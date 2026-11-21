@@ -1,0 +1,160 @@
+{
+  "source_url": "https://media.1001100.online/image-journal-2026-11-21/central-axis-templates.gif",
+  "source_sha256": "aeb51cd07daa9f6dd7ce422711698b3c6cfb30bb8e46bab70670fd96104c2f4f",
+  "gif_frame": 193,
+  "frame_indexing": "zero-based",
+  "crop_coordinates": "left, top, right-exclusive, bottom-exclusive",
+  "note": "Границы между фигурами выбраны вручную по сужениям видимой оси. Последний фрагмент обрезан краем GIF.",
+  "source_size": [
+    537,
+    413
+  ],
+  "atlas": "totem-axis-atlas.png",
+  "model": "gpt-image-2",
+  "size": "768x1024",
+  "figures": [
+    {
+      "number": 1,
+      "title": "Верхний знак",
+      "material": "резное дерево",
+      "crop": [
+        236,
+        0,
+        301,
+        32
+      ],
+      "asset": "totem-axis-01.webp",
+      "prompt": "totem-axis-01.txt"
+    },
+    {
+      "number": 2,
+      "title": "Раскрытые крылья",
+      "material": "чеканная медь",
+      "crop": [
+        236,
+        32,
+        301,
+        83
+      ],
+      "asset": "totem-axis-02.webp",
+      "prompt": "totem-axis-02.txt"
+    },
+    {
+      "number": 3,
+      "title": "Малая подвеска",
+      "material": "тёмный камень",
+      "crop": [
+        236,
+        83,
+        301,
+        104
+      ],
+      "asset": "totem-axis-03.webp",
+      "prompt": "totem-axis-03.txt"
+    },
+    {
+      "number": 4,
+      "title": "Двойная фигура",
+      "material": "тёмный камень",
+      "crop": [
+        236,
+        104,
+        301,
+        177
+      ],
+      "asset": "totem-stone.webp",
+      "prompt": "../totem-full-height/totem-stone.txt"
+    },
+    {
+      "number": 5,
+      "title": "Треугольный знак",
+      "material": "чеканная медь",
+      "crop": [
+        236,
+        177,
+        301,
+        201
+      ],
+      "asset": "totem-axis-05.webp",
+      "prompt": "totem-axis-05.txt"
+    },
+    {
+      "number": 6,
+      "title": "Ветвистая фигура",
+      "material": "резное дерево",
+      "crop": [
+        236,
+        201,
+        301,
+        245
+      ],
+      "asset": "totem-axis-06.webp",
+      "prompt": "totem-axis-06.txt"
+    },
+    {
+      "number": 7,
+      "title": "Круглая фигура",
+      "material": "чеканная медь",
+      "crop": [
+        236,
+        245,
+        301,
+        285
+      ],
+      "asset": "totem-axis-07.webp",
+      "prompt": "totem-axis-07.txt"
+    },
+    {
+      "number": 8,
+      "title": "Медальон",
+      "material": "тёмный камень",
+      "crop": [
+        236,
+        285,
+        301,
+        309
+      ],
+      "asset": "totem-axis-08.webp",
+      "prompt": "totem-axis-08.txt"
+    },
+    {
+      "number": 9,
+      "title": "Ромбовидная подвеска",
+      "material": "резное дерево",
+      "crop": [
+        236,
+        309,
+        301,
+        339
+      ],
+      "asset": "totem-axis-09.webp",
+      "prompt": "totem-axis-09.txt"
+    },
+    {
+      "number": 10,
+      "title": "Нижняя маска",
+      "material": "чеканная медь",
+      "crop": [
+        236,
+        339,
+        301,
+        380
+      ],
+      "asset": "totem-axis-10.webp",
+      "prompt": "totem-axis-10.txt"
+    },
+    {
+      "number": 11,
+      "title": "Фрагмент основания",
+      "material": "тёмный камень",
+      "crop": [
+        236,
+        380,
+        301,
+        413
+      ],
+      "asset": "totem-axis-11.webp",
+      "prompt": "totem-axis-11.txt"
+    }
+  ]
+}
