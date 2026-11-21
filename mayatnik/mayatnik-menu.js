@@ -5,6 +5,7 @@
    Original controls/listeners remain the source of truth. */
 (() => {
   'use strict';
+  if(window.mayPhoneStartupBlocked)return;
   const $ = id => document.getElementById(id), source = document.querySelector('.bar');
   if (!source || !window.ZerkGrozd || !window.ZerkMenuIcons) return;
   const mobileMenu=window.MayatnikMenuDock.mobileStrip();

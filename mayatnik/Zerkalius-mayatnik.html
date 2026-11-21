@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.078</title>
+<title>Zerkalius Маятнкъ — v1.079</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.078</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.079</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -738,7 +738,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-bit-synthesis.js?v=1033"></script>
 <script src="mayatnik-phone-robot.js?v=1033"></script>
 <script src="mayatnik-phone-music.js?v=1033"></script>
-<script src="mayatnik-phone-host.js?v=1033"></script>
+<script src="mayatnik-phone-host.js?v=1079"></script>
 <script src="../_js/hub-flow-core.js?v=1041"></script>
 <script src="mayatnik-flow.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-layers.css?v=517">
@@ -750,15 +750,27 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   var ovlFrozen = null;   // v0.487: ранние cssLayout/align могут проверить привязку до объявления API наложения
   let rulerMode=false,rulerA=null,rulerB=null,rulerHover=null;   // v0.161: линейка (см. rulerDraw); здесь, чтобы drawTemplate видел их с первого кадра
   const PHONE_REQUEST=new URLSearchParams(location.search).get('phoneScene')||'';
-  const PHONE_LINK=MayatnikPhoneHost.valid(PHONE_REQUEST)?PHONE_REQUEST:'';
+  const PHONE_MISSING=['MayatnikPhoneHost','MayatnikPhoneScenes','MayatnikPhoneCatalog','MayatnikPhoneRender','MayatnikPhoneMusic','MayatnikPhoneRobot','MayatnikSynthesisPendulums','MayatnikSynthesisMusic','MayatnikBitSynthesis'].filter(name=>!window[name]);
+  const PHONE_READY=PHONE_MISSING.length===0;
+  const PHONE_UNAVAILABLE='Модуль обоев не загрузился. Повторите загрузку страницы; сохранённая работа не изменена.';
+  function requirePhone(){if(!PHONE_READY)throw Error(PHONE_UNAVAILABLE);return window.MayatnikPhoneHost;}
+  function phoneStartupUnavailable(){
+    window.mayPhoneStartupBlocked=true;
+    const box=document.createElement('div');box.id='mayPhoneStartupStatus';box.setAttribute('role','alert');box.style.cssText='position:fixed;z-index:1000;left:50%;top:25%;transform:translateX(-50%);box-sizing:border-box;width:min(520px,90vw);padding:20px;background:#10151b;color:#ffe08a;border:1px solid #697587';
+    const text=document.createElement('p');text.textContent=PHONE_UNAVAILABLE;box.append(text);
+    const retry=document.createElement('button');retry.type='button';retry.className='gz-hx';retry.textContent='Повторить загрузку';retry.title='Повторно открыть эту страницу, сохранив ссылку и данные работы';retry.onclick=()=>location.reload();box.append(retry);document.body.append(box);
+    console.warn('Маятник: не загружены модули обоев:',PHONE_MISSING.join(', '));
+  }
+  if(PHONE_REQUEST&&!PHONE_READY){phoneStartupUnavailable();return;}
+  const PHONE_LINK=PHONE_READY&&MayatnikPhoneHost.valid(PHONE_REQUEST)?PHONE_REQUEST:'';
   const PHONE_SCOPE=PHONE_LINK?':phone:'+PHONE_LINK:'';
   const KEY = 'zerk_mayatnik'+PHONE_SCOPE;
   const PHONE_CACHE=PHONE_LINK?'phone-link-'+PHONE_LINK:'latest';
   const PHONE_RETURN='phone-return'+PHONE_SCOPE;
   var phoneFrame=null,phoneBusy=false,phoneNextAt=0,phoneRecordingMix=null,phoneReturnWork=null;
   function phoneOn(state=st){return !!state.phoneScene;}
-  function phoneScene(state=st){return MayatnikPhoneHost.scene(state.phoneScene);}
-  function phoneSettings(id){const model=MayatnikPhoneHost.scene(id);return {...MayatnikResetState.defaults(),phoneScene:id,phoneView:'art',phoneTempo:137,phoneVoice:'robot',phoneK:model.baseFrame,rows:model.height,steps:model.maxFrames,vmode:'',speed:1,noband:0,fixLines:false,fixCross:false,fixDragK:false};}
+  function phoneScene(state=st){return requirePhone().scene(state.phoneScene);}
+  function phoneSettings(id){const model=requirePhone().scene(id);return {...MayatnikResetState.defaults(),phoneScene:id,phoneView:'art',phoneTempo:137,phoneVoice:'robot',phoneK:model.baseFrame,rows:model.height,steps:model.maxFrames,vmode:'',speed:1,noband:0,fixLines:false,fixCross:false,fixDragK:false};}
   function phoneMaterialize(frame,copy=true){
     phoneFrame=phoneScene().frame(frame);
     if(copy)f.val.set(phoneFrame.values);
@@ -783,10 +795,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', zMid: true, speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
   st.autoAxesPaint=false;
   if (!CHISTO) try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (_) {}
+  if(st.phoneScene&&!PHONE_READY){phoneStartupUnavailable();return;}
   st.autoAxesPaint=st.autoAxesPaint===true;if(st.autoAxesPaint)st.autoAxes=true;
   st.wolfram=MayatnikWolfram.normalize(st.wolfram);
   if(PHONE_LINK&&!st.phoneScene)st=phoneSettings(PHONE_LINK);
-  if(phoneOn())try{MayatnikPhoneHost.validate(st);}catch(error){if(PHONE_LINK)st=phoneSettings(PHONE_LINK);else st.phoneScene='';setTimeout(()=>{$('fillInfo').textContent=error.message;},0);}
+  if(phoneOn())try{requirePhone().validate(st);}catch(error){if(PHONE_LINK)st=phoneSettings(PHONE_LINK);else st.phoneScene='';setTimeout(()=>{$('fillInfo').textContent=error.message;},0);}
   // Reload is an escape from a search, not a request to run it again.
   const searchReload = performance.getEntriesByType('navigation')[0]?.type === 'reload';
   let searchReloadPaused = false;
@@ -1073,7 +1086,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let rowBuild = null, rowBuildProgress = '', rowBuildHighlight = null, rowBuildHighlightDismissedOwner = null;
   function constructionActive(){return !animatrixOn()&&!testPattern&&MayatnikConstruction.active(st);}
   function fieldSpan(frame){return phoneOn()||animatrixOn()?[1,0]:st.sequenceSourceOn?MayatnikSequenceField.span(st,frame):MayatnikConstruction.span(st,frame);}
-  function assertWorkEvolution(state){if(phoneOn(state)){MayatnikPhoneHost.validate(state);return;}MayatnikEdgeFlow.validate(state);if(animatrixOn(state)){MayatnikAnimatrixSource.assertState(state);return;}MayatnikSequenceField.assertEvolution(state);MayatnikConstruction.assertCompatible(state);}
+  function assertWorkEvolution(state){if(phoneOn(state)){requirePhone().validate(state);return;}MayatnikEdgeFlow.validate(state);if(animatrixOn(state)){MayatnikAnimatrixSource.assertState(state);return;}MayatnikSequenceField.assertEvolution(state);MayatnikConstruction.assertCompatible(state);}
   function isEvolutionError(error){return [MayatnikSequenceField.LEGACY_MESSAGE,MayatnikConstruction.LEGACY_MESSAGE].includes(error?.message);}
   function rowBuildCancel(redraw=true) {
     rowBuildHighlight = null; rowBuildHighlightDraw();
@@ -6461,7 +6474,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     try{
       await cacheWrites;const data=upgradeAnimatrixWork(supplied||await MayatnikPaintCache.read(PHONE_CACHE));if(!data||![1,2].includes(data.schema))return false;
       if(supplied&&!phoneOn(data.st)){st.phoneScene='';phoneFrame=null;}
-      if(phoneOn(data.st))MayatnikPhoneHost.validate(data.st);
+      if(phoneOn(data.st))requirePhone().validate(data.st);
       if(!animatrixOn(data.st)&&MayatnikConstruction.legacy(data.st)){if(supplied)MayatnikConstruction.assertCompatible(data.st);$('paintCacheInfo').textContent=MayatnikConstruction.LEGACY_MESSAGE;return false;}
       if(MayatnikSequenceField.legacy(data.st)){if(supplied)assertWorkEvolution(data.st);$('paintCacheInfo').textContent=MayatnikSequenceField.LEGACY_MESSAGE;return false;}
       if(data.frameHost){validateFrameWork({format:'mayatnik-work',version:2,data});if(gpuBig)return false;}
@@ -13668,7 +13681,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function validateShareState(candidate){
     candidate.wolfram=MayatnikWolfram.normalize(candidate.wolfram);
-    if(phoneOn(candidate)){MayatnikPhoneHost.validate(candidate);return candidate;}
+    if(phoneOn(candidate)){requirePhone().validate(candidate);return candidate;}
     if(candidate.romboSeam!=null&&!['between','dedupe'].includes(candidate.romboSeam))throw Error('В ссылке неверный шов Ромбо');
     if(candidate.romboMode!=null&&!['fixed','custom'].includes(candidate.romboMode))throw Error('В ссылке неверный режим сборки');
     if(candidate.romboLayout!=null){const layout=MayatnikTriangleAssembly.normalize(candidate.romboLayout);if(!layout)throw Error('В ссылке неверная сборка треугольников');candidate.romboLayout=layout;}
@@ -14516,7 +14529,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   wrap.addEventListener('scroll',parityOverlayMask,{passive:true});addEventListener('resize',parityOverlayMask);
   async function phoneSelect(id){
     if(phoneBusy||!sessionReady||cacheRestoring||frameLibraryBusy||templateDragging)throw Error('Дождитесь завершения текущего действия');
-    if(!MayatnikPhoneHost.valid(id))throw Error('Неизвестный рецепт обоев');
+    if(!requirePhone().valid(id))throw Error('Неизвестный рецепт обоев');
     phoneBusy=true;
     try{
       stopFrameTransports();window.mayXorrom?.stopAll();
@@ -14524,7 +14537,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         const before=paintSnapshot();if(!before)throw Error('Сначала дождитесь готовности текущего поля');
         before.frameHost=frameHostSnapshot();phoneReturnWork=before;await cacheWrites;if(!CHISTO)await MayatnikPaintCache.write(before,PHONE_RETURN);
       }
-      const model=MayatnikPhoneHost.scene(id),tempo=st.phoneTempo||137;
+      const model=requirePhone().scene(id),tempo=st.phoneTempo||137;
       clearSharePaint();templateFollow.off();templateFrameBatch?.off();foldCloseAll();
       st={...phoneSettings(id),phoneTempo:tempo,phoneVoice:st.phoneVoice||'robot'};
       animatrixNewWork();resetLayers();writeUI();applyBitColours();reset(false);goToImmediate(model.baseFrame);save();savePaint();queueSession();
@@ -14544,7 +14557,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       save();savePaint();queueSession();$('fillInfo').textContent=before?'Возвращена работа, открытая до обоев.':'Открыт обычный Маятник.';
     }finally{phoneBusy=false;window.mayPhone?.sync();}
   }
-  window.mayPhone=MayatnikPhoneHost.mount({state:()=>st,frame:()=>phoneOn()?phoneFrame:null,playing:()=>playing&&!fast,wrap,select:phoneSelect,leave:phoneLeave,seek:goToImmediate,
+  if(PHONE_READY)window.mayPhone=MayatnikPhoneHost.mount({state:()=>st,frame:()=>phoneOn()?phoneFrame:null,playing:()=>playing&&!fast,wrap,select:phoneSelect,leave:phoneLeave,seek:goToImmediate,
     changed(){save();queueSession();if(f)draw();},stopOtherSound:()=>window.mayXorrom?.stopAll(),download});
   (async()=>{
     if(largeRows(st.rows))await gpuReady;
@@ -14695,7 +14708,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1078"></script>
+<script src="mayatnik-menu.js?v=1079"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">
