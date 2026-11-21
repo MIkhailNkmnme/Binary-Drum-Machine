@@ -251,6 +251,9 @@ def main():
     staged_upload.add_argument('--key', required=True)
     staged_upload.add_argument('--sha256', required=True)
     staged_upload.add_argument('--source-url', default='')
+    batch_upload = commands.add_parser('upload-r2-batch')
+    batch_upload.add_argument('--source-url', required=True)
+    batch_upload.add_argument('--sha256', required=True)
     for name in ('upload-vk-media', 'publish-vk'):
         commands.add_parser(name).add_argument('--queue', required=True)
     args = parser.parse_args()
@@ -263,6 +266,8 @@ def main():
             emit(vk_publish.check())
         elif args.command == 'upload-r2':
             emit(r2_release.upload_one(args, network, image_type))
+        elif args.command == 'upload-r2-batch':
+            emit(r2_release.upload_batch(args, network, image_type))
         elif args.command in ('upload-vk-media', 'publish-vk'):
             journal = REPOSITORY / 'issledovanie/image-journal/index.html'
             cards = journal_cards(journal.read_text(encoding='utf-8-sig'), vk_publish.JOURNAL_URL)

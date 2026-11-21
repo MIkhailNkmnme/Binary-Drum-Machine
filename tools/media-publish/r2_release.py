@@ -3,6 +3,7 @@
 import base64
 import binascii
 import hashlib
+import json
 import os
 from pathlib import Path
 import re
@@ -21,6 +22,8 @@ ASSET_HOSTS = {'release-assets.githubusercontent.com', 'objects.githubuserconten
 JOURNAL_KEY = r'image-journal-\d{4}-\d{2}-\d{2}/[A-Za-z0-9][A-Za-z0-9._-]*\.(?:png|jpe?g|gif|webp)'
 MAX_BYTES = 50 * 1024 * 1024
 MAX_INLINE = 48_000
+MAX_BATCH = 20
+MAX_MANIFEST_BYTES = 32 * 1024
 
 
 class ObjectAlreadyExists(ValueError):
@@ -64,11 +67,11 @@ class ImageRedirect(HTTPRedirectHandler):
         return super().redirect_request(request, fp, code, message, headers, destination)
 
 
-def download(url, label, *, absent_ok=False):
+def download(url, label, *, absent_ok=False, limit=MAX_BYTES):
     request = Request(url, headers={'Cache-Control': 'no-cache', 'User-Agent': 'ZerkaliusImageJournal/1.0'})
     try:
         with build_opener(ImageRedirect()).open(request, timeout=45) as response:
-            data = response.read(MAX_BYTES + 1)
+            data = response.read(limit + 1)
             content_type = response.headers.get_content_type()
     except HTTPError as error:
         if absent_ok and error.code == 404:
@@ -76,8 +79,8 @@ def download(url, label, *, absent_ok=False):
         raise ValueError(f'{label}: HTTP {error.code}.') from None
     except (URLError, OSError):
         raise ValueError(f'{label}: соединение не подтверждено.') from None
-    if not 0 < len(data) <= MAX_BYTES:
-        raise ValueError(f'{label}: нужен непустой файл до 50 МиБ.')
+    if not 0 < len(data) <= limit:
+        raise ValueError(f'{label}: нужен непустой файл размером до {limit} байт.')
     return data, content_type
 
 
@@ -136,6 +139,45 @@ def transfer(key, digest, source_url, inline, upload, image_type):
 def upload_one(args, upload, image_type):
     return transfer(args.key, args.sha256, args.source_url,
                     os.environ.get('R2_IMAGE_BASE64', '').strip(), upload, image_type)
+
+
+def upload_batch(args, upload, image_type):
+    check_release_url(args.source_url)
+    expected = parse_digest(args.sha256)
+    release_path = urlsplit(args.source_url).path.rsplit('/', 1)[0]
+    data, _ = download(args.source_url, 'Манифест выпуска', limit=MAX_MANIFEST_BYTES)
+    if hashlib.sha256(data).hexdigest() != expected:
+        raise ValueError('SHA-256 манифеста не совпадает с указанным.')
+    try:
+        manifest = json.loads(data)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise ValueError('Манифест должен быть корректным JSON.') from None
+    if not isinstance(manifest, dict) or set(manifest) != {'files'}:
+        raise ValueError('Манифест должен содержать список files.')
+    files = manifest['files']
+    if not isinstance(files, list) or not 1 <= len(files) <= MAX_BATCH:
+        raise ValueError(f'В одном манифесте допускается от 1 до {MAX_BATCH} файлов.')
+
+    keys = set()
+    selected = []
+    for item in files:
+        if not isinstance(item, dict) or set(item) != {'key', 'sha256', 'source_url'}:
+            raise ValueError('Для каждого файла нужны key, sha256 и source_url.')
+        key = parse_key(item['key'])
+        digest = parse_digest(item['sha256'])
+        source = item['source_url']
+        check_release_url(source)
+        if urlsplit(source).path.rsplit('/', 1)[0] != release_path:
+            raise ValueError('Все файлы должны находиться в том же выпуске GitHub, что и манифест.')
+        if key in keys:
+            raise ValueError('Ключи R2 в манифесте должны быть уникальны.')
+        keys.add(key)
+        selected.append((key, digest, source))
+
+    delivered = []
+    for key, digest, source in selected:
+        delivered.append(transfer(key, digest, source, '', upload, image_type))
+    return dict(delivered=delivered)
 
 
 def upload_selected(releases, upload, image_type):

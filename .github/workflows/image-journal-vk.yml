@@ -10,16 +10,16 @@ on:
       mode:
         description: Проверка ВК или R2, загрузка в R2 либо выпуск очереди
         type: choice
-        options: [check, check-r2, upload-r2, publish]
+        options: [check, check-r2, upload-r2, upload-r2-batch, publish]
         default: check
       object_key:
         description: Ключ файла в R2 для upload-r2
         type: string
       source_url:
-        description: Прямая ссылка на файл GitHub Release для upload-r2
+        description: Ссылка на изображение или манифест GitHub Release
         type: string
       sha256:
-        description: SHA-256 исходного файла для upload-r2
+        description: SHA-256 изображения или манифеста
         type: string
       image_base64:
         description: Данные небольшого файла для upload-r2 вместо ссылки
@@ -47,7 +47,7 @@ jobs:
           VK_USER_TOKEN: ${{ secrets.VK_USER_TOKEN }}
         run: python3 tools/media-publish/media.py check-vk
       - name: Install R2 client
-        if: github.event_name == 'push' || inputs.mode == 'publish' || inputs.mode == 'check-r2' || inputs.mode == 'upload-r2'
+        if: github.event_name == 'push' || inputs.mode == 'publish' || inputs.mode == 'check-r2' || inputs.mode == 'upload-r2' || inputs.mode == 'upload-r2-batch'
         run: python3 -m pip install --disable-pip-version-check -r tools/media-publish/requirements.txt
       - name: Check read access to R2
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check-r2'
@@ -69,6 +69,17 @@ jobs:
         run: |
           python3 tools/media-publish/media.py upload-r2 \
             --key "$R2_OBJECT_KEY" --sha256 "$R2_SHA256" --source-url "$R2_SOURCE_URL"
+      - name: Upload image batch to R2
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'upload-r2-batch'
+        env:
+          ZERKALIUS_R2_ENDPOINT: ${{ secrets.ZERKALIUS_R2_ENDPOINT }}
+          ZERKALIUS_R2_ACCESS_ID: ${{ secrets.ZERKALIUS_R2_ACCESS_ID }}
+          ZERKALIUS_R2_SECRET: ${{ secrets.ZERKALIUS_R2_SECRET }}
+          R2_SOURCE_URL: ${{ inputs.source_url }}
+          R2_SHA256: ${{ inputs.sha256 }}
+        run: |
+          python3 tools/media-publish/media.py upload-r2-batch \
+            --source-url "$R2_SOURCE_URL" --sha256 "$R2_SHA256"
       - name: Upload journal originals to R2
         if: github.event_name == 'push' || inputs.mode == 'publish'
         env:
