@@ -1,0 +1,58 @@
+{
+  "archive": "archive/Zerkalius-mayatnik/v1054/source-b59acdee.zip",
+  "task": "ПОМ-004",
+  "deployment_run": 44854482996,
+  "local_service": "Restarted while idle; health available=true, page-actions-v2",
+  "version": "1.054",
+  "commit": "b59acdee02cfcdf99b7730224728c39d0832d82d",
+  "review": "Source read by root and assistant_service; no browser, automated or syntax tests, no new model generation. User acceptance pending.",
+  "deployment_status": "success",
+  "behaviour": "Compact diamond icon commands; separate confirmed one-shot auto-axis painting only; native paint undo; stale-context protection; preserved manuals and saved palettes",
+  "http": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.css",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/assistant-controls.json",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-reset-state.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "tools/local-assistant/server.py",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "tools/local-assistant/README.md",
+      "http": 200,
+      "matches": true
+    }
+  ],
+  "default_colours": {
+    "one": "#ffd700",
+    "source": "user screenshot 2026-11-21; dominant field colours",
+    "zero": "#00008b"
+  }
+}
