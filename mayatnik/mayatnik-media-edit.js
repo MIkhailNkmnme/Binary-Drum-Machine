@@ -36,10 +36,12 @@
   }
   const api={
    get:()=>({sources:[...sources.values()].map(source=>({...source})),clips:copy(current()),duration:duration(current()),canUndo:cursor>0,canRedo:cursor<states.length-1}),
-   add(source){
+   add(source,initialCrop){
     const id=String(source?.id||'');if(!id||sources.has(id))throw Error('Неуникальный источник видео');
     if(!(time(source.duration)>EPS))throw Error('В видео нет доступной длительности');
-    sources.set(id,{...source,id});commit([...current(),{sourceId:id,start:0,end:source.duration}]);return true;
+    const crop=cropRect(initialCrop,source),clip={sourceId:id,start:0,end:source.duration};
+    if(crop)clip.crop=crop;
+    sources.set(id,{...source,id});commit([...current(),clip]);return true;
    },
    locate(seconds){const found=locate(current(),seconds);return found?{...found,source:{...sources.get(found.clip.sourceId)}}:null;},
    setCrop(index,value){

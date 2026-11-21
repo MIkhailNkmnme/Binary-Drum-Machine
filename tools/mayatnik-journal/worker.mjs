@@ -26,11 +26,23 @@ function decodeSummary(metadata) {
   return metadata.summary64 ? new TextDecoder().decode(Uint8Array.from(atob(metadata.summary64), c => c.charCodeAt(0))) : '';
 }
 
-async function storeScene(media, code) {
+async function sceneDigest(code) {
   const hash = await crypto.subtle.digest('SHA-256', encoder.encode(code));
-  const digest = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2,'0')).join('');
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2,'0')).join('');
+}
+
+async function storeScene(media, code, digest) {
   await media.put(SCENE_KEY + digest + '.txt', code, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'text/plain; charset=utf-8'}});
-  return digest;
+}
+
+async function prepareMediaScene(media, text) {
+  let data;
+  try { data = JSON.parse(text); } catch { return null; }
+  if (typeof data?.code !== 'string' || data.code.length > MAX_CODE || !CODE.test(data.code) ||
+      (data.summary != null && typeof data.summary !== 'string')) return null;
+  const digest = await sceneDigest(data.code);
+  return {metadata:{scene:digest,summary64:encodeSummary(data.summary || '')},
+    save:() => storeScene(media,data.code,digest)};
 }
 
 export class UploadWindow extends DurableObject {
@@ -153,7 +165,7 @@ export default {
       }
       if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX))
         return await serveMedia(request, env.MEDIA, url.pathname.slice(1), reply);
-      if (url.pathname === '/mayatnik-api/media') return await uploadMedia(request,env,url,reply,reserveUpload);
+      if (url.pathname === '/mayatnik-api/media') return await uploadMedia(request,env,url,reply,reserveUpload,prepareMediaScene);
       if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);
       if (request.method === 'GET') {
         const editor = env.EDITOR.get(env.EDITOR.idFromName('journal'));
@@ -210,7 +222,10 @@ export default {
       const png = await readPng(new Uint8Array(await image.arrayBuffer()));
       if (!png) return reply({error:'Нужен корректный PNG из Маятника до 32 Мпикс.'}, 400);
       const sceneMeta = summary64 ? {summary64} : {};
-      if (code) sceneMeta.scene = await storeScene(env.MEDIA, code);
+      if (code) {
+        sceneMeta.scene = await sceneDigest(code);
+        await storeScene(env.MEDIA,code,sceneMeta.scene);
+      }
       // Lexicographic R2 listing returns the most recent images first.
       const saved = await env.MEDIA.put(key, png.blob, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'image/png'}, customMetadata:{
         frame, width:String(png.width), height:String(png.height), ...sceneMeta

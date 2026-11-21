@@ -51,7 +51,7 @@
       if (!result.data.url) throw Error('Журнал не подтвердил публикацию.');
       return result.data.url;
     },
-    async publishMedia(blob, {width, height, duration = 0}, signal) {
+    async publishMedia(blob, {width, height, duration = 0, scene}, signal) {
       const mime = blob.type.split(';')[0].trim().toLowerCase();
       const format = mediaFormats.get(mime);
       if (!format) throw Error('Журнал принимает GIF, MP4 и WebM.');
@@ -59,15 +59,24 @@
       if (![width,height].every(n => Number.isSafeInteger(n) && n > 0) || !Number.isFinite(duration) || duration < 0) {
         throw Error('Не удалось определить размеры или длительность записи.');
       }
+      let body = blob, prefix;
+      if (scene != null) {
+        if (typeof scene.code !== 'string' || scene.code.length > 400000 || !/^[01]\.[A-Za-z0-9_-]+$/.test(scene.code)) {
+          throw Error('Некорректная ссылка на начало записи.');
+        }
+        prefix = new Blob([JSON.stringify({code:scene.code, summary:String(scene.summary || '').slice(0,1024)})]);
+        body = new Blob([prefix,blob],{type:mime});
+      }
       let ticket = mediaTickets.get(blob);
-      if (!ticket || Date.now() >= ticket.expires) {
+      if (!ticket || ticket.code !== scene?.code || Date.now() >= ticket.expires) {
         const {data,host} = await request('ready?' + new URLSearchParams({format}), {}, 4500, preferred, signal);
         if (!data.file?.endsWith('.' + format)) throw Error('Журнал не выдал адрес для этого формата.');
-        ticket = {file:data.file,host,expires:Date.now()+14*60000};
+        ticket = {file:data.file,host,code:scene?.code,expires:Date.now()+14*60000};
         mediaTickets.set(blob,ticket);
       }
       const query = new URLSearchParams({file:ticket.file, width, height, duration, size:blob.size});
-      const result = await request('media?' + query, {method:'POST',headers:{'Content-Type':mime},body:blob},
+      if (prefix) query.set('sceneBytes',String(prefix.size));
+      const result = await request('media?' + query, {method:'POST',headers:{'Content-Type':mime},body},
         9 * 60000, ticket.host, signal);
       if (!result.data.url) throw Error('Журнал не подтвердил публикацию.');
       return result.data.url;

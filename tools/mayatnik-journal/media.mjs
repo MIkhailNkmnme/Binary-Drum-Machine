@@ -78,14 +78,41 @@ function validHeader(format, bytes, size, width, height) {
   });
 }
 
-export async function uploadMedia(request, env, url, reply, reserve) {
+// Read only the bounded state prefix. Forward the remaining media with backpressure.
+async function splitScene(body, byteLength) {
+  const reader = body.getReader(), prefix = new Uint8Array(byteLength);
+  let filled = 0, tail;
+  while (filled < byteLength) {
+    const {value,done} = await reader.read();
+    if (done) { reader.releaseLock(); return null; }
+    const take = Math.min(value.length,byteLength-filled);
+    prefix.set(value.subarray(0,take),filled);
+    filled += take;
+    if (take < value.length) tail = value.subarray(take);
+  }
+  const stream = new ReadableStream({
+    start(controller) { if (tail) controller.enqueue(tail); tail = null; },
+    async pull(controller) {
+      const {value,done} = await reader.read();
+      if (done) { reader.releaseLock(); controller.close(); }
+      else controller.enqueue(value);
+    },
+    cancel(reason) { return reader.cancel(reason); }
+  });
+  return {text:new TextDecoder().decode(prefix),stream};
+}
+
+export async function uploadMedia(request, env, url, reply, reserve, prepareScene) {
   if (request.method !== 'POST') return reply({},405);
   const file = url.searchParams.get('file'), format = getFormat(file);
   if (!freshFile(file) || format === 'png') return reply({error:'Срок отправки истёк или неверный формат файла.'},400);
   const mime = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
   if (mime !== MIME.get(format)) return reply({error:'Для журнала нужен GIF, MP4 или WebM.'},415);
   const headerLength = request.headers.get('Content-Length'), declared = url.searchParams.get('size');
-  const size = Number(headerLength || declared);
+  const prefixSize = Number(url.searchParams.get('sceneBytes') || 0);
+  if (!Number.isSafeInteger(prefixSize) || prefixSize < 0 || prefixSize > 416384)
+    return reply({error:'Некорректный размер параметров записи.'},400);
+  const size = headerLength == null ? Number(declared) : Number(headerLength) - prefixSize;
   if (!request.body || !Number.isSafeInteger(size) || size <= 0 || size > MAX_MEDIA)
     return reply({error:'Для журнала нужен файл до 64 МиБ.'},413);
   if (declared !== null && Number(declared) !== size) return reply({error:'Размер загрузки изменился.'},400);
@@ -96,6 +123,15 @@ export async function uploadMedia(request, env, url, reply, reserve) {
     return reply({error:'Неверные размеры или длительность записи.'},400);
   const limited = await reserve(request,env);
   if (limited) return limited;
+
+  let body = request.body, scene;
+  if (prefixSize) {
+    const prefix = await splitScene(body,prefixSize);
+    if (!prefix) return reply({error:'Неполные параметры записи.'},400);
+    body = prefix.stream;
+    scene = await prepareScene(env.MEDIA,prefix.text);
+    if (!scene) { await body.cancel(); return reply({error:'Некорректная ссылка на начало записи.'},400); }
+  }
 
   const sample = new Uint8Array(Math.min(1024,size));
   let received = 0, last, invalid;
@@ -115,19 +151,20 @@ export async function uploadMedia(request, env, url, reply, reserve) {
       if (received === size) last = chunk;
       else controller.enqueue(chunk);
     },
-    flush(controller) {
+    async flush(controller) {
       if (!last || received !== size || (format==='gif' && last[last.length-1]!==0x3b)) fail();
+      if (scene) await scene.save();
       controller.enqueue(last);
     }
   });
   // R2 needs a known-length stream. Keep the last chunk until validation has completed.
   const stream = new FixedLengthStream(size);
   const cancel = new AbortController();
-  const transfer = request.body.pipeThrough(validate).pipeTo(stream.writable,{signal:cancel.signal});
+  const transfer = body.pipeThrough(validate).pipeTo(stream.writable,{signal:cancel.signal});
   const key = PREFIX + file;
   const writing = env.MEDIA.put(key,stream.readable,{
     onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:mime},
-    customMetadata:{width:String(width),height:String(height),duration:String(duration)}
+    customMetadata:{width:String(width),height:String(height),duration:String(duration),...scene?.metadata}
   }).finally(()=>cancel.abort());
   const [copied,saved] = await Promise.allSettled([transfer,writing]);
   if (invalid) return reply({error:'Данные файла не соответствуют GIF, MP4 или WebM.'},400);

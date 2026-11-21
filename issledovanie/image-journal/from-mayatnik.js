@@ -20,7 +20,7 @@
     link.dataset.kind = frame.kind || 'image';
     link.href = frame.url;
     figure.dataset.journalKey = new URL(frame.url).pathname.slice(1);
-    if (frame.summary) link.dataset.summary = frame.summary;
+    if (frame.summary && !video) link.dataset.summary = frame.summary;
     else if (link.dataset.kind === 'image') link.dataset.summary = 'Параметры построения не записаны.';
     if (frame.scene) link.dataset.scene = frame.scene;
     const preview = document.createElement(video ? 'video' : 'img');
@@ -47,6 +47,18 @@
     date.dateTime = frame.created;
     date.textContent = new Date(frame.created).toLocaleString('ru-RU', {dateStyle:'short', timeStyle:'short'});
     caption.append(title, date);
+    if (video && /^[a-f0-9]{64}$/.test(frame.scene)) {
+      const links = document.createElement('span');
+      links.className = 'figure-links';
+      const start = document.createElement('a');
+      start.dataset.recordingStart = '';
+      start.href = '/mayatnik/Zerkalius-mayatnik.html#journal=' + frame.scene;
+      start.target = '_blank';
+      start.rel = 'noopener';
+      start.textContent = 'Начало записи в Маятнике';
+      links.append(start);
+      caption.append(links);
+    }
     link.append(preview);
     figure.append(link, caption);
     return figure;

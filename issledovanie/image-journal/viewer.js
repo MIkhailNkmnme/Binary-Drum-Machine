@@ -35,6 +35,11 @@
     scene.hidden = true;
     scene.removeAttribute('href');
     sceneStatus.textContent = '';
+    if (link.dataset.kind === 'video') {
+      const start = figure?.querySelector('a[data-recording-start]');
+      if (start) showScene(start.href, start.textContent);
+      return;
+    }
     if (link.dataset.scene) {
       sceneStatus.textContent = 'Загрузка параметров кадра…';
       try {

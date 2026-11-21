@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.060</title>
+<title>Zerkalius Маятнкъ — v1.061</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -235,12 +235,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   body.may-embed #cv{width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;visibility:visible!important;opacity:1!important}
   body.may-embed #wrap > :not(#cv){display:none!important}
 </style>
-<script defer src="../_js/mayatnik-journal.js?v=3"></script>
+<script defer src="../_js/mayatnik-journal.js?v=4"></script>
 </head>
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.060</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.061</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -631,7 +631,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-settings-library.js?v=1055"></script>
 <script src="mayatnik-template-dim.js?v=524"></script>
 <script src="mayatnik-gif.js?v=1008"></script>
-<script src="mayatnik-recording-crop.js?v=947"></script>
+<script src="mayatnik-recording-crop.js?v=1061"></script>
 <script src="mayatnik-bit-glyph.js?v=921"></script>
 <script src="mayatnik-gif-scale.js?v=996"></script>
 <script src="mayatnik-gif-scale-record.js?v=926"></script>
@@ -660,9 +660,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-paint-cache.js?v=535"></script>
 <script src="vendor/mediabunny-1.65.0.min.js"></script>
 <script src="mayatnik-continuation-music.js?v=1015"></script>
-<script src="mayatnik-media-edit.js?v=905"></script>
+<script src="mayatnik-media-edit.js?v=1061"></script>
 <script src="mayatnik-video-render.js?v=905"></script>
-<script src="mayatnik-gif-viewer.js?v=1060"></script>
+<script src="mayatnik-gif-viewer.js?v=1061"></script>
 <link rel="stylesheet" href="mayatnik-gif-viewer.css?v=905">
 <script src="mayatnik-gif-frame-set.js?v=918"></script>
 <script src="mayatnik-gif-phase.js?v=951"></script>
@@ -763,7 +763,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.748: ссылка на построение и настройки — #s=… (сжатый код). Открыта ссылка — память браузера не перезаписываем:
   // чужой набор строк, кадра и вида не должен стать вашими настройками (как ?chisto, но библиотеки и файлы остаются).
   const SHARE_HASH = (() => { try { return MayatnikShareLink.hashCode(location.hash); } catch (_) { return ''; } })();
-  const SHARE_ON = !!SHARE_HASH;
+  const journalDigest=hash=>/^#journal=([a-f0-9]{64})$/.exec(hash)?.[1]||'';
+  const JOURNAL_DIGEST=journalDigest(location.hash);
+  const SHARE_ON = !!(SHARE_HASH||JOURNAL_DIGEST);
+  const journalScriptsReady=document.readyState==='loading'
+    ?new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true})):Promise.resolve();
   let SHARE_ACTIVE = SHARE_ON;   // пока ссылка открыта, настройки браузера не перезаписываются; испорченная ссылка снимает запрет
   // v0.472: «если всё дело в этом — только это отключи» (2026-10-23): замки шаблонов и краски («Застыло — цвет», templateLock) не считаются
   // и не применяются. Проверка замка шла на каждой отрисовке по всем пикселям шаблона и при «замок изменился» заказывала новую полную
@@ -5064,27 +5068,52 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 
   // v0.480: поток с отдельного холста постоянного чётного размера. Размер cv может меняться при zoom/view/resize,
   // а в GPU-режиме cv — заглушка 1×1. WebGPU копируем сразу после render(), пока его текущий кадр доступен.
-  let recorder=null;
+  let recorder=null,recordingSequence=0;
+  let videoDownloads=Promise.resolve();
+  async function captureRecordingScene(){
+    try{return {code:await MayatnikShareLink.encode(captureSharePayload())};}
+    catch(_){return null;} // Some field modes can be recorded but cannot be shared as a link.
+  }
   $('bRec').onclick=()=>{
     if(recorder){recorder.stop();return;}
     const button=$('bRec'),info=$('fillInfo');
     if(!cv.captureStream||!window.MediaRecorder){info.textContent='Этот браузер не умеет записывать видео с холста.';return;}
     if(!f){info.textContent='Сначала постройте поле для записи.';return;}
     let stream=null,r=null,timer=0,stopping=false,failed=false,frames=0,started=0,ended=0,recordedBounds=null;
-    const cropAbort=new AbortController();
+    const sequence=++recordingSequence,controller=new AbortController();
     const chunks=[],canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true}),composite=document.createElement('canvas');
     composite.width=Math.max(2,Math.round(wrap.clientWidth));composite.height=Math.max(2,Math.round(wrap.clientHeight));
-    const pageHide=()=>fail(Error('Запись прервана при закрытии страницы'));
-    const reset=()=>{removeEventListener('pagehide',pageHide);if(r){r.onstop=null;r.onerror=null;r.ondataavailable=null;}clearTimeout(timer);videoGpuFrame=null;stream?.getTracks().forEach(t=>t.stop());phoneRecordingMix?.close().catch(()=>{});phoneRecordingMix=null;recorder=null;button.disabled=false;button.setAttribute('aria-pressed','false');button.textContent='Запись';};
-    const fail=error=>{if(failed)return;failed=true;cropAbort.abort();info.textContent='Не удалось записать видео: '+(error?.message||error||'ошибка записи');
-      clearTimeout(timer);videoGpuFrame=null;button.disabled=true;
-      if(r){r.onstop=null;r.onerror=null;r.ondataavailable=null;if(r.state!=='inactive')try{r.stop();}catch(_){}}reset();};
-    const stop=()=>{if(stopping)return;stopping=true;ended=Date.now();clearTimeout(timer);videoGpuFrame=null;button.disabled=true;info.textContent='Завершаю видео…';
-      try{if(r.state!=='inactive')r.stop();}catch(e){fail(e);}};
+    const report=text=>{if(sequence===recordingSequence&&!controller.signal.aborted)info.textContent=text;};
+    const setButton=(label,pressed)=>{button.disabled=false;button.setAttribute('aria-pressed',String(pressed));button.dataset.miShort=label;button.textContent=label;};
+    function releaseCapture(label){
+      if(recorder!==session)return;
+      clearTimeout(timer);videoGpuFrame=null;recorder=null;
+      stream?.getTracks().forEach(track=>track.stop());
+      phoneRecordingMix?.close().catch(()=>{});phoneRecordingMix=null;
+      setButton(label,false);
+    }
+    function removeHandlers(){removeEventListener('pagehide',pageHide);if(r){r.onstop=null;r.onerror=null;r.ondataavailable=null;}}
+    function fail(error){
+      if(failed)return;
+      failed=true;report('Не удалось записать видео: '+(error?.message||error||'ошибка записи'));
+      controller.abort();removeHandlers();
+      if(r&&r.state!=='inactive')try{r.stop();}catch(_){}
+      releaseCapture('Запись');
+    }
+    function pageHide(){fail(Error('Запись прервана при закрытии страницы'));}
+    function stop(){
+      if(stopping)return;
+      stopping=true;ended=Date.now();
+      try{if(r.state!=='inactive')r.stop();}catch(error){fail(error);return;}
+      releaseCapture('Остановлено');report('Запись остановлена. Подготовка клипа…');
+      setTimeout(()=>{if(sequence===recordingSequence&&!recorder)setButton('Запись',false);},1100);
+    }
+    const session={stop};
+    recorder=session;addEventListener('pagehide',pageHide);
     const paint=gpuSource=>{const source=gifViewFrame(composite,composite.width,composite.height,gpuSource),sw=source.width,sh=source.height;if(!sw||!sh)throw Error('Нет изображения поля');
       const fit=Math.min(canvas.width/sw,canvas.height/sh),w=sw*fit,h=sh*fit;
       ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(source,(canvas.width-w)/2,(canvas.height-h)/2,w,h);frames++;
-      const Crop=window.MayatnikRecordingCrop;if(Crop)recordedBounds=Crop.union(recordedBounds,Crop.bounds(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height));
+      const Crop=window.MayatnikRecordingCrop;if(Crop)recordedBounds=Crop.extendCanvas(ctx,canvas.width,canvas.height,recordedBounds);
       stream?.getVideoTracks()[0]?.requestFrame?.();};
     try{
       if(gpuDisplay()){if(gpuRaf)cancelAnimationFrame(gpuRaf);gpuRender();}
@@ -5096,29 +5125,47 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       r=new MediaRecorder(stream,{...(type?{mimeType:type}:{}),videoBitsPerSecond:8e6,audioBitsPerSecond:128000,videoKeyFrameIntervalDuration:1000});
       r.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
       r.onerror=e=>fail(e.error||Error('Ошибка кодирования видео'));
-      r.onstop=async()=>{
-        clearTimeout(timer);videoGpuFrame=null;stream.getTracks().forEach(t=>t.stop());button.disabled=true;
-        if(failed){reset();return;}
-        if(!frames||!chunks.some(c=>c.size)){reset();info.textContent='Видео не сохранено: кодировщик не вернул кадров.';return;}
-        try{
-          const mime=r.mimeType||type||'video/webm',durationMs=(ended||Date.now())-started;let blob=new Blob(chunks,{type:mime}),outputWidth=canvas.width,outputHeight=canvas.height,cropWarning='';
-          const R=window.__zerkRecorder;if(R?.fixVideo)blob=await R.fixVideo(blob,durationMs);
-          if(failed)return;
-          if(window.MayatnikRecordingCrop)try{
-            info.textContent='Убираю пустые края видео…';
-            const cropped=await MayatnikRecordingCrop.video(blob,recordedBounds,{width:canvas.width,height:canvas.height,hasAudio:hasXorromAudio,mimeType:mime,durationMs,signal:cropAbort.signal,onProgress:(at,total)=>{info.textContent='Убираю пустые края видео… '+Math.floor(at)+' / '+Math.ceil(total||durationMs/1000)+' с';}});
-            blob=cropped.blob;outputWidth=cropped.width;outputHeight=cropped.height;
-          }catch(error){if(failed||cropAbort.signal.aborted)return;cropWarning=' · сохранён исходный размер: '+(error.message||String(error));}
-          if(failed)return;
-          const ext=blob.type.includes('mp4')?'mp4':'webm';
+      r.onstop=()=>{
+        ended ||= Date.now();
+        releaseCapture('Запись');
+        if(failed)return;
+        if(!frames||!chunks.some(chunk=>chunk.size)){fail(Error('Кодировщик не вернул кадров.'));return;}
+        const mime=r.mimeType||type||'video/webm',raw=new Blob(chunks,{type:mime});
+        chunks.length=0;r.onstop=null;r.onerror=null;r.ondataavailable=null;
+        const width=canvas.width,height=canvas.height,box=window.MayatnikRecordingCrop?.evenBox(recordedBounds,width,height);
+        const crop=box&&(box.left||box.top||box.width!==width||box.height!==height)?
+          {x:box.left/width,y:box.top/height,width:box.width/width,height:box.height/height}:null;
+        const stem='mayatnik-'+new Date(ended).toISOString().replace(/[:T]/g,'-').replace('Z','');
+        const extension=blob=>blob.type.includes('mp4')?'mp4':'webm';
+        const name=stem+'.'+extension(raw);
+        const prepared=Promise.resolve().then(()=>window.__zerkRecorder?.fixVideo?.(raw,ended-started)||raw).catch(()=>raw);
+        const metadata=prepared.then(blob=>window.MayatnikVideoRender.inspect(blob));
+        // The viewer opens synchronously. Indexing and cropped download can continue independently.
+        metadata.catch(()=>{});
+        window.MayatnikGifViewer?.showVideo(prepared,{name,crop,metadata,scene,background:sequence!==recordingSequence})
+          .catch(error=>report('Монтаж: '+(error.message||error)));
+        async function saveRecording(){
+          let blob=await prepared,outWidth=width,outHeight=height,note='';
+          if(controller.signal.aborted)return;
+          if(crop)try{
+            const source=await metadata;
+            if(hasXorromAudio&&!source.hasAudio)throw Error('Звуковая дорожка недоступна для обработки.');
+            const result=await window.MayatnikVideoRender.render({clips:[{blob,start:0,end:source.duration,crop}],signal:controller.signal});
+            blob=result.blob;outWidth=result.width;outHeight=result.height;
+          }catch(error){
+            if(controller.signal.aborted)return;
+            note=' · сохранён исходный размер: '+(error?.message||error);
+          }
+          if(controller.signal.aborted)return;
           if(!blob?.size)throw Error('Получен пустой видеофайл');
-          const url=URL.createObjectURL(blob),a=document.createElement('a');
-          a.href=url;a.download=`mayatnik-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-          reset();info.textContent=`Видео записано: ${(blob.size/1048576).toFixed(1)} МБ, .${ext} · ${outputWidth} × ${outputHeight}`+cropWarning;
-          Promise.resolve(window.MayatnikGifViewer?.showVideo?.(blob,{name:a.download,width:outputWidth,height:outputHeight})).catch(error=>{info.textContent+=' · Монтаж: '+(error?.message||String(error));});
-        }catch(e){fail(e);}
+          const ext=extension(blob),url=URL.createObjectURL(blob),a=document.createElement('a');
+          a.href=url;a.download=stem+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+          report(`Видео записано: ${(blob.size/1048576).toFixed(1)} МБ, .${ext} · ${outWidth} × ${outHeight}`+note);
+        }
+        videoDownloads=videoDownloads.then(saveRecording).catch(error=>report('Не удалось сохранить видео: '+(error?.message||error))).finally(removeHandlers);
       };
-      r.start(500);started=Date.now();recorder={stop};addEventListener('pagehide',pageHide);button.setAttribute('aria-pressed','true');button.textContent='Стоп записи';info.textContent='Идёт запись видео поля…';
+      r.start(500);started=Date.now();setButton('Стоп записи',true);info.textContent='Идёт запись видео поля…';
+      const scene=captureRecordingScene();
       videoGpuFrame=source=>{if(!stopping&&!failed)try{paint(source);}catch(e){fail(e);}};
       const tick=()=>{if(stopping||failed)return;try{
         if(gpuDisplay()){if(gpuRaf)cancelAnimationFrame(gpuRaf);gpuRender();}else paint(cv);
@@ -13330,9 +13377,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       return {rows:st.rows,frame};
     }finally{cacheRestoring=false;if(st.invertAuto&&f)st.invertFrame=k;invertNotify();}
   }
+  async function journalSceneCode(digest){
+    await journalScriptsReady;
+    if(!window.MayatnikJournal)throw Error('Не удалось загрузить модуль журнала.');
+    return window.MayatnikJournal.scene(digest);
+  }
   async function applyShareLink(link){
     let url;try{url=new URL(String(link),location.href);}catch(_){throw Error('Ссылка повреждена: неверный адрес');}
-    const code=MayatnikShareLink.hashCode(url.hash);
+    const digest=journalDigest(url.hash);
+    const code=digest?await journalSceneCode(digest):MayatnikShareLink.hashCode(url.hash);
     if(!code)throw Error('В ссылке нет кода построения (#s=…)');
     const payload=await MayatnikShareLink.decode(code);
     const wasShare=SHARE_ACTIVE;
@@ -13341,7 +13394,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return applySharePayload(payload,{stash:!wasShare});
   }
   async function openShareHash(){
-    const payload=await MayatnikShareLink.decode(SHARE_HASH);
+    const code=JOURNAL_DIGEST?await journalSceneCode(JOURNAL_DIGEST):SHARE_HASH;
+    const payload=await MayatnikShareLink.decode(code);
     return applySharePayload(payload,{booting:true});
   }
   function shareNotice(text){try{ochkiToast(text);}catch(_){}$('fillInfo').textContent=text;}

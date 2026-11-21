@@ -3,10 +3,43 @@
   'use strict';
   function bounds(rgba,width,height){
     let left=width,top=height,right=0,bottom=0;
-    for(let y=0;y<height;y++)for(let x=0;x<width;x++){const q=(y*width+x)*4;if(rgba[q]||rgba[q+1]||rgba[q+2]){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x+1);bottom=Math.max(bottom,y+1);}}
+    for(let y=0;y<height;y++){
+      const row=y*width*4;
+      let first=0;
+      for(;first<width;first++){
+        const i=row+4*first;
+        if(rgba[i]||rgba[i+1]||rgba[i+2])break;
+      }
+      if(first===width)continue;
+      let last=width-1;
+      for(;last>first;last--){
+        const i=row+4*last;
+        if(rgba[i]||rgba[i+1]||rgba[i+2])break;
+      }
+      left=Math.min(left,first);right=Math.max(right,last+1);
+      top=Math.min(top,y);bottom=y+1;
+    }
     return right>left&&bottom>top?{left,top,right,bottom}:null;
   }
   function union(a,b){return !b?a:!a?{...b}:{left:Math.min(a.left,b.left),top:Math.min(a.top,b.top),right:Math.max(a.right,b.right),bottom:Math.max(a.bottom,b.bottom)};}
+  // Pixels inside the accumulated crop can no longer change its outer edges.
+  function extendCanvas(ctx,width,height,previous){
+    if(!previous||(previous.right-previous.left)*(previous.bottom-previous.top)<width*height/2){
+      return union(previous,bounds(ctx.getImageData(0,0,width,height).data,width,height));
+    }
+    const {left,top,right,bottom}=previous;
+    let result=previous;
+    function inspect(x,y,w,h){
+      if(!w||!h)return;
+      const b=bounds(ctx.getImageData(x,y,w,h).data,w,h);
+      if(b)result=union(result,{left:x+b.left,top:y+b.top,right:x+b.right,bottom:y+b.bottom});
+    }
+    inspect(0,0,width,top);
+    inspect(0,bottom,width,height-bottom);
+    inspect(0,top,left,bottom-top);
+    inspect(right,top,width-right,bottom-top);
+    return result;
+  }
   function evenBox(box,width,height){
     if(!box)return null;
     const left=Math.max(0,Math.floor(box.left/2)*2),top=Math.max(0,Math.floor(box.top/2)*2);
@@ -66,5 +99,5 @@
       el.removeAttribute('src');el.load();el.remove();URL.revokeObjectURL(url);
     }
   }
-  return {bounds,union,evenBox,video};
+  return {bounds,union,extendCanvas,evenBox,video};
 });
