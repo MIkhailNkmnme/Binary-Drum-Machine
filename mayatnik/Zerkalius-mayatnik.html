@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.067</title>
+<title>Zerkalius Маятнкъ — v1.068</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -167,7 +167,7 @@ body.may-fold-active .may-layer-scene,body.may-fold-active .may-layer-service{vi
 body.may-nav .may-layer-service{visibility:hidden}
 #cvGpu{position:fixed;pointer-events:none}
 /* Live axis DOM, including handles, cannot flash between deferred canvas draws. */
-body.may-axes-below-one :is(#geomCenterCanvas,.may-zl-ov,.may-vtx-labels,.may-axis-columns,#mayCenterHover,#mayLineMeasures,.may-template-axis-controls,.may-manual-axis-controls,.may-scale-axis,.may-scale-stack__axis,.may-scale-stack__axis-band,.may-xorrom-axis-marker){visibility:hidden!important;pointer-events:none!important}
+body.may-axes-below-one :is(#geomCenterCanvas,.may-vtx-labels,.may-axis-columns,#mayCenterHover,#mayLineMeasures,.may-template-axis-controls,.may-manual-axis-controls:not([data-axis-id^="v:"]),.may-scale-axis,.may-scale-stack__axis,.may-scale-stack__axis-band,.may-xorrom-axis-marker){visibility:hidden!important;pointer-events:none!important}
 body.may-nav :is(.may-axis-columns,.may-ovl,.may-fix-ov,.may-sectors,.may-contour,.may-mir,.may-zl-ov,#mayLineMeasures,#symAxes,#geomCenterCanvas,#fillPreview,#cellInkCanvas,#cellLineCanvas){visibility:hidden}   /* v0.474: листают кадры — слои кадра после остановки */   /* v0.468: картинка большого режима — на окно поля */
 body.may-fold-active #cvGpu{opacity:0}
 #bKonus:disabled{opacity:.45;cursor:default}#konusInfo{color:var(--mute);font:12px var(--mono)}
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.067</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.068</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -9349,7 +9349,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   var gifStackZoom=1,gifStackActive=false;
   const gifStackNativeScale=()=> (st.edgeRhombOn?window.mayPixelExact?.exportScale(1)||1:1)/DPR();
   const scale = () => { if(st.gifScaleStack)return gifStackNativeScale()*(gifStackZoom||1);const s = st.zoom === 'fit' ? fitScale() : st.zoom === 'fitH' ? fitHScale() : st.zoom; return window.mayPixelExact?(window.mayPixelExact.snap(s,st.zoom==='fit'?'down':'nearest')??1/DPR()):st.zLimit ? 1 / DPR() : s; };
-  // МАЯ-574: below the existing physical-pixel 1:1 scale, suppress axis ink only.
+  // МАЯ-574: suppress axis ink below one physical pixel per cell; zlDraw keeps manual vertical guides.
   // Never use RK (native antialias/rhomb raster density) as the zoom threshold.
   function axesAtShownScale(){return scale()*DPR()>=1-1e-9;}
   function axesScaleSync(){const hidden=!axesAtShownScale(),was=document.body.classList.contains('may-axes-below-one');document.body.classList.toggle('may-axes-below-one',hidden);if(hidden&&!was){const canvas=$('symAxes');canvas?.getContext('2d').clearRect(0,0,canvas.width,canvas.height);}}
@@ -11743,7 +11743,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     c.style.display='';Object.assign(c.style,{left:host.left+'px',top:host.top+'px',width:w+'px',height:h+'px'});const W=Math.max(1,Math.round(w*d)),H=Math.max(1,Math.round(h*d));if(c.width!==W||c.height!==H){c.width=W;c.height=H;}
     G.setTransform(d,0,0,d,0,0);G.clearRect(0,0,w,h);G.lineWidth=1/d;
     const axes=[{id:'main',kind:'h',p:Math.max(0,Math.min(dispH(),Math.round((+st.ztopRow||0)*2)/2)),number:1,mode:st.ztMir|0,op:st.ztMirOp,paint:MayatnikManualLines.paintMask(st.ztPaint),paintColour1:st.ztPaintColour1,paintColour0:st.ztPaintColour0,visible:zlFamilyOn('h')&&st.ztlMain!==false,canDelete:false,resettable:true,pin:!!st.ztlZen},...zlList().map(z=>({id:z.k+':'+z.axisNo,kind:z.k,p:z.p,number:z.axisNo,mode:z.m|0,op:z.op,paint:MayatnikManualLines.paintMask(z.paint),paintColour1:z.paintColour1,paintColour0:z.paintColour0,visible:zlFamilyOn(z.k),canDelete:z.k==='h'||zlList().filter(t=>t.k===z.k).length>1}))];
-    for(const a of axes){const motion=axisMotionConfig(a.id);a.autoDirection=motion.direction||0;a.autoSpeed=motion.speed||1;a.colour=zlColour(a.kind,a.id);a.fieldSegment=a.kind==='v'?MayatnikManualLines.segment(a,g):null;a.segment=MayatnikManualLines.segment(a,g,viewport);if(!a.segment)continue;const [x1,y1,x2,y2]=a.segment;G.beginPath();G.moveTo(x1-host.left,y1-host.top);G.lineTo(x2-host.left,y2-host.top);
+    const showAllAxes=axesAtShownScale();
+    for(const a of axes){
+      if(!showAllAxes&&a.kind!=='v')a.visible=false;
+      const motion=axisMotionConfig(a.id);a.autoDirection=motion.direction||0;a.autoSpeed=motion.speed||1;a.colour=zlColour(a.kind,a.id);a.fieldSegment=a.kind==='v'?MayatnikManualLines.segment(a,g):null;a.segment=MayatnikManualLines.segment(a,g,viewport);if(!a.segment)continue;const [x1,y1,x2,y2]=a.segment;G.beginPath();G.moveTo(x1-host.left,y1-host.top);G.lineTo(x2-host.left,y2-host.top);
       if(a.kind==='v'){
         // Screen-pixel contrast survives zoom-out, coloured paint and high DPR.
         // Keep the actual axis coordinate; only its guide stroke is enlarged.
