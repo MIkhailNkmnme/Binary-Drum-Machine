@@ -19,6 +19,41 @@
     }
     return null;
   }
+  function planConsonantTrial({word,upper,phone,engine,phones,prepared}){
+    if(!word||word.end-word.start<2)return null;
+    const {letters,rawIndices}=prepared,parts=[];
+    let signCount=0;
+    for(let at=word.start;at<word.end;){
+      if(letters[at].toUpperCase()!==upper)return null;
+      const next=letters[at+1]?.toUpperCase();
+      const sign=next==='Ь'||next==='Ъ'?next:null;
+      const end=at+(sign?2:1);
+      parts.push({start:at,end,sign});
+      if(sign)signCount++;
+      at=end;
+    }
+    if(parts.length<2)return null;
+    // A final lone sign marks the entire row, such as пппь.
+    const commonSign=signCount===1?parts.at(-1).sign:null;
+    const softId=phone.id+'j',canSoften=softenable.has(upper)&&engine.phonemeIds.includes(softId);
+    for(const part of parts)part.id=canSoften&&(commonSign??part.sign)==='Ь'?softId:phone.id;
+    const short=shortConsonants.has(upper),units=[];
+    for(let at=0;at<parts.length;){
+      const {id,start}=parts[at];
+      let end=at+1;
+      if(!short&&!Object.hasOwn(phones??{},id)){
+        while(end<parts.length&&parts[end].id===id)end++;
+      }
+      const last=parts[end-1].end,cleanIndices=Array.from({length:last-start},(_,i)=>start+i);
+      const indices=cleanIndices.map(i=>rawIndices[i]);
+      const duration=end-at===1||upper==='Й'?phone.duration:Math.min(MAX_HOLD_SECONDS,phone.duration*(end-at));
+      const score=[{...phone,id,duration}];
+      if(short&&end<parts.length)score.push({id:'_',duration:.075});
+      units.push({index:indices[0],indices,cleanIndices,score,boundary:false,separate:true,isolatedStop:short});
+      at=end;
+    }
+    return units;
+  }
   function plan({text,language,catalog,engine,settings,phones,prosody,spell=false}){
     const counting=root.VoiceDigits?.supports(language);
     if(typeof text!=='string'||!(['ru','en','de'].includes(language)||counting))throw Error('Выберите доступный язык чтения.');
@@ -26,7 +61,7 @@
     if(!raw.length||raw.length>MAX_CHARS)throw Error('Текст: от 1 до '+MAX_CHARS+' символов.');
     const prepared=root.VoiceProsody.prepare(text,language,prosody,spell),letters=prepared.letters;
     const wordStarts=new Map(prepared.words.map(word=>[word.start,word]));
-    const names=spell||language==='ru'?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
+    const names=spell?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
       .map(r=>[r.symbol.normalize('NFC').toLowerCase(),r])):null;
     const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind==='sound').map(r=>[r.symbol.toUpperCase(),r]));
     const digits=new Map(catalog.filter(r=>r.lang===(language==='de'?'de':'ru')&&r.kind==='digit').map(r=>[r.symbol,r]));
@@ -91,32 +126,23 @@
         if(language==='ru'&&recipe.kind==='sound'){
           const previous=letters[index-1]?.toUpperCase();
           const vowel=russianVowels.has(upper);
-          const isSound=vowel||upper==='Й'||consonants.has(upper);
+          const isConsonant=upper==='Й'||consonants.has(upper);
+          const trial=isConsonant&&score.length===1?planConsonantTrial({
+            word:wordStarts.get(index),upper,phone:score[0],engine,phones,prepared
+          }):null;
+          if(trial){
+            units.push(...trial);
+            index=trial.at(-1).cleanIndices.at(-1);
+            sounding=true;
+            continue;
+          }
+          const isSound=vowel||isConsonant;
           if(isSound&&score.length&&score.every(token=>!Object.hasOwn(phones??{},token.id))){
             let end=index+1;
             while(letters[end]?.toUpperCase()===upper)end++;
             const next=letters[end]?.toUpperCase();
             const softId=score[0].id+'j';
             const customSoft=softenable.has(upper)&&softNext.has(next)&&Object.hasOwn(phones??{},softId);
-            const word=wordStarts.get(index),wholeWord=word?.end===end;
-            const markedRun=word?.end===end+1&&(next==='Ъ'||next==='Ь');
-            if(!customSoft&&shortConsonants.has(upper)&&end-index>=2&&(wholeWord||markedRun)){
-              // A marked trial and bare К/П repeat the consonant with short pauses.
-              // Other unmarked trials like ддд use the same syllables as letter names.
-              const bare=markedRun||upper==='К'||upper==='П';
-              if(bare&&next==='Ь'&&softenable.has(upper)&&engine.phonemeIds.includes(softId))score[0].id=softId;
-              const repeatScore=bare?score:names.get(char.toLowerCase())?.score;
-              if(repeatScore){
-                for(let at=index;at<end;at++){
-                  const rawIndex=prepared.rawIndices[at],tokens=repeatScore.map(token=>({...token}));
-                  if(bare&&at+1<end)tokens.push({id:'_',duration:.075});
-                  units.push({index:rawIndex,indices:[rawIndex],cleanIndices:[at],score:tokens,boundary:false,separate:true});
-                }
-                index=end-1;
-                sounding=true;
-                continue;
-              }
-            }
             // Preserve ordinary doubled vowels, such as the "оо" in "кооперация".
             if(!customSoft&&end-index>=(vowel?3:2))length=end-index;
           }

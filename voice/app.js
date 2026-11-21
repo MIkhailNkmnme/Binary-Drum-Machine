@@ -15,12 +15,15 @@
     zoom:$('speech-wave-zoom'),full:$('speech-wave-full'),clear:$('speech-wave-clear'),
     onSeek:seekTextWave,onRange:changeTextAudioRange
   });
-  const DEFAULT_SPEECH=speechField.value;
-  const PLAIN_RUSSIAN_EXAMPLE=DEFAULT_SPEECH.split('\n',1)[0].replace(/\u0301/g,'');
-  const RUSSIAN_NAMES_START=DEFAULT_SPEECH.lastIndexOf('\n')+1;
-  const RUSSIAN_EXAMPLE_PREFIX=DEFAULT_SPEECH.slice(0,RUSSIAN_NAMES_START);
+  const DEFAULT_SPEECH=speechField.defaultValue;
+  const [russianStory,russianVowelTrial,russianConsonantTrial]=DEFAULT_SPEECH.split('\n\n');
+  const PLAIN_RUSSIAN_EXAMPLE=russianStory.replace(/\u0301/g,'');
+  const RUSSIAN_EXAMPLE_PREFIX=russianStory+'\n\n'+russianVowelTrial+'\n';
+  const RUSSIAN_NAMES_START=RUSSIAN_EXAMPLE_PREFIX.length;
+  const russianConsonantRows=russianConsonantTrial.split('\n').map(line=>line.split(', '));
   const PREVIOUS_RUSSIAN_EXAMPLE=RUSSIAN_EXAMPLE_PREFIX+'Б В Г Д Ж З Й К Л М Н П Р С Т Ф Х Ц Ч Ш Щ';
   const PREVIOUS_RUSSIAN_NAMES=RUSSIAN_EXAMPLE_PREFIX+'Бэ, Вэ, Гэ, Дэ, Же, Зэ, И кра́ткое, Ка, Эль, Эм, Эн, Пэ, Эр, Эс, Тэ, Эф, Ха, Це, Че, Ша, Ща';
+  const PREVIOUS_RUSSIAN_MARKS=RUSSIAN_EXAMPLE_PREFIX+'Бъ бь, Въ вь, Гъ гь, Дъ дь, Жъ, Зъ зь, Йь, Къ кь, Лъ ль, Мъ мь, Нъ нь, Пь пъ, Ръ рь, Съ сь, Тъ ть, Фъ фь, Хъ хь, Цъ, Чь, Шъ, Щь';
   const EXAMPLE_DIGIT_END='\n\n1, 0, 0… 1, 1, 0, 0.';
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
@@ -36,14 +39,21 @@
   }));
   const PREVIOUS_EXAMPLES={fr:[VoiceDigits.example],it:[VoiceDigits.example],es:[VoiceDigits.example],ja:[VoiceDigits.example],en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
   for(const lang of Object.keys(BASE_SPEECH_EXAMPLES))(PREVIOUS_EXAMPLES[lang]??=[]).push(BASE_SPEECH_EXAMPLES[lang]);
-  PREVIOUS_EXAMPLES.ru.push(PREVIOUS_RUSSIAN_NAMES,PREVIOUS_RUSSIAN_NAMES+EXAMPLE_DIGIT_END);
+  const PREVIOUS_RUSSIAN_ROWS=[PREVIOUS_RUSSIAN_EXAMPLE,PREVIOUS_RUSSIAN_NAMES,PREVIOUS_RUSSIAN_MARKS]
+    .flatMap(text=>[text,text+EXAMPLE_DIGIT_END]);
+  PREVIOUS_EXAMPLES.ru.push(...PREVIOUS_RUSSIAN_ROWS);
   const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
   function letterTrial(count,separator,format='current'){
     const previous=format==='legacy';
-    return russianLetterNames.filter(({symbol})=>previous||!['Ъ','Ь'].includes(symbol)).map(({symbol,label})=>{
+    return russianLetterNames.filter(({symbol})=>previous||!['Ъ','Ь'].includes(symbol)).flatMap(({symbol,label})=>{
       const name=label[0].toUpperCase()+label.slice(1),letter=symbol.toLowerCase();
       const repeated=!previous&&!separator&&symbol==='Ю'?'й'+'у'.repeat(count):Array(count).fill(letter).join(separator);
       if(format==='current'){
+        const rows=russianConsonantRows.filter(([label])=>label[0]===symbol);
+        if(rows.length)return rows.map(([label,run])=>label+', '+(separator?run.match(/.[ъь]/gu).join(separator):run));
+        return name+', '+repeated;
+      }
+      if(format==='marked'){
         if(symbol==='Й')return separator?'Йь, '+Array(count).fill('йь').join(separator):'Йь, йь, ййййййь';
         const paired=VoiceText.pairedConsonants.includes(symbol);
         if(paired||'ЖШЦЧЩ'.includes(symbol)){
@@ -62,10 +72,11 @@
     }).join('\n');
   }
   const LETTER_TRIALS={joined:letterTrial(22,''),spaced:letterTrial(10,' ')};
+  const MARKED_LETTER_TRIALS={joined:letterTrial(22,'','marked'),spaced:letterTrial(10,' ','marked')};
   const PREVIOUS_LETTER_TRIALS={joined:letterTrial(22,'','names'),spaced:letterTrial(10,' ','names')};
   const OLD_LETTER_TRIALS={joined:letterTrial(22,'','legacy'),spaced:letterTrial(10,' ','legacy')};
   const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
-    ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
+    ||(language==='ru'&&text===PLAIN_RUSSIAN_EXAMPLE)
     ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
   const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechSpell:false,speechProsody:{...VoiceProsody.defaults},speechPlayback:{rate:1,volume:1},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
@@ -330,16 +341,6 @@
       offset+=char.length;
     }
     return offset;
-  }
-  function consonantNameCaret(position){
-    if(!Number.isInteger(position)||position<=RUSSIAN_NAMES_START)return position;
-    // The old row alternated one letter and one space. Keep the same letter
-    // and side of its name, even when that name contains several words.
-    const previousOffset=Math.min(position,PREVIOUS_RUSSIAN_EXAMPLE.length)-RUSSIAN_NAMES_START;
-    const ordinal=Math.floor(previousOffset/2);
-    const names=DEFAULT_SPEECH.slice(RUSSIAN_NAMES_START).split(', ');
-    const before=names.slice(0,ordinal).reduce((offset,name)=>offset+name.length+2,RUSSIAN_NAMES_START);
-    return before+(previousOffset%2?names[ordinal].length:0);
   }
   function syncSpeechHighlightScroll(){
     speechHighlight.scrollTop=speechField.scrollTop;
@@ -877,15 +878,15 @@
     state.speechLanguage=Object.hasOwn(SPEECH_EXAMPLES,page.speechLanguage)?page.speechLanguage:'ru';
     const savedText=page.speechText;
     const currentText=typeof savedText==='string'&&(!isFactoryText(savedText,state.speechLanguage)||savedText===SPEECH_EXAMPLES[state.speechLanguage]);
-    const oldTrial=state.speechLanguage==='ru'?Object.keys(LETTER_TRIALS).find(key=>savedText===OLD_LETTER_TRIALS[key]||savedText===PREVIOUS_LETTER_TRIALS[key]):null;
+    const oldTrial=state.speechLanguage==='ru'?Object.keys(LETTER_TRIALS).find(key=>
+      [OLD_LETTER_TRIALS,PREVIOUS_LETTER_TRIALS,MARKED_LETTER_TRIALS].some(trials=>trials[key]===savedText)):null;
     state.speechText=oldTrial?LETTER_TRIALS[oldTrial]:currentText?Array.from(savedText).slice(0,VoiceText.maxCharacters).join(''):SPEECH_EXAMPLES[state.speechLanguage];
     speechField.value=state.speechText;
     state.speechText=speechField.value;
     let caret=currentText&&!oldTrial?page.speechCaret:0;
     if(state.speechLanguage==='ru'){
       if(savedText===PLAIN_RUSSIAN_EXAMPLE)caret=accentedExampleCaret(page.speechCaret);
-      else if(savedText===PREVIOUS_RUSSIAN_EXAMPLE)caret=consonantNameCaret(page.speechCaret);
-      else if(savedText===PREVIOUS_RUSSIAN_NAMES||savedText===PREVIOUS_RUSSIAN_NAMES+EXAMPLE_DIGIT_END)
+      else if(PREVIOUS_RUSSIAN_ROWS.includes(savedText))
         caret=Math.min(page.speechCaret??0,RUSSIAN_NAMES_START);
     }
     restoreSpeechCaret(caret);

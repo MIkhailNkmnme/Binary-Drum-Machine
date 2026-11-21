@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.10';
+  const version='text-prosody-v1.2.11';
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   const labiodental=new Set(['v','vj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
@@ -79,7 +79,8 @@
       const isolated=language==='ru'&&unit.score.length===1&&word&&word.start===unit.cleanIndices[0]
         &&(word.end===afterUnit||word.end===afterUnit+1&&/^[ъь]$/iu.test(prepared.letters[afterUnit]))
         &&!Object.hasOwn(phones,unit.score[0].id);
-      unit.closedVoicedStop=isolated&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id);
+      unit.closedVoicedStop=(isolated||unit.isolatedStop)&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id)
+        &&!Object.hasOwn(phones,unit.score[0].id);
       // The isolated closed-voice recipe is for a single З. A held row needs friction.
       unit.isolatedZ=isolated&&unit.cleanIndices.length===1&&unit.kinds[0]==='fricative'&&['z','zj'].includes(unit.score[0].id);
       for(let j=0;j<unit.score.length;j++){
@@ -121,7 +122,7 @@
         const token=u.score[j],count=Math.round(token.duration/settings.speed*engine.limits.sampleRate),from=total?Math.min(1,elapsed/total):0,to=total?Math.min(1,(elapsed+count)/total):1,k=u.kinds[j],stress=u.stresses[j];
         const accent=config.contour==='flat'?0:stress?1.5*amount:0;
         u.prosody.push({pitchStartSemitones:clamp(contourValue(type,from)+accent,-12,12),pitchEndSemitones:clamp(contourValue(type,to)+accent*.35,-12,12),gain:k==='silence'?0:stress?1+.18*amount:k==='fricative' ? .96 : 1,
-          ...(u.closedVoicedStop?{closedVoicedStop:true}:{}),...(u.isolatedZ?{isolatedZ:true}:{})});elapsed+=count;
+          ...(j===0&&u.closedVoicedStop?{closedVoicedStop:true}:{}),...(u.isolatedZ?{isolatedZ:true}:{})});elapsed+=count;
       }
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];

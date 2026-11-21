@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Зеркалиус · Глсъ v0.035</title>
+<title>Зеркалиус · Глсъ v0.036</title>
   <link rel="stylesheet" href="../_js/grozd.css?v=50"><link rel="stylesheet" href="../_js/control-frame.css"><link rel="stylesheet" href="style.css?v=026">
   <script defer src="../_js/hub-button-text.js?v=540"></script><script defer src="../_js/menu-icons.js"></script><script defer src="../_js/control-frame.js"></script>
-  <script defer src="prosody-dsp.js?v=029"></script><script defer src="engine.js?v=025"></script><script defer src="robot/engine.js?v=001"></script><script defer src="robot-live.js?v=025"></script><script defer src="dsh-engine.js?v=025"></script><script defer src="engines.js?v=005"></script><script defer src="german.js?v=004"></script><script defer src="letters.js?v=029"></script><script defer src="english.js?v=008"></script><script defer src="digits.js?v=033"></script><script defer src="languages.js?v=032"></script><script defer src="catalog.js?v=030"></script><script defer src="prosody.js?v=032"></script><script defer src="text.js?v=034"></script><script defer src="waveform.js?v=025"></script><script defer src="app.js?v=033"></script>
+  <script defer src="prosody-dsp.js?v=029"></script><script defer src="engine.js?v=025"></script><script defer src="robot/engine.js?v=001"></script><script defer src="robot-live.js?v=025"></script><script defer src="dsh-engine.js?v=025"></script><script defer src="engines.js?v=005"></script><script defer src="german.js?v=004"></script><script defer src="letters.js?v=029"></script><script defer src="english.js?v=008"></script><script defer src="digits.js?v=033"></script><script defer src="languages.js?v=032"></script><script defer src="catalog.js?v=030"></script><script defer src="prosody.js?v=033"></script><script defer src="text.js?v=035"></script><script defer src="waveform.js?v=025"></script><script defer src="app.js?v=034"></script>
 </head>
 <body><main>
-  <header><h1><span id="voice-name">Глсъ</span> <small id="voice-version">v0.035</small></h1></header>
+  <header><h1><span id="voice-name">Глсъ</span> <small id="voice-version">v0.036</small></h1></header>
   <div class="voice-layout" id="voice-layout" data-engine="robot">
   <nav class="voice-tab-strip engine-tabs" id="engine-tabs" aria-label="Движки голоса">
     <a class="gz-hx voice-tab" data-engine="robot" data-mi-icon="cube" data-user-label href="?engine=robot" title="Codex-Робот" aria-current="page">Codex-Робот</a>
@@ -41,7 +41,43 @@
 А  Е  Ё  И  О  У  Ы  Э  Ю  Я
 А   Е   Ё   И   О   У   Ы   Э   Ю   Я
 АЕ ЕЁ ЁИ ИО ОУ УЫ ЫЭ ЭЮ ЮЯ ЯА
-Бъ бь, Въ вь, Гъ гь, Дъ дь, Жъ, Зъ зь, Йь, Къ кь, Лъ ль, Мъ мь, Нъ нь, Пь пъ, Ръ рь, Съ сь, Тъ ть, Фъ фь, Хъ хь, Цъ, Чь, Шъ, Щь</textarea>
+
+Бъ, бъбъбъбъ
+Бь, бьбьбьбь
+Въ, въвъвъвъ
+Вь, вьвьвьвь
+Гъ, гъгъгъгъ
+Гь, гьгьгьгь
+Дъ, дъдъдъдъ
+Дь, дьдьдьдь
+Жъ, жъжъжъжъ
+Зъ, зъзъзъзъ
+Зь, зьзьзьзь
+Йь, йьйьйьйь
+Къ, къкъкъкъ
+Кь, кькькькь
+Лъ, лълълълъ
+Ль, льльльль
+Мъ, мъмъмъмъ
+Мь, мьмьмьмь
+Нъ, нънънънъ
+Нь, ньньньнь
+Пь, пьпьпьпь
+Пъ, пъпъпъпъ
+Ръ, ръръръръ
+Рь, рьрьрьрь
+Съ, съсъсъсъ
+Сь, сьсьсьсь
+Тъ, тътътътъ
+Ть, тьтьтьть
+Фъ, фъфъфъфъ
+Фь, фьфьфьфь
+Хъ, хъхъхъхъ
+Хь, хьхьхьхь
+Цъ, цъцъцъцъ
+Чь, чьчьчьчь
+Шъ, шъшъшъшъ
+Щь, щьщьщьщь</textarea>
         </div>
       </div>
       <div class="command-groups">
@@ -89,8 +125,8 @@
     <table aria-label="Слитные повторы русских букв">
       <thead><tr><th scope="col">Группа</th><th scope="col">Буквы</th><th scope="col">Как читает Глсъ</th></tr></thead>
       <tbody>
-        <tr><th scope="row">Смычные взрывные</th><td>Б, Г, Д, К, П, Т</td><td>Короткий согласный с раскрытием смычки. Отдельный ряд может повторять название: <code>ддд → дэ-дэ-дэ</code>, <code>ггг → гэ-гэ-гэ</code>. Ряды <code>ккк → къ къ къ</code> и <code>ппп → пъ пъ пъ</code> читаются короткими звуками с паузами.</td></tr>
-        <tr><th scope="row">Аффрикаты</th><td>Ц, Ч</td><td>Короткая смычка переходит в шум. <code>ццц → цэ-цэ-цэ</code>, <code>ччч → че-че-че</code>.</td></tr>
+        <tr><th scope="row">Смычные взрывные</th><td>Б, Г, Д, К, П, Т</td><td>Отдельные короткие звуки с паузами: <code>ббб → бъбъбъ</code>, <code>ддд → дъдъдъ</code>, <code>пьпьпь → [п’] [п’] [п’]</code>.</td></tr>
+        <tr><th scope="row">Аффрикаты</th><td>Ц, Ч</td><td>Короткая смычка переходит в шум. <code>ццц → цъцъцъ</code>, <code>ччч → чьчьчь</code>.</td></tr>
         <tr><th scope="row">Щелевые</th><td>В, Ж, З, С, Ф, Х, Ш, Щ</td><td>Один протяжный звук: <code>жжж</code>, <code>ззз</code>, <code>ссс</code>, <code>ххх</code>. У звонких есть голос, у глухих слышен воздушный шум.</td></tr>
         <tr><th scope="row">Сонорные</th><td>Л, М, Н, Р</td><td>Один протяжный звук: <code>ллл</code>, <code>ммм</code>, <code>ннн</code>, <code>ррр</code>. Язык при [р] вибрирует.</td></tr>
         <tr><th scope="row">Короткий [й]</th><td>Й</td><td>В этой пробе <code>ййй</code> даёт один короткий [й], а <code>ииий</code> — протяжное [и] с коротким [й] в конце.</td></tr>
@@ -98,7 +134,7 @@
         <tr><th scope="row">Знаки</th><td>Ъ, Ь</td><td>Собственного звука нет. В пробе <code>въ</code> задаёт твёрдое [в], <code>вь</code> — мягкое [в’].</td></tr>
       </tbody>
     </table>
-    <p>В пробах согласных Ъ отмечает твёрдость, Ь — мягкость. Знак в конце слитного ряда действует на весь ряд. Например, <code>пппь → пь пь пь</code>, а <code>дддъ → дъ дъ дъ</code>. Названия повторяются у смычных и аффрикат в отдельных рядах без знака, кроме К и П. В <code>ккхххх</code> звучит короткое [к] и протяжное [х].</p>
+    <p>В пробах согласных Ъ отмечает твёрдость, Ь — мягкость. Без знака парный согласный твёрдый. Можно пометить каждый звук (<code>бъбьбъ</code>) или поставить один знак в конце ряда (<code>пппь → пьпьпь</code>). Смычные и аффрикаты идут с короткими паузами. Протяжный согласный одного варианта звучит слитно: <code>зъзъзъ</code> тянет одно [з]. В <code>ккхххх</code> звучит короткое [к] и протяжное [х].</p>
     <p>В RU Е, Ё, Ю, Я после согласной звучат без начального [й]; перед ними, И и Ь смягчаются поддержанные Б, В, Г, Д, З, К, Л, М, Н, П, Р, С, Т, Ф, Х. В начале слова, после гласной, Ь и Ъ начальный [й] сохраняется. Одиночный Й короткий. Ъ и Ь собственной длительности не имеют. В пробе «ръ / рь» задаёт твёрдый и мягкий варианты. Редукция и оглушение не моделируются. RU произносит цифры по-русски, EN — по-английски, каждую отдельно. Пробелы и знаки препинания дают паузы; прочие символы требуют исправления. Свои дополнительные языки и сохранённые буквы редактируются на вкладке «Партитура».</p>
     <p>DE читает Ä, Ö, Ü, ß и ẞ; цифры 0–9 произносятся по-немецки, каждую отдельно. Поддержаны sch, tsch, ch/chs, ei/ai, ie, eu/äu, au, qu, ph, ck, ss; sp/st превращаются в [шп]/[шт] только в начале слова. После a/o/u/au ch получает заднюю цель, после eu/äu и остальных букв — переднюю ich-цель. Для ä, ö, ü, ich и ach заданы отдельные ручные формантные цели каждого движка, а не русские заменители; ваши сохранённые замены имеют приоритет. На сочетании подсветка проходит все его буквы без разрыва звука. Долгота гласных, немая h, конечное оглушение, слоговые границы, морфология и исключения заимствованных слов не определяются. Произношение r и остальных общих фонем приближённое. Стандартный пример меняется вместе с языком; ваш собственный текст сохраняется. Кнопка «Сброс текста» возвращает длинный образец выбранного языка.</p>
     </details>
