@@ -2,7 +2,7 @@
   const wall = document.getElementById('mayatnik-frames');
   const status = document.getElementById('mayatnik-feed-status');
   const more = document.getElementById('mayatnik-more');
-  window.MayatnikJournal?.catalogBackup('backup/catalog.json?v=024');
+  window.MayatnikJournal?.catalogBackup('backup/catalog.json?v=026');
   let cursor = null;
   function card(frame) {
     const video = frame.kind === 'video';
