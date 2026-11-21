@@ -1,3 +1,4 @@
+<!-- ПОМ-001 · v1.051. Локальный помощник: документация, предложения настроек и отмена. Проверки интерфейса пользователем. -->
 <!-- МАЯ-699 · v1.050. Цвета шаблона и сохранение поля в зоне самоналожения при повороте. Проверки пользователем. -->
 <!-- МАЯ-698 · v1.049. Ширина по оси при запуске, отдельный счётчик совпадений. Проверки пользователем. -->
 <!-- МАЯ-696 · v1.047. Ручной сдвиг при «Верхе», возврат колесом, размеры выключены в ссылках. Проверки пользователем. -->
@@ -82,7 +83,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.050</title>
+<title>Zerkalius Маятнкъ — v1.051</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -234,7 +235,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.050</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.051</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -13915,6 +13916,43 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(searchReloadPaused)$('stat').textContent+=' · Поиск остановлен перезагрузкой. Для продолжения включите «Поиск».';
     if(animatrixStartupError)$('paintCacheInfo').textContent=animatrixStartupError;
   })();
+  // ПОМ-001: a small capability boundary; never dispatch arbitrary UI commands.
+  // Tempo bypasses readUI(), which also changes construction limits.
+  const assistantKeys=['speed','frameT','view','bitOneColour','bitZeroColour','outline','fixLines','geomCenter'];
+  const assistantViews=['bits','col','rgbNeighbours','bitContours','romb0','romb1','rombAll','rombTri'];
+  function assistantValueValid(id,value){
+    if(id==='speed'||id==='frameT')return Number.isInteger(value)&&value>=(id==='speed'?1:0)&&value<=(id==='speed'?64:40);
+    if(id==='view')return assistantViews.includes(value);
+    if(id==='bitOneColour'||id==='bitZeroColour')return typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
+    return ['outline','fixLines','geomCenter'].includes(id)&&typeof value==='boolean';
+  }
+  function assistantSnapshot(){
+    const state={};for(const id of assistantKeys){const value=id==='fixLines'?st.fixLines!==false:['outline','geomCenter'].includes(id)?!!st[id]:st[id];if(assistantValueValid(id,value))state[id]=value;}return state;
+  }
+  window.mayAssistantControls={
+    snapshot:assistantSnapshot,
+    ready:()=>sessionReady&&!!f,
+    apply(changes){
+      if(!sessionReady||!f)throw new Error('Дождитесь загрузки поля Маятника.');
+      if(phoneOn()||snakeSandbox)throw new Error('Подбор применяется в обычном Маятнике. Для этого специального режима доступно объяснение.');
+      if(!Array.isArray(changes)||!changes.length||changes.length>assistantKeys.length)throw new Error('Некорректный список настроек.');
+      const seen=new Set(),before=assistantSnapshot();
+      for(const change of changes){
+        if(!change||seen.has(change.id)||!assistantKeys.includes(change.id)||!assistantValueValid(change.id,change.value))throw new Error('Предложение содержит недоступную настройку.');
+        seen.add(change.id);
+        if(!Object.hasOwn(before,change.id))throw new Error('Текущий режим этой настройки не поддерживает обратимое применение.');
+        if(change.id==='speed'&&st.turbo)throw new Error('Сначала выключите Турбо, чтобы менять скорость ×.');
+        if(change.id==='view'&&(st.joined180||st.joined180Whole))throw new Error('Сначала выключите соединение 180°, чтобы помощник менял вид.');
+        if(change.id==='view'&&gpuBig?.large&&change.value!=='bits')throw new Error('На большом поле доступен только вид «Биты».');
+        const clock=window.MayatnikColourAuto?.getState?.(change.id);
+        if(clock&&clock.mode!=='off')throw new Error('Сначала выключите автоматическую смену выбранного цвета.');
+      }
+      const assign=list=>{for(const {id,value}of list){const colour=id==='bitOneColour'||id==='bitZeroColour',next=colour?value.toLowerCase():value;st[id]=next;const node=$(id);if(node){if(typeof next==='boolean')node.checked=next;else node.value=String(next);}if(colour)window.MayatnikColourAuto?.manual?.(id,next);}};
+      const refresh=()=>{applyBitColours();lgSync();if(seen.has('view')){templateTransientSync();canvasSize();layout();}save();draw();queueDigits();dispatchEvent(new Event('may-transport-change'));};
+      try{assign(changes);refresh();}catch(error){assign(changes.map(({id})=>({id,value:before[id]})));try{refresh();}catch(_){}throw error;}
+      return {before:Object.fromEntries(changes.map(({id})=>[id,before[id]])),after:assistantSnapshot()};
+    }
+  };
 })();
 </script>
 <script src="mayatnik-logo-pattern.js?v=138"></script>
@@ -13956,5 +13994,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-point-dock.js?v=996"></script>
 <link rel="stylesheet" href="mayatnik-side-dock.css?v=901">
 <script src="mayatnik-side-dock.js?v=887b"></script>
+<link rel="stylesheet" href="mayatnik-assistant.css?v=1051">
+<script src="mayatnik-assistant.js?v=1051"></script>
 </body>
 </html>

@@ -1,0 +1,41 @@
+/* ПОМ-001. Readable conversation, existing 120 × 24 command geometry. */
+#mayAssistantLauncher{position:fixed;right:12px;bottom:12px;z-index:2147483002}
+body.may-zen #mayAssistantLauncher,body.may-zen #mayAssistant{display:none!important}
+#mayAssistant{position:fixed;right:12px;bottom:44px;z-index:2147483100;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 64px);box-sizing:border-box;overflow:auto;overscroll-behavior:contain;background:#0e141e;color:#e8edf5;border:1px solid #6888ad;padding:16px;font:16px/1.5 'Segoe UI',sans-serif;box-shadow:0 8px 40px #0009;user-select:text;scrollbar-width:thin}
+#mayAssistant[hidden],#mayAssistant [hidden]{display:none!important}
+#mayAssistant .ma-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#mayAssistant h2{margin:0;font-size:19px;line-height:1.25;font-weight:600}
+#mayAssistant h3{margin:0 0 8px;font-size:16px}
+#mayAssistant p{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#mayAssistant .ma-intro,#mayAssistant .ma-note{color:#aebed2;font-size:14px}
+#mayAssistant .ma-status{color:#9bdacb;font-size:14px}
+#mayAssistant .ma-error{color:#ffbda6}
+#mayAssistant .ma-connection{font-size:14px;padding:8px 0;border-block:1px solid #26364b;margin:10px 0}
+#mayAssistant .ma-connection summary{cursor:pointer;color:#a7c8ed}
+#mayAssistant a{color:#aad5ff;text-decoration:underline;text-underline-offset:3px}
+#mayAssistant .ma-connection a{display:block;margin:8px 0}
+#mayAssistant .ma-actions{display:flex;flex-wrap:wrap;gap:2px;margin:8px 0}
+.ma-button{position:relative;display:inline-flex;justify-content:center;align-items:center;box-sizing:border-box;flex:0 0 120px;width:120px!important;min-width:120px!important;height:24px!important;min-height:24px!important;padding:0 12px!important;border:0!important;border-radius:0!important;clip-path:polygon(12px 0,108px 0,120px 12px,108px 24px,12px 24px,0 12px);background:linear-gradient(#344252,#1b2430 42%,#1b2430 58%,#344252)!important;color:#e8edf5!important;cursor:pointer;font:12px/24px 'Segoe UI',sans-serif!important;user-select:none;touch-action:manipulation;text-shadow:none!important;box-shadow:none!important}
+.ma-button>svg{position:absolute;inset:0;width:120px;height:24px;pointer-events:none;fill:none;stroke:#52688c;stroke-width:1}
+.ma-button>span{position:relative;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+.ma-button .ma-sides{stroke:transparent}
+.ma-button:is(:hover,:focus-visible) .ma-sides{stroke:#9ad8e9}
+.ma-button[aria-pressed=true] .ma-face,.ma-button[aria-expanded=true] .ma-face{stroke:#9ad8e9;stroke-width:2}
+.ma-button:active .ma-face{stroke:#9ad8e9;stroke-width:3}
+.ma-button:disabled{opacity:.45;cursor:default}
+#mayAssistant .ma-header .ma-button{flex:0 0 120px}
+#mayAssistant .ma-examples{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin:12px 0}
+#mayAssistant .ma-example{border:0;background:none;color:#aac5e7;text-align:left;padding:2px 0;font:14px/1.4 'Segoe UI',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px;user-select:none}
+#mayAssistant .ma-message{padding:12px 0;border-top:1px solid #26364b}
+#mayAssistant .ma-message>strong{color:#9bdacb;font-size:14px;font-weight:600}
+#mayAssistant .ma-sources{display:flex;flex-direction:column;gap:6px;font-size:14px}
+#mayAssistant .ma-proposal{padding:12px;background:#172337;border-left:2px solid #9bdacb;margin:10px 0}
+#mayAssistant .ma-proposal ul{margin:0;padding-left:18px;font-size:14px}
+#mayAssistant .ma-proposal li{margin-bottom:8px}
+#mayAssistant .ma-proposal li p{color:#aebed2;margin:2px 0}
+#mayAssistant .ma-form{margin-top:12px}
+#mayAssistant .ma-form label{display:block;font-size:14px;margin:6px 0;color:#b8cbe2}
+#mayAssistant textarea{display:block;box-sizing:border-box;width:100%;resize:vertical;min-height:88px;max-height:240px;background:#111c2b;color:#f0f6ff;border:1px solid #6888ad;border-radius:0;padding:10px;font:16px/1.4 'Segoe UI',sans-serif;user-select:text}
+#mayAssistant textarea:focus{outline:2px solid #9ad8e9;outline-offset:1px}
+#mayAssistant :focus-visible{outline:2px solid #9ad8e9;outline-offset:2px}
+@media(max-width:600px){#mayAssistant{right:6px;bottom:40px;width:calc(100vw - 12px);padding:12px;max-height:calc(100dvh - 52px)}#mayAssistantLauncher{right:6px;bottom:8px}}
