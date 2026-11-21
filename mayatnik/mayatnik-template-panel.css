@@ -356,3 +356,14 @@ body.may-mobile-menu #mayatnikTemplatePanel .mtp-sequence-generator>.mtp-command
 #mayatnikTemplatePanel .mtp-sequence-rows .is-navigable:focus-visible{outline:1px solid #69edff;outline-offset:-1px}
 #mayatnikTemplatePanel .mtp-sequence-table-actions{display:flex;gap:2px;margin:2px 0}
 #mayatnikTemplatePanel .mtp-sequence-table-actions .mtp-command[aria-pressed=true]::after{opacity:1}
+
+#mayAtlasOccurrences {
+  max-width: min(32rem, calc(100vw - 2rem)); max-height: min(36rem, calc(100dvh - 2rem));
+  color: #edf4fa; background: #141c25; border: 1px solid #516776; padding: 1rem;
+  scrollbar-width: none;
+}
+#mayAtlasOccurrences::backdrop { background: #080c13b8; }
+#mayAtlasOccurrences h2 { margin: 0 0 .65rem; font-size: 1.05rem; }
+#mayAtlasOccurrences ul { list-style: none; padding: 0; margin: 0 0 .75rem; }
+#mayAtlasOccurrences li { display: flex; align-items: center; gap: .6rem; margin: .28rem 0; }
+#mayAtlasOccurrences li span { font-size: .86rem; color: #b6cada; }

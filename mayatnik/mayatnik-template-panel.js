@@ -120,7 +120,7 @@
     }};
   }
   root.MayatnikAxis512PaletteDialog={open(options){(axis512PaletteDialog||=makeAxis512PaletteDialog()).open(options);}};
-  let address,sectionSave,renameButton,deleteButton,folderPaletteButton,searchInput,query='',folderSelection='';
+  let address,sectionSave,renameButton,deleteButton,folderPaletteButton,compositionButton,searchInput,query='',folderSelection='';
   const sectionTitle=()=>activeTab==='shared'?'Общие файлы':activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='music'?'Музыка':activeTab==='gif'?'GIF':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
   function folderNodes(){return store?.snapshot().nodes.filter(n=>n.kind==='folder')||[];}
@@ -181,6 +181,10 @@
         .filter(group=>group.ids.length);
       if(groups.length)store.seedTree?.(bank.folderId,'512',groups);
     }
+    if(bank?.atlasGroup&&!store.hasSeeded?.(bank.atlasGroup.id)){
+      const group=bank.atlasGroup;
+      store.seedGroup?.(group.id,group.name,group.ids.filter(id=>known.has(id)),bank.folderId);
+    }
     const key=allIds.join('\u0000');if(key!==libraryKey){store.reconcile(allIds);libraryKey=key;}
   }
   function selectedEntry(){
@@ -212,6 +216,7 @@
     const bank=axis512Bank();
     folderPaletteButton.hidden=activeTab!=='templates'||!bank||!path.some(node=>node.id===bank.folderId);
     folderPaletteButton.disabled=busy;
+    compositionButton.hidden=activeTab!=='templates';
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
     sectionSave.title=activeTab==='templates'?'Сохранить выбранную фигуру в битотеку':activeTab==='layers'?'Создать фиксацию выбранного слоя':activeTab==='sequences'?'Применить строки из редактора':library?'Сохранить '+library.scope:'';
     renameButton.disabled=busy||!entry||activeTab==='layers';deleteButton.disabled=busy||!entry||(activeTab==='layers'&&!entry.removable);
@@ -378,7 +383,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1087');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1088');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -413,6 +418,17 @@
     for(const [key,label,pane]of sections){const b=button(label,label,()=>selectTab(key));b.dataset.libraryTab=key;b.setAttribute('role','tab');b.id='mayLibraryTab-'+key;b.setAttribute('aria-controls',pane.id);pane.setAttribute('aria-labelledby',b.id);b.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?tabKeys[0]:e.key==='End'?tabKeys.at(-1):tabKeys[(tabKeys.indexOf(key)+(e.key==='ArrowRight'?1:tabKeys.length-1))%tabKeys.length];selectTab(next);tabButtons.get(next).focus();}});tabButtons.set(key,b);tabs.append(b);}
     const workspace=doc.createElement('div');workspace.className='mtp-workspace';const main=doc.createElement('div');main.className='mtp-main';
     const commands=doc.createElement('div');commands.className='mtp-section-commands';sectionSave=headingButton('Сохранить в текущий раздел','M7 6H17V18H7ZM9 6V10H15V6M9 18V13H15V18',()=>{if(activeTab==='templates')saveButton.click();else if(activeTab==='layers')layerApi?.capture();else if(activeTab==='sequences')sequenceView?.save();else captureLibraries.get(activeTab)?.save.click();});sectionSave.dataset.sectionSave='';renameButton=headingButton('Переименовать выбранный элемент','M7 17L8 13 15 6 18 9 11 16ZM13.5 7.5L16.5 10.5',()=>selectedAction('rename'));renameButton.dataset.sectionRename='';deleteButton=headingButton('Удалить выбранный элемент','M8 8V17H16V8M7 7H17M10 5H14M10 10V15M14 10V15',()=>selectedAction('delete'));deleteButton.dataset.sectionDelete='';folderPaletteButton=headingButton('Цвета 0 и 1 у всех шаблонов папки','M12 6A6 6 0 1 0 12 18A6 6 0 1 0 12 6ZM12 6V18',editAxis512FolderPalette);folderPaletteButton.dataset.axis512FolderPalette='';folderPaletteButton.hidden=true;commands.append(sectionSave,folderButton,folderPaletteButton,renameButton,deleteButton);
+    compositionButton=headingButton('Редактор композиций','M5 6H12V13H5ZM12 11H19V18H12ZM9 15V18H12',()=>{
+      try{
+        const host=root.MayatnikLibraryDetached?root.opener:root;
+        if(!host?.mayCompositionEditor)throw Error('Откройте редактор из заполненного окна Маятника');
+        if(host===root){setOpen(false);doc.getElementById('bTemplatePanel')?.focus();}
+        host.mayCompositionEditor.open();
+        if(host!==root)host.focus();
+      }catch(error){reportError(error);}
+    });
+    compositionButton.dataset.templateComposition='';
+    commands.append(compositionButton);
     commands.append(headingButton('Kraftwerk: маски, цветовые пресеты и перенос в Маятник','M12 5A7 7 0 1 0 19 12H15L12 9ZM8 9H9M7 13H8M11 16H12',()=>root.open(new URL('../issledovanie/xor-bitglyphs/#palettes',root.location.href).href,'_blank','noopener')));
     const exporter=root.MayatnikLibraryExport?.mount(root,{parent:panel,tab:()=>activeTab});if(exporter){const exportButton=headingButton('Скачать элемент, отмеченные элементы, весь раздел или всю битотеку в папку либо ZIP','M12 5V14M8 10L12 14 16 10M7 16V18H17V16',()=>exporter.open());exportButton.dataset.libraryExport='';commands.append(exportButton);}
     const viewbar=doc.createElement('div');viewbar.className='mtp-viewbar';searchInput=doc.createElement('input');searchInput.type='search';searchInput.className='mtp-search';searchInput.setAttribute('aria-label','Поиск в текущем разделе');searchInput.addEventListener('input',()=>{query=searchInput.value.trim().toLocaleLowerCase();renderKey='';if(layerGrid)delete layerGrid.dataset.signature;activeTab==='templates'?render():renderActive();});viewbar.append(layouts,searchInput);
@@ -520,6 +536,38 @@
       }else ctx.putImageData(pixels,px,py);left+=p.width*scale;}
     const url=canvas.toDataURL();previews.set(item.id,{key,url});img.src=url;
   }
+  let atlasDialog;
+  function openAtlasOccurrences(item){
+    const bank=axis512Bank(),occurrences=bank?.occurrences?.(item.id)||[];
+    if(!occurrences.length)return;
+    if(!atlasDialog){
+      atlasDialog=doc.createElement('dialog');
+      atlasDialog.id='mayAtlasOccurrences';
+      atlasDialog.setAttribute('aria-labelledby','mayAtlasOccurrencesTitle');
+      atlasDialog.addEventListener('keydown',event=>event.stopPropagation());
+      doc.body.append(atlasDialog);
+    }
+    const title=doc.createElement('h2');title.id='mayAtlasOccurrencesTitle';
+    const frames=new Set(occurrences.map(occurrence=>occurrence[0]));
+    title.textContent=item.name+' · Кадров '+frames.size;
+    const list=doc.createElement('ul');
+    for(const [frame,x,y,crosses]of occurrences){
+      const row=doc.createElement('li'),frameId=bank.frameId(frame);
+      const label='Кадр '+String(frame).padStart(3,'0');
+      const link=button(label,'Показать '+label.toLowerCase()+' в папке кадров',()=>{
+        const node=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===frameId);
+        if(!node)return;
+        atlasDialog.close();query='';searchInput.value='';
+        navigateFolder(node.parent);render();cards.get(frameId)?.scrollIntoView?.({block:'nearest'});
+      });
+      link.disabled=!engine.allIds().includes(frameId);
+      const position=doc.createElement('span');
+      position.textContent='x '+x+' · y '+y+(crosses?' · через границу вырезки':'');
+      row.append(link,position);list.append(row);
+    }
+    atlasDialog.replaceChildren(title,list,button('Закрыть','Закрыть список вхождений',()=>atlasDialog.close()));
+    if(!atlasDialog.open)atlasDialog.showModal();
+  }
   function templateCard(item){
     const card=doc.createElement('article');card.className='mtp-card';card.draggable=true;card.dataset.templateId=item.id;
     card.addEventListener('dragstart',e=>beginDrag(e,'template',item.id));dropTarget(card,'template',item.id);
@@ -536,6 +584,9 @@
     choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
     name.addEventListener('click',e=>{e.stopPropagation();if(e.detail<2&&!previewKey(card._item||item)?.compound){if(archive)select();else choose.click();}});name.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();rename();});name.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();if(archive)select();else choose.click();}});
     const row=doc.createElement('div');row.className='mtp-card-actions';
+    const occurrences=axis512Bank()?.occurrences?.(item.id)||[];
+    if(occurrences.length)row.append(headingButton('Кадры, в которых встречается фигура ('+occurrences.length+')',
+      'M5 7H19M5 12H19M5 17H19M7 5V19M17 5V19',()=>openAtlasOccurrences(card._item||item)));
     if(previewKey(item)?.compound)row.append(headingButton('Найти вхождения сборного шаблона на поле','M10 5A5 5 0 1 0 10 15A5 5 0 1 0 10 5ZM14 14L19 19',async()=>{try{await engine.select(item.id);schedule();}catch(e){reportError(e);}}));
     const visibility=headingButton('Скрыть шаблон с поля','M5 12Q12 5 19 12Q12 19 5 12ZM12 10A2 2 0 1 0 12 14A2 2 0 1 0 12 10',()=>act(item.id,'visible'));visibility.dataset.templateVisibility='';
     const skip=headingButton('Пропуск выделения на поле','M6 8H13L18 13M14 13H18V9M7 17L17 7',()=>act(item.id,'skip-selection'));skip.dataset.templateSkip='';row.append(visibility,skip);

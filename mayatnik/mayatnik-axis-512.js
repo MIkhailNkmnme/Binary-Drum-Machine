@@ -62,6 +62,21 @@
       {frame, startMs, durationMs, sameAs}, false);
   }
 
+  const atlas = root.MayatnikAxis512AtlasData;
+  let atlasGroup = null;
+  if (atlas?.version === 1 && atlas.sourceSha256 === packed.source.sha256 &&
+      atlas.palette?.join() === packed.palette.join()){
+    atlasGroup = {id: folderId + ':atlas', name: 'Атлас', ids: []};
+    for (let index = 0; index < atlas.records.length; index++){
+      const [width, height, counts, payload, occurrences] = atlas.records[index];
+      const label = number(index + 1, 3);
+      const [frame, x, y] = occurrences[0];
+      const patch = {x, y, width, height, counts, payload};
+      addRecord(atlasGroup, 'axis-512:atlas:' + label, 'Фигура ' + label, [patch],
+        {frame, occurrences}, true);
+    }
+  }
+
   function colourValue(hex){
     const rgb = Number.parseInt(hex.slice(1), 16);
     const red = rgb >>> 16;
@@ -164,11 +179,15 @@
   }
 
   function entries(){
-    return groups.flatMap(group => group.ids.map(id => {
+    return (atlasGroup ? [...groups, atlasGroup] : groups).flatMap(group => group.ids.map(id => {
       const record = records.get(id);
       return {id, name: record.name, folder: '512', source: record.source, shape: shape(id)};
     }));
   }
 
-  root.MayatnikAxis512 = {folderId, groups, isId: id => records.has(id), entries, shape};
+  root.MayatnikAxis512 = {
+    folderId, groups, atlasGroup, isId: id => records.has(id), entries, shape,
+    occurrences: id => records.get(id)?.source.occurrences || [],
+    frameId: frame => 'axis-512:frame:' + number(frame, 3)
+  };
 })(window);

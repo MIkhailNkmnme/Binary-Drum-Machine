@@ -28,9 +28,10 @@
       children:parent=>state.nodes.filter(n=>n.parent===(parent||'')).map(n=>({...n})),
       reconcile(ids){const known=new Set(ids.map(String)),present=new Set();state.nodes=state.nodes.filter(n=>n.kind==='folder'||known.has(n.id));for(const n of state.nodes)if(n.kind==='template')present.add(n.id);for(const id of known)if(!present.has(id))state.nodes.push({kind:'template',id,parent:''});save();},
       // Seeding is a migration, not a permanent constraint on user organisation.
-      seedGroup(id,name,ids){
+      seedGroup(id,name,ids,parent=''){
         if(!ids.length||state.seededGroups?.includes(id))return false;
-        if(!state.nodes.some(n=>n.kind==='folder'&&n.id===id))state.nodes.push({kind:'folder',id,parent:'',name:String(name)});
+        if(parent&&!state.nodes.some(n=>n.kind==='folder'&&n.id===parent))return false;
+        if(!state.nodes.some(n=>n.kind==='folder'&&n.id===id))state.nodes.push({kind:'folder',id,parent,name:String(name)});
         for(const templateId of new Set(ids.map(String))){const node=state.nodes.find(n=>n.kind==='template'&&n.id===templateId);if(!node)state.nodes.push({kind:'template',id:templateId,parent:id});else if(!node.parent)node.parent=id;}
         (state.seededGroups||(state.seededGroups=[])).push(id);save();return true;
       },
