@@ -45,7 +45,7 @@
   function create(id){
    const panel=doc.createElement('div');panel.className='may-manual-axis-controls';panel.hidden=true;panel.dataset.axisId=String(id);
    const parts={},status=doc.createElement('output');status.className='may-manual-axis-status';status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');status.id='may-manual-axis-status-'+String(id).replace(/[^a-z0-9_-]/gi,'-');panel.append(status);
-   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Выделить все шаблоны, касающиеся этой оси столбца; затем сохранить как сборный шаблон'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
+   for(const [key,text,title]of [['label','','Тянуть — двигать ось с шагом полклетки'],['add','+','Добавить ось между этой и началом поля'],['mirror1','',''],['mirror2','',''],['xor','XOR',''],['and','AND',''],['paint1','1',''],['paint0','0',''],['templates','▦','Выделить касающиеся оси шаблоны; если готовых нет — автоматически взять фигуры с поля по правилу «Область». Затем «В библиотеку» сохранит сборный шаблон'],['remove','×','Удалить ось'],['pin','📌','Показывать ручные оси в дзене']]){
     const button=doc.createElement('button');button.type='button';button.className='may-manual-axis-'+key;button.textContent=text;button.title=title;parts[key]=button;panel.append(button);
    }
    for(const bit of [1,0]){
