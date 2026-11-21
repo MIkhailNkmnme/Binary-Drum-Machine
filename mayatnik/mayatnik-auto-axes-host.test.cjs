@@ -62,22 +62,20 @@ test('all-shown seed feed accepts auto-only and refuses any partial pending resu
 test('menu, clear/undo, restores and export include the auto-axes state',()=>{
   const menu=fs.readFileSync(require.resolve('./mayatnik-menu.js'),'utf8');
   assert.match(menu,/autoAxes:'Автооси ▼'/);assert.match(menu,/\['autoAxes','axes'\]/);assert.match(html,/clearAxesKeys=\[[^\]]*'autoAxes'/);
-  assert.match(html,/symTriangles:false,autoAxes:false/);assert.match(html,/paintAutoAxes\(cg,automatic,0,0,RK\)/);
+  assert.match(html,/symTriangles:false,autoAxes:false/);assert.doesNotMatch(html.slice(html.indexOf('  function paintCleanFrame('),html.indexOf('  let pngBusy=')),/paintAutoAxes\(/);
   assert.match(html,/!!st\.autoAxes!==autoAxesOn/);assert.match(html,/if\(!symPending&&!autoAxesPending\)/);
 });
-test('PNG waits for the current axes and draws the accepted result',async()=>{
-  const source=html.slice(html.indexOf('  async function pngCanvas('),html.indexOf('  let pngBusy='));
-  const calls={capture:0,axes:0};let release;
-  const data={triangles:[],segments:[{x:1.5,y0:2,y1:8,h:6}]};
-  const ctx={window:{},viewRotation:{capture:c=>c},st:{autoAxes:true},f:{},k:4,gpuBig:null,img:{},
-    autoAxesPaintData:()=>new Promise(resolve=>{release=resolve;}),
-    capturePicture:()=>{calls.capture++;return {width:12,height:14};},
+test('PNG waits for computed axis colour and omits guide strokes',async()=>{
+  const source=html.slice(html.indexOf('  function paintCleanFrame('),html.indexOf('  let pngBusy='));
+  let captures=0,release;
+  const ctx={window:{mayManualAxisPaint:{whenIdle:()=>new Promise(resolve=>{release=resolve;})}},
+    viewRotation:{capture:c=>c},st:{autoAxes:true,autoAxesPaint:true},f:{},k:4,gpuBig:null,img:{},
+    capturePicture:()=>{captures++;return {width:12,height:14};},
     document:{createElement:()=>({getContext:()=>({putImageData(){}})})},
-    paintBitContours(){},paintTemplate(){},paintGeomCenter(){},parityExportMask(){},
-    paintAutoAxes(g,a){assert.equal(a,data);calls.axes++;},RK:1};
+    paintBitContours(){},paintTemplate(){},parityExportMask(){},RK:1};
   vm.runInNewContext(source,ctx);
-  const capture=ctx.pngCanvas(4,ctx.f);await Promise.resolve();await new Promise(setImmediate);
-  assert.equal(calls.capture,0);release(data);await capture;assert.deepEqual(calls,{capture:1,axes:1});
-  ctx.autoAxesPaintData=async()=>{throw Error('failed');};
+  const result=ctx.pngCanvas(4,ctx.f);await new Promise(setImmediate);
+  assert.equal(captures,0);release();await result;assert.equal(captures,1);
+  ctx.window.mayManualAxisPaint.whenIdle=async()=>{throw Error('failed');};
   await assert.rejects(ctx.pngCanvas(4,ctx.f),/failed/);
 });

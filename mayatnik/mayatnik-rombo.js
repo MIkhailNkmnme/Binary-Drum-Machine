@@ -282,7 +282,7 @@
    if(canvas.width!==cw)canvas.width=cw;if(canvas.height!==ch)canvas.height=ch;
    const ctx=canvas.getContext('2d'),frame=precision()?o.captureBits?.():(o.capture?.()||source);paint(ctx,frame,current,quality,unit);
   }
-  function paint(ctx,frame,p,quality,displayUnit,region=null,overlayFrame){
+  function paint(ctx,frame,p,quality,displayUnit,region=null,overlayFrame,guides=true){
    if(precision()){
     const size=region?exactSize(region.width,region.height,1):exactSize(p.outputWidth,p.outputHeight,quality);let cache=images.get(ctx);
     if(!cache||cache.base.width!==size.width||cache.base.height!==size.height){cache={base:ctx.createImageData(size.width,size.height)};images.set(ctx,cache);}
@@ -297,6 +297,7 @@
      ctx.imageSmoothingEnabled=false;ctx.drawImage(cache.canvas,0,0);
     }
    }else draw(ctx,frame,p,quality,quality<Math.max(frame.width/p.width,frame.height/p.height));
+   if(!guides)return;
    const ox=region?.x||0,oy=region?.y||0;
    ctx.setTransform(quality,0,0,quality,-ox,-oy);o.paintOverlay?.(ctx,p,quality,displayUnit,region);
    if(p.axis){const a=p.forward(p.axis[0]),b=p.forward(p.axis[1]);ctx.strokeStyle='#ffd35b';ctx.lineWidth=1/Math.max(.02,displayUnit);ctx.setLineDash?.([5/displayUnit,3/displayUnit]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash?.([]);}
@@ -304,11 +305,16 @@
   }
   function capture(options={}){
    if(precision()){const policy=o.precisionPolicy?.();if(policy&&!policy.ok)throw Error(policy.reason);}
-   const c=doc.createElement('canvas'),g=geometry(),state=get(g),frame=precision()?o.captureBits?.():(o.capture?.()||source);
+   const c=doc.createElement('canvas'),g=geometry(),state=get(g);
+   let frame=options.field||(precision()?o.captureBits?.():(o.capture?.()||source));
+   if(options.field&&!precision()){
+    const flat=doc.createElement('canvas');flat.width=frame.width;flat.height=frame.height;
+    flat.getContext('2d').putImageData(frame,0,0);frame=flat;
+   }
    if(precision()&&!frame?.data)throw new TypeError('Для точного Ромбо нужен исходный массив RGBA.');
    if(!state.on||!state.available){c.width=frame.width;c.height=frame.height;if(precision()){const image=c.getContext('2d').createImageData(frame.width,frame.height);image.data.set(frame.data);c.getContext('2d').putImageData(image,0,0);}else c.getContext('2d').drawImage(frame,0,0);return c;}
    const p=makePlan(undefined,g,state),wanted=precision()&&o.exportScale?o.exportScale(options.minimumScale):Math.max(2,frame.width/p.width,frame.height/p.height);if(wanted===null)throw Error('Не удалось выбрать точный масштаб экспорта.');const raster=(precision()?exactSize:rasterSize)(p.outputWidth,p.outputHeight,wanted);
-   c.width=raster.width;c.height=raster.height;paint(c.getContext('2d'),frame,p,raster.quality,o.precision?.()&&o.scale?o.scale():source.getBoundingClientRect().width/p.width||1);return c;
+   c.width=raster.width;c.height=raster.height;paint(c.getContext('2d'),frame,p,raster.quality,o.precision?.()&&o.scale?o.scale():source.getBoundingClientRect().width/p.width||1,null,options.field?null:undefined,!options.field);return c;
   }
   // The field captures point drags on its host. Retain the originally
   // selected copy when later events target the host or cross another tile.

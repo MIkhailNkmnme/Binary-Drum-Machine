@@ -11,7 +11,7 @@
     for(const [a,b,x,y]of snapshot.axes||[]){g.beginPath();g.moveTo(a*snapshot.rasterScale,b*snapshot.rasterScale);g.lineTo(x*snapshot.rasterScale,y*snapshot.rasterScale);MayatnikAxisStyle.stroke(g,{mode:snapshot.axisPalette});}}
   function load(s){if(!s?.image||!(s.image.pixels instanceof Uint8ClampedArray)||s.image.width*s.image.height*4!==s.image.pixels.length||!(s.field?.val instanceof Int8Array)||s.field.W*s.field.H!==s.field.val.length)throw Error('В файле нет полного снимка кадра');
     stop();snapshot=s;colourReady=false;for(const id of ['base','colours','lines']){$(id).width=s.image.width;$(id).height=s.image.height;}
-    $('base').getContext('2d').putImageData(new ImageData(s.image.pixels,s.image.width,s.image.height),0,0);redrawLines();
+    $('base').getContext('2d').putImageData(new ImageData(s.image.pixels,s.image.width,s.image.height),0,0);$('lines').hidden=true;
     $('min').value=s.minRows||16;$('down').checked=s.down!==false;$('up').checked=s.up!==false;$('totems').classList.remove('on');buttons.forEach(id=>$(id).disabled=false);$('title').textContent=`Маятник · кадр ${s.frame}`;document.title=`Кадр ${s.frame} · Маятник`;
     status.textContent=`Кадр ${s.frame} · ${s.image.width} × ${s.image.height} · осей: ${(s.axes||[]).length} · анимация отсутствует`;fit();
   }
@@ -24,7 +24,7 @@
         if(kind==='holes'){
           const lines=MayatnikTotems.edges(e.data,{width:field.W,height:field.H,lattice:snapshot.lattice,gap:snapshot.gap});
           const seen=new Set((snapshot.axes||[]).map(l=>l.join(',')));for(const l of lines)if(!seen.has(l.join(','))){seen.add(l.join(','));(snapshot.axes||=[]).push(l);}
-          redrawLines();$('cancel').disabled=true;status.textContent=`Чёрных треугольников: ${e.data.length/5} · осей: ${snapshot.axes.length}`;
+          $('lines').hidden=false;redrawLines();$('cancel').disabled=true;status.textContent=`Чёрных треугольников: ${e.data.length/5} · осей: ${snapshot.axes.length}`;
         }else paint(e.data.triangles,token);
       };
       const opts={anchor:snapshot.anchor,minRows:2,minBits:2,directions:kind==='holes'?[...($('down').checked?[1]:[]),...($('up').checked?[-1]:[])]:['v']};
@@ -57,7 +57,7 @@
   $('open').onclick=()=>$('file').click();$('file').onchange=async()=>{const file=$('file').files[0];if(!file)return;try{status.textContent='Открываю работу…';const {data}=await MayatnikWorkFile.run('decode',file);load({...data.frameView,work:data});
     if(data.frameView.overlay instanceof Uint8ClampedArray&&data.frameView.overlay.length===snapshot.image.pixels.length){$('colours').getContext('2d').putImageData(new ImageData(data.frameView.overlay,snapshot.image.width,snapshot.image.height),0,0);colourReady=true;$('colours').hidden=data.frameView.overlayVisible===false;$('totems').classList.toggle('on',!$('colours').hidden);}
   }catch(e){status.textContent='Файл не открыт: '+e.message;}finally{$('file').value='';}};
-  $('png').onclick=()=>{const c=document.createElement('canvas');c.width=snapshot.image.width;c.height=snapshot.image.height;const g=c.getContext('2d');for(const id of ['base','colours','lines'])if(!$(id).hidden)g.drawImage($(id),0,0);c.toBlob(b=>b&&download(b,`mayatnik-kadr-${snapshot.frame}.png`));};
+  $('png').onclick=()=>{const c=document.createElement('canvas');c.width=snapshot.image.width;c.height=snapshot.image.height;const g=c.getContext('2d');for(const id of ['base','colours'])if(!$(id).hidden)g.drawImage($(id),0,0);c.toBlob(b=>b&&download(b,`mayatnik-kadr-${snapshot.frame}.png`));};
   $('plus').onclick=()=>zoomTo(zoom*2);$('minus').onclick=()=>zoomTo(zoom/2);$('fit').onclick=fit;
   viewport.addEventListener('wheel',e=>{if(!snapshot)return;e.preventDefault();const r=viewport.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,px=(viewport.scrollLeft+x)/zoom,py=(viewport.scrollTop+y)/zoom;zoomTo(zoom*(e.deltaY<0?1.25:.8));viewport.scrollLeft=px*zoom-x;viewport.scrollTop=py*zoom-y;},{passive:false});
   let drag=null;viewport.onpointerdown=e=>{if(e.button)return;drag={x:e.clientX,y:e.clientY,l:viewport.scrollLeft,t:viewport.scrollTop};viewport.setPointerCapture(e.pointerId);};viewport.onpointermove=e=>{if(drag){viewport.scrollLeft=drag.l+drag.x-e.clientX;viewport.scrollTop=drag.t+drag.y-e.clientY;}};viewport.onpointerup=viewport.onpointercancel=()=>drag=null;

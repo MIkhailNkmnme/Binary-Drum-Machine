@@ -29,7 +29,7 @@ test('state restores, separate label clear/undo, mirror clear and PNG are wired'
   assert.ok(html.includes("'triangleMapAxes','crossLabels','fixLines'"));assert.ok(html.includes('triangleMapAxes:false,crossLabels:false'));
   assert.ok(html.includes("'triangleMapAxes','crossLabels','midCol'"));assert.ok(html.includes('mirrorsOff(){st.crossMirror=false;crossMirrorSync();'));
   assert.equal((html.match(/triangleMapSync\(\);crossMirrorSync\(\);\$\('autoAxes'\)/g)||[]).length,2);
-  assert.ok(html.includes('if(st.crossLabels)paintCrossLabels(cg,0,0,RK,c.width,c.height)'));
+  assert.doesNotMatch(html.slice(html.indexOf('  function paintCleanFrame('),html.indexOf('  let pngBusy=')),/paintCrossLabels\(/);
   assert.ok(html.includes('triangleMapMirrorApply(px);crossMirrorApply(px);'));
   for(const id of ['crossMirror','crossMirrorMode','crossMirrorSector','crossLabels'])assert.ok(html.includes('id="'+id+'"'));
 });
@@ -58,7 +58,7 @@ test('sector cache tracks actual frame, masks, geometry, rows, crop and field re
 test('PNG paints the same cached sector mask before contours/axes and keeps fill independent of mirror',async()=>{
   const {c,nodes}=host(),canvases=canvasHost(c),trace=[],ctx={save(){},restore(){},drawImage(){}};c.st.crossMirror=false;const data=c.paintCrossSectors(ctx,0,0,5);
   Object.assign(c,{playing:false,capturePicture:()=>({width:c.VW,height:c.VH}),paintBitContours:()=>trace.push('contours'),paintTemplate(){},paintGeomCenter(){},viewRotation:{capture:canvas=>canvas},download:(name,blob)=>trace.push(blob.type),fname:()=> 'frame.png'});
-  const source=html.slice(html.indexOf('  async function pngCanvas('),html.indexOf('  let pngBusy='));
+  const source=html.slice(html.indexOf('  function paintCleanFrame('),html.indexOf('  let pngBusy='));
   c.parityExportMask=()=>{};vm.runInContext(source,c);await c.pngCanvas(c.k,c.f);
   assert.equal(canvases.length,2);assert.strictEqual(canvases[1].calls[0][0],data.canvas);assert.deepEqual(canvases[1].calls[0].slice(1),[0,0,c.VW,c.VH]);assert.deepEqual(trace,['contours']);
   const png=source.indexOf('paintCrossSectors'),contours=source.indexOf('paintBitContours');assert.ok(png<contours);assert.ok(html.indexOf('paintCrossSectors(symG')<html.indexOf('if(data)paintSymmetry(symG'));

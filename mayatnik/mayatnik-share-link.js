@@ -2,7 +2,7 @@
    v0.748: ссылка на построение и настройки Маятника — #s=<1|0>.<base64url>.
    v0.758: в описании ссылки — вид «Треугольники» (rombTri) и «Ромбы · всё поле».
    Внутри — настройки поля и вида (st), кадр, инструменты, цвета и краску клеток.
-   Шаблоны не включаются.
+   templateScene хранит раскраску и экземпляры шаблонов на поле.
    Код: '1.' — deflate-raw (CompressionStream), '0.' — несжатый JSON в base64url. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikShareLink=api;})(typeof globalThis==='object'?globalThis:this,function(){
   'use strict';
@@ -28,6 +28,48 @@
   function normalizePaint(value){if(value==null)return null;if(!isPlainObject(value))throw Error('В ссылке повреждена раскраска');const x=integer(value.x,0,100000000,'В ссылке неверное начало раскраски'),width=integer(value.width,1,MAX_PAINT_CELLS,'В ссылке неверная ширина раскраски'),height=integer(value.height,1,MAX_PAINT_CELLS,'В ссылке неверная высота раскраски'),length=width*height;if(!Number.isSafeInteger(length)||length>MAX_PAINT_CELLS)throw Error('Раскраска слишком велика для ссылки');for(const key of ['fill','bits'])if(typeof value[key]!=='string'||value[key].length>MAX_CODE)throw Error('В ссылке неверные данные раскраски');decodeRuns(value.fill,length,'fill',false);decodeRuns(value.bits,length,'bits',false);return {x,width,height,fill:value.fill,bits:value.bits};}
   function encodePaint(value){if(!isPlainObject(value))throw Error('Нет данных раскраски');const {x,width,height,fill,bits}=value,length=integer(width,1,MAX_PAINT_CELLS,'Неверная ширина раскраски')*integer(height,1,MAX_PAINT_CELLS,'Неверная высота раскраски');if(!Number.isSafeInteger(length)||length>MAX_PAINT_CELLS||!Number.isInteger(x)||x<0||x>100000000)throw Error('Раскраска слишком велика для ссылки');if(fill!=null&&(!(fill instanceof Uint32Array)||fill.length!==length))throw Error('Некорректная цветная краска');if(bits!=null&&(!(bits instanceof Int8Array)||bits.length!==length||bits.some(v=>v < -1||v>1)))throw Error('Некорректная чёрно-белая краска');return normalizePaint({x,width,height,fill:encodeRuns(fill,'fill'),bits:encodeRuns(bits,'bits')});}
   function decodePaint(value){const paint=normalizePaint(value);if(!paint)return null;const length=paint.width*paint.height;return {...paint,fill:decodeRuns(paint.fill,length,'fill'),bits:decodeRuns(paint.bits,length,'bits')};}
+  const templateArrays = {Uint32Array, Int32Array, Int8Array, Uint8Array, Uint8ClampedArray, Float32Array};
+  const MAX_TEMPLATE_TEXT = 64 * 1024 * 1024;
+  function encodeTemplateScene(scene) {
+    const value = JSON.stringify(scene, (_, item) => {
+      if (!ArrayBuffer.isView(item)) return item;
+      const name = item.constructor.name;
+      if (!Object.hasOwn(templateArrays,name)) throw Error('Неизвестный массив шаблона');
+      return {$templateArray:name, data:b64url(new Uint8Array(item.buffer,item.byteOffset,item.byteLength))};
+    });
+    if (value.length > MAX_TEMPLATE_TEXT) throw Error('Шаблоны слишком велики для ссылки');
+    return value;
+  }
+  function decodeTemplateScene(text) {
+    if (typeof text !== 'string' || text.length > MAX_TEMPLATE_TEXT) throw Error('Повреждены данные шаблонов');
+    const scene = JSON.parse(text, (_, item) => {
+      if (!item || !Object.hasOwn(item,'$templateArray')) return item;
+      if (!Object.hasOwn(templateArrays,item.$templateArray) || typeof item.data !== 'string') throw Error('Неизвестный массив шаблона');
+      const bytes = item.data ? unb64url(item.data) : new Uint8Array();
+      const Type = templateArrays[item.$templateArray];
+      if (bytes.byteLength % Type.BYTES_PER_ELEMENT) throw Error('Повреждён массив шаблона');
+      return new Type(bytes.buffer);
+    });
+    if (!scene || !Array.isArray(scene.templates) || !Array.isArray(scene.pickedTemplates)) throw Error('Повреждены шаблоны поля');
+    let pixels = 0;
+    const ids = new Set();
+    for (const item of scene.templates) {
+      if (!item || typeof item.id !== 'string' || ids.has(item.id) || !isPlainObject(item.view) || !Array.isArray(item.parts)) throw Error('Повреждён шаблон поля');
+      ids.add(item.id);
+      for (const part of item.parts) {
+        const mask = part?.mask;
+        if (!mask || !Number.isSafeInteger(mask.width) || !Number.isSafeInteger(mask.height) || mask.width < 1 || mask.height < 1 ||
+            !Number.isFinite(mask.x) || !Number.isFinite(mask.y) || !(mask.data instanceof Uint32Array) || mask.data.length !== mask.width*mask.height) throw Error('Повреждена маска шаблона');
+        pixels += mask.data.length;
+        if (pixels > MAX_PAINT_CELLS) throw Error('Шаблоны слишком велики для ссылки');
+      }
+    }
+    const m = scene.matches;
+    if (m && (typeof m.key !== 'string' || !(m.indices instanceof Uint32Array) || !(m.paint instanceof Uint32Array) ||
+        !(m.bits instanceof Uint8Array) || m.paint.length !== m.indices.length || m.bits.length !== m.indices.length ||
+        m.bits.some(b => b > 2 && b !== 255))) throw Error('Повреждены цвета найденных шаблонов');
+    return scene;
+  }
   function edgeSeedSize(seed){
     if(!isPlainObject(seed))throw Error('В ссылке повреждена опора круга');
     const width=integer(seed.width,1,MAX_PAINT_CELLS,'В ссылке неверная ширина опоры круга');
@@ -117,6 +159,8 @@
     const Repeat=typeof module==='object'&&module.exports?require('./mayatnik-paint-repeat.js'):globalThis.MayatnikPaintRepeat;
     const paintRepeat=Repeat.json(Repeat.normalize(value.paintRepeat));
     const paint=normalizePaint(value.paint);
+    const templateScene=value.templateScene;
+    if(templateScene!=null && (typeof templateScene!=='string' || templateScene.length>MAX_TEMPLATE_TEXT))throw Error('Повреждены данные шаблонов');
     const edgeSeed=normalizeEdgeSeed(value.edgeSeed,state);
     let display=null;
     if(value.display!=null){
@@ -124,17 +168,19 @@
       if(!isPlainObject(value.display)||![scrollLeft,scrollTop].every(n=>Number.isFinite(n)&&n>=0))throw Error('В ссылке повреждено положение просмотра');
       display={scrollLeft,scrollTop};
     }
-    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,sequenceApexStart:state.sequenceApexStart||'seed',sequenceApexWalk:state.sequenceApexWalk===true,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
+    return {v:VERSION,at:typeof value.at==='string'?value.at:'',k,state:{...state,sequenceApexStart:state.sequenceApexStart||'seed',sequenceApexWalk:state.sequenceApexWalk===true,...inversion,...isolated,...pit,rows,steps},tools,colours,colourAuto,paint,...(templateScene?{templateScene}:{}),...(paintRepeat?{paintRepeat}:{}),...(edgeSeed?{edgeSeed}:{}),...(display?{display}:{})};
   }
   function pack(value){return JSON.stringify(normalizePayload(value));}
   function unpack(text){let data;try{data=JSON.parse(text);}catch(_){throw Error('Ссылка повреждена: данные не читаются');}return normalizePayload(data);}
   async function encode(value){
     const raw=new TextEncoder().encode(pack(value));
+    let code;
     if(typeof CompressionStream==='function'){
       const packed=await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
-      return '1.'+b64url(new Uint8Array(packed));
-    }
-    return '0.'+b64url(raw);
+      code='1.'+b64url(new Uint8Array(packed));
+    }else code='0.'+b64url(raw);
+    if(code.length>MAX_CODE)throw Error('Ссылка слишком длинная. Сохраните работу в файл.');
+    return code;
   }
   async function decode(code){
     if(typeof code!=='string'||!code)throw Error('Пустая ссылка');
@@ -172,5 +218,5 @@
     const summary=[rows+' строк','кадр '+k+' из '+maximum,(pair?'пара · ':'')+construction,view].filter(Boolean).join(' · ');
     return {title:'Ссылка '+rows+' строк · кадр '+k+(construction!=='Маятник'?' · '+construction:''),summary};
   }
-  return {VERSION,HASH,MAX_CODE,MAX_FRAME,MAX_PAINT_CELLS,MODES,BACKGROUNDS,COMPARE_SOURCES,VIEWS,b64url,unb64url,normalizePayload,encodePaint,decodePaint,encodeEdgeSeed,decodeEdgeSeed,pack,unpack,encode,decode,hashCode,urlFor,describe};
+  return {VERSION,HASH,MAX_CODE,MAX_FRAME,MAX_PAINT_CELLS,MODES,BACKGROUNDS,COMPARE_SOURCES,VIEWS,b64url,unb64url,normalizePayload,encodePaint,decodePaint,encodeTemplateScene,decodeTemplateScene,encodeEdgeSeed,decodeEdgeSeed,pack,unpack,encode,decode,hashCode,urlFor,describe};
 });

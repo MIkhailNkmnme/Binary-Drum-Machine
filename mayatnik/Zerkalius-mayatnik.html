@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.058</title>
+<title>Zerkalius Маятнкъ — v1.059</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.058</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.059</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -609,7 +609,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-triangle-editor.css?v=848">
 <script src="mayatnik-pixel-grid.js?v=955"></script>
 <script src="mayatnik-pixel-exact-host.js?v=926"></script>
-<script src="mayatnik-rombo.js?v=887b"></script>
+<script src="mayatnik-rombo.js?v=1059"></script>
 <script src="mayatnik-axis-column.js?v=924"></script>
 <script src="../_js/control-frame.js?v=887b"></script>
 <script src="mayatnik-rombo-preview.js?v=848"></script>
@@ -620,7 +620,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-work-file.js?v=140"></script>
 <script src="mayatnik-xorrom-visual.js?v=867"></script>
 <script src="mayatnik-frame-library.js?v=623"></script>
-<script src="mayatnik-share-link.js?v=1033"></script>
+<script src="mayatnik-share-link.js?v=1059"></script>
 <script src="mayatnik-link-library.js?v=783"></script>
 <link rel="stylesheet" href="mayatnik-ochki-log.css?v=647">
 <script src="mayatnik-ochki-method.js?v=652"></script>
@@ -6224,11 +6224,19 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     templateStatsKey='';autoSync();fillSync();templateSync();draw();savePaint();
   };
+  function templateFieldSnapshot(){
+    return templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,sourceVacatedCells:t.sourceVacatedCells,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))}));
+  }
+  function restoreFieldTemplates(data){
+    for(const t of templateItems){if(!['direct','mirror','symmetric'].includes(t.matchOrientation))delete t.matchOrientation;for(const p of t.parts){if(!Number.isFinite(p.axis))p.axis=p.mask.x+p.mask.width/2;p.canvas=document.createElement('canvas');p.canvas.width=p.mask.width;p.canvas.height=p.mask.height;p.canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(p.mask.data.buffer),p.mask.width,p.mask.height),0,0);}colourTemplate=t;if(!t.bits)t.bits=templateBits(true);}
+    for(const item of templateItems)window.mayTemplateBaseline?.remember(item);
+    colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===data.activeTemplate)||(Array.isArray(data.pickedTemplates)?null:templateItems[0])||null,false);if(Array.isArray(data.pickedTemplates)){templatePickedIds.clear();for(const id of data.pickedTemplates)if(templateItems.some(t=>t.id===id))templatePickedIds.add(id);}templateMove=!!colourTemplate;
+  }
   function paintSnapshot(){
     if(!f||!img||rowBuild)return null;
     rememberTemplate();
     return {schema:2,templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibrary),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
-      templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,sourceVacatedCells:t.sourceVacatedCells,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))})),
+      templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateFieldSnapshot(),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
   function savePaint(){
@@ -6272,9 +6280,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       // В v0.030 след хранился только краской: восстановить его точные чёрные/белые биты.
       if(!data.paintBits&&fillMask){const black=rgba([0,0,0]),white=rgba([255,255,255]);for(let q=0;q<fillMask.length;q++)if((fillMask[q]===black||fillMask[q]===white)&&rasterBit(q%img.width,Math.floor(q/img.width),true)>=0){if(!paintBits)paintBits=new Int8Array(fillMask.length).fill(-1);paintBits[q]=fillMask[q]===white?1:0;}}
       templateItems=data.schema===2?structuredClone(data.templates||[]):data.template?[{...data.template,id:'field:legacy',name:data.template.hex,view:{...data.options,x:data.offsetX||0,returnTo:data.returnTo,paintBit:data.paintBit,visible:data.visible}}]:[];
-      for(const t of templateItems){if(!['direct','mirror','symmetric'].includes(t.matchOrientation))delete t.matchOrientation;for(const p of t.parts){if(!Number.isFinite(p.axis))p.axis=p.mask.x+p.mask.width/2;p.canvas=document.createElement('canvas');p.canvas.width=p.mask.width;p.canvas.height=p.mask.height;p.canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(p.mask.data.buffer),p.mask.width,p.mask.height),0,0);}colourTemplate=t;if(!t.bits)t.bits=templateBits(true);}
-      for(const item of templateItems)window.mayTemplateBaseline?.remember(item);
-      colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===data.activeTemplate)||(Array.isArray(data.pickedTemplates)?null:templateItems[0])||null,false);if(Array.isArray(data.pickedTemplates)){templatePickedIds.clear();for(const id of data.pickedTemplates)if(templateItems.some(t=>t.id===id))templatePickedIds.add(id);}templateMove=!!colourTemplate;
+      restoreFieldTemplates(data);
       if(Array.isArray(data.library)){await libraryReady;if(supplied)removedTemplateIds=new Set(data.libraryHidden||[]);loadUserLibrary(structuredClone(data.library));}
       mirrorXor=!!data.mirrors?.xor;mirrorLiveSet(!!data.mirrors?.live);if(mirrorLive&&data.mirrors.base)mirrorBase=data.mirrors.base;
       axisLinesSync();triangleMapSync();crossMirrorSync();autoAxesPaintSync();$('symTriangles').checked=!!st.symTriangles;$('symTriangleRows').value=st.symTriangleRows||16;
@@ -7536,6 +7542,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         }
         ctx.globalAlpha=1;ctx.imageSmoothingEnabled=false;ctx.drawImage(layer,x0+ox*s,y0,VW*s,VH*s);
       }
+      if(exportMode){ctx.restore();continue;}
       // The clicked segment and its exact central mirror show all their pairs.
       // Resolve against the current search so filtered axes and old frames vanish.
       if(selectedGroup&&(p<0||selected.p<0||selected.p===p)){
@@ -11002,20 +11009,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       throw Error('Полный PNG этого масштаба слишком велик ('+width+' × '+height+'). Уменьшите масштаб поля.');
     const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;return canvas;
   }
-  function pngGuides(ctx,unit,width,height){
-    if(!axesAtShownScale())return;
-    if(!staggeredOn()&&fixOvOn()&&(fixShown()||st.sawFull)&&fixGuideSegments().length){
-      fixLinesDraw(ctx,0,0,unit,1,0,false,true,true);
-    }
-    if(st.linesOn&&(!document.body.classList.contains('may-zen')||st.ztlZen)){
-      const geometry={left:0,top:0,scale:unit,anchor:geo.anchor-VX,width:dispW(),height:dispH()};
-      const bounds={left:0,top:0,right:width,bottom:height};
-      for(const axis of manualPaintAxes()){
-        const line=MayatnikManualLines.segment(axis,geometry,bounds);if(!line)continue;
-        ctx.beginPath();ctx.moveTo(line[0],line[1]);ctx.lineTo(line[2],line[3]);axisStroke(ctx,{primary:zlColour(axis.kind,axis.id)});
-      }
-    }
-  }
   function pngGpuPreview(canvas,unit){
     const ctx=canvas.getContext('2d'),tile=document.createElement('canvas'),device=gpuApi.attach(tile);
     const inverted=MayatnikInvert.bits(st);
@@ -11057,6 +11050,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       ctx.restore();
     }
   }
+  function paintCleanFrame(canvas,picture,unit,display){
+    const ctx=canvas.getContext('2d'),{width,height}=canvas;
+    if(display)pngFieldLayers(ctx,picture,unit,width,height);
+    else ctx.putImageData(picture,0,0);
+    if(st.crossLabels)paintCrossSectors(ctx,0,0,unit);
+    paintBitContours(ctx,0,0,unit,width,height);
+    if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(ctx,symCache,0,0,unit,width,height,true);
+    if(!display||!window.mayLayers)paintTemplate(ctx,0,0,unit,true);
+    parityExportMask(canvas,0,0,unit);
+  }
   async function pngCanvas(frame,owner,unit=RK,display=false){
     const current=()=>k===frame&&f===owner;
     if(!owner)throw Error('Сначала постройте поле.');
@@ -11065,11 +11068,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     await window.mayIsolatedPaint?.whenIdle?.();
     if(!current())throw Error('Кадр изменился. Повторите сохранение.');
     if(window.mayPhone?.art())return window.mayPhone.capture(1080,2400);
-    if(st.edgeRhombOn&&window.mayRombo)return viewRotation.capture(window.mayRombo.capture({minimumScale:unit}));
     const extent=n=>Math.max(1,Math.ceil(n*unit-1e-9));
     if(gpuBig?.large||gpuBig?.skip?.includes('окно не помещается в видеокарту')){
       const c=pngSurface(extent(dispW()),extent(dispH()));pngGpuPreview(c,unit);
-      pngGuides(c.getContext('2d'),unit,c.width,c.height);return viewRotation.capture(c);
+      return viewRotation.capture(c);
     }
     if(gpuBig&&(!img||!gpuBig.fresh||gpuBig.k!==frame)){
       gpuFlush();
@@ -11078,22 +11080,17 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(gpuCpuDisplay())draw();else{gpuPicture();await gpuPost();}
     }
     if(!current()||!img)throw Error('Не удалось получить изображение кадра.');
-    const automatic=st.autoAxes?await autoAxesPaintData(current):null;
-    if(!current())throw Error('Кадр изменился. Повторите сохранение.');
-    const map=st.triangleMapAxes?triangleMapGet():null;if(map?.error)throw Error(map.error);
-    if((st.crossMirror||st.crossLabels)&&crossMirrorReason())throw Error(crossMirrorReason());
-    const picture=capturePicture(),c=display?pngSurface(extent(dispW()),extent(dispH())):document.createElement('canvas');
+    const picture=capturePicture();
+    if(st.edgeRhombOn&&window.mayRombo){
+      const native=pngSurface(picture.width,picture.height);
+      paintCleanFrame(native,picture,RK,display);
+      const field=native.getContext('2d').getImageData(0,0,native.width,native.height);
+      return viewRotation.capture(window.mayRombo.capture({minimumScale:unit,field}));
+    }
+    const c=display?pngSurface(extent(dispW()),extent(dispH())):document.createElement('canvas');
     if(!display){c.width=picture.width;c.height=picture.height;}
-    const cg=c.getContext('2d');
-    if(display)pngFieldLayers(cg,picture,unit,c.width,c.height);else cg.putImageData(picture,0,0);
-    if(st.crossLabels)paintCrossSectors(cg,0,0,unit);paintBitContours(cg,0,0,unit,c.width,c.height);
-    if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,unit,c.width,c.height,true);
-    if(automatic)paintAutoAxes(cg,automatic,0,0,unit);
-    if(map)paintTriangleMapAxes(cg,map,0,0,unit);
-    if(st.crossLabels)paintCrossLabels(cg,0,0,unit,c.width,c.height);
-    paintTemplate(cg,0,0,unit,false,null,display&&window.mayLayers?'outline':'');paintGeomCenter(cg,0,0,unit,c.width,c.height);
-    if(display)pngGuides(cg,unit,c.width,c.height);
-    parityExportMask(c,0,0,unit);return viewRotation.capture(c);
+    paintCleanFrame(c,picture,unit,display);
+    return viewRotation.capture(c);
   }
   let pngBusy=false,pngNoticeTimer,pngDownloadUrl;
   function pngNotice(message,inJournal=false,file=null){
@@ -11119,25 +11116,30 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       pngNotice('Подготовка PNG…');
       const canvas=await pngCanvas(frame,owner,unit,true);
       if(frame!==k||owner!==f)throw Error('Кадр изменился. Повторите сохранение.');
-      let details;
+      let details,sceneWarning='',sceneError='';
       if(publish){
         const params=['масштаб '+(window.mayPixelExact?.format(scale())||unit+':1'),'бит 0 '+bitColour(0),'бит 1 '+bitColour(1)];
-        if(st.autoAxes)params.push('автооси');if(autoAxesPaintOn())params.push('автоокраска');
-        if(st.fixLines)params.push('линии застывания');if(st.fixCross)params.push('точка встречи');
+        if(autoAxesPaintOn())params.push('окраска по автоосям');
         try{
           const payload=captureSharePayload(),description=MayatnikShareLink.describe(payload);
           details={code:await MayatnikShareLink.encode(payload),summary:[description.summary,...params].join(' · ')};
         }catch(error){
-          details={code:'',summary:[st.rows+' строк','кадр '+frame,...params,'Точные настройки недоступны: '+error.message].join(' · ')};
+          if(!testPattern){
+            sceneError=error.message||String(error);
+          }else{
+            sceneWarning='Тестовый рисунок: ссылка на настройки недоступна.';
+            details={code:'',summary:[st.rows+' строк','кадр '+frame,...params,sceneWarning].join(' · ')};
+          }
         }
       }
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?.size?resolve(b):reject(Error('Браузер не смог создать PNG.')),'image/png'));
+      if(sceneError){pngNotice('Кадр не опубликован: '+sceneError,true,{blob,filename});return;}
       if(!publish){download(filename,blob);pngNotice(('Кадр '+frame)+' · PNG передан на скачивание.');return;}
       if(blob.size>8*1024*1024||canvas.width*canvas.height>32*1024*1024)throw Error('Для журнала нужен PNG до 8 МиБ и 32 Мпикс.');
       pngNotice('Публикация кадра '+frame+'…');
       try{await window.MayatnikJournal.publish(frame,blob,details);}
       catch(error){pngNotice(error.message||'Журнал не подтвердил публикацию.',true,{blob,filename});return;}
-      pngNotice('Кадр '+frame+' опубликован',true);
+      pngNotice('Кадр '+frame+' опубликован'+(sceneWarning?'. '+sceneWarning:''),true);
     }catch(error){pngNotice(error.message||String(error));}
     finally{pngBusy=false;$('bPng').disabled=$('bPngJournal').disabled=false;}
   }
@@ -11152,7 +11154,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!outShow(y,x+VX))val[y*W+x]=rasterBit(Math.floor((x+ox+.5)*RK),Math.floor((y+.5)*RK));
     }
     const image=capturePicture(),picture=document.createElement('canvas');picture.width=image.width;picture.height=image.height;
-    const pg=picture.getContext('2d');pg.putImageData(image,0,0);paintBitContours(pg,0,0,RK,picture.width,picture.height);paintTemplate(pg,0,0,RK);parityExportMask(picture);
+    paintCleanFrame(picture,image,RK,true);
+    const pg=picture.getContext('2d');
     const pixels=pg.getImageData(0,0,picture.width,picture.height).data;
     return {frame:k,field:{W,H,val},anchor,lattice:joinedWhole()?-1:joined?0:rp,gap:RG,rasterScale:RK,...(joined?{joined:joinedGeometry().config}:{}),
       image:{width:picture.width,height:picture.height,pixels},minRows:st.symTriangleRows||16,
@@ -13177,7 +13180,35 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   // v0.778: ссылка сохраняет раскраску клеток компактными сериями, привязанными к битам.
   // v0.748: ссылка на текущее построение и настройки — в буфер и в Библиотеку → Ссылки.
-  // Шаблоны в ссылку не входят.
+  // Keep the editable field instances and their individual palette; the catalogue is local.
+  function captureShareTemplates(){
+    const match=templateMatchLayer?.key===templateMatchKey()?templateMatchLayer:null;
+    if(!templateItems.length&&!match)return null;
+    rememberTemplate();
+    const layers=window.mayLayers?.list().filter(layer=>layer.kind==='template')||[];
+    return MayatnikShareLink.encodeTemplateScene({
+      templates:templateFieldSnapshot(),templatePaint:templatePaintLayer,activeTemplate:colourTemplate?.id,
+      pickedTemplates:[...templatePickedIds],layers,
+      matches:match?{key:match.key,indices:match.indices,paint:Uint32Array.from(match.indices,q=>match.paint[q]),
+        bits:Uint8Array.from(match.indices,q=>match.bits[q])}:null
+    });
+  }
+  function restoreShareTemplates(scene){
+    templatePaintLayer=templatePaintValidate(scene.templatePaint);
+    const match=scene.matches;
+    if(match){
+      if(match.key!==templateMatchKey()||match.indices.some(q=>q>=f.val.length))throw Error('Геометрия найденных шаблонов не совпала с полем');
+      const paint=new Uint32Array(f.val.length),bits=new Uint8Array(f.val.length).fill(2);
+      match.indices.forEach((q,i)=>{paint[q]=match.paint[i];bits[q]=match.bits[i];});
+      templateMatchLayer={key:match.key,indices:match.indices,paint,bits};templateMatchRevision++;templateMatchCache=null;
+    }
+    templateItems=scene.templates;restoreFieldTemplates(scene);
+    if(window.mayLayers&&scene.layers?.length){
+      layerTemplates();
+      for(const layer of scene.layers)if(layer.id.startsWith('template:'))window.mayLayers.set(layer.id,layer);
+    }
+    draw();
+  }
   function shareBaseUrl(){
     // С диска ссылка ведёт на опубликованную страницу (путь file:///E:/… у другого читателя не откроется);
     // по HTTP — на ту же самую страницу, включая локальный сервер проверки.
@@ -13202,7 +13233,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       tools:{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode,templateDragEnabled},
       colours:{fillColour:$('fillColour').value,fillMirror:$('fillMirror').checked},
       colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),
-      paintRepeat:MayatnikPaintRepeat.json(paintRepeatSeed),paint:captureSharePaint()};
+      templateScene:captureShareTemplates(),paintRepeat:MayatnikPaintRepeat.json(paintRepeatSeed),paint:captureSharePaint()};
   }
   async function buildShareUrl(){
     const payload=captureSharePayload(),description=MayatnikShareLink.describe(payload),code=await MayatnikShareLink.encode(payload);
@@ -13255,6 +13286,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   async function applySharePayload(payload,{booting=false,stash=true}={}){
     const data=MayatnikShareLink.normalizePayload(payload);
+    const templates=data.templateScene?MayatnikShareLink.decodeTemplateScene(data.templateScene):null;
+    if(templates){
+      templatePaintValidate(templates.templatePaint);
+      for(const item of templates.templates)for(const part of item.parts)MayatnikTemplateAxisTurn.validatePart(part);
+    }
     if(!booting&&(!sessionReady||cacheRestoring||templateDragging||frameLibraryBusy))throw Error('Дождитесь завершения текущего действия');
     // Links without a saved range retain the legacy default.
     const next={...MayatnikResetState.defaults(),steps:512,vmode:'',...structuredClone(data.state),lineMeasures:false};
@@ -13285,6 +13321,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         for(let y=0;y<saved.height&&y<targetHeight;y++)for(let x=0;x<saved.width;x++){const source=y*saved.width+x,colour=saved.fill[source],bit=saved.bits[source];if(!colour&&bit<0)continue;const col=saved.x+x-targetX;if(col<0||col>=targetWidth)continue;for(let dy=0;dy<RK;dy++){const py=y*RK+dy;if(py>=img.height)break;const row=py*img.width+col*RK;for(let dx=0;dx<RK&&col*RK+dx<img.width;dx++){const q=row+dx;if(colour&&newFill)newFill[q]=colour;if(bit>=0&&newBits)newBits[q]=bit;}}}
         fillMask=newFill?.some(Boolean)?newFill:null;paintBits=newBits?.some(value=>value>=0)?newBits:null;fillBits=null;draw();}
       paintRepeatSeed=MayatnikPaintRepeat.normalize(data.paintRepeat);if(paintRepeatSeed&&paintRepeatSeed.scope!==paintRepeatScope())throw Error('Перенос краски относится к другому полю');draw();
+      if(templates)restoreShareTemplates(templates);
       applyShareControls(data);st.templateFocusMargins=next.templateFocusMargins||null;
       if(cellSelectionModel){st.cellSelection=structuredClone(next.cellSelection||null);st.cellInk=structuredClone(next.cellInk||{});cellHydrate();cellInk.draw();}
       fillSync();autoSync();axisLinesSync();rulerSync();templateSync();layout();queueDigits();

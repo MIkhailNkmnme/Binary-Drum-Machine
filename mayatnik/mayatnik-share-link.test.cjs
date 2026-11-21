@@ -153,3 +153,19 @@ test('legacy edge links carry the piecewise-replay baseline and reject incompati
 test('isolated palette links retain distinct colours and clocks; legacy links inherit later',async()=>{const data=payload();Object.assign(data.state,{paintIsolated0:true,paintIsolated1:true,isolatedOneColour:'#00ff00',isolatedZeroColour:'#0000ff'});data.colourAuto={isolatedOneColour:{mode:'frame',color:'#00ff00'},isolatedZeroColour:{mode:'off',color:'#0000ff'}};const back=await SL.decode(await SL.encode(data));assert.deepEqual(back.state,data.state);assert.deepEqual(back.colourAuto,data.colourAuto);const old=await SL.decode(await SL.encode(payload()));assert.equal(old.state.isolatedOneColour,undefined);for(const key of ['isolatedOneColour','isolatedZeroColour'])for(const value of [null,123,'red','#12345',{}]){const bad=payload();bad.state[key]=value;assert.throws(()=>SL.normalizePayload(bad),/цвет одиночных/);}});
 
 test('each manual axis retains its own two colours, flags and stable number in links',async()=>{const data=payload();Object.assign(data.state,{ztPaint:3,ztPaintColour1:'#ff0000',ztPaintColour0:'#0000ff',zl:[{k:'v',p:.5,axisNo:2,paint:3,paintColour1:'#00ff00',paintColour0:'#ff00ff'},{k:'e',p:2,axisNo:3,paint:1,paintColour1:'#123456',paintColour0:'#abcdef'}]});const back=await SL.decode(await SL.encode(data));assert.deepEqual(back.state,data.state);const old=payload();old.state.zl=[{k:'v',p:1,axisNo:1,paint:1}];assert.deepEqual((await SL.decode(await SL.encode(old))).state,old.state);for(const key of ['ztPaintColour1','ztPaintColour0']){const bad=payload();bad.state[key]='red';assert.throws(()=>SL.normalizePayload(bad),/цвет оси/);}for(const value of [null,123,'#xyzxyz',{}]){const bad=payload();bad.state.zl=[{k:'v',p:0,paintColour0:value}];assert.throws(()=>SL.normalizePayload(bad),/цвет оси/);}});
+
+test('a fresh share link restores editable coloured template masks and painted matches',async()=>{
+  const red=0xff4433ff, blue=0xffcc3322, id='field:coloured';
+  const scene={
+    templates:[{id, hex:'#ff3344', view:{visible:true,alpha:70},
+      parts:[{mask:{x:1,y:2,width:2,height:1,data:Uint32Array.of(red,blue)},bitsData:Int8Array.of(1,0)}]}],
+    activeTemplate:id, pickedTemplates:[id], templatePaint:{version:2,colours:{[id]:'#2277cc'}},
+    layers:[{id:'template:'+id,tint:'#aabbcc',opacity:65,x:3,y:4,visible:true}],
+    matches:{key:'field-key',indices:Uint32Array.of(9,12),paint:Uint32Array.of(blue,red),bits:Uint8Array.of(255,2)}
+  };
+  const linked=await SL.decode(await SL.encode({...payload(),templateScene:SL.encodeTemplateScene(scene)}));
+  assert.deepEqual(SL.decodeTemplateScene(linked.templateScene),scene);
+  assert.equal((await SL.decode(await SL.encode(payload()))).templateScene,undefined);
+  scene.templates[0].parts[0].mask.width=3;
+  assert.throws(()=>SL.decodeTemplateScene(SL.encodeTemplateScene(scene)),/маска/);
+});
