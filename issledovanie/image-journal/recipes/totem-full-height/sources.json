@@ -1,0 +1,43 @@
+{
+  "source": "https://media.1001100.online/image-journal-2026-11-21/central-axis-templates.gif",
+  "sha256": "aeb51cd07daa9f6dd7ce422711698b3c6cfb30bb8e46bab70670fd96104c2f4f",
+  "frame_indexing": "zero-based",
+  "crop_coordinates": "left, top, right-exclusive, bottom-exclusive",
+  "model": "gpt-image-2",
+  "output": "768 × 1024 WebP, medium",
+  "totems": [
+    {
+      "asset": "totem-wood.webp",
+      "gif_frame": 105,
+      "source_crop": [
+        218,
+        183,
+        320,
+        251
+      ],
+      "prompt": "totem-wood.txt"
+    },
+    {
+      "asset": "totem-stone.webp",
+      "gif_frame": 193,
+      "source_crop": [
+        233,
+        104,
+        305,
+        177
+      ],
+      "prompt": "totem-stone.txt"
+    },
+    {
+      "asset": "totem-copper.webp",
+      "gif_frame": 144,
+      "source_crop": [
+        212,
+        302,
+        326,
+        353
+      ],
+      "prompt": "totem-copper.txt"
+    }
+  ]
+}
