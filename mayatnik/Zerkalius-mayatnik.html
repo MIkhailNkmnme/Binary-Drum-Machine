@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.083</title>
+<title>Zerkalius Маятнкъ — v1.084</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.083</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.084</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -658,8 +658,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-axis-turn.js?v=1077"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1082"></script>
-<link rel="stylesheet" href="mayatnik-template-inline.css?v=1081">
+<script src="mayatnik-template-inline.js?v=1084"></script>
+<link rel="stylesheet" href="mayatnik-template-inline.css?v=1084">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=1077">
 <script src="mayatnik-bit-contours.js?v=562"></script>
 <script src="mayatnik-kraft-shadows.js?v=954"></script>
@@ -5508,6 +5508,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(scene){if(Object.hasOwn(scene,'pitCopiesOn')){st.pitCopiesOn=!!scene.pitCopiesOn;pitCopiesSync();save();}if(Object.hasOwn(scene,'paintEmptyNeighbours')){st.paintEmptyNeighbours=!!scene.paintEmptyNeighbours;paintEmptySync();save();}templatePaintLayer=scene.templatePaint||null;colReplayRestore(scene.columns||[]);faceLayer=scene.face||null;templateMatchLayer=scene.matches||null;if(scene.library){templateLibrary=scene.library.map(t=>({...t}));removedTemplateIds=new Set(scene.hidden||[]);persistLibrary();MayatnikPaintCache.write([...removedTemplateIds],'template-hidden').catch(()=>{});}colourTemplate=null;templateItems=scene.items.map(t=>({...t,view:{...t.view}}));selectTemplate(templateItems.find(t=>t.id===scene.active)||(Array.isArray(scene.picked)?null:templateItems[0])||null,false);if(Array.isArray(scene.picked)){templatePickedIds.clear();for(const id of scene.picked)if(templateItems.some(t=>t.id===id))templatePickedIds.add(id);}}
     if(entry.inlineLayers&&window.mayLayers)for(const layer of (redo?entry.inlineLayers.after:entry.inlineLayers.before))window.mayLayers.set('template:'+layer.id,{opacity:layer.opacity});
     transfer();
+    columnTemplatesKeepEdits(entry.inlineAutoColumns);
     fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';if(raster)cssLayout();draw();fillSync();savePaint();if(st.paintSame||st.paintSymmetric)manualPatternSchedule();return true;
     }catch(error){return report(error);}finally{if(raster)gpuPaintRequests--;}
   }
@@ -6188,7 +6189,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     queueLineMeasures();
     if(window.mayLayers)layerTemplates();
     if(!playing&&templateLockCheck())requestAnimationFrame(()=>{if(f)draw();});   // v0.142: шаблон встал на застывшие биты
-    rememberTemplate();templateStatus();templateCanvas.hidden=(!ochkiSelectionCurrent()&&!templateFrameSearchSelection()&&!window.mayTemplateLibrary?.getSelection()&&!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode&&!rulerA&&!st.nAxisSets?.length)||(playing&&!templateFollowActive()&&!columnTemplatesOn());if(templateCanvas.hidden){templateAxisControls?.hide();window.mayTemplateAxesHover?.clear();return;}
+    rememberTemplate();templateStatus();templateCanvas.hidden=(!ochkiSelectionCurrent()&&!templateFrameSearchSelection()&&!window.mayTemplateLibrary?.getSelection()&&!templateItems.some(t=>t.view.visible)&&!mirrorLine&&!st.userLines.length&&!axisLineMode&&!rulerA&&!st.nAxisSets?.length)||(playing&&!templateFollowActive()&&!columnTemplatesOn());if(templateCanvas.hidden){templateAxisControls?.hide();window.mayTemplateAxesHover?.clear();window.mayTemplateInline?.render(null,null);return;}
     const host=wrap.getBoundingClientRect(),r=cv.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1),w=wrap.clientWidth,h=wrap.clientHeight;
     templateCanvas.style.left=host.left+'px';templateCanvas.style.top=host.top+'px';templateCanvas.style.width=w+'px';templateCanvas.style.height=h+'px';
     templateCanvas.width=Math.max(1,Math.round(w*d));templateCanvas.height=Math.max(1,Math.round(h*d));templateG.setTransform(d,0,0,d,0,0);
@@ -7161,18 +7162,29 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     save();queueSession();if(axis.templatesOn)window.mayTemplateLibrary?.clear();zTopLine();if(f)draw();
     return columnTemplateStatus(id);
   }
+  function columnTemplateStamp(){
+    return {owner:f,frame:k,key:JSON.stringify([k,geometryKey(),VX,VW,VH,RK,img.width,img.height,st,manualPaintRevision,templateMatchRevision,templateLibrary.filter(t=>t.skipSelection).map(t=>t.id)]),edit:fillHistory.at(-1),mask:fillMask,bits:paintBits};
+  }
+  function columnTemplatesKeepEdits(axes){
+    if(!axes?.length||!columnTemplateRuns||!img||!geo)return;
+    const stamp=columnTemplateStamp();
+    for(const axis of axes){
+      const previous=columnTemplateRuns.get(axis);
+      if(previous?.owner===f&&previous.frame===k)columnTemplateRuns.set(axis,{...previous,...stamp,ids:templateItems.filter(item=>item.autoColumnAxis===axis).map(item=>item.id)});
+    }
+  }
   function columnTemplatesRefresh(){
-    if(!img||!f||!geo||templateDragging)return;
+    if(!img||!f||!geo||templateDragging||templateInlineTransaction?.owner===f&&templateInlineTransaction.frame===k||templateInlineDrag?.owner===f&&templateInlineDrag.frame===k)return;
     columnTemplateRuns||=new Map();
     const axes=columnTemplatesOn()?zlList().filter(z=>z.k==='v'&&z.templatesOn&&zlAxisOn(z)):[],enabled=new Set(axes.map(z=>'v:'+z.axisNo));
     const obsolete=templateItems.filter(t=>t.autoColumnAxis&&!enabled.has(t.autoColumnAxis));
     let changed=!!obsolete.length;
     if(changed)templateItems=templateItems.filter(t=>!obsolete.includes(t));
     if(!axes.length&&!changed)return;
-    const key=axes.length?JSON.stringify([k,geometryKey(),VX,VW,VH,RK,img.width,img.height,st,manualPaintRevision,templateMatchRevision,templateLibrary.filter(t=>t.skipSelection).map(t=>t.id)]):'',edit=fillHistory.at(-1),knownIds=new Set(templateItems.map(t=>t.id));
+    const stamp=axes.length?columnTemplateStamp():null,knownIds=new Set(templateItems.map(t=>t.id));
     for(const axis of axes){
       const id='v:'+axis.axisNo,previous=columnTemplateRuns.get(id);
-      if(previous?.owner===f&&previous.key===key&&previous.edit===edit&&previous.mask===fillMask&&previous.bits===paintBits&&previous.ids.every(id=>knownIds.has(id)))continue;
+      if(previous?.owner===f&&previous.key===stamp.key&&previous.edit===stamp.edit&&previous.mask===stamp.mask&&previous.bits===stamp.bits&&previous.ids.every(id=>knownIds.has(id)))continue;
       let result=null,message;
       try{
         if(gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||!gpuBig.cpuRaster))throw Error('Автоподбор требует полного точного CPU-растра; в этом режиме он недоступен.');
@@ -7184,7 +7196,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const own=templateItems.filter(t=>t.autoColumnAxis===id),items=result?.items||[];
       templateItems=templateItems.filter(t=>t.autoColumnAxis!==id);for(const item of own)templatePickedIds.delete(item.id);
       for(const item of items){item.id='axis-auto:'+id+':'+Date.now()+':'+(++templateSerial);item.autoColumnAxis=id;item.sourcePreserving=true;item.sourceKind='copy';item.paintSource=false;item.lifted=null;templateItems.push(item);templatePickedIds.add(item.id);}
-      columnTemplateRuns.set(id,{owner:f,key,edit,mask:fillMask,bits:paintBits,ids:items.map(t=>t.id),message});changed=true;
+      columnTemplateRuns.set(id,{...stamp,ids:items.map(t=>t.id),message});changed=true;
     }
     if(!changed)return;
     const ids=new Set(templateItems.map(t=>t.id));for(const id of templatePickedIds)if(!ids.has(id))templatePickedIds.delete(id);
@@ -13444,7 +13456,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateLibrary=scene.library.map(t=>({...t}));removedTemplateIds=new Set(scene.hidden||[]);colourTemplate=null;templateItems=scene.items.map(t=>({...t,view:{...t.view}}));templateInlineRestoreSelection(scene.active,scene.picked||[]);
   }
   function templateInlineLayers(ids){return ids.map(id=>({id,layer:window.mayLayers?.get('template:'+id)})).filter(v=>v.layer).map(({id,layer})=>({id,opacity:layer.opacity}));}
-  function templateInlineFinish(before,ids){const last=fillHistory.at(-1);finishEdit(before);if(fillHistory.at(-1)!==last&&before.inlineLayers)fillHistory.at(-1).inlineLayers={before:before.inlineLayers,after:templateInlineLayers(ids)};}
+  function templateInlineFinish(before,ids){
+    const last=fillHistory.at(-1);finishEdit(before);
+    const entry=fillHistory.at(-1);if(entry===last)return;
+    if(before.inlineLayers)entry.inlineLayers={before:before.inlineLayers,after:templateInlineLayers(ids)};
+    const targets=new Set(ids),axes=[...new Set(before.scene.items.filter(item=>item.autoColumnAxis&&targets.has(item.id)).map(item=>item.autoColumnAxis))];
+    if(axes.length){entry.inlineAutoColumns=axes;columnTemplatesKeepEdits(axes);}
+  }
   function templateInlineResetItem(item){
     const restored=MayatnikTemplateInline.restoreReceipt(item.inlineReset,{paint:fillMask,bits:paintBits,matchPaint:templateMatchLayer?.paint,matchBits:templateMatchLayer?.bits,size:Math.max(img.width*img.height,f.val.length)});
     fillMask=restored.paint;paintBits=restored.bits;
@@ -13507,6 +13525,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function templateInlineAction(command,value){
     if(command==='fall')return Promise.resolve(templateInlineFallToggle());
     if(command==='colour'&&!/^#[0-9a-f]{6}$/i.test(value))return Promise.resolve(false);
+    if(templateInlineSteps.has(command)&&playing)stop();
     // Capture the selected IDs at execution. A queued action never resurrects a departed frame.
     const owner=f,frame=k,active=colourTemplate?.id,run=()=>owner===f&&frame===k&&colourTemplate?.id===active?templateInlineRun(command,value):false,first=templateInlineQueued++===0;
     templateInlineQueue=(first?Promise.resolve(run()):templateInlineQueue.then(run)).finally(()=>templateInlineQueued--);return templateInlineQueue;
@@ -13544,10 +13563,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function templateInlineRender(ctx,state,screen){
     if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,visibilityMode:()=>templateVisibility.mode,split:true,expanded:true,
       fieldRect:()=>viewRotation.physicalRect(cv)});
-    if(!state){templateInlineControls.hide();templateInlineAxes?.cancel();return;}
+    if(!f||!img||!geo){templateInlineControls.hide();templateInlineAxes?.cancel();return;}
+    if(!screen){const rect=wrap.getBoundingClientRect();screen={left:rect.left,top:rect.top,width:wrap.clientWidth,height:wrap.clientHeight};}
     const {left,top,width,height,ox,oy,factor}=screen,o=templateOptions();
     const music=$('mayMusicSettingsPanel'),panel=music&&!music.hidden?music.getBoundingClientRect?.():null,freeWidth=panel&&panel.right>left&&panel.left<left+width&&panel.bottom>top&&panel.top<top+height?Math.max(0,panel.left-left-4):width;
-    templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTransfer,paint:!!templatePaintColour(state.item.id),manualH:!!state.item.templateAxes?.manualH?.visible,manualV:!!state.item.templateAxes?.manualV?.visible,underlayOne:!!state.item.templateAxes?.underlayOne,capturePaint:templateAxisPaintMode(state.item)==='pickup',transferPaint:templateAxisPaintMode(state.item)==='deposit',trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
+    if(!state){
+      templateInlineAxes?.cancel();
+      templateInlineControls.render({key:null,left,top,width:freeWidth,viewportHeight:height,noSelection:true});
+      return;
+    }
+    templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,motionStatus:templateOffsetX?'Сдвиг по горизонтали '+templateOffsetX+' кл.':'',box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTransfer,paint:!!templatePaintColour(state.item.id),manualH:!!state.item.templateAxes?.manualH?.visible,manualV:!!state.item.templateAxes?.manualV?.visible,underlayOne:!!state.item.templateAxes?.underlayOne,capturePaint:templateAxisPaintMode(state.item)==='pickup',transferPaint:templateAxisPaintMode(state.item)==='deposit',trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
   }
   function templateInlineAxisBegin(id,direction,event){
     if(!templateDragEnabled||templateInlineDrag||templateInlineTransaction||templateDragging)return false;const state=templateAxisState();if(!state)return false;
@@ -13569,7 +13594,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(drag.owner!==f||drag.frame!==k)return;
     if(drag.pointerId!=null)touchPts.delete(drag.pointerId);
     if(cancel){templateInlineRestoreScene(drag.before.scene);fillMask=drag.before.paint;paintBits=drag.before.bits;templateInlineRestoreSelection(drag.active,drag.picked);}
-    else if(drag.started){templateInlineRestoreSelection(drag.active,drag.picked);finishEdit(drag.before);actSet('tpl');}
+    else if(drag.started){templateInlineRestoreSelection(drag.active,drag.picked);templateInlineFinish(drag.before,drag.items.map(item=>item.id));actSet('tpl');}
     templateSync();fillSync();draw();queueDigits();savePaint();
   }
   function templateInlineAxesRender(controls,state){

@@ -126,6 +126,11 @@
       for(const [node,direction]of [[left,-1],[right,1]]){node.type='button';node.title=(direction<0?'Уменьшить: ':'Увеличить: ')+title;node.setAttribute('aria-label',node.title);const svg=doc.createElementNS(NS,'svg'),path=doc.createElementNS(NS,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('inline-step-icon');path.setAttribute('d',direction<0?'M16 5 9 12 16 19':'M8 5 15 12 8 19');svg.append(path);node.append(svg);repeatStep(node,()=>{const next=Math.max(min,Math.min(max,Number(input.value)+direction*step));if(next===Number(input.value))return;input.value=String(next);return commit();});extraControls.push(node);}
       row.append(left,middle,right);const frame=root.ZerkControlFrame?.attach(row,left,middle,right,{input});if(frame)frames.push(frame);sections.get(group).append(row);inputs.set(id,input);
     }
+    const motionStatus=doc.createElement('div');
+    motionStatus.className='may-template-inline-motion-status';
+    motionStatus.setAttribute('role','status');
+    motionStatus.hidden=true;
+    groupViews.get('motion').body.append(motionStatus);
     function queuePosition(){if(fieldRect&&!positionFrame)positionFrame=root.requestAnimationFrame(()=>{positionFrame=0;if(currentState&&!host.hidden)place(currentState);});}
     function place(state){
       const field=fieldRect?.(),box=field?{x:field.left,y:field.top,width:field.width,height:field.height}:state.box;
@@ -144,15 +149,21 @@
       banks.forEach((bank,index)=>{const h=Math.min(bank.inlineHeight,limit);style(bank,'left',(index?rightX:leftX)+'px');style(bank,'top',clamp(box.y,minY,maxY-h)+'px');});
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
+      const noSelection=state.noSelection===true;
+      for(const [id,group]of groupViews)group.section.hidden=noSelection&&id!=='motion';
+      const message=noSelection?'Выберите шаблон на поле':state.motionStatus||'';
+      if(motionStatus.textContent!==message)motionStatus.textContent=message;
+      motionStatus.hidden=!message;
+      const unavailable=noSelection||state.busy;
       state.visibilityMode=options.visibilityMode?.()||'';
       const checked={underlayOne:state.underlayOne,'manualAxis:manualH':state.manualH,'manualAxis:manualV':state.manualV,capturePaint:state.capturePaint,transferPaint:state.transferPaint,hideSelected:state.visibilityMode==='hide',onlySelected:state.visibilityMode==='only'};
       for(const [id,node]of buttons){
-        disabled(node,state.busy||state.disabled?.includes(id));
+        disabled(node,unavailable||state.disabled?.includes(id));
         if(Object.hasOwn(checked,id))set(node,'aria-pressed',!!checked[id]);
         else if(['show','move','transfer','paint','trail','proportional','fall'].includes(id))set(node,'aria-pressed',!!state[id]);
       }
-      const colour=state.colour||'#ffffff';if(custom.value!==colour)custom.value=colour;if(buttons.get('colour').style.getPropertyValue('--sample')!==colour)buttons.get('colour').style.setProperty('--sample',colour);for(const swatch of palette.children)disabled(swatch,state.busy);for(const node of extraControls)disabled(node,state.busy);
-      for(const [id,input]of inputs){if(doc.activeElement!==input){const value=state[id],nearest=Math.round(value),text=String(typeof value==='number'&&Math.abs(value-nearest)<1e-9?nearest:value??'');if(input.value!==text)input.value=text;}disabled(input,state.busy);}
+      const colour=state.colour||'#ffffff';if(custom.value!==colour)custom.value=colour;if(buttons.get('colour').style.getPropertyValue('--sample')!==colour)buttons.get('colour').style.setProperty('--sample',colour);for(const swatch of palette.children)disabled(swatch,unavailable);for(const node of extraControls)disabled(node,unavailable);
+      for(const [id,input]of inputs){if(doc.activeElement!==input){const value=state[id],nearest=Math.round(value),text=String(typeof value==='number'&&Math.abs(value-nearest)<1e-9?nearest:value??'');if(input.value!==text)input.value=text;}disabled(input,unavailable);}
       place(state);
     }
     function hide(resetDismissal=true){for(const stop of holds)stop();host.hidden=true;palette.hidden=true;currentState=null;geometryDirty=true;layoutKey='';if(resetDismissal){dismissed=false;dismissedKey=null;}}

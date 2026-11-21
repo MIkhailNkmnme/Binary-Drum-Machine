@@ -48,3 +48,4 @@
 .may-template-translate-grip[data-direction=h]{cursor:ew-resize}.may-template-translate-grip[data-direction=v]{cursor:ns-resize}.may-template-translate-grip:focus-visible{stroke:#b48cff66;stroke-width:5}
 .may-template-translate .may-template-axis-grab{pointer-events:none}
 body.may-fold-active .may-template-inline{display:none}
+.may-template-inline-motion-status{padding:3px 5px;color:#dfe6f5;font-size:11px;line-height:1.3}
