@@ -1,0 +1,44 @@
+name: Publish chosen image journal entries to VK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'issledovanie/image-journal/vk/*.json'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Проверка подключения или выпуск очереди
+        type: choice
+        options: [check, publish]
+        default: check
+
+permissions:
+  contents: read
+
+concurrency:
+  group: image-journal-vk-zerkalis
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check the VK connection
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check'
+        env:
+          VK_USER_TOKEN: ${{ secrets.VK_USER_TOKEN }}
+        run: python3 tools/media-publish/media.py check-vk
+      - name: Convert covers to VK JPEG
+        if: github.event_name == 'push' || inputs.mode == 'publish'
+        run: python3 -m pip install --disable-pip-version-check 'Pillow==12.2.0'
+      - name: Announce releases
+        if: github.event_name == 'push' || inputs.mode == 'publish'
+        env:
+          VK_USER_TOKEN: ${{ secrets.VK_USER_TOKEN }}
+        run: python3 tools/media-publish/media.py publish-vk --queue issledovanie/image-journal/vk

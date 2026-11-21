@@ -1,4 +1,4 @@
-"""R2 image storage and offline journal drafts. Secrets are never CLI arguments."""
+"""Local image generation, R2 storage and publication of selected journal posts."""
 import argparse
 import hashlib
 from html.parser import HTMLParser
@@ -8,6 +8,9 @@ from pathlib import Path
 import re
 import sys
 from urllib.parse import quote, urlsplit, urlunsplit
+
+import image_api
+import vk_publish
 
 BUCKET = 'zerkalius-media'
 PUBLIC_BASE = 'https://media.1001100.online'
@@ -65,17 +68,12 @@ class JournalParser(HTMLParser):
         self.stack[-1].children.append(data)
 
 
-def prepare_vk(args):
-    """Local files only; boto3 is deliberately imported elsewhere."""
-    output = Path(args.output_directory).expanduser().resolve()
-    # Refuse repo output even through a symlink/junction resolved above.
-    if output == REPOSITORY or REPOSITORY in output.parents:
-        raise ValueError('Каталог черновиков должен находиться вне репозитория.')
-    journal_url = urlsplit(args.journal_url)
+def journal_cards(html, source_url):
+    journal_url = urlsplit(source_url)
     if journal_url.scheme != 'https' or not journal_url.hostname or journal_url.username or journal_url.password or journal_url.query or journal_url.fragment:
         raise ValueError('Journal URL должен быть HTTPS URL без credentials, query и anchor.')
     parser = JournalParser()
-    parser.feed(Path(args.journal).read_text(encoding='utf-8-sig'))
+    parser.feed(html)
     parser.close()
     cards, seen = [], set()
     for article in parser.root.walk():
@@ -117,10 +115,19 @@ def prepare_vk(args):
             seen.add(stable_id)
             caption = '\n\n'.join(s for s in (f'{title} · {name}' if name else title, description, entry_url) if s)
             cards.append(dict(id=stable_id, image_url=source, figure_name=name, image_description=alt,
-                              source_title=title, source_description=description, journal_url=args.journal_url,
+                              source_title=title, source_description=description, journal_url=source_url,
                               entry_anchor=anchor, entry_url=entry_url, caption=caption, state='draft'))
     if not cards:
         raise ValueError('В журнале не найдены карточки figure a[data-view-image].')
+    return cards
+
+
+def prepare_vk(args):
+    output = Path(args.output_directory).expanduser().resolve()
+    # Resolve symlinks and junctions before checking the repository boundary.
+    if output.is_relative_to(REPOSITORY):
+        raise ValueError('Каталог черновиков должен находиться вне репозитория.')
+    cards = journal_cards(Path(args.journal).read_text(encoding='utf-8-sig'), args.journal_url)
     # Refuse existing destination files: repeated preparation cannot replace edits.
     names = ['drafts.json', 'drafts.txt']
     if any((output / name).exists() for name in names):
@@ -228,10 +235,22 @@ def main():
     draft.add_argument('--journal', required=True)
     draft.add_argument('--output-directory', required=True)
     draft.add_argument('--journal-url', required=True)
+    image_api.add_arguments(commands.add_parser('generate-image'))
+    commands.add_parser('check-vk')
+    release = commands.add_parser('publish-vk')
+    release.add_argument('--queue', required=True)
     args = parser.parse_args()
     try:
         if args.command == 'prepare-vk':
             prepare_vk(args)
+        elif args.command == 'generate-image':
+            emit(image_api.generate(args, REPOSITORY, image_type, MAX_IMAGE_BYTES))
+        elif args.command == 'check-vk':
+            emit(vk_publish.check())
+        elif args.command == 'publish-vk':
+            journal = REPOSITORY / 'issledovanie/image-journal/index.html'
+            cards = journal_cards(journal.read_text(encoding='utf-8-sig'), vk_publish.JOURNAL_URL)
+            emit(vk_publish.publish(args.queue, cards, journal_cards))
         else:
             network(args)
     except (ValueError, OSError) as exc:

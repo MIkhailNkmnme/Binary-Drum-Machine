@@ -1,18 +1,24 @@
 ﻿[CmdletBinding()]
 param(
     [Parameter(Position=0, Mandatory=$true)]
-    [ValidateSet('status','configure','list','upload','prepare-vk')][string]$Command,
+    [ValidateSet('status','configure','list','upload','prepare-vk','configure-openai','generate-image')][string]$Command,
     [string]$File,
     [string]$Key,
     [string]$Prefix = '',
     [string]$Journal = (Join-Path $PSScriptRoot '../../issledovanie/image-journal/index.html'),
     [string]$OutputDirectory,
+    [string]$PromptFile,
+    [string]$Source,
+    [string]$Model = 'gpt-image-2.5-sunburst',
+    [string]$Size = '2048x1152',
+    [ValidateSet('low','medium','high','auto')][string]$Quality = 'medium',
     [string]$JournalUrl = 'https://1001100.online/issledovanie/image-journal/'
 )
 $ErrorActionPreference = 'Stop'
 $connectionDirectory = Join-Path $env:APPDATA 'Zerkalius\connections'
 $credentialPath = Join-Path $connectionDirectory 'r2.credentials.xml'
 $configPath = Join-Path $connectionDirectory 'r2.config.json'
+$openAiCredentialPath = Join-Path $connectionDirectory 'openai.credentials.xml'
 $pythonPath = Join-Path $env:LOCALAPPDATA 'Zerkalius\media-publish\venv\Scripts\python.exe'
 
 function Assert-Endpoint([string]$Endpoint) {
@@ -48,6 +54,7 @@ try {
         [ordered]@{
             credentialsExist = (Test-Path -LiteralPath $credentialPath -PathType Leaf)
             configExist = (Test-Path -LiteralPath $configPath -PathType Leaf)
+            openAiConfigured = [bool]$env:OPENAI_API_KEY -or (Test-Path -LiteralPath $openAiCredentialPath -PathType Leaf)
             pythonExists = (Test-Path -LiteralPath $pythonPath -PathType Leaf)
             connectionDirectory = $connectionDirectory
             scope = 'DPAPI: текущая Windows-учётная запись на этом компьютере'
@@ -56,6 +63,18 @@ try {
             $metadata = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
             [ordered]@{ endpoint=$metadata.endpoint; bucket=$metadata.bucket; publicBase=$metadata.publicBase } | ConvertTo-Json
         }
+        return
+    }
+    if ($Command -eq 'configure-openai') {
+        if (Test-Path -LiteralPath $openAiCredentialPath) { throw 'Локальный профиль OpenAI уже настроен.' }
+        $secret = Read-Host 'OpenAI API key (ввод скрыт)' -AsSecureString
+        if ($secret.Length -eq 0) { throw 'Пустой ключ OpenAI.' }
+        $null = New-Item -ItemType Directory -Path $connectionDirectory -Force
+        Protect-Path $connectionDirectory $true
+        $credential = New-Object System.Management.Automation.PSCredential('OpenAI', $secret)
+        $credential | Export-Clixml -LiteralPath $openAiCredentialPath -NoClobber
+        Protect-Path $openAiCredentialPath
+        Write-Output 'Ключ OpenAI сохранён в локальном профиле Windows.'
         return
     }
     if ($Command -eq 'configure') {
@@ -90,7 +109,11 @@ try {
         throw "Не найден частный Python: $pythonPath. Создайте venv и установите requirements.txt по README."
     }
     $childArgs = @((Join-Path $PSScriptRoot 'media.py'), $Command)
-    if ($Command -eq 'prepare-vk') {
+    if ($Command -eq 'generate-image') {
+        if (-not $PromptFile -or -not $File) { throw 'Для generate-image обязательны -PromptFile и -File.' }
+        $childArgs += @('--prompt-file', $PromptFile, '--file', $File, '--model', $Model, '--size', $Size, '--quality', $Quality)
+        if ($Source) { $childArgs += @('--source', $Source) }
+    } elseif ($Command -eq 'prepare-vk') {
         if (-not $OutputDirectory) { throw 'Укажите -OutputDirectory вне репозитория.' }
         $childArgs += @('--journal', $Journal, '--output-directory', $OutputDirectory, '--journal-url', $JournalUrl)
     } elseif ($Command -eq 'upload') {
@@ -107,7 +130,14 @@ try {
     $info.StandardOutputEncoding = [System.Text.Encoding]::UTF8
     $info.StandardErrorEncoding = [System.Text.Encoding]::UTF8
     $info.EnvironmentVariables['PYTHONUTF8'] = '1'
-    if ($Command -ne 'prepare-vk') {
+    if ($Command -eq 'generate-image' -and -not $env:OPENAI_API_KEY) {
+        if (-not (Test-Path -LiteralPath $openAiCredentialPath -PathType Leaf)) { throw 'Сначала настройте ключ для текущего пользователя через configure-openai.' }
+        try { $credential = Import-Clixml -LiteralPath $openAiCredentialPath }
+        catch { throw 'Windows DPAPI не смог открыть ключ OpenAI.' }
+        if ($credential -isnot [System.Management.Automation.PSCredential]) { throw 'Некорректный локальный профиль OpenAI.' }
+        $info.EnvironmentVariables['OPENAI_API_KEY'] = $credential.GetNetworkCredential().Password
+    }
+    if ($Command -in @('list','upload')) {
         if (-not (Test-Path -LiteralPath $credentialPath) -or -not (Test-Path -LiteralPath $configPath)) { throw 'Сначала выполните configure.' }
         $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
         Assert-Endpoint $config.endpoint
@@ -134,6 +164,7 @@ try {
     } finally {
         $info.EnvironmentVariables.Remove('ZERKALIUS_R2_ACCESS_ID')
         $info.EnvironmentVariables.Remove('ZERKALIUS_R2_SECRET')
+        $info.EnvironmentVariables.Remove('OPENAI_API_KEY')
         $process.Dispose()
         $credential = $null
         $secret = $null
