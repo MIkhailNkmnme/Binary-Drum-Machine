@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.070</title>
+<title>Zerkalius Маятнкъ — v1.071</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.070</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.071</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -408,6 +408,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <button id="bDiag" title="Ромбы построчно: у каждой решётки (чётная — вершины 0, ±2…, нечётная — ±1, ±3…) ромбы стоят рядами по диагоналям. В файле — правые диагонали ↘ и левые ↙ обеих решёток; строка — одна диагональ сверху вниз, диагонали слева направо. Текущий кадр, окно показа">Диагонали .txt</button>
     <a id="mirrorLink" href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
+    <button id="bViewSwing" aria-pressed="false" title="Качание плоского треугольника: семь делений основания, три шага вправо и влево. Вершина неподвижна, основание горизонтально.">Качанье</button>
     <button id="bViewUpsideDown" aria-pressed="false" title="Повернуть весь видимый холст на 180° вместе с осями, зеркалами и подписями. Меню остаются на месте.">Вверх ногами</button>
     <button id="bFaceRotate" title="Выделите прямоугольный фрагмент в Ячейках и поверните его на 180°. Окружающий рисунок сохраняется.">Выделение 180°</button>
     <button id="bFaceFlipY" title="Выделите прямоугольный фрагмент в Ячейках и отразите его верх ↔ низ. Окружающий рисунок сохраняется.">Верх ↔ низ</button>
@@ -551,11 +552,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="../_js/retriangle.js?v=1"></script>
 <script src="mayatnik-colour-auto.js?v=1024"></script>
 <link rel="stylesheet" href="mayatnik-cell-selection-view.css?v=543">
-<script src="mayatnik-view-rotation.js?v=837"></script>
+<script src="mayatnik-swing.js?v=1071"></script>
+<script src="mayatnik-view-rotation.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-view-rotation.css?v=600">
 <script src="mayatnik-face-transform.js?v=600"></script>
 <script src="mayatnik-pit-copies.js?v=939"></script>
-<script src="mayatnik-reset-state.js?v=1062"></script>
+<script src="mayatnik-reset-state.js?v=1071"></script>
 <script src="mayatnik-cell-selection.js?v=542"></script>
 <script src="mayatnik-cell-selection-view.js?v=542"></script>
 <script src="mayatnik-xorrom.js?v=871"></script>
@@ -630,7 +632,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-search-frame-store.js?v=1000"></script>
 <script src="mayatnik-template-follow.js?v=651"></script>
 <script src="mayatnik-template-batch.js?v=1024"></script>
-<script src="mayatnik-settings-library.js?v=1062"></script>
+<script src="mayatnik-settings-library.js?v=1071"></script>
 <script src="mayatnik-template-dim.js?v=524"></script>
 <script src="mayatnik-gif.js?v=1008"></script>
 <script src="mayatnik-recording-crop.js?v=1061"></script>
@@ -737,7 +739,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-phone-music.js?v=1033"></script>
 <script src="mayatnik-phone-host.js?v=1033"></script>
 <script src="../_js/hub-flow-core.js?v=1041"></script>
-<script src="mayatnik-flow.js?v=1046"></script>
+<script src="mayatnik-flow.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-layers.css?v=517">
 <script>
 (() => {
@@ -936,6 +938,32 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   viewRotation.set(!!st.viewUpsideDown);
   function viewRotationSync(){viewRotation.set(!!st.viewUpsideDown);$('bViewUpsideDown').setAttribute('aria-pressed',String(!!st.viewUpsideDown));notifyXorromField();}
   $('bViewUpsideDown').onclick=()=>{st.viewUpsideDown=!st.viewUpsideDown;viewRotationSync();save();queueDigits();};
+  var swingShownOwner=null,swingShownFrame=-1;
+  function swingReason(){
+    if(!f||!geo)return 'Сначала постройте поле.';
+    if(gpuBig?.large||rombP()>=0||joinedOn()||staggeredOn()||animatrixOn()||phoneOn()||bothOn()||st.edgeRhombOn||st.gifScaleStack||document.body.classList.contains('may-fold-active'))return 'Качание доступно для одиночного плоского треугольника: Биты или Цвета, без ромбов, сборки, свёртки и коллажа.';
+    if(ovlState().n||ovlFrozen||cellHidden()||templateItems.some(item=>{const layer=window.mayLayers?.get('template:'+item.id);return (item===colourTemplate?templateVisible:item.view?.visible!==false)&&!window.mayTemplateTransient?.hidden(item)&&layer?.visible!==false&&(layer?.opacity??item.view?.alpha??100)>0;}))return 'Для качания скройте наложение и шаблоны, раскройте ячейки. Сами данные сохраняются.';
+    return '';
+  }
+  function swingSync(frame=k){
+    const reason=st.viewSwing?swingReason():'',on=st.viewSwing&&!reason;
+    // A real displayed transition is one swing step, for arrows ±1 as well as player ×2.
+    // Repaints, unfinished GPU/paint frames and restoring F5 never advance it.
+    let index=((Math.trunc(Number(st.swingPhaseIndex)||0)%12)+12)%12;
+    if(on&&swingShownOwner===f&&!cacheRestoring&&sessionReady&&frame!==st.swingLastFrame){index=MayatnikSwing.advance(index,st.swingLastFrame,frame);st.swingPhaseIndex=index;st.swingLastFrame=frame;queueSession();}
+    else if(on&&!cacheRestoring&&sessionReady)st.swingLastFrame=frame;
+    let geometry=null;
+    if(on&&img){try{const semantic=visibleSemanticContext(false,true);geometry=MayatnikSwing.triangle(img.width,img.height,semantic.readBit);}catch(_){}}
+    const amount=on&&geometry?MayatnikSwing.STEPS[index]*geometry.width/(7*geometry.height):0;
+    viewRotation.setSwing(amount,on?cv:null,geometry?geometry.top/img.height:0);swingShownOwner=f;swingShownFrame=frame;
+    const button=$('bViewSwing');button.setAttribute('aria-pressed',String(!!st.viewSwing));
+    button.title=reason||'Качание плоского треугольника: семь делений основания; 0, −1, −2, −3, −2, −1, 0, +1, +2, +3, +2, +1. Вершина неподвижна, основание горизонтально. Один показанный переход — одно деление; назад — обратная фаза.';
+    document.body.classList.toggle('may-swing-active',!!on);
+    window.mayFlow?.invalidate();
+  }
+  $('bViewSwing').onclick=()=>{st.viewSwing=!st.viewSwing;if(st.viewSwing){st.swingStartFrame=k;st.swingLastFrame=k;st.swingPhaseIndex=0;}save();queueSession();if(f)draw();else $('bViewSwing').setAttribute('aria-pressed',String(!!st.viewSwing));};
+  window.maySwing={get:()=>({enabled:!!st.viewSwing,active:viewRotation.swinging,frame:swingShownFrame,start:Number(st.swingStartFrame)||0,step:MayatnikSwing.STEPS[st.swingPhaseIndex||0],shear:viewRotation.shear,reason:st.viewSwing?swingReason():''}),sync:()=>{if(f)draw();}};
+
 
   let autoVertical=0,fillBase=null,fillBits=null,pxBase=null,pxAnimPre=null,colReplay=[],colReplayPaint=null;   // Column strokes use field coordinates; their raster paint is rebuilt each draw.
   let chessLive=false,chessLayer=null,chessPrev=null,chessNext=0,chessScratch=null,chessRetry=0,chessSpare=null;   // v0.088: живой слой «Шахматки 0» (до первого draw)
@@ -1156,7 +1184,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function clearLargeBuildRequest(){largeBuildSerial++;setLargeBuildMessage();}
   const gpuSnapshot = MayatnikGpuSnapshot.create();
   const gpuCpuOchki = () => !!gpuBig && !!st.ochki;
-  const gpuManualCpu = () => !!gpuBig && (manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
+  const gpuManualCpu = () => !!gpuBig && (st.viewSwing&&!swingReason()||manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
   let gpuPaintRequests=0;
   const gpuPaintCpu = () => !!gpuBig&&(gpuPaintRequests>0||midPaintOn()||st.pitCopiesOn||st.paintEmptyNeighbours||st.paintIsolated0||st.paintIsolated1||st.paintFrameMode!=='off'&&!!paintRepeatSeed||!!st.manualSnake&&(rombP()>=0||!visibleSemanticCanLazy())||!!fillMask||!!templatePaintLayer||!!templateMatchLayer||!!manualPaintCurrent()?.layer||!!manualPaintCurrent()?.patterns||fillHistory.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e))||fillRedo.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e)));
   const gpuCpuDisplay = () => !!gpuBig&&!gpuBig.large&&(wolframActive()||!!window.mayGifScaleNeedsCpu?.()||st.heat&&rombP()<0||st.fillWholeColour&&fillMode||st.geomCenter||st.edgeRhombOn||joinedWhole()||st.joined180&&contoursOn()||st.view==='rgbNeighbours'||gpuCpuOchki()||gpuManualCpu()||gpuPaintCpu()||templateFollowActive());
@@ -3016,7 +3044,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(snakePathBlocked){snakePathOverlay?.clear();snakePathEntries=[];return;}
     if(snakePathOwner!==f){snakePathOwner=f;snakePathEpoch++;snakePathOverlay?.clear();}
     snakePathOverlay??=MayatnikSnakePaths.create({document,window,onSelect:value=>sequences.selectSnakePath?.(value)});
-    const wr=wrap.getBoundingClientRect(),viewport={left:wr.left+wrap.clientLeft,top:wr.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight},rect=cv.getBoundingClientRect(),unit=scale(),physical=p=>viewRotation.logicalPoint(p),project=(x,y)=>{const p=physical({x:rect.left+x*unit,y:rect.top+y*unit});return {x:p.x-viewport.left,y:p.y-viewport.top};},unproject=(x,y)=>{const p=physical({x:x+viewport.left,y:y+viewport.top});return {x:(p.x-rect.left)/unit,y:(p.y-rect.top)/unit};},paths=[];
+    const wr=wrap.getBoundingClientRect(),viewport={left:wr.left+wrap.clientLeft,top:wr.top+wrap.clientTop,width:wrap.clientWidth,height:wrap.clientHeight},rect=cv.getBoundingClientRect(),unit=scale(),physical=p=>viewRotation.screenPoint(p),project=(x,y)=>{const p=physical({x:rect.left+x*unit,y:rect.top+y*unit});return {x:p.x-viewport.left,y:p.y-viewport.top};},unproject=(x,y)=>{const p=viewRotation.logicalPoint({x:x+viewport.left,y:y+viewport.top});return {x:(p.x-rect.left)/unit,y:(p.y-rect.top)/unit};},paths=[];
     const a=manualSnakeLayer;if(st.manualSnake&&a?.path&&a.owner===f&&a.key===manualPaintKey()&&a.geometry===manualSnakeGeometry())paths.push(a.path);
     if(st.ochki&&st.ochkiSnake&&ochki?.snake&&ochki.owner===f&&ochki.key===key)for(let index=0;index<ochki.found.length;index++){
       const hit=ochki.found[index];if(!Number.isInteger(hit.i)||!hit.cells?.length)continue;
@@ -3676,8 +3704,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(gpuRaf){cancelAnimationFrame(gpuRaf);gpuRaf=0;}if(gpuCv)gpuCv.hidden=true;
       if(gpuBig.snapshotError?.key===ochkiKey())throw Error(gpuBig.snapshotError.message);
       if(!same){
-        cv.width=1;cv.height=1;gpuBig.cpuRaster=false;img=null;digitCanvas.hidden=true;
-        if(window.mayLayers){layerOriginalBase(cv);layerOriginalDigits(false,false);if(layerCpuService)layerCpuService.style.display='none';}cellSelectionView?.render();
+        if(!viewRotation.swinging||swingShownOwner!==f||!gpuBig.cpuRaster||!img){
+          cv.width=1;cv.height=1;gpuBig.cpuRaster=false;img=null;digitCanvas.hidden=true;
+          if(window.mayLayers){layerOriginalBase(cv);layerOriginalDigits(false,false);if(layerCpuService)layerCpuService.style.display='none';}cellSelectionView?.render();
+        }
         ochki=null;if(st.ochki){publishOchki(null,'Читаю полный GPU-кадр для точного поиска…');$('ochkiSum').textContent='Поиск: читаю полный GPU-кадр…';$('ochkiBox').hidden=false;}
         gpuReadSoon(0);status();$('stat').textContent+=' · читаю точный кадр…';notifyXorromField();return;
       }
@@ -9341,6 +9371,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   window.mayPixelExact=MayatnikPixelExactHost.create({viewport:true,minRows:8,getState:()=>st.gifScaleStack?{...st,zLimit:false}:st,getGeometry:pixelGeometry,onError:message=>pixelExactReport(message,!window.mayPixelExact?.policyFor().ok)});
   function pixelAlignSource(){
     if(!window.mayPixelExact||!geo||ovlLinked())return;
+    if(viewRotation.swinging){cv.style.translate='';return;}
     cv.style.translate='';const r=viewRotation.physicalRect(cv),d=DPR(),sign=viewRotation.enabled?-1:1;
     cv.style.translate=(sign*(Math.round(r.left*d)/d-r.left))+'px '+(sign*(Math.round(r.top*d)/d-r.top))+'px';
   }
@@ -9360,7 +9391,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   window.mayPointAxisX=()=>{
     if(!geo)return null;
     if(st.edgeRhombOn&&window.mayRombo?.get().available){const r=viewRotation.physicalRect($('edgeBelowWrap'));return r.left+r.width/2;}
-    const r=cv.getBoundingClientRect();return viewRotation.logicalPoint({x:r.left+displayAnchorX()*scale(),y:r.top}).x;
+    const r=cv.getBoundingClientRect();return viewRotation.screenPoint({x:r.left+displayAnchorX()*scale(),y:r.top}).x;
   };
   function stackMeeting(){
     const meeting=fixOvDraw.o?.meeting;
@@ -9374,7 +9405,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const meeting=field===cv?stackMeeting():null;
     if(meeting){
       const logical=cv.getBoundingClientRect(),s=scale();
-      const point=viewRotation.logicalPoint({x:logical.left+meeting.x*s,y:logical.top+meeting.y*s});
+      const point=viewRotation.screenPoint({x:logical.left+meeting.x*s,y:logical.top+meeting.y*s});
       return {x:point.x,top:Math.max(host.top,rect.bottom,point.y)};
     }
     const top=st.gifScaleStack&&st.anchorAxis!==false&&axesAtShownScale()?rect.top:rect.bottom;
@@ -9799,6 +9830,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   },true);
   function present(quick) {
     if(autoAxesSeekPending())return;
+    swingSync(k);
     window.mayPhone?.sync();
     axesScaleSync();
     if(window.mayPixelExact&&f&&geo){
@@ -10227,7 +10259,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const wr=wrap.getBoundingClientRect(),left=wr.left+wrap.clientLeft,top=wr.top+wrap.clientTop,width=wrap.clientWidth,height=wrap.clientHeight,d=DPR(),r=cv.getBoundingClientRect(),unit=scale()/a.rasterScale;
     canvas.hidden=false;canvas.style.display='';Object.assign(canvas.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});canvas.width=Math.max(1,Math.round(width*d));canvas.height=Math.max(1,Math.round(height*d));
     const ctx=canvas.getContext('2d');ctx.fillStyle=a.partial?'rgb(255,64,64)':'rgb(255,214,70)';
-    for(const q of a.indices){const px=r.left+(q%a.width-(a.packed?VX:0))*unit,py=r.top+Math.floor(q/a.width)*unit,P=viewRotation.logicalPoint({x:px,y:py}),Q=viewRotation.logicalPoint({x:px+unit,y:py+unit}),x=(Math.min(P.x,Q.x)-left)*d,y=(Math.min(P.y,Q.y)-top)*d,s=unit*d;if(x+s<=0||y+s<=0||x>=canvas.width||y>=canvas.height)continue;if(s<1)ctx.fillRect(Math.floor(x+s/2),Math.floor(y+s/2),1,1);else ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(x+s)-Math.floor(x),Math.ceil(y+s)-Math.floor(y));}
+    for(const q of a.indices){const px=r.left+(q%a.width-(a.packed?VX:0))*unit,py=r.top+Math.floor(q/a.width)*unit,P=viewRotation.screenPoint({x:px,y:py}),Q=viewRotation.screenPoint({x:px+unit,y:py+unit}),x=(Math.min(P.x,Q.x)-left)*d,y=(Math.min(P.y,Q.y)-top)*d,s=unit*d;if(x+s<=0||y+s<=0||x>=canvas.width||y>=canvas.height)continue;if(s<1)ctx.fillRect(Math.floor(x+s/2),Math.floor(y+s/2),1,1);else ctx.fillRect(Math.floor(x),Math.floor(y),Math.ceil(x+s)-Math.floor(x),Math.ceil(y+s)-Math.floor(y));}
   }
   var manualSnakeDisplayed=null;
   function manualSnakeFrameId(){return typeof testPattern!=='undefined'&&testPattern?.kind==='xor'&&typeof testXorInfo!=='undefined'&&testXorInfo?'xor:'+testXorInfo.frame:k;}
@@ -10745,7 +10777,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!semantic.current())throw Error('Поле изменилось во время сохранения; повторите перестроение.');
       semantic.release();semantic=null;
       const defaults=MayatnikResetState.defaults(),clean={};
-      for(const key of 'parity joined180 joined180Whole viewUpsideDown edgeRhombOn blackMirror fixMirror fixLow fixWide fixLowOut fixRot fixHor fixDown triTop thirds crossMirror triangleMapMirror triangleMapMask linesOn mirAxis ovl paintFrameMode paintSame paintSymmetric paintIsolated0 paintIsolated1 paintEmptyNeighbours pitCopiesOn manualSnake paintMid paintAxis paintMeet midOneOn midZeroOn cellSelection'.split(' '))clean[key]=defaults[key];
+      for(const key of 'parity joined180 joined180Whole viewUpsideDown viewSwing swingStartFrame swingLastFrame swingPhaseIndex edgeRhombOn blackMirror fixMirror fixLow fixWide fixLowOut fixRot fixHor fixDown triTop thirds crossMirror triangleMapMirror triangleMapMask linesOn mirAxis ovl paintFrameMode paintSame paintSymmetric paintIsolated0 paintIsolated1 paintEmptyNeighbours pitCopiesOn manualSnake paintMid paintAxis paintMeet midOneOn midZeroOn cellSelection'.split(' '))clean[key]=defaults[key];
       const algorithm=st.animatrixAlgorithm==='copyRows'?'two':st.animatrixAlgorithm;
       animatrixInstall(source,{...clean,animatrixAlgorithm:algorithm,inverted:false,invertAuto:false,animatrixColours:'inherit',animatrixTiming:'rows',animatrixCycles:1,animatrixCycleMode:'finite'});installed=true;
       const after=frameWorkOnly(paintSnapshot());if(!after)throw Error('Не удалось сохранить результат для повтора.');after.frameHost=frameHostSnapshot();
@@ -11813,7 +11845,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       }else axisStroke(G,{primary:a.colour});
     }
     const bitBounds={left:r.left,top:r.top,right:r.left+dispW()*s,bottom:r.top+dispH()*s,width:dispW()*s,height:dispH()*s};
-    const figureBounds=st.edgeRhombOn&&window.mayRombo?.get().available?viewRotation.physicalRect($('edgeBelowWrap')):viewRotation.enabled?MayatnikViewRotation.rect(bitBounds,viewRotation.center):bitBounds;
+    const figureBounds=st.edgeRhombOn&&window.mayRombo?.get().available?viewRotation.physicalRect($('edgeBelowWrap')):viewRotation.screenRect(bitBounds);
     if(axes.some(a=>a.autoDirection))axisMotionStart();
     manualLinesView.render({axes,viewport,fieldBounds:figureBounds,fieldOrigin:{x:r.left,y:r.top},scale:s,anchor:geo.anchor,rows:dispH(),selectedId:st.zlSelected||null,paintColour:paintToolColour('axisFillColour')});
   }
@@ -13895,6 +13927,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   cleanupAdd('folds','Свёртки','reset',()=>!!(foldTransport?.active||foldTransportV?.active),foldCloseAll);
   cleanupAdd('rowBuild','Построенная строка','select',()=>!!(rowBuildHighlight&&st.rowStepOutline!==false&&rowBuildHighlightDismissedOwner!==rowBuildHighlight.owner),()=>dismissRowBuildHighlight());
   cleanupAdd('thirds','Трети','reset',()=>!!st.thirds,()=>$('bThirds').onclick());
+  cleanupAdd('swing','Качанье','reset',()=>!!st.viewSwing,()=>$('bViewSwing').onclick());
   cleanupAdd('upsideDown','Вверх ногами','reset',()=>!!st.viewUpsideDown,()=>$('bViewUpsideDown').onclick());
   cleanupAdd('originalLayer','Свойства оригинала','reset',()=>!!window.mayLayers?.list().some(layer=>layer.kind==='original'&&(!layer.visible||layer.opacity!==100||layer.tint||layer.x||layer.y)),()=>window.mayLayers.reset('original'));
   cleanupAdd('digits','Цифры','reset',digitsOn,()=>{st.viewDigits=false;if(['digits','digitsOnly'].includes(st.view)){st.view='bits';$('view').value='bits';$('view').dispatchEvent(new Event('change'));}});
@@ -13923,7 +13956,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function flowAxis(){
     if(!f||!geo)return null;
     const m=mirState(),r=cv.getBoundingClientRect(),length=Math.max(24,m.len*r.width),a={x:r.left+m.ax*r.width,y:r.bottom};
-    const end=viewRotation.logicalPoint({x:a.x+length*Math.cos(m.ang),y:a.y+length*Math.sin(m.ang)}),start=viewRotation.logicalPoint(a);
+    const end=viewRotation.screenPoint({x:a.x+length*Math.cos(m.ang),y:a.y+length*Math.sin(m.ang)}),start=viewRotation.screenPoint(a);
     return {x:end.x,y:end.y,dx:(start.x-end.x)/length,dy:(start.y-end.y)/length};
   }
   // Grid centres are logical bits, never the RK subpixels used to rasterise diamonds.
@@ -13931,6 +13964,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const width=dispW(),half=staggeredOn()&&!(staggeredLayout().stride===1&&staggeredBlocksOn());
     const offset=rombP()===4?1:.5,unit=half ? .5 : 1,step=unit*s;
     const count=rombP()===4?Math.max(0,width-2):half?Math.max(0,Math.round(2*width)-1):Math.floor(width);
+    if(viewRotation.swinging){
+      if(count>4096)return {reason:'По сетке: увеличьте масштаб, чтобы было видно не более 4096 столбцов'};
+      const xs=[];for(let i=0;i<count;i++){const p=viewRotation.screenPoint({x:r.left+(offset+i*unit)*s,y:r.top});if(p.x>=clip.left&&p.x<clip.right)xs.push(p.x);}xs.sort((a,b)=>a-b);
+      return {xs,step,key:['swing',clip.left,clip.top,clip.width,clip.height,step,offset,count].join('|')};
+    }
     const rotated=viewRotation.enabled,pivot=viewRotation.center;
     const left=rotated?2*pivot.x-clip.right:clip.left,right=rotated?2*pivot.x-clip.left:clip.right;
     const origin=r.left+offset*s,lo=(left-origin)/step,hi=(right-origin)/step;
@@ -13951,7 +13989,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const reason=message=>({reason:message});
     if(!f||!geo)return reason('сначала постройте поле');
     if(gpuBig?.large)return reason('большое GPU-поле не имеет доступной маски; выберите до 4096 строк');
-    if(!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||gpuBig.pend?.length))return reason('ожидание точного кадра; при GPU-анимации остановите поле');
+    if(!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||gpuBig.pend?.length)||st.viewSwing&&(swingShownOwner!==f||swingShownFrame!==k))return {pending:true,reason:'ожидание точного показанного кадра'};
     if(window.mayPhone?.art())return reason('выберите Обои → Клетки');
     if(st.edgeRhombOn)return reason('сборка Ромбо: вернитесь к исходному полю');
     if(document.body.classList.contains('may-fold-active'))return reason('выключите свёртку поля');
@@ -13965,7 +14003,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(extra)return reason('скройте дополнительный слой «'+extra.name+'» без битовой маски');
     let semantic;try{semantic=visibleSemanticContext(false,true);}catch(_){return reason('ожидание полной семантики текущего кадра');}
     const r=cv.getBoundingClientRect(),clip=flowViewport(),s=scale(),width=img.width,height=img.height,original=window.mayLayers?.get('original');
-    const baseVisible=original?.visible!==false&&original?.opacity!==0,rotated=viewRotation.enabled,pivot=viewRotation.center;
+    const baseVisible=original?.visible!==false&&original?.opacity!==0,mapping=viewRotation.snapshot();
     const tags=contourBits?.length===width*height&&!paintBits&&!faceLayer&&!templateMatchLayer&&!pxHide.size?contourBits:null;
     const allFilters=st.view==='rgbNeighbours'?rgbNeighbourFilters():[],bw=st.view==='rgbNeighbours'?rgbNeighbourBWMode():0,filters=bw?[]:allFilters,staggered=staggeredOn();
     const filtered=filters.length?new Set(filters):null,shown=pxHide.size?pxColourView():img,pixels=new Uint32Array(shown.data.buffer,shown.data.byteOffset,shown.data.byteLength/4),raw=new Uint32Array(img.data.buffer,img.data.byteOffset,img.data.byteLength/4);
@@ -14001,8 +14039,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
           clipLeft:r.left+part.ox*s+dx,clipRight:r.left+(part.ox+templatePartWidth(part))*s+dx,clipTop:r.top+dy,clipBottom:r.top+dispH()*s+dy});
       }
     }
-    return {clip,grid:()=>flowGrid(r,clip,s),typeAt(x,y){
-      if(rotated){x=2*pivot.x-x;y=2*pivot.y-y;}
+    return {clip,preserveTraces:viewRotation.swinging,grid:()=>flowGrid(r,clip,s),typeAt(x,y){
+      ({x,y}=mapping.logicalPoint({x,y}));
       let type=baseVisible?read(x,y):0;
       if(mirror){const dx=x-ax,dy=y-ay;type|=read(ax+c2*dx+s2*dy,ay+s2*dx-c2*dy,true);}
       for(const t of templates){if(x<t.clipLeft||x>=t.clipRight||y<t.clipTop||y>=t.clipBottom||x<t.left||x>=t.left+t.width||y<t.top||y>=t.top+t.height)continue;
@@ -14503,7 +14541,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1062"></script>
+<script src="mayatnik-menu.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

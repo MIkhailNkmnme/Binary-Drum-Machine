@@ -162,11 +162,13 @@
   }
   function rebuild(time){
     if(!dirty||time-lastMask<100)return;
-    dirty=false;lastMask=time;scene=host.capture();const previous=unavailable;unavailable=scene.reason||'';
+    const nextScene=host.capture();
+    if(nextScene.pending&&scene&&!scene.reason){lastMask=time;dirty=true;return;}
+    dirty=false;lastMask=time;scene=nextScene;const previous=unavailable;unavailable=scene.reason||'';
     if(gridFlow&&!unavailable){
       const grid=scene.grid();unavailable=grid.reason||'';
       if(!unavailable){
-        if(gridKey!==grid.key){reset();emission=1;gridKey=grid.key;}
+        if(gridKey!==grid.key){if(!scene.preserveTraces)reset();emission=1;gridKey=grid.key;}
         gridSources=grid.xs;gridStep=grid.step;horizon=Math.max(0,scene.clip.top-cell-1);
       }
     }

@@ -16,13 +16,32 @@
     const records=new Map(),events=new WeakMap(),activePointers=new Set(),listeners=[];
     const originalHostRotate=host.style.rotate,originalHostOrigin=host.style.transformOrigin;
     let enabled=false,destroyed=false,frame=0,captureCanvas=null,pivot=center(host.getBoundingClientRect());
+    let swing=0,swingSource=null,swingTop=0,apexY=0,refreshing=false,neutral=false,swingDirty=true,swingGeometry='';
+    const Swing=globalThis.MayatnikSwing;
+    const swingRoots=new Map();
+    function logicalRect(value,node){
+      const unturned=transformed(node)?rect(value,pivot):value;
+      return swing&&!neutral&&node.closest?.('.may-swing-layer')?Swing.unrect(unturned,swing,apexY):unturned;
+    }
+    function screenPoint(p){const q=swing?Swing.point(p,swing,apexY):p;return enabled?point(q,pivot):q;}
+    function logicalPoint(p){const q=enabled?point(p,pivot):p;return swing?Swing.point(q,-swing,apexY):q;}
+    function restoreSwing(){for(const [node,r]of swingRoots){node.classList.remove('may-swing-layer');if(r.own)Object.defineProperty(node.style,'transform',r.own);else delete node.style.transform;node.style.transform=r.transform;node.style.transformOrigin=r.origin;}swingRoots.clear();}
+    function scanSwing(){
+      if(!swingSource)return;
+      for(const {node}of records.values()){
+        if(swingRoots.has(node)||node.parentElement?.closest(selector))continue;
+        const style=node.style,own=Object.getOwnPropertyDescriptor(style,'transform'),r={own,transform:style.transform,origin:style.transformOrigin};
+        swingRoots.set(node,r);node.classList.add('may-swing-layer');swingDirty=true;
+        Object.defineProperty(style,'transform',{configurable:true,get:()=>r.transform,set:value=>{if(value===r.transform)return;r.transform=value;style.setProperty('transform',value);swingDirty=true;refresh();}});
+      }
+    }
     function physicalRect(node){const r=records.get(node);return r?r.native():node.getBoundingClientRect();}
     function transformed(node){return enabled&&(host.contains(node)||!!node.closest?.('.may-rotation-world'));}
     function register(node){
       if(!node||records.has(node)||node===host)return;
       const own=Object.getOwnPropertyDescriptor(node,'getBoundingClientRect'),native=node.getBoundingClientRect.bind(node);
       const record={node,own,native,world:null,marker:null};records.set(node,record);
-      Object.defineProperty(node,'getBoundingClientRect',{configurable:true,value(){const value=native();return transformed(node)?rect(value,pivot):value;}});
+      Object.defineProperty(node,'getBoundingClientRect',{configurable:true,value(){return logicalRect(native(),node);}});
     }
     function move(record){
       const node=record.node;if(record.world||!node.isConnected)return;
@@ -43,42 +62,68 @@
       if(enabled)for(const record of records.values())move(record);
       // Capture code reads canvases inside a composite layer directly.
       for(const record of [...records.values()])for(const node of record.node.querySelectorAll?.('canvas,svg')||[])register(node);
+      scanSwing();
     }
     function restoreWorlds(){for(const record of records.values())if(record.world){if(record.node.isConnected&&record.marker.isConnected)record.marker.replaceWith(record.node);else record.marker.remove();record.world.remove();record.world=record.marker=null;}}
     function refresh(){
+      if(refreshing)return;refreshing=true;
+      try{
       pivot=center(host.getBoundingClientRect());
       for(const record of records.values())if(record.world){const origin=pivot.x+'px '+pivot.y+'px';if(record.world.style.transformOrigin!==origin)record.world.style.transformOrigin=origin;}
+      if(swingSource){
+        const sourceBounds=swingSource.getBoundingClientRect(),key=[sourceBounds.left,sourceBounds.top,sourceBounds.width,sourceBounds.height,swing,enabled,pivot.x,pivot.y].join('|');
+        if(!swingDirty&&key===swingGeometry)return;
+        // Measure once with the shear removed. The scroll viewport itself never
+        // shears, so its clipping, scrollbars and screen-space flows stay fixed.
+        neutral=true;
+        for(const [node,r]of swingRoots){node.style.setProperty('transform',r.transform);node.style.transformOrigin=r.origin;}
+        const source=swingSource.getBoundingClientRect();apexY=source.top+swingTop*source.height;
+        const boxes=[...swingRoots].map(([node,r])=>[node,r,node.getBoundingClientRect()]);
+        for(const [node,r,b]of boxes){node.style.transformOrigin='0 0';node.style.setProperty('transform',`matrix(1,0,${swing},1,${swing*(b.top-apexY)},0) ${r.transform||''}`);r.css=node.style.cssText;}
+        swingDirty=false;swingGeometry=[source.left,source.top,source.width,source.height,swing,enabled,pivot.x,pivot.y].join('|');
+      }
+      }finally{neutral=false;refreshing=false;}
     }
-    function tick(){frame=0;if(!enabled||destroyed)return;refresh();frame=win.requestAnimationFrame(tick);}
+    function tick(){frame=0;if((!enabled&&!swingSource)||destroyed)return;refresh();frame=win.requestAnimationFrame(tick);}
     function set(value){
       const next=!!value;if(next===enabled)return enabled;
       enabled=next;activePointers.clear();
       if(enabled){refresh();host.style.transformOrigin='50% 50%';host.style.rotate='180deg';scan();frame=win.requestAnimationFrame(tick);}
-      else{if(frame)win.cancelAnimationFrame(frame);frame=0;host.style.rotate=originalHostRotate;host.style.transformOrigin=originalHostOrigin;restoreWorlds();}
+      else{if(frame)win.cancelAnimationFrame(frame);frame=0;host.style.rotate=originalHostRotate;host.style.transformOrigin=originalHostOrigin;restoreWorlds();if(swingSource)frame=win.requestAnimationFrame(tick);}
+      refresh();
       return enabled;
+    }
+    function setSwing(amount,source,top=0){
+      const next=Number.isFinite(amount)?amount:0;
+      if(!source){swing=0;swingSource=null;restoreSwing();if(!enabled&&frame){win.cancelAnimationFrame(frame);frame=0;}return;}
+      if(swing!==next||swingSource!==source||swingTop!==top)swingDirty=true;
+      swing=next;swingSource=source;swingTop=top;scan();refresh();if(!frame)frame=win.requestAnimationFrame(tick);
     }
     function fieldTarget(target){return target===host||host.contains(target)||[...records.keys()].some(node=>node===target||node.contains(target));}
     function input(event){
-      if(!enabled||events.has(event))return;
+      if((!enabled&&!swingSource)||events.has(event))return;
       const active=activePointers.has(event.pointerId),field=fieldTarget(event.target);
       if(!active&&!field)return;
       // Menus can have transparent backings over the field. Consult their
       // existing geometry guard before replacing screen coordinates.
       if(!active&&options.ownsMenu?.(event))return;
       if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return;
-      refresh();const physical={x:event.clientX,y:event.clientY},logical=point(physical,pivot);events.set(event,physical);
-      for(const [key,value]of Object.entries({clientX:logical.x,clientY:logical.y,x:logical.x,y:logical.y,pageX:logical.x+win.scrollX,pageY:logical.y+win.scrollY,movementX:-event.movementX||0,movementY:-event.movementY||0}))Object.defineProperty(event,key,{configurable:true,value});
+      refresh();const physical={x:event.clientX,y:event.clientY},logical=logicalPoint(physical),movement=logicalPoint({x:physical.x+(event.movementX||0),y:physical.y+(event.movementY||0)});events.set(event,physical);
+      for(const [key,value]of Object.entries({clientX:logical.x,clientY:logical.y,x:logical.x,y:logical.y,pageX:logical.x+win.scrollX,pageY:logical.y+win.scrollY,movementX:movement.x-logical.x,movementY:movement.y-logical.y}))Object.defineProperty(event,key,{configurable:true,value});
       if(event.type==='pointerdown')activePointers.add(event.pointerId);
       if(event.type==='pointerup'||event.type==='pointercancel')activePointers.delete(event.pointerId);
     }
     for(const type of ['pointerdown','pointermove','pointerup','pointercancel','pointerover','pointerout','pointerenter','pointerleave','mousedown','mousemove','mouseup','click','dblclick','contextmenu','wheel']){win.addEventListener(type,input,{capture:true,passive:true});listeners.push(type);}
-    const observer=new win.MutationObserver(changes=>{if(changes.some(change=>[...change.addedNodes].some(node=>node.nodeType===1&&(node.matches(selector)||node.querySelector(selector)||node.closest('.may-rotation-world')))))scan();});observer.observe(doc.body,{childList:true,subtree:true});scan();
+    const observer=new win.MutationObserver(changes=>{if(changes.some(change=>[...(change.addedNodes||[])].some(node=>node.nodeType===1&&(node.matches(selector)||node.querySelector(selector)||node.closest('.may-rotation-world')))))scan();if(changes.some(change=>change.type==='attributes'&&swingRoots.has(change.target)&&swingRoots.get(change.target).css!==change.target.style.cssText))swingDirty=true;});observer.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});scan();
     return {
-      set,refresh,scan,register,physicalRect,logicalPoint:p=>enabled?point(p,pivot):p,
+      set,setSwing,refresh,scan,register,physicalRect,logicalPoint,screenPoint,
+      screenRect:r=>{const q=swing?Swing.rect(r,swing,apexY):r;return enabled?rect(q,pivot):q;},
+      snapshot(){const amount=swing,y=apexY,c={...pivot},turned=enabled;return {logicalPoint:p=>{const q=turned?point(p,c):p;return amount?Swing.point(q,-amount,y):q;}};},
       physicalPoint:event=>events.get(event)||{x:event.clientX,y:event.clientY},isFieldEvent:event=>events.has(event),
       get enabled(){return enabled;},get center(){return {...pivot};},
-      capture:canvas=>enabled?turnCanvas(canvas,()=>captureCanvas||(captureCanvas=doc.createElement('canvas'))):canvas,
-      destroy(){set(false);destroyed=true;observer.disconnect();for(const type of listeners)win.removeEventListener(type,input,true);for(const {node,own}of records.values()){if(own)Object.defineProperty(node,'getBoundingClientRect',own);else delete node.getBoundingClientRect;}records.clear();}
+      get swinging(){return !!swingSource;},get shear(){return swing;},
+      capture:canvas=>{const sheared=swing?Swing.capture(canvas,swing):canvas;return enabled?turnCanvas(sheared,()=>captureCanvas||(captureCanvas=doc.createElement('canvas'))):sheared;},
+      destroy(){setSwing(0,null);set(false);destroyed=true;observer.disconnect();for(const type of listeners)win.removeEventListener(type,input,true);for(const {node,own}of records.values()){if(own)Object.defineProperty(node,'getBoundingClientRect',own);else delete node.getBoundingClientRect;}records.clear();}
     };
   }
   return {LAYERS,center,point,rect,turnCanvas,mount};
