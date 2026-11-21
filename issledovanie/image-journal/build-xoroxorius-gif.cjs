@@ -34,35 +34,68 @@ const maskLeft = geometry.anchor + mask.x - axis - left;
 const maskPixels = Buffer.from(mask.data.data, 'base64url');
 const gif = encoder(width, height);
 
-function render(turn, reveal, delay) {
+// The triangular field stays fixed. Only the complete red mask rotates.
+const fieldBits = new Int8Array(cols * rows).fill(-1);
+for (let row = 0; row < rows; row++) {
+  for (let col = 0; col < cols; col++) {
+    const fieldCol = left + col;
+    if (fieldCol >= geometry.anchor - row - 1 && fieldCol <= geometry.anchor + row) {
+      fieldBits[row * cols + col] = field.val[row * field.W + fieldCol];
+    }
+  }
+}
+
+const pivotX = maskLeft + mask.width / 2;
+const pivotY = mask.y + mask.height / 2;
+const trail = new Uint8Array(cols * rows);
+const turns = 48;
+
+function rotatedMask(angle) {
+  const cells = new Uint8Array(cols * rows);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const dx = col + 0.5 - pivotX;
+      const dy = row + 0.5 - pivotY;
+      const sx = Math.floor(dx * cos + dy * sin + mask.width / 2);
+      const sy = Math.floor(-dx * sin + dy * cos + mask.height / 2);
+      if (sx >= 0 && sx < mask.width && sy >= 0 && sy < mask.height) {
+        cells[row * cols + col] = Number(maskPixels.readUInt32LE(4 * (sy * mask.width + sx)) !== 0);
+      }
+    }
+  }
+  return cells;
+}
+
+function render(cells, delay) {
   const pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     const row = Math.floor(y / unit) - 1;
     for (let x = 0; x < width; x++) {
-      const col = Math.floor(x / unit);
-      const fieldCol = col + left;
-      const inside = row >= 0 && row < rows && fieldCol >= geometry.anchor - row - 1 && fieldCol <= geometry.anchor + row;
-      let colour = backdrop;
-      if (inside) {
-        colour = palette[field.val[row * field.W + fieldCol]] || backdrop;
-        const mx = col - maskLeft;
-        const my = row - mask.y;
-        if (mx >= 0 && mx < mask.width && my >= 0 && my < reveal) {
-          const sx = turn ? mask.width - 1 - mx : mx;
-          const sy = turn ? mask.height - 1 - my : my;
-          if (maskPixels.readUInt32LE(4 * (sy * mask.width + sx))) colour = palette[2];
-        }
-      }
-      pixels.set(colour, 4 * (y * width + x));
-      pixels[4 * (y * width + x) + 3] = 255;
+      const cell = row * cols + Math.floor(x / unit);
+      const bit = trail[cell] ? 1 : fieldBits[cell];
+      const colour = cells[cell] ? palette[2] : palette[bit] || backdrop;
+      const pixel = 4 * (y * width + x);
+      pixels.set(colour, pixel);
+      pixels[pixel + 3] = 255;
     }
   }
   gif.add(pixels, delay);
 }
 
-render(false, mask.height, 125);
-for (let row = 4; row < mask.height; row += 2) render(true, row, 12);
-render(true, mask.height, 145);
+const original = rotatedMask(0);
+let previous = original;
+render(original, 35);
+for (let frame = 1; frame <= turns; frame++) {
+  const cells = frame === turns ? original : rotatedMask(frame * 2 * Math.PI / turns);
+  for (let cell = 0; cell < cells.length; cell++) {
+    // A vacated blue zero becomes its yellow anti-bit. Yellow ones stay yellow.
+    if (previous[cell] && !cells[cell] && fieldBits[cell] === 0) trail[cell] = 1;
+  }
+  render(cells, frame === turns ? 62 : 5);
+  previous = cells;
+}
 
 gif.finish().arrayBuffer().then(data => {
   writeFileSync(join(__dirname, 'xoroxorius-flip.gif'), Buffer.from(data));
