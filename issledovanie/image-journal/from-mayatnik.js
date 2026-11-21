@@ -2,6 +2,7 @@
   const wall = document.getElementById('mayatnik-frames');
   const status = document.getElementById('mayatnik-feed-status');
   const more = document.getElementById('mayatnik-more');
+  window.MayatnikJournal?.catalogBackup('backup/catalog.json?v=022');
   let cursor = null;
   function card(frame) {
     const video = frame.kind === 'video';
@@ -70,11 +71,18 @@
     status.textContent = 'Загрузка кадров…';
     try {
       const page = await window.MayatnikJournal.list(cursor);
-      wall.append(...page.frames.map(card));
+      const cards = page.frames.map(card);
+      if (cursor) wall.append(...cards);
+      else {
+        for (const media of wall.querySelectorAll('img, video')) window.MayatnikJournal.cancelMedia(media);
+        wall.replaceChildren(...cards);
+      }
       cursor = page.cursor;
-      more.hidden = !cursor;
-      more.textContent = 'Ещё кадры';
-      status.textContent = wall.children.length ? '' : 'Пока нет публикаций.';
+      more.hidden = !cursor && !page.backupDate;
+      more.textContent = page.backupDate ? 'Проверить новые кадры' : 'Ещё кадры';
+      status.textContent = page.backupDate
+        ? 'Резервная копия от ' + new Date(page.backupDate).toLocaleDateString('ru-RU') + '.'
+        : wall.children.length ? '' : 'Пока нет публикаций.';
     } catch {
       status.textContent = 'Не удалось загрузить список кадров. Повторите попытку.'
       more.textContent = 'Повторить';

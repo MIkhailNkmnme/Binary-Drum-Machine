@@ -124,7 +124,7 @@
       }
     }, { once: true });
 
-    original.href = link.href;
+    original.href = window.MayatnikJournal.mediaLink(link.href);
     error.hidden = true;
     clearStage();
     stage.append(media);

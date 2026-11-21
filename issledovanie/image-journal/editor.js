@@ -35,6 +35,7 @@
     retry.hidden = true;
     try {
       const withdrawn = new Set(await api.withdrawn());
+      for (const key of withdrawn) forgetCard(key);
       for (const template of document.querySelectorAll('template[data-archive-key]')) {
         const card = template.content.firstElementChild;
         card.dataset.journalKey = template.dataset.archiveKey;

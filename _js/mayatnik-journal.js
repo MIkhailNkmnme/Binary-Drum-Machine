@@ -7,12 +7,47 @@
   const mediaLoads = new WeakMap();
   let preferredMedia = '';
 
+  let backup = null;
+  let withdrawnKeys = new Set();
+
+  function catalogBackup(url) {
+    const source = new URL(url, location.href);
+    if (source.origin === location.origin) backup = {source};
+  }
+
+  async function readBackup() {
+    if (!backup) throw Error('Резервный каталог недоступен.');
+    if (!backup.loading) {
+      backup.loading = fetch(backup.source, {signal:AbortSignal.timeout(5500)}).then(async response => {
+        if (!response.ok) throw Error('Резервный каталог недоступен.');
+        const data = await response.json();
+        if (!Array.isArray(data.frames) || !Array.isArray(data.withdrawn) ||
+            !Array.isArray(data.media) || !Array.isArray(data.scenes) ||
+            !Number.isFinite(Date.parse(data.saved))) throw Error('Резервный каталог повреждён.');
+        backup.catalog = {...data, media:new Set(data.media), scenes:new Set(data.scenes)};
+        return backup.catalog;
+      }).catch(error => { backup.loading = null; throw error; });
+    }
+    const catalog = await backup.loading;
+    backup.active = true;
+    return catalog;
+  }
+
+  function mediaLink(source) {
+    const url = new URL(source, location.href);
+    const key = url.pathname.slice(1);
+    if (backup?.active && hosts.includes(url.origin) && backup.catalog.media.has(key)) {
+      return new URL(key, backup.source).href;
+    }
+    return url.href;
+  }
+
   // API availability does not guarantee that the browser can read media on that host.
   function loadMedia(media, source) {
     mediaLoads.get(media)?.();
     delete media.dataset.mediaFailed;
     media.closest('a.image-link')?.querySelector('.journal-media-failure')?.remove();
-    const url = new URL(source, location.href);
+    const url = new URL(mediaLink(source));
     const first = preferredMedia || preferred;
     const candidates = hosts.includes(url.origin)
       ? [first, ...hosts.filter(host => host !== first)].map(host => host + url.pathname + url.search)
@@ -134,6 +169,8 @@
     } finally { pending.abort(); }
   }
   window.MayatnikJournal = {
+    catalogBackup,
+    mediaLink,
     loadMedia,
     cancelMedia(media) { mediaLoads.get(media)?.(); },
     async publish(frame, blob, scene) {
@@ -185,6 +222,11 @@
       return result.data.url;
     },
     async scene(digest) {
+      if (backup?.active && backup.catalog.scenes.has(digest)) {
+        const response = await fetch(new URL('scenes/' + digest + '.txt', backup.source), {signal:AbortSignal.timeout(5500)});
+        if (!response.ok) throw Error('Параметры кадра не загрузились.');
+        return response.text();
+      }
       const {data} = await request('scene?' + new URLSearchParams({id:digest}), {}, 10000);
       return data.code;
     },
@@ -194,11 +236,28 @@
       return data;
     },
     async withdrawn() {
-      return (await readCatalog('editor/hidden', data => Array.isArray(data?.keys))).keys;
+      let keys;
+      try {
+        keys = (await readCatalog('editor/hidden', data => Array.isArray(data?.keys))).keys;
+      } catch {
+        keys = (await readBackup()).withdrawn;
+      }
+      withdrawnKeys = new Set(keys);
+      return keys;
     },
     async list(cursor) {
       const query = cursor ? '?' + new URLSearchParams({cursor}) : '';
-      return readCatalog('frames' + query, data => Array.isArray(data?.frames) && (data.cursor === null || typeof data.cursor === 'string'));
+      try {
+        return await readCatalog('frames' + query, data => Array.isArray(data?.frames) && (data.cursor === null || typeof data.cursor === 'string'));
+      } catch (error) {
+        if (cursor) throw error;
+        const backup = await readBackup();
+        const hidden = new Set([...backup.withdrawn, ...withdrawnKeys]);
+        return {
+          frames:backup.frames.filter(frame => !hidden.has(new URL(frame.url).pathname.slice(1))),
+          cursor:null, backupDate:backup.saved
+        };
+      }
     }
   };
 })();
