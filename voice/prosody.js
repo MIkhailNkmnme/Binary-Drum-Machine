@@ -2,7 +2,7 @@
    No speech model, recordings or automatic judgement of intelligibility. */
 (function(root){
   'use strict';
-  const version='text-prosody-v1.2.5';
+  const version='text-prosody-v1.2.6';
   const voicedStops=new Set(['b','bj','g','gj','d','dj']);
   const defaults=Object.freeze({mode:'speech',expressiveness:55,contour:'auto',transitionMs:20});
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -18,17 +18,19 @@
   };
   for(const language of ['ru','de'])for(const pattern of patterns[language]){const chars=Array.from(pattern),stress=chars.indexOf('+');dictionary[language].set(chars.filter(c=>c!=='+').join(''),stress);}
   const isWord=c=>!!c&&/^[a-zа-яёäöüß0-9]$/iu.test(c);
+  const isCountingWord=c=>!!c&&/^[\p{L}\p{M}0-9〇]$/u.test(c);
   function prepare(text,language,options){
     const config=normalize(options),raw=Array.from(text),letters=[],rawIndices=[],markers=[],manual=new Map(),characters=[];let offset=0;
+    const counting=root.VoiceDigits?.supports(language),isWordChar=counting?isCountingWord:isWord;
     for(const char of raw){characters.push({text:char,start:offset,end:offset+char.length});offset+=char.length;}
     const isVowel=c=>vowels[language]?.has(c?.toLowerCase());
     for(let i=0;i<raw.length;i++){
       const char=raw[i];
-      if(char==='+'){
+      if(!counting&&char==='+'){
         if(!isVowel(raw[i+1]))throw Error('Метка + ставится непосредственно перед гласной: зам+ок или з+амок.');
         if(manual.has(letters.length))throw Error('Повторная метка ударения у одной гласной.');manual.set(letters.length,true);markers.push(i);continue;
       }
-      if(char==='\u0301'){
+      if(!counting&&char==='\u0301'){
         const at=letters.length-1;if(!isVowel(letters[at])||rawIndices[at]!==i-1)throw Error('Знак ударения ставится сразу после гласной.');
         if(manual.has(at))throw Error('Повторная метка ударения у одной гласной.');manual.set(at,true);markers.push(i);continue;
       }
@@ -36,7 +38,7 @@
     }
     const words=[],stressed=new Set();let start=0;
     while(start<letters.length){
-      if(!isWord(letters[start])){start++;continue;}const numeric=/^[0-9]$/.test(letters[start]);let end=start+1;while(end<letters.length&&isWord(letters[end])&&/^[0-9]$/.test(letters[end])===numeric)end++;
+      if(!isWordChar(letters[start])){start++;continue;}const numeric=/^[0-9]$/.test(letters[start]);let end=start+1;while(end<letters.length&&isWordChar(letters[end])&&/^[0-9]$/.test(letters[end])===numeric)end++;
       const chars=letters.slice(start,end),word=chars.join(''),lower=word.toLowerCase(),explicit=[];for(let j=start;j<end;j++)if(manual.has(j))explicit.push(j);
       if(explicit.length>1)throw Error('В слове «'+word+'» допускается одна явная ударная гласная.');
       let at=null,source='unknown';
@@ -79,12 +81,12 @@
       unit.closedVoicedStop=isolated&&unit.kinds[0]==='stop'&&voicedStops.has(unit.score[0].id);
       unit.isolatedZ=isolated&&unit.kinds[0]==='fricative'&&['z','zj'].includes(unit.score[0].id);
       for(let j=0;j<unit.score.length;j++){
-        const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.enStressTokens?unit.enStressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
+        const token=unit.score[j],k=unit.kinds[j],stress=k==='vowel'&&(unit.stressTokens?unit.stressTokens.includes(j):marked||numericStress.includes(j));unit.stresses.push(stress);
         const factor={vowel:.72,stop:.80,affricate:.82,fricative:.80,sonorant:.82,trill:.82,rhotic:.82,silence:1}[k]||1;
         if(k==='silence'){
           const punctuation=unit.indices.map(i=>prepared.characters[i]?.text||'').join('');
           const spaces=connected&&language==='ru'&&/^ +$/.test(punctuation)?Math.min(punctuation.length,3):1;
-          token.duration=/[.!?…]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:]/u.test(punctuation) ? .12+.05*amount
+          token.duration=/[.!?…。]/u.test(punctuation)||connected&&/[\r\n]/u.test(punctuation) ? .24+.10*amount : /[,;:、]/u.test(punctuation) ? .12+.05*amount
             : connected&&/[—–]/u.test(punctuation) ? .12+.05*amount
             : /\s/u.test(punctuation) ? (connected ? .022 : .07)*spaces : connected ? .022 : .06;
         }else{
@@ -96,7 +98,7 @@
     }
     // Determine phrase boundaries before packing into 12-second worker chunks.
     const phrases=[];let phrase=[];
-    for(const unit of result){phrase.push(unit);if(unit.indices.some(i=>/[.!?…]/u.test(prepared.characters[i]?.text||''))){phrases.push(phrase);phrase=[];}}
+    for(const unit of result){phrase.push(unit);if(unit.indices.some(i=>/[.!?…。]/u.test(prepared.characters[i]?.text||''))){phrases.push(phrase);phrase=[];}}
     if(phrase.length)phrases.push(phrase);
     const contourValue=(type,t)=>type==='flat'?0:type==='question'?amount*(.3-.6*t+4*Math.max(0,(t-.65)/.35)):amount*(.9-3.1*t);
     for(const group of phrases){
@@ -115,7 +117,10 @@
     }
     const unknown=prepared.words.filter(w=>['unknown','en-rules'].includes(w.source)).map(w=>w.word),unique=[...new Set(unknown)];
     const timing=connected?' Связное чтение Codex: один пробел даёт 22 мс при скорости 1. Соседние знаки образуют одну паузу.':'';
-    return {units:result,config,words:prepared.words,note:(unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.':'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.')+timing};
+    const note=root.VoiceDigits?.supports(language)?'Произношение цифр задано фонемными рецептами. Каждая цифра читается отдельно.'
+      :unique.length?'Без автоматического ударения: '+unique.slice(0,8).join(', ')+(unique.length>8?' … ('+unique.length+' слов)':'')+'. Для неизвестных EN-слов применяются приближённые правила чтения.'
+      :'Ударения: явные метки, ё или небольшой открытый словарь. EN читает слова и английские цифры; служебные слова могут не иметь отдельного акцента.';
+    return {units:result,config,words:prepared.words,note:note+timing};
   }
   root.VoiceProsody=Object.freeze({version,defaults,normalize,prepare,apply});
 })(globalThis);

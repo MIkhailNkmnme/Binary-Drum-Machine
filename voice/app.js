@@ -6,7 +6,7 @@
   const SHARED_KEY=KEY+'.library',LAST_ENGINE_KEY=KEY+'.current-engine';
   const TEXT_FADE=.004;
   const engineStorageKey=id=>KEY+'.engine.'+id;
-  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceProsody||!globalThis.VoiceText||!globalThis.VoiceWaveform||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Компоненты редактора не загрузились. Обновите страницу после доставки файлов.';return;}
+  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceDigits||!globalThis.VoiceProsody||!globalThis.VoiceText||!globalThis.VoiceWaveform||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Компоненты редактора не загрузились. Обновите страницу после доставки файлов.';return;}
   const speechField=$('speech-text');
   const speechHighlight=$('text-cursor');
   const waveform=VoiceWaveform({
@@ -22,7 +22,7 @@
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
-  const SPEECH_EXAMPLES={ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
+  const SPEECH_EXAMPLES={fr:VoiceDigits.example,it:VoiceDigits.example,es:VoiceDigits.example,ja:VoiceDigits.example,ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
   const PREVIOUS_EXAMPLES={en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
   const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
   function letterTrial(count,separator,previous=false){
@@ -377,13 +377,13 @@
     textButton();
   }
   function showProsodyTrace(trace,duration=null,parts=0){
-    const p=trace.config,sources={manual:'вручную',yo:'ё',dict:'открытый словарь',unknown:'неизвестно, нейтрально',catalog:'каталожная цифра','en-dictionary':'EN · словарь произношения','en-rules':'EN · приближённые правила'},contours={auto:'по знакам препинания',flat:'без добавочного контура',question:'вопрос',statement:'утверждение'};
+    const p=trace.config,sources={manual:'вручную',yo:'ё',dict:'открытый словарь',unknown:'неизвестно, нейтрально',catalog:'каталожная цифра','count-word':'название цифры','en-dictionary':'EN · словарь произношения','en-rules':'EN · приближённые правила'},contours={auto:'по знакам препинания',flat:'без добавочного контура',question:'вопрос',statement:'утверждение'};
     $('prosody-note').textContent=(p.mode==='original'?'Исходно, без наложения просодии. ':'Речь · выразительность '+p.expressiveness+' · контур '+contours[p.contour]+' · связность '+p.transitionMs+' мс. ')+trace.note+(duration===null?'':' Фактически: '+duration.toFixed(3)+' с, частей '+parts+'. Параметры каждой части доступны в паспорте JSON.');
     const list=$('prosody-trace');list.replaceChildren();for(const word of trace.words){const item=document.createElement('li');item.textContent=word.word+' — '+(sources[word.source]||word.source)+(word.stressIndex===null?'':'; ударная гласная в позиции '+(word.stressIndex+1));list.append(item);}
   }
   async function prepareText(ticket,text){
     readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),language=$('speech-language').value,prosody=readSpeechProsody();
-    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});
+    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});
     const cached=[textCache,wholeTextCache].find(entry=>entry?.key===key);
     if(cached){
       textCache=cached;
@@ -403,7 +403,7 @@
       if(offset>VoiceText.maxSeconds*plan.rate)throw Error('Готовый круг превысил лимит '+VoiceText.maxSeconds+' секунд. Сократите текст.');
     }
     if(!offset||!actual)throw Error('Нет звучащего текста.');const samples=new Float32Array(offset);let at=0;for(const piece of pieces){samples.set(piece,at);at+=piece.length;}
-    const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
+    const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
     const cache={key,text,language,timeline,trace:plan.prosody,passport,result:{samples,sampleRate:plan.rate,duration:offset/plan.rate,engineId,engineVersion:actual.engineVersion,settings:clone(actual.settings),phones:clone(actual.phones),seed:actual.seed}};
     if(!active(ticket))return null;
     textCache=cache;
@@ -709,6 +709,7 @@
     state.speechLanguage=$('speech-language').value;
     if(factory)useSpeechExample();
     invalidate('Язык текстового чтения изменён. Нажмите «Плей».');
+    if(VoiceDigits.supports(state.speechLanguage))$('text-status').textContent='Введите цифры 0–9 или их названия. «Сброс текста» загружает счёт 1001100.';
   };
   $('text-example').onclick=()=>{useSpeechExample();invalidate('Исходный пример выбранного языка восстановлен.');$('text-status').textContent='Исходный текст восстановлен.';};
   function loadLetterTrial(mode){
@@ -815,7 +816,7 @@
       range.value=Number.isFinite(value)?value:1;
       update();
     }
-    state.speechLanguage=['ru','en','de'].includes(page.speechLanguage)?page.speechLanguage:'ru';
+    state.speechLanguage=Object.hasOwn(SPEECH_EXAMPLES,page.speechLanguage)?page.speechLanguage:'ru';
     const savedText=page.speechText;
     const currentText=typeof savedText==='string'&&(!isFactoryText(savedText,state.speechLanguage)||savedText===SPEECH_EXAMPLES[state.speechLanguage]);
     const oldTrial=state.speechLanguage==='ru'?Object.keys(OLD_LETTER_TRIALS).find(key=>savedText===OLD_LETTER_TRIALS[key]):null;
