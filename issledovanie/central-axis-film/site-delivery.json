@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-11-21T12:25:25.093663+00:00",
+  "version": "0.020",
+  "implementationCommit": "78f65154f556cbd5be914437554ec0da17977b67",
+  "youtube": "https://youtu.be/Jm2bn4uhH9Q",
+  "pagesRun": 44903397229,
+  "workerRun": 44903414416,
+  "checks": [
+    {
+      "name": "page",
+      "url": "https://1001100.online/issledovanie/image-journal/",
+      "status": 200,
+      "bytes": 54019,
+      "sha256": "3b71ba33cbdc89b2dcf656588be2a90c897fec3d4eeb232a25a622cabdbe6a21",
+      "matches": true
+    },
+    {
+      "name": "video",
+      "url": "https://1001100.online/issledovanie/central-axis-film/central-axis-templates-v2-amber-turquoise-1080p.mp4",
+      "status": 200,
+      "bytes": 6851631,
+      "sha256": "c1155deabc000281fe6bd462d33cd1b5186e026094c499760d839e1f51c8f684",
+      "matches": true
+    },
+    {
+      "name": "poster",
+      "url": "https://1001100.online/issledovanie/central-axis-film/central-axis-v2-preview.jpg",
+      "status": 200,
+      "bytes": 118125,
+      "sha256": "bca4c4e9aaf34541cc7becd8aabc50b96543acfcfda2c8593c0bc7820575f46c",
+      "matches": true
+    },
+    {
+      "name": "axis-30",
+      "url": "https://zerkalius-mayatnik-journal.zerkalius-1001100.workers.dev/image-journal-2026-11-21/axis-30-enamel.webp",
+      "status": 200,
+      "bytes": 532850,
+      "sha256": "4076645e2f79e7ea4264ffd978dd079cc7cca5d318022e1ebedea679ed98a418",
+      "matches": true
+    },
+    {
+      "name": "axis-42",
+      "url": "https://zerkalius-mayatnik-journal.zerkalius-1001100.workers.dev/image-journal-2026-11-21/axis-42-etching.webp",
+      "status": 200,
+      "bytes": 618908,
+      "sha256": "b2c9d07783ea81aa8439b1ee27a6d257b34c67a5f5429fa2001ca89041eb0035",
+      "matches": true
+    }
+  ],
+  "browserAcceptance": "User"
+}
