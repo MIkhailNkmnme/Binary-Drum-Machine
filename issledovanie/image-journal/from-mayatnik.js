@@ -38,7 +38,6 @@
       preview.width = frame.width;
       preview.height = frame.height;
     }
-    preview.src = frame.url;
     const caption = document.createElement('figcaption');
     const title = document.createElement('span');
     title.className = 'figure-name';
@@ -61,6 +60,7 @@
     }
     link.append(preview);
     figure.append(link, caption);
+    window.MayatnikJournal.loadMedia(preview, frame.url);
     return figure;
   }
   async function loadPage() {

@@ -1,6 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
 import { editorRoute, JournalEditor } from './editor.mjs';
-import { getFormat, uploadFile, freshFile, mediaType, serveMedia, uploadMedia } from './media.mjs';
+import { getFormat, uploadFile, freshFile, mediaType, isPublicMediaKey, serveMedia, uploadMedia } from './media.mjs';
 export { JournalEditor };
 
 const ORIGIN = 'https://1001100.online';
@@ -163,7 +163,7 @@ export default {
         const file = uploadFile(url.searchParams.get('format') || 'png');
         return file ? reply({file}) : reply({error:'Неизвестный формат файла.'},400);
       }
-      if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX))
+      if (['GET','HEAD'].includes(request.method) && isPublicMediaKey(url.pathname.slice(1)))
         return await serveMedia(request, env.MEDIA, url.pathname.slice(1), reply);
       if (url.pathname === '/mayatnik-api/media') return await uploadMedia(request,env,url,reply,reserveUpload,prepareMediaScene);
       if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);

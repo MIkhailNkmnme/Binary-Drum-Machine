@@ -2,8 +2,61 @@ const PREFIX = 'from-mayatnik/';
 const FILE = /^\d{13}-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\.(png|gif|mp4|webm)$/;
 const MIME = new Map([['png','image/png'], ['gif','image/gif'], ['mp4','video/mp4'], ['webm','video/webm']]);
 const MAX_MEDIA = 64 * 1024 * 1024;
+// Only assets already published in the journal may be read through the backup.
+const ARCHIVE_KEYS = new Set([
+  'image-journal-2026-11-20/axis-checks.png',
+  'image-journal-2026-11-20/axis-diagonal-preview.webp',
+  'image-journal-2026-11-20/axis-diagonal.png',
+  'image-journal-2026-11-20/axis-horizontal-preview.webp',
+  'image-journal-2026-11-20/axis-horizontal.png',
+  'image-journal-2026-11-20/axis-vertical-preview.webp',
+  'image-journal-2026-11-20/axis-vertical.png',
+  'image-journal-2026-11-20/code-wave-preview.webp',
+  'image-journal-2026-11-20/code-wave.webp',
+  'image-journal-2026-11-20/hub-xor-4k-preview.webp',
+  'image-journal-2026-11-20/hub-xor-4k.png',
+  'image-journal-2026-11-20/hub-xor-full.png',
+  'image-journal-2026-11-20/mirror-lattice-preview.webp',
+  'image-journal-2026-11-20/mirror-lattice.webp',
+  'image-journal-2026-11-20/pendulum-0004-copper-preview.webp',
+  'image-journal-2026-11-20/pendulum-0004-copper.png',
+  'image-journal-2026-11-20/pendulum-0004-rgb-preview.webp',
+  'image-journal-2026-11-20/pendulum-0004-rgb.png',
+  'image-journal-2026-11-20/pendulum-0004-turquoise-preview.webp',
+  'image-journal-2026-11-20/pendulum-0004-turquoise.png',
+  'image-journal-2026-11-20/pendulum-0004-wolfram-90-preview.webp',
+  'image-journal-2026-11-20/pendulum-0004-wolfram-90.png',
+  'image-journal-2026-11-20/pendulum-0064-copper-preview.webp',
+  'image-journal-2026-11-20/pendulum-0064-copper.png',
+  'image-journal-2026-11-20/pendulum-0064-rgb-preview.webp',
+  'image-journal-2026-11-20/pendulum-0064-rgb.png',
+  'image-journal-2026-11-20/pendulum-0064-turquoise-preview.webp',
+  'image-journal-2026-11-20/pendulum-0064-turquoise.png',
+  'image-journal-2026-11-20/pendulum-0064-wolfram-90-preview.webp',
+  'image-journal-2026-11-20/pendulum-0064-wolfram-90.png',
+  'image-journal-2026-11-20/pendulum-0176-copper-preview.webp',
+  'image-journal-2026-11-20/pendulum-0176-copper.png',
+  'image-journal-2026-11-20/pendulum-0176-rgb-preview.webp',
+  'image-journal-2026-11-20/pendulum-0176-rgb.png',
+  'image-journal-2026-11-20/pendulum-0176-turquoise-preview.webp',
+  'image-journal-2026-11-20/pendulum-0176-turquoise.png',
+  'image-journal-2026-11-20/pendulum-0176-wolfram-90-preview.webp',
+  'image-journal-2026-11-20/pendulum-0176-wolfram-90.png',
+  'image-journal-2026-11-20/pendulum-0508-copper-preview.webp',
+  'image-journal-2026-11-20/pendulum-0508-copper.png',
+  'image-journal-2026-11-20/pendulum-0508-rgb-preview.webp',
+  'image-journal-2026-11-20/pendulum-0508-rgb.png',
+  'image-journal-2026-11-20/pendulum-0508-turquoise-preview.webp',
+  'image-journal-2026-11-20/pendulum-0508-turquoise.png',
+  'image-journal-2026-11-20/pendulum-0508-wolfram-90-preview.webp',
+  'image-journal-2026-11-20/pendulum-0508-wolfram-90.png',
+  'image-journal-2026-11-20/rhombus-mosaic-preview.webp',
+  'image-journal-2026-11-20/rhombus-mosaic.webp',
+]);
+
 
 export function getFormat(file) { return FILE.exec(file || '')?.[1]; }
+export function isPublicMediaKey(key) { return isUploadKey(key) || ARCHIVE_KEYS.has(key); }
 export function isUploadKey(key) { return key.startsWith(PREFIX) && Boolean(getFormat(key.slice(PREFIX.length))); }
 export function uploadFile(format) {
   if (!MIME.has(format)) return null;
@@ -27,11 +80,13 @@ function byteRange(value, size) {
 }
 
 export async function serveMedia(request, bucket, key, reply) {
-  if (!isUploadKey(key)) return reply({}, 404);
+  if (!isPublicMediaKey(key)) return reply({}, 404);
   const rangeHeader = request.method === 'GET' && request.headers.get('Range');
   let item = request.method === 'HEAD' || rangeHeader ? await bucket.head(key) : await bucket.get(key);
   if (!item) return reply({}, 404);
-  const headers = new Headers({'Content-Type':MIME.get(getFormat(key.slice(PREFIX.length))),
+  const type = isUploadKey(key) ? MIME.get(getFormat(key.slice(PREFIX.length)))
+    : key.endsWith('.webp') ? 'image/webp' : 'image/png';
+  const headers = new Headers({'Content-Type':type,
     'Content-Length':String(item.size), 'Cache-Control':'public, max-age=31536000, immutable',
     'Accept-Ranges':'bytes', ETag:item.httpEtag, 'X-Content-Type-Options':'nosniff'});
   let status = 200;

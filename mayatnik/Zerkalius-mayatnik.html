@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.062</title>
+<title>Zerkalius Маятнкъ — v1.063</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -235,12 +235,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   body.may-embed #cv{width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;visibility:visible!important;opacity:1!important}
   body.may-embed #wrap > :not(#cv){display:none!important}
 </style>
-<script defer src="../_js/mayatnik-journal.js?v=4"></script>
+<script defer src="../_js/mayatnik-journal.js?v=5"></script>
 </head>
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.062</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.063</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -3524,6 +3524,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     target = t;
     if (k === t) { if(k!==colourFrameBefore)advancePaintColour('frame',Math.abs(k-colourFrameBefore));paintJumpFrom=null;draw(); return; }
     if(gpuBig?.large){cancelLargeSearch();gpuBig.seekTarget=t;}
+    frameSeekTarget=t;
     fast = true; t0 = 0; playing = true; syncTransportPlayUI(); next();
   }
   // v0.002: пиксель — одно 32-битное число (порядок байт RGBA в памяти little-endian), таблица на 6 сочетаний бит × цвет
@@ -3868,9 +3869,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       meetTp={k,tp};if(sec>=0){meetNow=false;meetSec=sec;meetPaintRun(px);meetAxisRun(px);meetSec=0;}}   // v0.202: новый кадр — заливка столбцов продолжается; v0.310 — и рост краски
     chessLiveApply(px);templateLockApply(px);contourEdits();blackMirrorApply(px);triangleMapMirrorApply(px);crossMirrorApply(px);pxAnimPre=pxHide.size&&st.animHl?px.slice():null;animHlApply(px);heatApply(px);   // после applyFill: при смене кадра правленые биты прошлого уже сброшены
     thirdApply(px);templateMatchApply(px);faceApply(px);parityFillRaster(px);manualPaintLayerApply(px);parityMask(px);if(st.thirds)lastShown={k,VX,RK,W:img.width,H:img.height,...templateThirdsSnapshot(px,thirdsSemantic)};   // Keep transient search colours out of future thirds and work snapshots.
-    paintRepeatDraw(px);manualSnakeApply(px);if(manualPaintOn()&&!manualPaintApply(px))return;if((st.paintIsolated0||st.paintIsolated1)&&!isolatedLivePaint(px))return;present();
-    pictureStats = {frame:k,...measured,figure:st.geomCenter?geomCenterFigure():null}; imageStats(); queueDigits();
-    status();
+    paintRepeatDraw(px);manualSnakeApply(px);if(manualPaintOn()&&!manualPaintApply(px))return;if((st.paintIsolated0||st.paintIsolated1)&&!isolatedLivePaint(px))return;
+    if(!autoAxesSeekPending()){
+      present();pictureStats = {frame:k,...measured,figure:st.geomCenter?geomCenterFigure():null}; imageStats(); queueDigits();status();
+    }
     if(templateFollowActive()){if(templateFollow.on)templateFollow.ensure();templateFrameSearchEnsure();}
   }
   // v0.130 → v0.132: «имел в виду не столбец, а покраска по столбцу заливкой». «Центр краской» — заливка «Столбов» от верха
@@ -7467,7 +7469,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return [autoAxesRevision,k,f?.W,f?.H,geo?.anchor,VX,VW,VH,st.view,!!st.joined180,st.noband,JSON.stringify(st.parity),!!st.inverted,st.invertKind,typeof bmGen==='number'?bmGen:0].join('|');
   }
   function autoAxesGet(){
-    if(!st.autoAxes||!f||!geo||navQuick()||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k))return null;
+    if(!st.autoAxes||!f||!geo||autoAxesSeekPending()||navQuick()||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k))return null;
     const key=autoAxesKey();if(autoAxesCache?.key===key)return autoAxesCache;if(autoAxesPending===key)return null;
     if(autoAxesWorker)autoAxesWorker.terminate();autoAxesWorker=null;autoAxesPending=key;
     $('autoAxesInfo').textContent='Ищу автооси ▼…';
@@ -7860,6 +7862,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     $('bitBalance').textContent = `Кадр ${frame} · записано ${num(bits)} бит · 0: ${num(zero)} (${percent(zero)}%) · 1: ${num(one)} (${percent(one)}%) · пусто: ${num(empty)}`;
   }
   function fieldCaption() {
+    if(autoAxesSeekPending())return;
     let el = fieldCaption.el;
     if (!el) { el = fieldCaption.el = document.createElement('div'); el.id = 'mayFieldCaption';
       Object.assign(el.style, {position:'fixed',zIndex:'6',pointerEvents:'none',whiteSpace:'nowrap',font:'12px monospace',color:'#b48cff',background:'#000c',padding:'1px 4px'}); document.body.append(el); }
@@ -7871,9 +7874,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     el.style.left = Math.max(w.left + 4, Math.min(r.right + 8, w.left + wrap.clientWidth - el.offsetWidth - 8)) + 'px';
   }
   function queueDigits(){
+    if(autoAxesSeekPending())return;
     if(gpuBig?.large){digitCanvas.hidden=true;if(window.mayLayers)layerOriginalDigits(false,false);return;}
     window.mayTemplateTransient?.sync();joinedBackground();
-    if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{if(gpuBig?.large){digitsRaf=0;return;}drawDigits();drawSymmetry();drawTemplate();drawFillPreview();drawGeomCenter();cellInk.draw();foldTransport?.render();foldTransportV?.render();parityOverlayMask();cellSelectionView?.render();window.mayTemplateTransient?.draw();rowBuildHighlightDraw();window.mayGifStackViewRefresh?.();});
+    if(!digitsRaf)digitsRaf=requestAnimationFrame(()=>{if(gpuBig?.large||autoAxesSeekPending()){digitsRaf=0;return;}drawDigits();drawSymmetry();drawTemplate();drawFillPreview();drawGeomCenter();cellInk.draw();foldTransport?.render();foldTransportV?.render();parityOverlayMask();cellSelectionView?.render();window.mayTemplateTransient?.draw();rowBuildHighlightDraw();window.mayGifStackViewRefresh?.();});
   }
   function drawDigits() {
     digitsRaf=0;
@@ -9157,6 +9161,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   addEventListener('may-cone-continue-change',frameTimelineSync);
   function status() {
+    if(autoAxesSeekPending())return;
     frameTimelineSync();
     edgeFlowButtonSync();
     if(edgeFlowOn())({jumps:edgeJumps,laps:edgeLaps}=MayatnikEdgeFlow.counts(st,k,f.W));
@@ -9674,6 +9679,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(event.key==='Escape'&&!event.isComposing&&!event.target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),dialog,[aria-modal="true"]'))dismissRowBuildHighlight();
   },true);
   function present(quick) {
+    if(autoAxesSeekPending())return;
     window.mayPhone?.sync();
     axesScaleSync();
     if(window.mayPixelExact&&f&&geo){
@@ -9824,6 +9830,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // прежде перерисовка съедала почти всё время, и 2024 вершины шли ~8 минут. Считается при этом каждая вершина;
   // «▶ Анимация» по-прежнему показывает каждый кадр (скорость 1 = вершина на кадр).
   let fast = false, t0 = 0, lastDraw = 0, drawMs = 0, edgeLooping = false;
+  // An explicit seek constructs intermediate model states without playing them.
+  // Fast Build has no seek destination and retains its per-frame paint barrier.
+  var frameSeekTarget=null;
+  function autoAxesSeekPending(){return frameSeekTarget!==null&&playing&&fast&&k!==frameSeekTarget&&autoAxesPaintOn();}
   function build({paused=false}={}) {
     if(phoneOn()){reset(false);goToImmediate(phoneScene().baseFrame);return true;}
     if(animatrixOn()&&!largeRows(Number($('rows').value))&&clampInt($('rows').value,8,4096,st.rows)!==st.rows)return animatrixResizeRows($('rows').value);
@@ -9904,9 +9914,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     if (gpuBig && gpuBig.busy) { next(); return; }   // v0.468: видеокарта ещё считает прошлую пачку — не копить очередь
     const colourFrameBefore=k;
-    if(templateFollowActive()||(gpuBig&&st.heat&&rombP()<0)||(fast&&autoAxesPaintOn())){if(!more())stop(false);}
+    if(templateFollowActive()||(gpuBig&&st.heat&&rombP()<0)||(fast&&autoAxesPaintOn()&&!autoAxesSeekPending())){if(!more())stop(false);}
     else if((st.ochki||st.manualSnake&&manualSnakeSession.current()?.anchor)&&gpuBig?.large&&gpuBig.seekTarget!==target){if(!more())stop(false);}
-    else if((autoAxesPaintOn()&&!st.turbo)||(st.ochki&&!gpuBig?.large)){
+    else if((!fast&&autoAxesPaintOn()&&!st.turbo)||(st.ochki&&!gpuBig?.large)){
       // Advance the model through the skipped frames. draw() requests the axes and paint for the destination.
       const steps=Math.max(1,stepSpeed());
       for(let n=0;n<steps;n++)if(!more()){stop(false);break;}
@@ -9980,6 +9990,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function cancelFrameNavigation(){templateNavigationSerial++;templateFollowTarget=null;templateFollowQueue=Promise.resolve();}
   function stop(cancelPending=true) {
+    frameSeekTarget=null;
     phoneNextAt=0;
     window.mayPhone?.stop();
     rowBuildCancel(); rowBuildProgress = '';
@@ -11488,12 +11499,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function autoAxesPaintOn(){return st.autoAxes===true&&st.autoAxesPaint===true;}
   // The automatic batch is paint-only: never expose it as a draggable/manual axis.
-  function livePaintAxes(){return [...(autoAxesPaintOn()?[{id:'auto-axes',automatic:true,paint:3,visible:true}]:[]),...manualPaintAxes()];}
+  function livePaintAxes(){return [...(autoAxesPaintOn()&&!autoAxesSeekPending()?[{id:'auto-axes',automatic:true,paint:3,visible:true}]:[]),...manualPaintAxes()];}
   function manualPaintOn(){return autoAxesPaintOn()||manualPaintAxes().some(a=>a.visible&&a.paint);}
   function manualPaintCellAt(x,y){const cell=displayCell((x+.5)/RK,(y+.5)/RK);return cell?displayPoint(cell.c,cell.r,cell.p):null;}
   let manualAxisPaintJob=null;
   function manualAxisColour(axis,bit){if(axis?.automatic)return paintToolColour(autoAxisColourIds[bit]);const value=axis?.['paintColour'+bit];return /^#[0-9a-f]{6}$/i.test(value||'')?value:paintToolColour('axisFillColour');}
-  function manualAxisPaintKey(){return JSON.stringify([manualPaintKey(),manualPatternGeometry(),manualPaintRevision,templateMatchRevision,!!st.inverted,st.invertKind,st.fillArea,$('fillMirror').checked,!!st.triangleMapMask,st.triangleMapSource,third?.part,autoAxesPaintOn()?autoAxesKey():null,livePaintAxes().map(a=>[a.id,a.kind,a.p,a.paint,a.visible]),...pxHide]);}
+  function manualAxisPaintKey(){return JSON.stringify([manualPaintKey(),manualPatternGeometry(),manualPaintRevision,templateMatchRevision,!!st.inverted,st.invertKind,st.fillArea,$('fillMirror').checked,!!st.triangleMapMask,st.triangleMapSource,third?.part,autoAxesPaintOn()&&!autoAxesSeekPending()?autoAxesKey():null,livePaintAxes().map(a=>[a.id,a.kind,a.p,a.paint,a.visible]),...pxHide]);}
   function manualAxisPaintCurrent(job){return manualAxisPaintJob===job&&job.owner===f&&job.key===manualAxisPaintKey()&&job.edit===fillHistory.at(-1);}
   async function autoAxesPaintData(current){
     const deadline=performance.now()+120000;
@@ -11566,6 +11577,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function manualPaintApply(px){
     if(!f||!geo||!img||!manualPaintOn()){manualAxisPaintJob=null;return true;}
+    if(autoAxesSeekPending()&&!manualPaintAxes().some(a=>a.visible&&a.paint)){manualAxisPaintJob=null;return true;}
     const key=manualAxisPaintKey(),edit=fillHistory.at(-1);
     if(!manualAxisPaintJob||manualAxisPaintJob.owner!==f||manualAxisPaintJob.key!==key||manualAxisPaintJob.edit!==edit){
       const job=manualAxisPaintJob={owner:f,key,edit,frame:k,axes:livePaintAxes().filter(a=>a.visible&&a.paint),layers:null,failed:false};
@@ -11577,6 +11589,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function manualAxisPaintPixel(q){const job=manualAxisPaintJob;if(!job?.layers||job.owner!==f||job.frame!==k)return 0;for(let i=job.layers.length-1;i>=0;i--){const layer=job.layers[i];if(layer.id==='auto-axes'&&!autoAxesPaintOn())continue;if(MayatnikAxisAutoPaint.has(layer.mask,q))return layer.colour;}return 0;}
   function manualAxisPaintFrameWait(){
     if(!f||!manualPaintOn())return false;
+    if(autoAxesSeekPending()&&!manualPaintAxes().some(a=>a.visible&&a.paint))return false;
     if(autoAxesPaintOn()&&gpuBig?.snapshotError){$('fillInfo').textContent='Автоокраска: '+gpuBig.snapshotError.message;stopFrameTransports();return true;}
     if(manualAxisPaintJob&&manualAxisPaintCurrent(manualAxisPaintJob)){if(autoAxesPaintOn()&&manualAxisPaintJob.failed){stopFrameTransports();return true;}return !!manualAxisPaintJob.pending;}
     if(!gpuBig?.snapshotPending)draw();

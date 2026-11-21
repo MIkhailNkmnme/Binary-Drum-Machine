@@ -4,6 +4,84 @@
   class Refused extends Error {}
   const mediaTickets = new WeakMap();
   const mediaFormats = new Map([['video/mp4', 'mp4'], ['video/webm', 'webm'], ['image/gif', 'gif']]);
+  const mediaLoads = new WeakMap();
+  let preferredMedia = '';
+
+  // API availability does not guarantee that the browser can read media on that host.
+  function loadMedia(media, source) {
+    mediaLoads.get(media)?.();
+    delete media.dataset.mediaFailed;
+    media.closest('a.image-link')?.querySelector('.journal-media-failure')?.remove();
+    const url = new URL(source, location.href);
+    const first = preferredMedia || preferred;
+    const candidates = hosts.includes(url.origin)
+      ? [first, ...hosts.filter(host => host !== first)].map(host => host + url.pathname + url.search)
+      : [url.href];
+    const ready = media.tagName === 'VIDEO' ? 'loadedmetadata' : 'load';
+    let index = 0, timer, observer, finished = false, watching = false;
+    function dispose() {
+      finished = true;
+      clearTimeout(timer);
+      observer?.disconnect();
+      media.removeEventListener(ready, loaded);
+      media.removeEventListener('error', failed);
+      if (mediaLoads.get(media) === dispose) mediaLoads.delete(media);
+    }
+    function loaded() {
+      if (finished) return;
+      const host = new URL(candidates[index]).origin;
+      if (hosts.includes(host)) preferredMedia = host;
+      clearTimeout(timer);
+      observer?.disconnect();
+      // Keep video error handling after metadata: playback can still fail later.
+      if (media.tagName !== 'VIDEO') dispose();
+    }
+    function watch() {
+      if (finished) return;
+      watching = true;
+      clearTimeout(timer);
+      timer = setTimeout(failed, 12000);
+    }
+    function failed() {
+      if (finished) return;
+      if (!media.isConnected) { dispose(); return; }
+      clearTimeout(timer);
+      if (++index < candidates.length) {
+        media.src = candidates[index];
+        if (watching) watch();
+      } else {
+        dispose();
+        const link = media.closest('a.image-link');
+        if (link) {
+          media.dataset.mediaFailed = '';
+          const notice = document.createElement('span');
+          notice.className = 'journal-media-failure';
+          notice.textContent = 'Не удалось загрузить изображение или видео по двум адресам. Откройте карточку, чтобы повторить.';
+          link.append(notice);
+        }
+        media.dispatchEvent(new Event('journal-media-error'));
+      }
+    }
+    mediaLoads.set(media, dispose);
+    media.addEventListener(ready, loaded);
+    media.addEventListener('error', failed);
+    // A lazy image has no network deadline until it approaches the viewport.
+    if (media.loading === 'lazy' && typeof IntersectionObserver === 'function') {
+      observer = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          observer.disconnect();
+          watch();
+        }
+      }, {rootMargin:'300px'});
+      observer.observe(media);
+    } else watch();
+    if (media.src !== candidates[0]) media.src = candidates[0];
+    else if (media.complete) {
+      if (media.naturalWidth) loaded();
+      else failed();
+    }
+    return dispose;
+  }
 
   async function request(path, options, timeout, first = preferred, signal) {
     for (const host of [first, ...hosts.filter(other => other !== first)]) {
@@ -33,6 +111,8 @@
     throw Error('Не удалось связаться с журналом по двум адресам.');
   }
   window.MayatnikJournal = {
+    loadMedia,
+    cancelMedia(media) { mediaLoads.get(media)?.(); },
     async publish(frame, blob, scene) {
       const {data, host} = await request('ready', {}, 4500);
       if (!data.file) throw Error('Сервис журнала не выдал адрес для кадра.');

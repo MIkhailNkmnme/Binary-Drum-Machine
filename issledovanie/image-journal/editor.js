@@ -24,7 +24,10 @@
   }
   function forgetCard(key) {
     for (const card of document.querySelectorAll('[data-journal-key]')) {
-      if (card.dataset.journalKey === key) card.remove();
+      if (card.dataset.journalKey === key) {
+        for (const media of card.querySelectorAll('img, video')) api.cancelMedia(media);
+        card.remove();
+      }
     }
   }
   async function loadArchive() {
@@ -43,6 +46,7 @@
           else link.dataset.journalKey = key;
         }
         template.replaceWith(card);
+        for (const media of card.querySelectorAll('img[src], video[src]')) api.loadMedia(media, media.src);
       }
     } catch { retry.hidden = false; }
   }

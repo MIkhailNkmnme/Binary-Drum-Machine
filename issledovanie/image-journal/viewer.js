@@ -14,8 +14,11 @@
   const expand = document.getElementById('viewer-expand');
   const mayatnik = '/mayatnik/Zerkalius-mayatnik.html';
   let selected = null;
+  let cancelMedia = null;
 
   function clearStage() {
+    cancelMedia?.();
+    cancelMedia = null;
     const video = stage.querySelector('video');
     stage.replaceChildren();
     if (video) {
@@ -113,7 +116,7 @@
       const height = video ? media.videoHeight : media.naturalHeight;
       if (width && height) size.textContent = width + ' × ' + height + ' пикс.';
     }, { once: true });
-    media.addEventListener('error', () => {
+    media.addEventListener('journal-media-error', () => {
       if (stage.contains(media)) {
         clearStage();
         error.textContent = video ? 'Не удалось воспроизвести видео.' : 'Картинка не загрузилась.';
@@ -130,7 +133,7 @@
     viewer.dataset.label = name.textContent;
     document.dispatchEvent(new Event('journal-image-open'));
     describeScene(link, figure);
-    media.src = link.href;
+    cancelMedia = window.MayatnikJournal.loadMedia(media, link.href);
   });
 
   const outsideImage = target => !target.closest('img, video, .viewer-info, .viewer-toolbar');

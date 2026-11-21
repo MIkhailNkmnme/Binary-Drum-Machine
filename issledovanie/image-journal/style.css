@@ -67,6 +67,8 @@ figure { min-width: 0; margin: 0; }
 .image-link { display: block; background: #0b0e12; border: 1px solid var(--line); }
 .image-link:hover { border-color: var(--accent); }
 figure :is(img, video) { display: block; width: 100%; height: auto; }
+figure [data-media-failed] { display: none; }
+.journal-media-failure { display: block; padding: 1.2rem; color: var(--muted); }
 .image-link video { pointer-events: none; }
 figcaption { padding-top: .56rem; }
 .figure-name { display: block; font-weight: 700; }
