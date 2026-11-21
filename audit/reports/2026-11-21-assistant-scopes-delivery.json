@@ -1,0 +1,36 @@
+{
+  "commit": "3b67c36acc508726a7a01923a2d4ced8eed35aac",
+  "deployment_run": 44853345492,
+  "deployment_status": "success",
+  "manuals": "Genesis README.ru.md, README.md and synthesis-instruction.html unchanged",
+  "task": "ПОМ-003",
+  "version": "1.053",
+  "http": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "tools/local-assistant/server.py",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "tools/local-assistant/README.md",
+      "http": 200,
+      "matches": true
+    }
+  ],
+  "review": "Source read; running health confirms page-scopes-v1; UI and tests not run"
+}
