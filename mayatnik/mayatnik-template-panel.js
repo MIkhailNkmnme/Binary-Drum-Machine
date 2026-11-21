@@ -147,11 +147,11 @@
     const known=new Set(engine?.allIds()||[]),ids=snapshot.nodes.filter(n=>n.kind==='template'&&(!folder||parents.has(n.parent))&&known.has(n.id)).map(n=>n.id);
     return {ids,name:folder?snapshot.nodes.find(n=>n.kind==='folder'&&n.id===folder)?.name||'Шаблоны':'Все шаблоны'};
   }
-  function axis512Bank(){try{return root.MayatnikAxis512||root.opener?.MayatnikAxis512||null;}catch(_){return null;}}
+  function axisArchive(){try{return root.MayatnikAxisArchive||root.opener?.MayatnikAxisArchive||null;}catch(_){return null;}}
   async function editAxis512Palette(title,scope){
     try{
       const ids=scope();
-      if(!ids.length)throw Error('В папке нет шаблонов набора «512»');
+      if(!ids.length)throw Error('В папке нет шаблонов центральной оси');
       const colors=await engine.action(ids,'axis-512-read-palette');
       root.MayatnikAxis512PaletteDialog.open({title,colors,async apply(changes){
         const target=scope();
@@ -162,7 +162,7 @@
     }catch(error){reportError(error);}
   }
   function editAxis512FolderPalette(){
-    const folder=current,bank=axis512Bank();
+    const folder=current,bank=axisArchive();
     if(!folder||!bank)return;
     const node=folderNodes().find(item=>item.id===folder);
     if(node)editAxis512Palette('Цвета папки «'+node.name+'»',()=>folderSearchScope(folder).ids.filter(id=>bank.isId(id)));
@@ -173,17 +173,18 @@
     let pack=root.MayatnikXorAxesTemplates;try{pack ||= root.opener?.MayatnikXorAxesTemplates;}catch(_){}const entries=pack?.entries?.()||[];
     // Wait for the complete bank: an early partial host must not consume migration.
     const ids=entries.map(e=>e.id);if(ids.length===28&&ids.every(id=>known.has(id)))store.seedGroup?.('folder:xor-axes','Оси XOR',ids);
-    const bank=axis512Bank();
-    if(bank?.groups?.length===12&&!store.hasSeeded?.(bank.folderId)){
-      // The host loads the complete archive in one assignment. A restored work
-      // may intentionally hide some entries, so seed only the present ones.
-      const groups=bank.groups.map(group=>({...group,ids:group.ids.filter(id=>known.has(id))}))
-        .filter(group=>group.ids.length);
-      if(groups.length)store.seedTree?.(bank.folderId,'512',groups);
-    }
-    if(bank?.atlasGroup&&!store.hasSeeded?.(bank.atlasGroup.id)){
-      const group=bank.atlasGroup;
-      store.seedGroup?.(group.id,group.name,group.ids.filter(id=>known.has(id)),bank.folderId);
+    const present=group=>({...group,ids:group.ids.filter(id=>known.has(id))});
+    for(const bank of axisArchive()?.banks||[]){
+      if(!store.hasSeeded?.(bank.folderId)){
+        // A restored work may intentionally hide some entries.
+        const groups=(bank.groups.length?bank.groups:[bank.atlasGroup]).filter(Boolean)
+          .map(present).filter(group=>group.ids.length);
+        if(groups.length)store.seedTree?.(bank.folderId,bank.folder,groups);
+      }
+      if(bank.groups.length&&bank.atlasGroup&&!store.hasSeeded?.(bank.atlasGroup.id)){
+        const group=present(bank.atlasGroup);
+        store.seedGroup?.(group.id,group.name,group.ids,bank.folderId);
+      }
     }
     const key=allIds.join('\u0000');if(key!==libraryKey){store.reconcile(allIds);libraryKey=key;}
   }
@@ -213,8 +214,8 @@
     syncFrameSearch();
     sectionSave.parentElement.hidden=activeTab==='shared'||activeTab==='music'||activeTab==='gif';
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
-    const bank=axis512Bank();
-    folderPaletteButton.hidden=activeTab!=='templates'||!bank||!path.some(node=>node.id===bank.folderId);
+    const banks=axisArchive()?.banks||[];
+    folderPaletteButton.hidden=activeTab!=='templates'||!path.some(node=>banks.some(bank=>node.id===bank.folderId));
     folderPaletteButton.disabled=busy;
     compositionButton.hidden=activeTab!=='templates';
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
@@ -383,7 +384,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1088');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1089');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -500,7 +501,7 @@
     syncCardFrameSearch(card,item.id);
     card.classList.toggle('mtp-dark-preview',darkPreview(item.hex));card.querySelector('.mtp-preview').style.background=/^#[0-9a-f]{6}$/i.test(item.palette?.background||'')?item.palette.background:'';card.querySelector('.mtp-name').textContent=templateName(item.name);
     const size=metrics?.size??(item.parts||[]).filter(p=>p.width>0&&p.height>0).map(p=>Math.max(1,Math.round(p.width/rk))+'×'+Math.max(1,Math.round(p.height/rk))).join(' · ');
-    const archive=axis512Bank()?.isId(item.id),counts=key?.axis512Counts;
+    const archive=axisArchive()?.isId(item.id),counts=key?.axis512Counts;
     const action=archive?' — добавить копию на поле. ':key?.compound?' — вставить сборный шаблон на поле; «Разобрать» — в его группе «Копии / библиотека». ':' — выделить все вхождения. ';
     const help=counts?'0 и 1 — количество пикселей соответствующего бита исходной записи.':archive?'Размер взят из сохранённой записи.':'1 — заполненные клетки; 0 — замкнутые внутренние пустоты. Внешние выемки и фон не учитываются.';
     card.querySelector('.mtp-size').textContent=(key?.compound?'Сборный · '+key.compound.members.length+' · ':'')+size;
@@ -516,7 +517,7 @@
     }
     if(metricActive||metricTasks.size)metricTimer=root.setTimeout(metricsPump,0);
   }
-  function queueMetrics(card){if(!card?._item||!open||activeTab!=='templates')return;const key=previewKey(card._item);if(axis512Bank()?.isId(card._item.id)||key&&typeof key==='object'&&metricsCache.has(key))return;
+  function queueMetrics(card){if(!card?._item||!open||activeTab!=='templates')return;const key=previewKey(card._item);if(axisArchive()?.isId(card._item.id)||key&&typeof key==='object'&&metricsCache.has(key))return;
     if(metricActive?.card===card&&metricActive.key===key)return;metricTasks.set(card,key);if(!metricTimer)metricTimer=root.setTimeout(metricsPump,0);}
   function queueVisibleMetrics(){if(!panel||!open||activeTab!=='templates')return;const area=panel.getBoundingClientRect();for(const card of grid.querySelectorAll('[data-template-id]')){const r=card.getBoundingClientRect();if(r.bottom>=area.top&&r.top<=area.bottom)queueMetrics(card);}}
   function drawPreview(card){
@@ -538,7 +539,7 @@
   }
   let atlasDialog;
   function openAtlasOccurrences(item){
-    const bank=axis512Bank(),occurrences=bank?.occurrences?.(item.id)||[];
+    const bank=axisArchive()?.bankFor(item.id),occurrences=bank?.occurrences(item.id)||[];
     if(!occurrences.length)return;
     if(!atlasDialog){
       atlasDialog=doc.createElement('dialog');
@@ -554,13 +555,18 @@
     for(const [frame,x,y,crosses]of occurrences){
       const row=doc.createElement('li'),frameId=bank.frameId(frame);
       const label='Кадр '+String(frame).padStart(3,'0');
-      const link=button(label,'Показать '+label.toLowerCase()+' в папке кадров',()=>{
+      const sourceHref=bank.sourceFrameHref?.(frame);
+      const link=sourceHref?doc.createElement('a'):button(label,'Показать '+label.toLowerCase()+' в папке кадров',()=>{
         const node=store.snapshot().nodes.find(n=>n.kind==='template'&&n.id===frameId);
         if(!node)return;
         atlasDialog.close();query='';searchInput.value='';
         navigateFolder(node.parent);render();cards.get(frameId)?.scrollIntoView?.({block:'nearest'});
       });
-      link.disabled=!engine.allIds().includes(frameId);
+      if(sourceHref){
+        link.href=sourceHref;link.target='_blank';link.rel='noopener';
+        link.textContent=label;link.title='Открыть исходный кадр Маятника с полем в 1024 строки';
+        link.style.color='inherit';
+      }else link.disabled=!engine.allIds().includes(frameId);
       const position=doc.createElement('span');
       position.textContent='x '+x+' · y '+y+(crosses?' · через границу вырезки':'');
       row.append(link,position);list.append(row);
@@ -571,7 +577,7 @@
   function templateCard(item){
     const card=doc.createElement('article');card.className='mtp-card';card.draggable=true;card.dataset.templateId=item.id;
     card.addEventListener('dragstart',e=>beginDrag(e,'template',item.id));dropTarget(card,'template',item.id);
-    const archive=axis512Bank()?.isId(item.id);
+    const archive=axisArchive()?.isId(item.id);
     const select=async()=>{try{folderSelection='';await engine.select(item.id);schedule();}catch(e){reportError(e);}};
     const choose=button('',archive?'Добавить копию шаблона на поле':'Выделить все вхождения шаблона на поле',()=>{
       if(archive||previewKey(card._item||item)?.compound){folderSelection='';return act(item.id,'insert');}
@@ -584,7 +590,7 @@
     choose.addEventListener('contextmenu',e=>{e.preventDefault();rename();});
     name.addEventListener('click',e=>{e.stopPropagation();if(e.detail<2&&!previewKey(card._item||item)?.compound){if(archive)select();else choose.click();}});name.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();rename();});name.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();if(archive)select();else choose.click();}});
     const row=doc.createElement('div');row.className='mtp-card-actions';
-    const occurrences=axis512Bank()?.occurrences?.(item.id)||[];
+    const occurrences=axisArchive()?.bankFor(item.id)?.occurrences(item.id)||[];
     if(occurrences.length)row.append(headingButton('Кадры, в которых встречается фигура ('+occurrences.length+')',
       'M5 7H19M5 12H19M5 17H19M7 5V19M17 5V19',()=>openAtlasOccurrences(card._item||item)));
     if(previewKey(item)?.compound)row.append(headingButton('Найти вхождения сборного шаблона на поле','M10 5A5 5 0 1 0 10 15A5 5 0 1 0 10 5ZM14 14L19 19',async()=>{try{await engine.select(item.id);schedule();}catch(e){reportError(e);}}));

@@ -1,0 +1,286 @@
+'use strict';
+
+const { createHash } = require('node:crypto');
+const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
+const path = require('node:path');
+const { crc32, deflateSync, inflateSync } = require('node:zlib');
+const Core = require('../../mayatnik/mayatnik-core.js');
+const Construction = require('../../mayatnik/mayatnik-construction.js');
+
+const SIZE_LIMIT = 4096;
+const RECTANGLE_LIMIT = 12_000_000;
+const FRAME_INTERVAL = 4;
+const SETTINGS = { rows: 1024, steps: 1024, mode: 'pend', bg: 'empty' };
+const EXACT_LINK = 'https://1001100.online/mayatnik/Zerkalius-mayatnik.html?chisto&n=1024&s=1024&k={frame}&mode=pend';
+const SITE_FILE = path.resolve(__dirname, '../../mayatnik/mayatnik-axis-1024-data.js');
+const BANK_FILE = path.resolve(__dirname, '../../mayatnik/mayatnik-axis-512-data.js');
+const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function getPalette() {
+  const match = readFileSync(BANK_FILE, 'utf8').match(/^\s*palette: *(\[[^\r\n]+\]), *$/m);
+  if (!match) throw new Error('Cannot read the existing 512 bank palette');
+  const palette = JSON.parse(match[1]);
+  if (palette[0] !== '#000000' || palette[1] !== '#ffe969' || palette[2] !== '#00008b') {
+    throw new Error('The bit roles differ from the existing 512 bank palette');
+  }
+  return palette;
+}
+
+function digest(data) {
+  return createHash('sha256').update(data).digest('hex');
+}
+
+function pngChunk(name, data) {
+  const namedData = Buffer.concat([Buffer.from(name, 'ascii'), data]);
+  const size = Buffer.alloc(4);
+  size.writeUInt32BE(data.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE(crc32(namedData));
+  return Buffer.concat([size, namedData, checksum]);
+}
+
+function png(width, height, compressed, palette) {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 2;
+  header[9] = 3;
+  return Buffer.concat([
+    PNG_SIGNATURE,
+    pngChunk('IHDR', header),
+    pngChunk('PLTE', Buffer.concat(palette.slice(0, 3).map(colour => Buffer.from(colour.slice(1), 'hex')))),
+    pngChunk('tRNS', Buffer.from([0, 255, 255])),
+    pngChunk('IDAT', compressed),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
+function scanlineStride(width) {
+  return 1 + Math.ceil(width / 4);
+}
+
+function framePixels({ W, H, val }) {
+  const stride = scanlineStride(W);
+  const rows = Buffer.alloc(H * stride);
+  const bits = [0, 0];
+  for (let y = 0; y < H; y++) {
+    const start = y * W;
+    const row = y * stride + 1;
+    for (let x = 0; x < W; x++) {
+      const bit = val[start + x];
+      if (bit < 0) continue;
+      bits[bit]++;
+      rows[row + (x >> 2)] |= (2 - bit) << (6 - 2 * (x & 3));
+    }
+  }
+  return { rows, bits };
+}
+
+function compressRows(rows) {
+  const compressed = deflateSync(rows);
+  if (!inflateSync(compressed).equals(rows)) throw new Error('Packed PNG rows differ from their input');
+  return compressed;
+}
+
+function collect(field, center, frame, seen, queue, visit) {
+  const { W, H, val } = field;
+  let hits = 0;
+  let axisCells = 0;
+  let assignedAxisCells = 0;
+
+  for (let seedY = 0; seedY < H; seedY++) {
+    const seed = seedY * W + center;
+    const bit = val[seed];
+    if (bit < 0) continue;
+    axisCells++;
+    if (seen[seed] === frame) continue;
+
+    seen[seed] = frame;
+    queue[0] = seed;
+    let count = 1;
+    let xMin = center;
+    let xMax = center;
+    let yMin = seedY;
+    let yMax = seedY;
+    for (let head = 0; head < count; head++) {
+      const offset = queue[head];
+      const y = Math.floor(offset / W);
+      const x = offset - y * W;
+      if (x === center) assignedAxisCells++;
+      xMin = Math.min(xMin, x);
+      xMax = Math.max(xMax, x);
+      yMin = Math.min(yMin, y);
+      yMax = Math.max(yMax, y);
+      const left = Math.max(x - 1, 0);
+      const right = Math.min(x + 1, W - 1);
+      const fromY = Math.max(y - 1, 0);
+      const toY = Math.min(y + 1, H - 1);
+      for (let ny = fromY; ny <= toY; ny++) {
+        const row = ny * W;
+        for (let neighbor = row + left; neighbor <= row + right; neighbor++) {
+          if (seen[neighbor] !== frame && val[neighbor] === bit) {
+            seen[neighbor] = frame;
+            queue[count++] = neighbor;
+          }
+        }
+      }
+    }
+
+    const width = xMax - xMin + 1;
+    const height = yMax - yMin + 1;
+    const stride = scanlineStride(width);
+    const rows = Buffer.alloc(height * stride);
+    for (let n = 0; n < count; n++) {
+      const offset = queue[n];
+      const y = Math.floor(offset / W);
+      const x = offset - y * W - xMin;
+      rows[(y - yMin) * stride + 1 + (x >> 2)] |= (2 - bit) << (6 - 2 * (x & 3));
+    }
+    visit({ width, height, bit, count, rows }, [frame, xMin, yMin]);
+    hits++;
+  }
+
+  if (assignedAxisCells !== axisCells) throw new Error('The axis is not fully covered in frame ' + frame);
+  return { hits, axisCells };
+}
+
+function packRle({ width, height, rows }) {
+  const stride = scanlineStride(width);
+  const runs = [];
+  let colour = rows[1] >> 6;
+  let length = 0;
+  for (let y = 0; y < height; y++) {
+    const row = y * stride + 1;
+    for (let x = 0; x < width; x++) {
+      const index = (rows[row + (x >> 2)] >> (6 - 2 * (x & 3))) & 3;
+      if (index !== colour || length === 32) {
+        runs.push(((length - 1) << 3) | colour);
+        colour = index;
+        length = 0;
+      }
+      length++;
+    }
+  }
+  runs.push(((length - 1) << 3) | colour);
+  return Buffer.from(runs).toString('base64');
+}
+
+function writeLocal(folder, file, data) {
+  const destination = path.join(folder, file);
+  try {
+    writeFileSync(destination, data, { flag: 'wx' });
+  } catch (error) {
+    if (error.code !== 'EEXIST' || !readFileSync(destination).equals(Buffer.from(data))) throw error;
+  }
+}
+
+function build(folder) {
+  const palette = getPalette();
+  const geometry = Construction.geometry(SETTINGS);
+  const field = Core.field(geometry.W, SETTINGS.rows, SETTINGS.bg, geometry.anchor);
+  const seen = new Uint16Array(field.val.length);
+  const queue = new Int32Array(field.val.length);
+  const source = { ...SETTINGS, first: FRAME_INTERVAL, last: SETTINGS.steps, interval: FRAME_INTERVAL,
+    connectivity: 8, bitRule: 'same', axis: 'center-column', link: EXACT_LINK };
+  const size = [field.W, field.H];
+  const center = geometry.anchor;
+  const frames = [];
+  const figures = [];
+  const siteRecords = [];
+  const byMask = new Map();
+  let occurrences = 0;
+  let webOccurrences = 0;
+
+  mkdirSync(path.join(folder, 'frames'), { recursive: true });
+  mkdirSync(path.join(folder, 'figures'), { recursive: true });
+
+  for (let frame = 1; frame <= SETTINGS.steps; frame++) {
+    Construction.step(field, geometry, SETTINGS, frame - 1);
+    if (frame % FRAME_INTERVAL !== 0) continue;
+    const file = 'frames/frame-' + String(frame).padStart(4, '0') + '.png';
+    const frameImage = framePixels(field);
+    const image = png(...size, compressRows(frameImage.rows), palette);
+    writeLocal(folder, file, image);
+    const selected = [0, 0];
+    let webHits = 0;
+    const { hits, axisCells } = collect(field, center, frame, seen, queue, (shape, occurrence) => {
+      const { width, height, bit, count, rows } = shape;
+      selected[bit] += count;
+      const signature = width + 'x' + height + ':' + digest(rows);
+      let entry = byMask.get(signature);
+      if (!entry) {
+        const id = figures.length + 1;
+        const name = 'figures/figure-' + String(id).padStart(4, '0') + '.png';
+        const counts = bit === 0 ? [count, 0] : [0, count];
+        const withinSiteLimits = count <= SIZE_LIMIT && width * height <= RECTANGLE_LIMIT;
+        const packed = compressRows(rows);
+        const figureImage = png(width, height, packed, palette);
+        writeLocal(folder, name, figureImage);
+        const item = { id, width, height, counts, file: name, sha256: digest(figureImage),
+          siteId: withinSiteLimits ? siteRecords.length + 1 : null, occurrences: [] };
+        figures.push(item);
+        if (withinSiteLimits) siteRecords.push([width, height, counts, packRle(shape), item.occurrences]);
+        entry = { item, packed };
+        byMask.set(signature, entry);
+      } else if (!inflateSync(entry.packed).equals(rows)) {
+        throw new Error('Different normalized masks have the same digest in frame ' + frame);
+      }
+
+      entry.item.occurrences.push(occurrence);
+      if (entry.item.siteId !== null) webHits++;
+    });
+    if (selected.some((count, bit) => count > frameImage.bits[bit])) {
+      throw new Error('The selected components exceed the source pixels in frame ' + frame);
+    }
+    occurrences += hits;
+    webOccurrences += webHits;
+    frames.push({ frame, file, sha256: digest(image), link: EXACT_LINK.replace('{frame}', frame),
+      bits: frameImage.bits, selected, axisCells, occurrences: hits, webOccurrences: webHits });
+
+    if (frame % 128 === 0) console.log('Collected ' + frames.length + ' frames through ' + frame);
+  }
+
+  const localFigures = figures.length - siteRecords.length;
+  const localOccurrences = occurrences - webOccurrences;
+  const counts = { frames: frames.length, figures: figures.length, occurrences,
+    webFigures: siteRecords.length, webOccurrences, localFigures, localOccurrences };
+  const sumOccurrences = records => records.reduce((sum, record) => sum + record.occurrences.length, 0);
+  if (counts.frames !== SETTINGS.steps / FRAME_INTERVAL || sumOccurrences(figures) !== occurrences ||
+      sumOccurrences(figures.filter(record => record.siteId !== null)) !== webOccurrences) {
+    throw new Error('Frame and figure indices contain different occurrence totals');
+  }
+  const limits = { maxOccupiedBits: SIZE_LIMIT, maxBoundingArea: RECTANGLE_LIMIT };
+  const index = { version: 1, source, size, center, palette: palette.slice(0, 3), limits, counts, frames, figures };
+  writeLocal(folder, 'index.json', JSON.stringify(index, null, 2) + '\n');
+  const csv = ['id,site_id,frame,x,y,width,height,bit0,bit1,file'];
+  for (const item of figures) {
+    for (const [frame, x, y] of item.occurrences) {
+      csv.push([item.id, item.siteId, frame, x, y, item.width, item.height, ...item.counts, item.file].join(','));
+    }
+  }
+  writeLocal(folder, 'occurrences.csv', csv.join('\n') + '\n');
+
+  const lines = [
+    '/* Generated by tools/mayatnik-journal/build-axis-1024.cjs. */',
+    'window.MayatnikAxis1024Data = {',
+    '  version: 1,',
+    '  size: ' + JSON.stringify(size) + ',',
+    '  center: ' + center + ',',
+    '  source: ' + JSON.stringify(source) + ',',
+    '  palette: ' + JSON.stringify(palette) + ',',
+    '  records: [',
+    ...siteRecords.map(record => '    ' + JSON.stringify(record) + ','),
+    '  ]',
+    '};',
+    ''
+  ];
+  writeFileSync(SITE_FILE, lines.join('\n'));
+  console.log(JSON.stringify(counts));
+}
+
+if (process.argv.length !== 3 || typeof crc32 !== 'function') {
+  console.error('Usage with Node.js 22 or newer: node tools/mayatnik-journal/build-axis-1024.cjs <atlas-directory>');
+  process.exitCode = 1;
+} else {
+  build(path.resolve(process.argv[2]));
+}

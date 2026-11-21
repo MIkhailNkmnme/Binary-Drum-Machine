@@ -1,3 +1,4 @@
+<!-- ПОМ-035 · v1.089 · Атлас центральной оси на 1024 строках. -->
 <!-- ПОМ-033 / ПОМ-034 · v1.088 · Атлас 512 и редактор композиций. -->
 <!-- ПОМ-032 · v1.087 · Папка «512» и независимые палитры шаблонов. -->
 <!-- МЕД-ПНГ · v1.056 · Скачивание PNG и публикация кадра в журнал. -->
@@ -88,7 +89,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.088</title>
+<title>Zerkalius Маятнкъ — v1.089</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -242,7 +243,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.088</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.089</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -690,7 +691,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-user-templates.js?v=1"></script>
 <script src="mayatnik-axis-512-data.js?v=1087"></script>
 <script src="mayatnik-axis-512-atlas-data.js?v=1088"></script>
-<script src="mayatnik-axis-512.js?v=1088"></script>
+<script src="mayatnik-axis-1024-data.js?v=1089"></script>
+<script src="mayatnik-axis-512.js?v=1089"></script>
 <script src="mayatnik-template-matcher.js?v=1024"></script>
 <script src="mayatnik-template-limit.js?v=650"></script>
 <script src="mayatnik-cell-area.js?v=658"></script>
@@ -7120,7 +7122,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function loadUserLibrary(items){
     const local=Array.isArray(items)?items.filter(t=>!String(t.id).startsWith('standard:')&&!removedTemplateIds.has(t.id)):[],bundled=[...(window.MayatnikXorAxesTemplates?.entries()||[]),...(window.MayatnikUserTemplates||[])].filter(t=>!removedTemplateIds.has(t.id));
     // Сохранённая пользователем версия с тем же id имеет приоритет.
-    const archive=window.MayatnikAxis512,byId=new Map(local.map(item=>[item.id,item]));
+    const archive=window.MayatnikAxisArchive,byId=new Map(local.map(item=>[item.id,item]));
     const archived=(archive?.entries()||[]).filter(t=>!removedTemplateIds.has(t.id)).map(entry=>{
       const saved=byId.get(entry.id);
       if(!saved)return entry;
@@ -7347,7 +7349,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function axis512FolderEntries(ids){
     if(!Array.isArray(ids))return [];
-    const wanted=new Set(ids),archive=window.MayatnikAxis512;
+    const wanted=new Set(ids),archive=window.MayatnikAxisArchive;
     return templateLibrary.filter(t=>wanted.has(t.id)&&archive?.isId(t.id)&&(t.shape.axis512Packed||t.shape.axis512Palette&&t.shape.axisParts));
   }
   function axis512FolderColours(ids){
@@ -7359,7 +7361,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   async function changeAxis512FolderColours(ids,value){
     const entries=axis512FolderEntries(ids),changes=axis512Changes(value);
     if(!entries.length||!Object.keys(changes).length)return false;
-    const archive=window.MayatnikAxis512,replacements=[];
+    const archive=window.MayatnikAxisArchive,replacements=[];
     for(const entry of entries){
       const shape=entry.shape,axis512Palette={...shape.axis512Palette,...changes};
       if(shape.axis512Packed){
@@ -7741,7 +7743,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     scope:()=>[templateMatchKey(),templateMatchRows(),templateMatchRevision,bmGen,st.templateMaxArea].join('|'),
     filterActive:()=>!!f&&!playing&&!!(window.MayatnikTemplatePanel?.isOpen()||window.MayatnikTemplatePanel?.hasWindow()),
     visibleInstances:id=>templateItems.some(t=>t.libraryId===id&&t.view?.visible!==false&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
-    listedInstances:id=>id.startsWith('xor-axes:')||id.startsWith('kraftwerk:')||window.MayatnikAxis512?.isId(id)||templateItems.some(t=>t.libraryId===id&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
+    listedInstances:id=>id.startsWith('xor-axes:')||id.startsWith('kraftwerk:')||window.MayatnikAxisArchive?.isId(id)||templateItems.some(t=>t.libraryId===id&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
     visibility:id=>{const placed=templateItems.filter(t=>t.libraryId===id);return {placed:placed.length,visible:placed.some(t=>t.view?.visible!==false),skipSelection:!!templateLibrary.find(t=>t.id===id)?.skipSelection};},
     instances:id=>templateItems.filter(t=>t.libraryId===id&&templateItemAllowed(t)).map(t=>t.id),shapeInstances:templateShapeInstances,
     choose(id){$('templateList').value=id;librarySelection();},stop(){stop();target=k;},
@@ -15091,7 +15093,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-folders.js?v=1088"></script>
 <script src="mayatnik-library-export.js?v=748"></script>
 <script src="mayatnik-gif-library.js?v=896"></script>
-<script src="mayatnik-template-panel.js?v=1088"></script>
+<script src="mayatnik-template-panel.js?v=1089"></script>
 <script src="mayatnik-music-panel.js?v=881"></script>
 <script src="mayatnik-menu-dock.js?v=887c"></script>
 <script src="mayatnik-menu-options.js?v=636"></script>

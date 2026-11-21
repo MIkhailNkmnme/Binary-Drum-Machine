@@ -1,12 +1,30 @@
-/* Native templates from the complete central-axis recording, packed by visible band. */
-(function(root){
+/* Packed templates and atlas figures from the two central-axis collections. */
+(function(root, createBank){
   'use strict';
-  const packed = root.MayatnikAxis512Data;
-  if (packed?.version !== 1) return;
+  const recorded = root.MayatnikAxis512Data;
+  const recordedAtlas = root.MayatnikAxis512AtlasData;
+  const match = recorded?.source?.sha256 && recordedAtlas?.sourceSha256 === recorded.source.sha256
+    && recordedAtlas.palette?.join() === recorded.palette.join();
+  const generated = root.MayatnikAxis1024Data;
+  const banks = [
+    createBank(root, recorded, '512', match ? recordedAtlas : null),
+    createBank(root, generated, '1024', generated)
+  ].filter(Boolean);
+  const bankFor = id => banks.find(bank => bank.isId(id));
+  root.MayatnikAxisArchive = {
+    banks, bankFor,
+    isId: id => !!bankFor(id),
+    entries: () => banks.flatMap(bank => bank.entries()),
+    shape: (id, palette) => bankFor(id)?.shape(id, palette)
+  };
+})(window,function(root, packed, folder, atlas){
+  'use strict';
+  if (packed?.version !== 1) return null;
 
-  const folderId = 'folder:axis-512';
+  const folderId = 'folder:axis-' + folder;
+  const prefix = 'axis-' + folder;
   const tileSide = 64;
-  const sourceCentre = packed.size[0] / 2;
+  const sourceCentre = packed.center ?? packed.size[0] / 2;
   const records = new Map();
   const groups = [];
   const number = (value, digits) => String(value).padStart(digits, '0');
@@ -38,41 +56,41 @@
     group.ids.push(id);
   }
 
-  const frameGroup = addGroup(folderId + ':frames', 'Кадры');
-  const bands = packed.bands.map(band => {
-    const label = number(band.number, 2);
-    const group = addGroup(folderId + ':band:' + label, label + ' · ' + band.title);
-    const variants = new Map();
-    for (const [variant, frame, x, y, width, height, counts, payload] of band.variants){
-      const part = {x, y, width, height, counts, payload};
-      variants.set(variant, part);
-      const variantLabel = number(variant, 3);
-      addRecord(group, 'axis-512:band:' + label + ':' + variantLabel,
-        band.title + ' · ' + variantLabel, [part], {band: band.number, variant, frame}, true);
-    }
-    return variants;
-  });
-  for (const [frame, startMs, durationMs, sameAs, refs] of packed.frames){
-    const label = number(frame, 3);
-    const patches = [];
-    refs.forEach((variant, i) => {
-      if (variant !== null) patches.push(bands[i].get(variant));
+  if (packed.bands && packed.frames){
+    const frameGroup = addGroup(folderId + ':frames', 'Кадры');
+    const bands = packed.bands.map(band => {
+      const label = number(band.number, 2);
+      const group = addGroup(folderId + ':band:' + label, label + ' · ' + band.title);
+      const variants = new Map();
+      for (const [variant, frame, x, y, width, height, counts, payload] of band.variants){
+        const part = {x, y, width, height, counts, payload};
+        variants.set(variant, part);
+        const variantLabel = number(variant, 3);
+        addRecord(group, prefix + ':band:' + label + ':' + variantLabel,
+          band.title + ' · ' + variantLabel, [part], {band: band.number, variant, frame}, true);
+      }
+      return variants;
     });
-    addRecord(frameGroup, 'axis-512:frame:' + label, 'Кадр ' + label, patches,
-      {frame, startMs, durationMs, sameAs}, false);
+    for (const [frame, startMs, durationMs, sameAs, refs] of packed.frames){
+      const label = number(frame, 3);
+      const patches = [];
+      refs.forEach((variant, i) => {
+        if (variant !== null) patches.push(bands[i].get(variant));
+      });
+      addRecord(frameGroup, prefix + ':frame:' + label, 'Кадр ' + label, patches,
+        {frame, startMs, durationMs, sameAs}, false);
+    }
   }
 
-  const atlas = root.MayatnikAxis512AtlasData;
   let atlasGroup = null;
-  if (atlas?.version === 1 && atlas.sourceSha256 === packed.source.sha256 &&
-      atlas.palette?.join() === packed.palette.join()){
+  if (atlas?.version === 1){
     atlasGroup = {id: folderId + ':atlas', name: 'Атлас', ids: []};
     for (let index = 0; index < atlas.records.length; index++){
       const [width, height, counts, payload, occurrences] = atlas.records[index];
       const label = number(index + 1, 3);
       const [frame, x, y] = occurrences[0];
       const patch = {x, y, width, height, counts, payload};
-      addRecord(atlasGroup, 'axis-512:atlas:' + label, 'Фигура ' + label, [patch],
+      addRecord(atlasGroup, prefix + ':atlas:' + label, 'Фигура ' + label, [patch],
         {frame, occurrences}, true);
     }
   }
@@ -112,11 +130,11 @@
       for (let i = 0; i < runs.length; i++){
         const run = runs.charCodeAt(i);
         const next = offset + (run >>> 3) + 1;
-        if (next > pixels.length) throw Error('Повреждён растр шаблона 512');
+        if (next > pixels.length) throw Error('Повреждён растр шаблона ' + folder);
         pixels.fill(run & 7, offset, next);
         offset = next;
       }
-      if (offset !== pixels.length) throw Error('Неполный растр шаблона 512');
+      if (offset !== pixels.length) throw Error('Неполный растр шаблона ' + folder);
 
       const x = patch.x - record.x;
       const y = patch.y - record.y;
@@ -181,13 +199,16 @@
   function entries(){
     return (atlasGroup ? [...groups, atlasGroup] : groups).flatMap(group => group.ids.map(id => {
       const record = records.get(id);
-      return {id, name: record.name, folder: '512', source: record.source, shape: shape(id)};
+      return {id, name: record.name, folder, source: record.source, shape: shape(id)};
     }));
   }
 
-  root.MayatnikAxis512 = {
-    folderId, groups, atlasGroup, isId: id => records.has(id), entries, shape,
+  return {
+    folder, folderId, groups, atlasGroup, isId: id => records.has(id), entries, shape,
     occurrences: id => records.get(id)?.source.occurrences || [],
-    frameId: frame => 'axis-512:frame:' + number(frame, 3)
+    frameId: frame => prefix + ':frame:' + number(frame, 3),
+    sourceFrameHref: packed.source.link
+      ? frame => packed.source.link.replace('{frame}', frame)
+      : null
   };
-})(window);
+});
