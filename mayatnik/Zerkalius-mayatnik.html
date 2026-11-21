@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.056</title>
+<title>Zerkalius Маятнкъ — v1.057</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -235,11 +235,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   body.may-embed #cv{width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;visibility:visible!important;opacity:1!important}
   body.may-embed #wrap > :not(#cv){display:none!important}
 </style>
+<script defer src="../_js/mayatnik-journal.js?v=1"></script>
 </head>
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.056</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.057</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -11027,15 +11028,19 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     paintTemplate(cg,0,0,RK);paintGeomCenter(cg,0,0,RK,c.width,c.height);
     parityExportMask(c);return viewRotation.capture(c);
   }
-  let pngBusy=false,pngNoticeTimer;
-  function pngNotice(message,inJournal=false){
+  let pngBusy=false,pngNoticeTimer,pngDownloadUrl;
+  function pngNotice(message,inJournal=false,file=null){
     const note=$('pngNotice');
+    if(pngDownloadUrl){URL.revokeObjectURL(pngDownloadUrl);pngDownloadUrl=null;}
     clearTimeout(pngNoticeTimer);note.textContent=message;note.hidden=false;
     if(inJournal){
       const link=document.createElement('a');link.href='../issledovanie/image-journal/#from-mayatnik';
       link.target='_blank';link.rel='noopener';link.textContent='Из Маятника';note.append(' · ',link);
     }
-    pngNoticeTimer=setTimeout(()=>{note.hidden=true;},12000);
+    if(file){
+      const link=document.createElement('a');pngDownloadUrl=URL.createObjectURL(file.blob);
+      link.href=pngDownloadUrl;link.download=file.filename;link.textContent='Скачать этот PNG';note.append(' · ',link);
+    }else pngNoticeTimer=setTimeout(()=>{note.hidden=true;},12000);
   }
   async function exportPng(publish){
     if(pngBusy)return;
@@ -11050,11 +11055,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!publish){download(filename,blob);pngNotice((viewport?'Видимая область':'Кадр '+frame)+' · PNG передан на скачивание.');return;}
       if(blob.size>8*1024*1024||canvas.width*canvas.height>32*1024*1024)throw Error('Для журнала нужен PNG до 8 МиБ и 32 Мпикс.');
       pngNotice('Публикация кадра '+frame+'…');
-      let response;
-      try{response=await fetch('https://media.1001100.online/mayatnik-api/frames?frame='+frame,{method:'POST',body:blob,credentials:'omit',signal:AbortSignal.timeout(60000)});}
-      catch{throw Error('Нет ответа от сервиса журнала. Проверьте раздел «Из Маятника».');}
-      const result=await response.json().catch(()=>null);
-      if(response.status!==201||!result?.url)throw Error(result?.error||'Сервис публикации пока недоступен.');
+      try{await window.MayatnikJournal.publish(frame,blob);}
+      catch(error){pngNotice(error.message||'Журнал не подтвердил публикацию.',true,{blob,filename});return;}
       pngNotice((viewport?'Видимая область кадра ':'Кадр ')+frame+' опубликован',true);
     }catch(error){pngNotice(error.message||String(error));}
     finally{pngBusy=false;$('bPng').disabled=$('bPngJournal').disabled=false;}

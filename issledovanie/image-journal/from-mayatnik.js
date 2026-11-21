@@ -2,7 +2,6 @@
   const wall = document.getElementById('mayatnik-frames');
   const status = document.getElementById('mayatnik-feed-status');
   const more = document.getElementById('mayatnik-more');
-  const api = 'https://media.1001100.online/mayatnik-api/frames';
   let cursor = null;
   function card(frame) {
     const label = 'Кадр ' + frame.frame;
@@ -35,11 +34,7 @@
     more.disabled = true;
     status.textContent = 'Загрузка кадров…';
     try {
-      const url = new URL(api);
-      if (cursor) url.searchParams.set('cursor', cursor);
-      const response = await fetch(url, {credentials:'omit', cache:'no-store', signal:AbortSignal.timeout(20000)});
-      if (!response.ok) throw Error();
-      const page = await response.json();
+      const page = await window.MayatnikJournal.list(cursor);
       wall.append(...page.frames.map(card));
       cursor = page.cursor;
       more.hidden = !cursor;

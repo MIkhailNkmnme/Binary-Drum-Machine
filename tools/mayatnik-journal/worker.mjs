@@ -1,7 +1,11 @@
 import { DurableObject } from 'cloudflare:workers';
 
 const ORIGIN = 'https://1001100.online';
-const MEDIA = 'https://media.1001100.online/';
+const FILE = /^\d{13}-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png$/;
+function newFile() {
+  const rank = String(9999999999999 - Date.now()).padStart(13, '0');
+  return rank + '-' + crypto.randomUUID() + '.png';
+}
 const PREFIX = 'from-mayatnik/';
 const MAX_BYTES = 8 * 1024 * 1024;
 const WINDOW = 60000;
@@ -90,20 +94,35 @@ async function readPng(data) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (request.method === 'GET' && url.pathname === '/mayatnik-api/ready') return reply({file:newFile()});
+    if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX)) {
+      const key = url.pathname.slice(1);
+      if (!FILE.test(key.slice(PREFIX.length))) return reply({}, 404);
+      const object = request.method === 'GET' ? await env.MEDIA.get(key) : await env.MEDIA.head(key);
+      if (!object) return reply({}, 404);
+      return new Response(object.body || null, {headers:{'Content-Type':'image/png',
+        'Content-Length':String(object.size), 'Cache-Control':'public, max-age=31536000, immutable',
+        'ETag':object.httpEtag, 'X-Content-Type-Options':'nosniff'}});
+    }
     if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);
     if (request.method === 'OPTIONS') return reply({}, 200, {'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'});
     try {
       if (request.method === 'GET') {
         const page = await env.MEDIA.list({prefix:PREFIX, limit:24, cursor:url.searchParams.get('cursor') || undefined, include:['customMetadata']});
-        const frames = page.objects.map(obj => ({url:MEDIA + obj.key, frame:Number(obj.customMetadata.frame),
+        const frames = page.objects.map(obj => ({url:url.origin + '/' + obj.key, frame:Number(obj.customMetadata.frame),
           width:Number(obj.customMetadata.width), height:Number(obj.customMetadata.height), created:obj.uploaded.toISOString()}));
         return reply({frames, cursor:page.truncated ? page.cursor : null});
       }
       if (request.method !== 'POST') return reply({}, 405);
       if (request.headers.get('Origin') !== ORIGIN) return reply({error:'Откройте Маятник на 1001100.online.'}, 403);
-      if (request.headers.get('Content-Type') !== 'image/png') return reply({error:'Нужен PNG.'}, 415);
+      const type = request.headers.get('Content-Type');
+      if (type && type !== 'image/png') return reply({error:'Нужен PNG.'}, 415);
       const frame = url.searchParams.get('frame');
       if (!/^\d{1,10}$/.test(frame ?? '')) return reply({error:'Некорректный номер кадра.'}, 400);
+      const file = url.searchParams.get('file') ?? newFile();
+      if (!FILE.test(file) || Math.abs(9999999999999 - Number(file.slice(0,13)) - Date.now()) > 15*60000)
+        return reply({error:'Срок отправки истёк. Нажмите кнопку ещё раз.'}, 400);
+      const key = PREFIX + file;
       const length = Number(request.headers.get('Content-Length'));
       if (!request.body || length > MAX_BYTES) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
       const ip = request.headers.get('CF-Connecting-IP');
@@ -121,12 +140,10 @@ export default {
       const png = await readPng(new Uint8Array(await new Blob(chunks).arrayBuffer()));
       if (!png) return reply({error:'Нужен корректный PNG из Маятника до 32 Мпикс.'}, 400);
       // Lexicographic R2 listing returns the most recent images first.
-      const rank = String(9999999999999 - Date.now()).padStart(13,'0');
-      const key = PREFIX + rank + '-' + crypto.randomUUID() + '.png';
-      await env.MEDIA.put(key, png.blob, {httpMetadata:{contentType:'image/png'}, customMetadata:{
+      const saved = await env.MEDIA.put(key, png.blob, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'image/png'}, customMetadata:{
         frame, width:String(png.width), height:String(png.height)
       }});
-      return reply({url:MEDIA + key}, 201);
+      return reply({url:url.origin + '/' + key}, saved ? 201 : 200);
     } catch {
       return reply({error:'Сервис журнала временно недоступен.'}, 503);
     }
