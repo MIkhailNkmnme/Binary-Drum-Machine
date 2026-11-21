@@ -37,7 +37,7 @@
       if(nearest&&x>=nearest.left&&x<=nearest.right&&y>=nearest.top&&y<=nearest.bottom)return group;
     }return null;
   }
-  function mount({document:doc=globalThis.document,groups,ownerOf,ownerAtPoint,onChange=()=>{}}){
+  function mount({document:doc=globalThis.document,groups,ownerOf,ownerAtPoint,blocksPointer,onChange=()=>{}}){
     let current=null;const saved=[],win=doc.defaultView||globalThis;
     function changeStyle(node,key,value){saved.push({node,key,value,old:node.style.getPropertyValue(key),priority:node.style.getPropertyPriority(key)});node.style.setProperty(key,value,'important');}
     function restore(){for(const {node,key,value,old,priority}of saved.splice(0).reverse())if(node.style.getPropertyValue(key)===value&&node.style.getPropertyPriority(key)==='important'){if(old)node.style.setProperty(key,old,priority);else node.style.removeProperty(key);}}
@@ -50,7 +50,9 @@
       }onChange(group);
     }
     const owner=target=>target?.nodeType===1?ownerOf(target):null;
-    const resolve=(e,target)=>owner(target)||ownerAtPoint?.(e,current)||null;
+    // An owning floating surface must be checked before geometric hit-testing:
+    // a menu outline can exist underneath the actual event target.
+    const resolve=(e,target)=>blocksPointer?.(e,target,current)?null:owner(target)||ownerAtPoint?.(e,current)||null;
     const over=e=>{if(e.pointerType!=='touch')set(resolve(e,e.target));};
     const out=e=>{if(e.pointerType!=='touch')set(e.relatedTarget?resolve(e,e.relatedTarget):null);};
     const move=e=>{if(e.pointerType!=='touch')set(resolve(e,e.target));};

@@ -1,4 +1,4 @@
-/* ПОМ-001. Local documentation assistant. Model text is never executable markup. */
+/* ПОМ-002. Movable local assistant with pointer ownership over overlapping menus. */
 (() => {
   'use strict';
   const init = async () => {
@@ -49,6 +49,69 @@
     form.append(label,input,formActions);
     panel.append(header,intro,status,connection,modes,examples,history,proposal,form);
     document.body.append(launcher,panel);
+    // Preserve the surface from which a pointer entered the overlap. Raising a
+    // hidden menu by outline geometry must not steal an in-progress interaction.
+    const positionKey='zerk_may_assistant_position_v1';
+    let position=null,front=false,heldPointer=null,drag=null;
+    try{const saved=JSON.parse(localStorage.getItem(positionKey)||'null');if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.y))position=saved;}catch(_){}
+    const setFront=value=>{front=!!value&&!panel.hidden;panel.classList.toggle('ma-front',front);};
+    const insidePanel=event=>{if(panel.hidden)return false;const r=panel.getBoundingClientRect();return r.width>0&&r.height>0&&event.clientX>=r.left&&event.clientX<=r.right&&event.clientY>=r.top&&event.clientY<=r.bottom;};
+    window.mayAssistantSurface={blocksPointer(event,target,currentMenu){
+      if(panel.hidden){setFront(false);return false;}
+      if(drag||heldPointer===event.pointerId){setFront(true);return true;}
+      const inside=insidePanel(event);
+      // Coming from a menu keeps that menu through its own outline gaps too.
+      if(inside&&!front&&currentMenu&&window.ZerkMenuGroupFocus?.outlineOwner([currentMenu],event.clientX,event.clientY,currentMenu)===currentMenu)return false;
+      if(inside&&(front||panel.contains(target))){setFront(true);return true;}
+      setFront(false);return false;
+    }};
+    const viewport=()=>{const v=window.visualViewport;return {x:v?.offsetLeft||0,y:v?.offsetTop||0,width:v?.width||innerWidth,height:v?.height||innerHeight};};
+    const persistPosition=()=>{try{if(position)localStorage.setItem(positionKey,JSON.stringify(position));else localStorage.removeItem(positionKey);}catch(_){}};
+    function placeWindow(x,y,persist=false){
+      if(panel.hidden)return;
+      const v=viewport();panel.style.maxHeight=Math.max(64,v.height-12)+'px';
+      const r=panel.getBoundingClientRect(),left=Math.max(v.x+6,Math.min(x,v.x+v.width-r.width-6)),top=Math.max(v.y+6,Math.min(y,v.y+v.height-r.height-6));
+      position={x:Math.round(left),y:Math.round(top)};
+      panel.style.left=position.x+'px';panel.style.top=position.y+'px';panel.style.right='auto';panel.style.bottom='auto';
+      if(persist)persistPosition();
+    }
+    function fitWindow(){if(panel.hidden)return;const v=viewport();panel.style.maxHeight=Math.max(64,v.height-12)+'px';if(position)placeWindow(position.x,position.y);}
+    function finishDrag(event){
+      if(drag&&event?.pointerId!==undefined&&event.pointerId!==drag.id)return;
+      const previous=drag;drag=null;heldPointer=null;header.classList.remove('ma-dragging');
+      if(previous){try{if(header.hasPointerCapture(previous.id))header.releasePointerCapture(previous.id);}catch(_){}if(previous.moved)persistPosition();}
+      setFront(!!event&&insidePanel(event));
+    }
+    header.tabIndex=0;header.setAttribute('role','group');
+    header.setAttribute('aria-label','Перемещение помощника: перетащите заголовок или используйте стрелки; Home возвращает исходное место');
+    header.title='Перетащите за заголовок. С клавиатуры: стрелки, Shift — точнее; Home — исходное место.';
+    header.addEventListener('pointerdown',event=>{
+      if(event.button!==0||event.isPrimary===false||event.target.closest('button,a,input,textarea,select'))return;
+      const r=panel.getBoundingClientRect();drag={id:event.pointerId,x:event.clientX,y:event.clientY,left:r.left,top:r.top,moved:false};
+      heldPointer=event.pointerId;setFront(true);header.classList.add('ma-dragging');
+      header.setPointerCapture(event.pointerId);event.preventDefault();event.stopPropagation();
+    });
+    header.addEventListener('pointermove',event=>{
+      if(!drag||event.pointerId!==drag.id)return;
+      const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+      if(!drag.moved&&Math.hypot(dx,dy)<3)return;
+      drag.moved=true;placeWindow(drag.left+dx,drag.top+dy);event.preventDefault();event.stopPropagation();
+    });
+    for(const type of ['pointerup','pointercancel','lostpointercapture'])header.addEventListener(type,event=>{if(drag&&event.pointerId===drag.id)finishDrag(event);});
+    header.addEventListener('keydown',event=>{
+      if(event.target!==header)return;
+      const delta={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
+      if(!delta&&event.key!=='Home')return;
+      event.preventDefault();event.stopPropagation();setFront(true);
+      if(event.key==='Home'){position=null;for(const key of ['left','top','right','bottom'])panel.style.removeProperty(key);persistPosition();fitWindow();return;}
+      const r=panel.getBoundingClientRect(),step=event.shiftKey?1:10;placeWindow(r.left+delta[0]*step,r.top+delta[1]*step,true);
+    });
+    document.addEventListener('pointerdown',event=>{if(!panel.hidden&&panel.contains(event.target)){heldPointer=event.pointerId;setFront(true);}},true);
+    for(const type of ['pointerup','pointercancel'])document.addEventListener(type,event=>{if(heldPointer===event.pointerId&&!drag){heldPointer=null;setFront(type==='pointerup'&&insidePanel(event));}},true);
+    panel.addEventListener('focusin',()=>setFront(true));
+    window.addEventListener('blur',()=>finishDrag());
+    window.addEventListener('resize',fitWindow);window.visualViewport?.addEventListener('resize',fitWindow);window.visualViewport?.addEventListener('scroll',fitWindow);
+    if(window.ResizeObserver)new ResizeObserver(fitWindow).observe(panel);
     let controls=[],byId=new Map(),mode='explain',busy=false,controller=null,turns=[],undoRecord=null,available=false;
     try{undoRecord=JSON.parse(localStorage.getItem(undoKey)||'null');}catch(_){}
     const bridge=()=>window.mayAssistantControls;
@@ -81,8 +144,8 @@
       const prompts=mode==='explain'?['Чем отличаются скорость × и время t?','Как найти нужную кнопку?','Как сохранить мой рисунок?']:['Сделай движение медленнее','Золотые единицы и тёмно-синие нули','Покажи геометрический центр'];
       for(const text of prompts){const b=node('button','ma-example',text);b.type='button';b.addEventListener('click',()=>{input.value=text;input.focus();});examples.append(b);}
     }
-    function open(){panel.hidden=false;launcher.setAttribute('aria-expanded','true');try{localStorage.setItem('zerk_may_assistant_open','1');}catch(_){}input.focus();health();}
-    function hide(){panel.hidden=true;launcher.setAttribute('aria-expanded','false');try{localStorage.setItem('zerk_may_assistant_open','0');}catch(_){}launcher.focus();}
+    function open(){panel.hidden=false;fitWindow();setFront(true);launcher.setAttribute('aria-expanded','true');try{localStorage.setItem('zerk_may_assistant_open','1');}catch(_){}input.focus();health();}
+    function hide(){finishDrag();panel.hidden=true;setFront(false);launcher.setAttribute('aria-expanded','false');try{localStorage.setItem('zerk_may_assistant_open','0');}catch(_){}launcher.focus();}
     launcher.addEventListener('click',()=>panel.hidden?open():hide());close.addEventListener('click',hide);
     explain.addEventListener('click',()=>chooseMode('explain'));settings.addEventListener('click',()=>chooseMode('settings'));retry.addEventListener('click',health);
     for(const type of ['pointerdown','pointerup','click','wheel','keyup'])panel.addEventListener(type,event=>event.stopPropagation());
@@ -149,7 +212,7 @@
         input.value='';available=true;
       }catch(error){
         say(error.name==='AbortError'?'Ожидание остановлено. Настройки не изменены. Модель может ещё завершать запрос.':(error.message==='Failed to fetch'?'Не удалось связаться с помощником. Проверь подключение или открой локальный Маятник.':error.message),true);
-      }finally{clearTimeout(timer);controller=null;setBusy(false);if(!panel.hidden)input.focus();}
+      }finally{clearTimeout(timer);controller=null;setBusy(false);if(!panel.hidden&&front&&heldPointer===null&&!drag)input.focus({preventScroll:true});}
     });
     chooseMode('explain');setBusy(false);
     try{const response=await fetch('assistant-controls.json?v=1051',{cache:'no-store'});if(!response.ok)throw new Error();const data=await response.json();if(data.version!==1||!Array.isArray(data.controls)||!data.controls.length)throw new Error();controls=data.controls;byId=new Map(controls.map(rule=>[rule.id,rule]));setBusy(false);if(undoRecord)undo.hidden=false;}

@@ -3,7 +3,9 @@
 body.may-zen #mayAssistantLauncher,body.may-zen #mayAssistant{display:none!important}
 #mayAssistant{position:fixed;right:12px;bottom:44px;z-index:2147483100;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 64px);box-sizing:border-box;overflow:auto;overscroll-behavior:contain;background:#0e141e;color:#e8edf5;border:1px solid #6888ad;padding:16px;font:16px/1.5 'Segoe UI',sans-serif;box-shadow:0 8px 40px #0009;user-select:text;scrollbar-width:thin}
 #mayAssistant[hidden],#mayAssistant [hidden]{display:none!important}
-#mayAssistant .ma-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#mayAssistant.ma-front{z-index:2147483647!important}
+#mayAssistant .ma-header{position:sticky;top:-16px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;background:#0e141e;cursor:grab;touch-action:none;user-select:none}
+#mayAssistant .ma-header.ma-dragging{cursor:grabbing}
 #mayAssistant h2{margin:0;font-size:19px;line-height:1.25;font-weight:600}
 #mayAssistant h3{margin:0 0 8px;font-size:16px}
 #mayAssistant p{margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere}

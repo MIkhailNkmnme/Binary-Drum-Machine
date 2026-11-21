@@ -3114,6 +3114,7 @@
   }
   let lastHoveredGroup=null;
   groupHover=window.ZerkMenuGroupFocus?.mount({groups:()=>document.querySelectorAll(groupSelector),
+    blocksPointer:(event,target,current)=>window.mayAssistantSurface?.blocksPointer(event,target,current)||false,
     ownerOf:target=>activeList?.list.contains(target)?activeList.group:(target.closest('.may-horr-popup')?.mayHorrOwner||target.closest(groupSelector)),
     ownerAtPoint:(event,current)=>window.ZerkMenuGroupFocus.outlineOwner(document.querySelectorAll(groupSelector),event.clientX,event.clientY,current),
     onChange:group=>{const previous=lastHoveredGroup;lastHoveredGroup=group;if(previous&&previous!==group)previous._popupLeave?.();if(group){group._hoverOpen?.();groupRanks.set(group,++groupRank);}scheduleGroups();}});
