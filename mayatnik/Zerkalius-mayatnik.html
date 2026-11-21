@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.068</title>
+<title>Zerkalius Маятнкъ — v1.069</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.068</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.069</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -1158,7 +1158,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const gpuCpuOchki = () => !!gpuBig && !!st.ochki;
   const gpuManualCpu = () => !!gpuBig && (manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
   let gpuPaintRequests=0;
-  const gpuPaintCpu = () => !!gpuBig&&(gpuPaintRequests>0||st.pitCopiesOn||st.paintEmptyNeighbours||st.paintIsolated0||st.paintIsolated1||st.paintFrameMode!=='off'&&!!paintRepeatSeed||!!st.manualSnake&&(rombP()>=0||!visibleSemanticCanLazy())||!!fillMask||!!templatePaintLayer||!!templateMatchLayer||!!manualPaintCurrent()?.layer||!!manualPaintCurrent()?.patterns||fillHistory.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e))||fillRedo.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e)));
+  const gpuPaintCpu = () => !!gpuBig&&(gpuPaintRequests>0||midPaintOn()||st.pitCopiesOn||st.paintEmptyNeighbours||st.paintIsolated0||st.paintIsolated1||st.paintFrameMode!=='off'&&!!paintRepeatSeed||!!st.manualSnake&&(rombP()>=0||!visibleSemanticCanLazy())||!!fillMask||!!templatePaintLayer||!!templateMatchLayer||!!manualPaintCurrent()?.layer||!!manualPaintCurrent()?.patterns||fillHistory.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e))||fillRedo.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e)));
   const gpuCpuDisplay = () => !!gpuBig&&!gpuBig.large&&(wolframActive()||!!window.mayGifScaleNeedsCpu?.()||st.heat&&rombP()<0||st.fillWholeColour&&fillMode||st.geomCenter||st.edgeRhombOn||joinedWhole()||st.joined180&&contoursOn()||st.view==='rgbNeighbours'||gpuCpuOchki()||gpuManualCpu()||gpuPaintCpu()||templateFollowActive());
   const gpuDisplay = () => !!gpuBig && !gpuCpuDisplay();
   let videoGpuFrame = null;   // v0.480: копировать WebGPU сразу после render, до передачи кадра браузеру
@@ -1328,7 +1328,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // Анимация (▶) рисует как прежде: Аниматрица и след — её собственные слои.
   const NAV_QUIET = 250;
   let navAt = -1e9, navFullT = 0;
-  const navQuick = () => !st.pitCopiesOn&&!st.paintEmptyNeighbours&&!st.paintIsolated0&&!st.paintIsolated1&&!(st.paintFrameMode!=='off'&&paintRepeatSeed) && !(fillMode&&st.fillWholeColour) && !templateFollowActive() && !playing && performance.now() - navAt < NAV_QUIET;
+  const navQuick = () => !midPaintOn()&&!st.pitCopiesOn&&!st.paintEmptyNeighbours&&!st.paintIsolated0&&!st.paintIsolated1&&!(st.paintFrameMode!=='off'&&paintRepeatSeed) && !(fillMode&&st.fillWholeColour) && !templateFollowActive() && !playing && performance.now() - navAt < NAV_QUIET;
   function navFullSoon() { clearTimeout(navFullT); navFullT = setTimeout(() => { navFullT = 0; document.body.classList.remove('may-nav'); if (f && !playing) draw(); }, NAV_QUIET); }
   // v0.476: кадр стоит, биты свежие — картинка видеокарты (биты, цвета, зеркала) → img; краска и прочие слои — тем же кодом, что у процессора
   // (drawPost); готовая картинка — обратно на видеокарту. Пока кадр не тот, img нет: заливки, шаблоны и «Взять цвет» ждут остановки.
@@ -3864,7 +3864,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     clearFillPreview();
     const thirdsSemantic=st.thirds&&contourBits?Int32Array.from(contourBits):null;const baseWas=fillBase;fillBase=px.slice();fillBits=null;pxBase=fillBase;   // v0.196: картинка до краски — скрытие цветов не трогает краску
-    paintMid();   // v0.132: «Центр краской» — заливка по центральному столбцу, до applyFill
+    midUnpaint();   // Убрать временный центр перед переносом краски предыдущего кадра.
     const keyWas=fillKey,maskWas=fillMask,fWas=fillField;applyFill(px);if(fillKey!==keyWas){fillGrowRun(px,keyWas,maskWas,baseWas,fWas);}colReplayRun(px);{const tp=third&&third.k===k?third.part:0,mp=meetTp;let sec=-1;   // v0.325: «Точка» и «ТочкаОсь» — по третям
       if(fillKey!==keyWas||meetNow)sec=tp===1?1:0;else if(mp&&mp.k===k&&mp.tp!==tp)sec=tp===2?2:mp.tp===2?3:mp.tp===1&&!tp?23:-1;
       meetTp={k,tp};if(sec>=0){meetNow=false;meetSec=sec;meetPaintRun(px);meetAxisRun(px);meetSec=0;}}   // v0.202: новый кадр — заливка столбцов продолжается; v0.310 — и рост краски
@@ -3884,10 +3884,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // строке от столба якоря в обе стороны, пока бит слева = биту справа, оба красятся цветом своего бита на MID_WIDE_A поверх картинки.
   const MID_WIDE_A=.45,mixPx=(c,b,a)=>{const ch=s=>Math.round(((c>>>s)&255)*a+((b>>>s)&255)*(1-a));return (255<<24|ch(16)<<16|ch(8)<<8|ch(0))>>>0;};
   const midCfg=()=>({one:$('midOneOn').checked?rgba(hexRGB($('midOneColour').value)):0,zero:$('midZeroOn').checked?rgba(hexRGB($('midZeroColour').value)):0,wide:$('midWide').checked,alpha:MID_WIDE_A});
-  let midAuto=null;   // {idx, cols, mark, n}: пиксели прошлой автозаливки и что в них положено
-  function midUnpaint(){if(midAuto&&fillMask&&fillMask.length===midAuto.n){const {idx,cols}=midAuto;for(let i=0;i<idx.length;i++)if(fillMask[idx[i]]===cols[i])fillMask[idx[i]]=0;if(!fillMask.some(Boolean))fillMask=null;}midAuto=null;}
+  function midPaintOn(){return !!st.paintMid&&rombP()<0&&($('midOneOn').checked||$('midZeroOn').checked);}
+  let midAuto=null;   // Нанесённый временный цвет привязан к конкретной маске.
+  function midUnpaint(){if(midAuto&&fillMask===midAuto.mask){const {idx,cols}=midAuto;for(let i=0;i<idx.length;i++)if(fillMask[idx[i]]===cols[i])fillMask[idx[i]]=0;if(!fillMask.some(Boolean))fillMask=null;}midAuto=null;}
   function paintMid(){
-    midUnpaint();if(!st.paintMid||!img||!geo||!f||rombP()>=0)return;const a=geo.anchor-VX;if(a<0||a>=VW)return;const C=midCfg(),mapMask=triangleMapRasterMask();if(!C.one&&!C.zero)return;
+    if(!img||!geo||!f||!midPaintOn())return;const a=geo.anchor-VX;if(a<0||a>=VW)return;const C=midCfg(),mapMask=triangleMapRasterMask();
     const IW=img.width,IH=img.height,n=IW*IH,fb=new Uint8Array(n);for(let y=0;y<IH;y++)for(let x=0;x<IW;x++)fb[y*IW+x]=mapMask?.[y*IW+x]?0:fillBit(x,y)+1;
     if(!fillMask)fillMask=new Uint32Array(n);if(fillMask.length!==n)return;
     const idx=[],cols=[],mark=new Uint8Array(n),put=(q,c)=>{if(mapMask?.[q]||fillMask[q]||mark[q])return;fillMask[q]=c;idx.push(q);cols.push(c);mark[q]=1;};
@@ -3895,7 +3896,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(C.wide&&RK===1)for(let y=0;y<IH;y++)for(let d=1;a-d>=0&&a+d<IW;d++){const l=y*IW+a-d,r=y*IW+a+d,b=fb[l];if(!b||b!==fb[r])break;
       const c=b===2?C.one:C.zero;if(!c)continue;put(l,mixPx(c,fillBase?.[l]||0,C.alpha));put(r,mixPx(c,fillBase?.[r]||0,C.alpha));}
     if(!idx.length){if(!fillMask.some(Boolean))fillMask=null;return;}
-    midAuto={idx:Uint32Array.from(idx),cols:Uint32Array.from(cols),mark,n};
+    midAuto={mask:fillMask,idx:Uint32Array.from(idx),cols:Uint32Array.from(cols),mark};
   }
   function midSync(){$('bPaintMid').textContent='Центр краской';$('bPaintMid').setAttribute('aria-pressed',String(!!st.paintMid));}
   const midRedraw=()=>{save();if(f){draw();fillSync();}foldTransport?.render();foldTransportV?.render();};
@@ -3924,6 +3925,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(fillField===f&&fillKey&&fillKey!==key){paintStash.set(fillKey,{fillMask,paintBits,faceLayer,templatePaintLayer,templateItems,active:colourTemplate?.id});while(paintStash.size>8)paintStash.delete(paintStash.keys().next().value);const back=paintStash.get(key);
       if(back){paintStash.delete(key);fillKey=key;fillMask=back.fillMask;paintBits=back.paintBits;faceLayer=back.faceLayer||null;templatePaintLayer=back.templatePaintLayer||null;fillBits=null;resetFillHistory();templateItems=back.templateItems;colourTemplate=null;selectTemplate(templateItems.find(t=>t.id===back.active)||templateItems[0]||null,false);fillSync();}}
     if(fillField!==f||fillKey!==key){const had=!!fillMask;clearFill(had&&fillField===f?'Краска этого вида отложена: вернётся, когда вернёшь вид.':had?'Другой рисунок · сохранённую раскраску можно вернуть кнопкой «Из памяти».':'');fillField=f;fillKey=key;templateItems=[];colourTemplate=null;templateVisible=false;templateMove=false;templateLastDown=0;templateOffsetX=0;templateStatsKey='';$('templateInfo').textContent='';templateSync();}
+    paintMid();   // Новый центр считается только после восстановления краски и битов текущего кадра.
     if(paintBits){const black=rgba([0,0,0]),white=rgba([255,255,255]);for(let i=0;i<px.length;i++)if(paintBits[i]>=0)px[i]=(!!paintBits[i]!==!!(st.inverted&&st.invertKind!=='colour'))?white:black;}
     if(fillMask)for(let i=0;i<px.length;i++)if(fillMask[i])px[i]=st.inverted?storedInk(paintBits?.[i],fillMask[i]):fillMask[i];
     templatePaintApply(px);
