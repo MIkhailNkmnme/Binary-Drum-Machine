@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Глсъ · Сравнение «гэ» и «тэ»</title>
+  <link rel="stylesheet" href="../../_js/grozd.css?v=50">
+  <link rel="stylesheet" href="../style.css?v=026">
+  <script defer src="../../_js/hub-button-text.js?v=540"></script>
+  <script defer src="../../_js/menu-icons.js"></script>
+  <script defer src="../prosody-dsp.js?v=029"></script>
+  <script defer src="../engine.js?v=025"></script>
+  <script defer src="experiment.js?v=001"></script>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Сравнение «гэ» и «тэ»</h1>
+    <p>В каждом варианте сначала звучит «гэ», затем «тэ». Послушайте A и B и сравните, где легче различить начало слогов.</p>
+  </header>
+  <div class="voice-layout" data-engine="bank">
+    <section class="engine-page" aria-label="Слепая проба">
+      <div class="command-groups">
+        <div class="commands" role="group" aria-label="Воспроизведение">
+          <button type="button" id="play-a" class="gz-hx" data-mi-icon="play" data-user-label title="Воспроизвести вариант A" aria-label="Воспроизвести вариант A" aria-pressed="false" disabled>Плей A</button>
+          <button type="button" id="play-b" class="gz-hx" data-mi-icon="play" data-user-label title="Воспроизвести вариант B" aria-label="Воспроизвести вариант B" aria-pressed="false" disabled>Плей B</button>
+          <button type="button" id="stop" class="gz-hx" data-mi-icon="square" data-user-label title="Остановить воспроизведение" aria-label="Остановить воспроизведение" disabled>Стоп</button>
+        </div>
+      </div>
+      <p id="play-status" role="status" aria-live="polite">Загружается Банк.</p>
+      <details class="voice-help">
+        <summary class="gz-hx" data-mi-icon="eye" data-user-label title="Показать, каким способом синтезирован каждый вариант">Показать A/B</summary>
+        <p id="answer"></p>
+        <p>В эксперименте смычка, короткий шум раскрытия и переход к [э] заданы отдельно. Оба варианта рассчитаны Банком с высотой 130 Гц. На образец приходится 305 мс, уровень установившегося [э] выровнен по среднеквадратичной амплитуде.</p>
+        <p>Звук вычисляется процедурно при первом запуске. Для построения опыта использованы <a href="https://web.mit.edu/morrishalle/pubworks/papers/1957_Halle_Hughes_Radley_Acoustic_Properties_Stop_Consonants.pdf">измерения смычных и переходов к гласным</a>.</p>
+      </details>
+    </section>
+  </div>
+  <footer><a href="../">Глсъ</a></footer>
+</main>
+</body>
+</html>
