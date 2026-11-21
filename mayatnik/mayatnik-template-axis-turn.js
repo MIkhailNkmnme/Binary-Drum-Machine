@@ -24,13 +24,30 @@
     if(validFrame(previous?.fixedFrame,pose))return previous;
     return {...previous,fixedFrame:{box:{...box},pose:[...pose]}};
   }
-  function toggleManual(previous,box,id){
+  function toggleManual(previous,box,id,independent=false){
     if(!box||!['manualH','manualV'].includes(id))return previous;
-    if(!previous?.manualH&&!previous?.manualV)return {...previous,manualH:{visible:true,position:box.y+box.height/2},manualV:{visible:true,position:box.x+box.width/2}};
-    const initial=id==='manualH'?box.y+box.height/2:box.x+box.width/2,old=previous[id];
+    if(!independent&&!previous?.manualH&&!previous?.manualV)return {...previous,manualH:{visible:true,position:box.y+box.height/2},manualV:{visible:true,position:box.x+box.width/2}};
+    const initial=id==='manualH'?box.y+box.height/2:box.x+box.width/2,old=previous?.[id];
     return {...previous,[id]:{position:Number.isFinite(old?.position)?old.position:initial,visible:!old?.visible}};
   }
   function moveManual(previous,id,position){return previous?.[id]&&Number.isFinite(position)?{...previous,[id]:{...previous[id],position}}:previous;}
+  // Bake only the landing footprint; colours do not replace semantic bits or source addresses.
+  function capturePaint(parts,rects,read,maxPixels=12e6){
+    let pixels=0,touched=0;
+    const result=parts.map((part,i)=>{
+      const m=part.mask,r=rects[i],x=Math.floor(r.x),y=Math.floor(r.y),width=Math.max(1,Math.ceil(r.x+r.width)-x),height=Math.max(1,Math.ceil(r.y+r.height)-y),size=width*height;
+      pixels+=size;if(!Number.isSafeInteger(size)||pixels>maxPixels||width>32768||height>32768)throw Error('Подхват краски: шаблон слишком большой — уменьшите его масштаб');
+      const data=new Uint32Array(size),indices=new Uint32Array(size),working=new Uint32Array(size),bits=part.bitsData?new Int8Array(size).fill(-1):null;let count=0;
+      for(let yy=0;yy<height;yy++)for(let xx=0;xx<width;xx++){
+        const px=x+xx+.5,py=y+yy+.5,u=(px-r.x)/r.width,v=(py-r.y)/r.height;if(u<0||v<0||u>=1||v>=1)continue;
+        const q=Math.floor(v*m.height)*m.width+Math.floor(u*m.width),j=yy*width+xx,colour=m.data[q];if(!(colour>>>24))continue;
+        const paint=read(part,px,py);data[j]=paint?((paint&0xffffff)|(colour&0xff000000))>>>0:colour;if(paint)touched++;
+        count++;indices[j]=part.sourceIndices?.[q]??q;working[j]=q;if(bits)bits[j]=part.bitsData[q];
+      }
+      return {...part,mask:{...m,x,y,width,height,data,count},axis:x+width/2,axisOriginY:y,sourceData:data,sourceIndices:indices,...(bits?{bitsData:bits}:{}),...(part.compositionSources?.length?{compositionSources:remapCompositionSources(part.compositionSources,working,data)}:{}),canvas:null,bitCanvas:null,edges:null};
+    });
+    return {parts:touched?result:parts,touched};
+  }
   function operation(value){return value==='xor'||value==='and'?value:'';}
   function toggleOperation(previous,requested){const op=operation(requested);return op?{...previous,operation:operation(previous?.operation)===op?'':op}:previous;}
   function rebaseFrame(previous,box,pose){const frame=previous?.fixedFrame;return {...previous,fixedFrame:{box:{...(frame?.box||box)},pose:[...pose]}};}
@@ -185,10 +202,10 @@
     function handle(axis){
       if(handles.has(axis.id))return handles.get(axis.id);
       const node=doc.createElementNS(svg.namespaceURI,'line');node.classList.add('may-template-axis-grab');node.setAttribute('tabindex','0');node.setAttribute('role','slider');node.setAttribute('aria-label',axis.direction==='h'?'Переместить горизонтальную ось шаблона':'Переместить вертикальную ось шаблона');node.setAttribute('aria-orientation',axis.direction==='h'?'vertical':'horizontal');svg.append(node);handles.set(axis.id,node);
-      node.addEventListener('pointerdown',e=>{if(e.button!==0||!current)return;options.beginMove?.();drag={pointerId:e.pointerId,id:axis.id,node};node.setPointerCapture(e.pointerId);node.focus();e.preventDefault();e.stopPropagation();});
-      node.addEventListener('pointermove',e=>{if(!drag||drag.pointerId!==e.pointerId||!current)return;const vertical=axis.direction==='v',coordinate=(vertical?e.clientX-current.left-current.ox:e.clientY-current.top-current.oy)/current.factor;options.move(axis.id,coordinate);e.preventDefault();e.stopPropagation();});
+      node.addEventListener('pointerdown',e=>{if(e.button!==0||!current||options.beginMove?.()===false)return;const value=current.axes.find(a=>a.id===axis.id);if(!value){options.endMove?.(true);return;}drag={pointerId:e.pointerId,id:axis.id,node,position:value.position,x:e.clientX,y:e.clientY,factor:current.factor,rk:current.rk};node.setPointerCapture(e.pointerId);node.focus();e.preventDefault();e.stopPropagation();});
+      node.addEventListener('pointermove',e=>{if(!drag||drag.pointerId!==e.pointerId||!current)return;const delta=(axis.direction==='v'?e.clientX-drag.x:e.clientY-drag.y)/drag.factor,step=drag.rk*(e.shiftKey?1:.5),coordinate=options.snapManual?Math.round((drag.position+delta)/step)*step:(axis.direction==='v'?e.clientX-current.left-current.ox:e.clientY-current.top-current.oy)/current.factor;options.move(axis.id,coordinate);e.preventDefault();e.stopPropagation();});
       node.addEventListener('pointerup',e=>finish(e));node.addEventListener('pointercancel',e=>finish(e,true));node.addEventListener('lostpointercapture',e=>finish(e,true));
-      node.addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){finish({pointerId:drag.pointerId,preventDefault(){},stopPropagation(){}},true);return;}const direction=axis.direction==='v'?(e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0):(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0);if(!direction||!current)return;const value=current.axes.find(a=>a.id===axis.id);if(!value)return;options.beginMove?.();options.move(axis.id,value.position+direction*current.rk*(e.shiftKey?1:.5));options.endMove?.(false);e.preventDefault();e.stopPropagation();});
+      node.addEventListener('keydown',e=>{if(e.key==='Escape'&&drag){finish({pointerId:drag.pointerId,preventDefault(){},stopPropagation(){}},true);return;}const direction=axis.direction==='v'?(e.key==='ArrowLeft'?-1:e.key==='ArrowRight'?1:0):(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0);if(!direction||!current||drag)return;const value=current.axes.find(a=>a.id===axis.id);if(!value||options.beginMove?.()===false)return;options.move(axis.id,value.position+direction*current.rk*(e.shiftKey?1:.5));options.endMove?.(false);e.preventDefault();e.stopPropagation();});
       return node;
     }
     function button(axis){
@@ -214,5 +231,5 @@
     }
     return {render,hide,destroy(){hide();host.remove();},host};
   }
-  return {bounds,axes,frameBox,freezeFrame,toggleManual,moveManual,operation,toggleOperation,rebaseFrame,sourceContributions,remapCompositionSources,semanticParts,compose,prepareParts,placeReflected,originalPart,validatePart,libraryParts,libraryPreview,fromLibrary,grid,symmetricGrid,insideOut,layout,mount};
+  return {bounds,axes,frameBox,freezeFrame,toggleManual,moveManual,capturePaint,operation,toggleOperation,rebaseFrame,sourceContributions,remapCompositionSources,semanticParts,compose,prepareParts,placeReflected,originalPart,validatePart,libraryParts,libraryPreview,fromLibrary,grid,symmetricGrid,insideOut,layout,mount};
 });

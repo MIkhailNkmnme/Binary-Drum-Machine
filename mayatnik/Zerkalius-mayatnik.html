@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.069</title>
+<title>Zerkalius Маятнкъ — v1.070</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.069</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.070</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -651,11 +651,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-cross-mirrors.js?v=632"></script>
 <script src="mayatnik-paint-groups.js?v=892"></script>
 <script src="mayatnik-template.js?v=36"></script>
-<script src="mayatnik-template-axis-turn.js?v=652"></script>
+<script src="mayatnik-template-axis-turn.js?v=1070"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1065a"></script>
-<link rel="stylesheet" href="mayatnik-template-inline.css?v=1031">
+<script src="mayatnik-template-inline.js?v=1070"></script>
+<link rel="stylesheet" href="mayatnik-template-inline.css?v=1070">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=651">
 <script src="mayatnik-bit-contours.js?v=562"></script>
 <script src="mayatnik-kraft-shadows.js?v=954"></script>
@@ -5875,7 +5875,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return {item,layer,rects,box,axisBox,pose,axes:MayatnikTemplateAxisTurn.axes(axisBox,item.templateAxes)};
   }
   function templateAxesChanged(){window.dispatchEvent(new Event('may-template-axes-change'));}
-  function templateAxisCommit(before){templateReturn=null;templateStatsKey='';templateMatchCache=null;window.mayTemplateLibrary?.clear();templateSceneHistory(before,colourTemplate.parts.reduce((n,p)=>n+p.mask.data.byteLength+(p.bitsData?.byteLength||0)+(p.sourceIndices?.byteLength||0)+(p.compositionSources||[]).reduce((n,r)=>n+r.pairs.byteLength,0),1024));templateSync();queueDigits();savePaint();}
+  function templateAxisCommit(before,raster=false){templateReturn=null;templateStatsKey='';templateMatchCache=null;window.mayTemplateLibrary?.clear();if(raster)finishEdit(before);else templateSceneHistory(before,colourTemplate.parts.reduce((n,p)=>n+p.mask.data.byteLength+(p.bitsData?.byteLength||0)+(p.sourceIndices?.byteLength||0)+(p.compositionSources||[]).reduce((n,r)=>n+r.pairs.byteLength,0),1024));templateSync();queueDigits();savePaint();}
   function templateAxisSemanticParts(parts){
     return MayatnikTemplateAxisTurn.semanticParts(parts,(part,q)=>{
       const origin=part.sourceOrigin,index=part.sourceIndices?.[q]??q,proof=origin?.librarySource||part.librarySource;
@@ -5884,46 +5884,103 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     });
   }
   function templateAxisCanvasParts(parts){return parts.map(p=>{const m=p.mask,canvas=document.createElement('canvas');canvas.width=m.width;canvas.height=m.height;canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(m.data.buffer),m.width,m.height),0,0);return {...p,canvas,symmetry:MayatnikTemplate.symmetry(m)};});}
+  function templateAxisPaintMode(item){const mode=item?.templateAxes?.paintTransfer;return mode==='pickup'||mode==='deposit'?mode:'';}
+  function toggleTemplateAxisPaint(mode){
+    const state=templateAxisState();if(!state||templateAxisMove||!['pickup','deposit'].includes(mode))return false;
+    const before=sceneSnapshot();state.item.templateAxes={...state.item.templateAxes,paintTransfer:templateAxisPaintMode(state.item)===mode?'':mode};templateAxisCommit(before);return true;
+  }
+  function templateAxisPaintContext(){
+    if(!img||!fillBase||fillBase.length!==img.width*img.height||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k)||manualAxisPaintJob?.pending)throw Error('Подхват и передача краски ждут готового кадра');
+    const pixels=new Uint32Array(img.data.buffer),semantic=visibleSemanticContext(),map=triangleMapRasterMask();
+    return {pixels,valid(x,y){const q=y*img.width+x;return x>=0&&y>=0&&x<img.width&&y<img.height&&!map?.[q]&&semantic.readBit(x,y)>=0;},paint(x,y){
+      if(!this.valid(x,y))return 0;const q=y*img.width+x,pq=parityPlan().settings.rowFill==='none'?q:paritySourcePixel(x,y);
+      return pixels[q]!==fillBase[q]||fillMask?.[pq]||paintRepeatLayer?.[pq]||colReplayPaint?.[pq]||manualAxisPaintPixel(q)?pixels[q]:0;
+    }};
+  }
+  function templateAxisCapture(state,candidate,context){
+    const tinted=group=>group?.members?.some(member=>member.tint||tinted(member.source?.compound));
+    if(templatePaintColour(state.item.id)||state.layer?.tint||tinted(candidate.compound))throw Error('Для подхвата краски отключите «Прокрасить» и тонировку слоя или частей сборного шаблона');
+    const factor=RK/scale(),dx=(state.layer?.x||0)*factor,dy=(state.layer?.y||0)*factor;
+    const visible=part=>{let group=candidate.compound;for(const index of part.compoundPath||part.sourceOrigin?.compoundPath||[]){const member=group?.members[index];if(!member||member.visible===false||member.opacity===0)return false;group=member.source.compound;}return true;};
+    return MayatnikTemplateAxisTurn.capturePaint(candidate.parts,candidate.parts.map(p=>templateRect(p,false,candidate)),(part,x,y)=>{
+      if(!visible(part)||!candidate.compound&&(x<part.ox*RK||x>=(part.ox+templatePartWidth(part))*RK||y<0||y>=dispH()*RK))return 0;
+      return context.paint(Math.floor(x+dx),Math.floor(y+dy));
+    });
+  }
+  function templateAxisDeposit(state,candidate,context){
+    const rects=candidate.parts.map(p=>templateRect(p,false,candidate)),box=MayatnikTemplateAxisTurn.bounds(rects);if(!box)return [];
+    const left=Math.floor(box.x),top=Math.floor(box.y),width=Math.ceil(box.x+box.width)-left,height=Math.ceil(box.y+box.height)-top;
+    if(width*height>12e6||width>32768||height>32768)throw Error('Передача краски: шаблон слишком большой — уменьшите его масштаб');
+    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+    if(candidate.compound){const picture=templateCompoundPicture(candidate);ctx.drawImage(picture.canvas,picture.x-left,picture.y-top);}
+    else for(const [i,part]of candidate.parts.entries()){const r=rects[i];ctx.save();ctx.beginPath();ctx.rect(part.ox*RK-left,-top,templatePartWidth(part)*RK,dispH()*RK);ctx.clip();ctx.drawImage(templateDisplayCanvas(part,candidate,true),r.x-left,r.y-top,r.width,r.height);ctx.restore();}
+    const image=ctx.getImageData(0,0,width,height),bytes=state.layer?.tint?MayatnikLayers.tintPixels(image.data,state.layer.tint):image.data,pixels=new Uint32Array(bytes.buffer,bytes.byteOffset,bytes.byteLength/4);
+    const factor=RK/scale(),dx=(state.layer?.x||0)*factor,dy=(state.layer?.y||0)*factor,alpha=(state.layer?.opacity??candidate.view?.alpha??100)/100;
+    const x0=Math.max(0,Math.ceil(left+dx-.5)),x1=Math.min(img.width,Math.ceil(left+width+dx-.5)),y0=Math.max(0,Math.ceil(top+dy-.5)),y1=Math.min(img.height,Math.ceil(top+height+dy-.5));
+    const capacity=Math.max(0,x1-x0)*Math.max(0,y1-y0),indices=new Uint32Array(capacity),colours=new Uint32Array(capacity),alphas=new Float64Array(capacity);let count=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const q=Math.floor(y+.5-dy-top)*width+Math.floor(x+.5-dx-left),colour=pixels[q],a=(colour>>>24)/255*alpha;if(a&&context.valid(x,y)){indices[count]=y*img.width+x;colours[count]=colour;alphas[count++]=a;}}
+    return {indices:indices.subarray(0,count),colours:colours.subarray(0,count),alphas:alphas.subarray(0,count),length:count};
+  }
+  function templateAxisDepositPrepare(plans){
+    const painted=plans.filter(plan=>plan.deposit?.length).length>1?new Map():null;
+    for(const plan of plans){const deposit=plan.deposit;if(!deposit?.length)continue;for(let i=0;i<deposit.length;i++){
+      const q=deposit.indices[i],colour=deposit.colours[i],alpha=deposit.alphas[i],base=painted?.get(q)??plan.paintContext.pixels[q],result=alpha>=1?(colour|0xff000000)>>>0:mixPx(colour,base,alpha);
+      if(st.inverted&&storedInk(paintBits?.[q],result)!==result)throw Error('Этот чёрный/белый цвет нельзя передать на изменённый бит без смены его значения: выключите битовую инверсию');
+      painted?.set(q,result);deposit.colours[i]=result;
+    }deposit.alphas=null;}
+  }
+  function templateAxisDepositApply(plan){
+    const deposit=plan.deposit;for(let i=0;i<(deposit?.length||0);i++){const q=deposit.indices[i];templateBaselineWrite(q,deposit.colours[i],paintBits?.[q]??-1);}
+  }
   function toggleTemplateAxisOperation(requested){
     if(colourTemplate?.compound){$('fillInfo').textContent='Для XOR / AND сначала разберите сборный шаблон';return false;}
     const state=templateAxisState();if(!state||templateAxisMove||!MayatnikTemplateAxisTurn.operation(requested))return false;const before=sceneSnapshot();state.item.templateAxes=MayatnikTemplateAxisTurn.toggleOperation(state.item.templateAxes,requested);templateAxisCommit(before);return true;
   }
-  function templateAxisBuildTurn(state,axis,op,width){
+  function templateAxisBuildTurn(state,axis,op,width,paintContext=null){
     if(state.item.compound&&op)throw Error('Для XOR / AND сначала разберите сборный шаблон');
-    const item=state.item,prepared=op?templateAxisSemanticParts(item.parts):MayatnikTemplateAxisTurn.prepareParts(item.parts),candidate={...item,parts:prepared},inside=MayatnikTemplateAxisTurn.insideOut(prepared,state.rects,axis,width);
+    const item=state.item,mode=templateAxisPaintMode(item),prepared=op||mode==='pickup'?templateAxisSemanticParts(item.parts):MayatnikTemplateAxisTurn.prepareParts(item.parts),view=item===colourTemplate?{...item.view,height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked}:{...item.view},candidate={...item,view,parts:prepared},inside=MayatnikTemplateAxisTurn.insideOut(prepared,state.rects,axis,width);
     if(inside){candidate.parts=inside;delete candidate.matchOrientation;}
     else{flipParts(candidate,axis.direction==='v');candidate.parts=MayatnikTemplateAxisTurn.placeReflected(candidate.parts,state.rects,axis,width);}
-    if(op){const view=item===colourTemplate?{...item.view,height:Number($('templateHeight').value),down:Number($('templateDown').value),x:templateOffsetX,proportional:$('templateProportional').checked}:{...item.view};candidate.view=view;
+    if(op){
       const turned=candidate.parts.map(p=>templateRect(p,false,candidate));candidate.parts=MayatnikTemplateAxisTurn.compose(prepared,state.rects,candidate.parts,turned,op,{zero:rgba(hexRGB(st.bitZeroColour)),one:rgba(hexRGB(st.bitOneColour)),clipWidth:width});delete candidate.matchOrientation;}
-    candidate.parts=templateAxisCanvasParts(candidate.parts);return {prepared,candidate};
+    if(op)candidate.view={...view,height:100,down:0,x:0,proportional:false};
+    if(mode)paintContext||=templateAxisPaintContext();let captured=0;
+    if(mode==='pickup'){const result=templateAxisCapture(state,candidate,paintContext);candidate.parts=result.parts;captured=result.touched;if(captured)candidate.view={...candidate.view,height:100,down:0,x:0,proportional:false};}
+    candidate.parts=templateAxisCanvasParts(candidate.parts);const deposit=mode==='deposit'?templateAxisDeposit(state,candidate,paintContext):null;return {prepared,candidate,captured,deposit,paintContext,mode};
   }
   function turnTemplateAxis(id){
     const state=templateAxisState(),axis=state?.axes.find(a=>a.id===id);if(!state||!axis||templateAxisMove)return false;
-    const before=sceneSnapshot(),item=state.item,op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation),width=img?img.width/RK:dispW();let prepared,candidate;
+    const item=state.item,mode=templateAxisPaintMode(item),before=mode==='deposit'?{...editSnapshot(),templateOwned:true}:sceneSnapshot(),op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation),width=img?img.width/RK:dispW();let plan;
     try{
-      ({prepared,candidate}=templateAxisBuildTurn(state,axis,op,width));
+      plan=templateAxisBuildTurn(state,axis,op,width);
+      templateAxisDepositPrepare([plan]);
     }catch(error){$('fillInfo').textContent='Поворот шаблона не выполнен: '+(error?.message||String(error));return false;}
+    const {prepared,candidate,captured}=plan;
     item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
     item.templateAxes=MayatnikTemplateAxisTurn.freezeFrame(item.templateAxes,state.axisBox,state.pose);
-    if(op){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
-    const vacated=typeof templateVacateSource==='function'&&templateVacateSource(item,prepared);templateAxisCommit(before);
-    if(typeof templateFollow!=='undefined')templateFollow?.acknowledge(templateFollowScope());if(vacated)draw();return true;
+    if(op||captured){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
+    const vacated=!mode&&typeof templateVacateSource==='function'&&templateVacateSource(item,prepared);if(mode==='deposit')templateAxisDepositApply(plan);templateAxisCommit(before,mode==='deposit');
+    if(typeof templateFollow!=='undefined')templateFollow?.acknowledge(templateFollowScope());if(vacated||mode==='deposit')draw();return true;
+  }
+  function templateManualAxisToggle(previous,box,id){
+    const next=MayatnikTemplateAxisTurn.toggleManual(previous,box,id,true);
+    return !previous?.[id]&&next?.[id]?MayatnikTemplateAxisTurn.moveManual(next,id,Math.round(next[id].position/RK*2)*RK/2):next;
   }
   function toggleTemplateManualAxis(id){
     const state=templateAxisState();if(!state||templateAxisMove)return false;const before=sceneSnapshot();
-    const next=MayatnikTemplateAxisTurn.toggleManual(state.item.templateAxes,state.box,id);if(next===state.item.templateAxes)return false;state.item.templateAxes=next;templateAxisCommit(before);return true;
+    const next=templateManualAxisToggle(state.item.templateAxes,state.box,id);if(next===state.item.templateAxes)return false;state.item.templateAxes=next;templateAxisCommit(before);return true;
   }
   function beginTemplateAxisMove(){const state=templateAxisState();if(!state||templateAxisMove)return false;const items=window.mayTemplateInline?.targets()||[state.item];templateAxisMove={item:state.item,before:sceneSnapshot(),axes:state.item.templateAxes,items:items.map(item=>({item,axes:item.templateAxes,box:MayatnikTemplateAxisTurn.bounds(item.parts.map(p=>templateRect(p,false,item)))}))};return true;}
-  function moveTemplateManualAxis(id,position){const move=templateAxisMove;if(!move||colourTemplate!==move.item)return;const delta=position-(move.axes?.[id]?.position??position);for(const target of move.items){const axes=target.axes?.[id]?target.axes:MayatnikTemplateAxisTurn.toggleManual(target.axes,target.box,id);target.item.templateAxes=MayatnikTemplateAxisTurn.moveManual(axes,id,axes[id].position+delta);}queueDigits();}
+  function moveTemplateManualAxis(id,position){const move=templateAxisMove;if(!move||colourTemplate!==move.item)return;const delta=position-(move.axes?.[id]?.position??position);for(const target of move.items){const axes=target.axes?.[id]?target.axes:templateManualAxisToggle(target.axes,target.box,id);if(axes?.[id])target.item.templateAxes=MayatnikTemplateAxisTurn.moveManual(axes,id,axes[id].position+delta);}queueDigits();}
   function endTemplateAxisMove(cancel){
     const move=templateAxisMove;if(!move)return;templateAxisMove=null;
     if(cancel||colourTemplate!==move.item){for(const target of move.items)target.item.templateAxes=target.axes;queueDigits();return;}
     if(move.items.some(target=>JSON.stringify(target.axes)!==JSON.stringify(target.item.templateAxes)))templateAxisCommit(move.before);
   }
-  window.mayTemplateAxes={get(){const state=templateAxisState();return {enabled:!!state,manualH:!!state?.item.templateAxes?.manualH?.visible,manualV:!!state?.item.templateAxes?.manualV?.visible,operation:MayatnikTemplateAxisTurn.operation(state?.item.templateAxes?.operation)};},toggle:id=>window.mayTemplateInline?.action('manualAxis:'+id)??toggleTemplateManualAxis(id),toggleOperation:id=>window.mayTemplateInline?.action('axisOperation:'+id)??toggleTemplateAxisOperation(id),turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id)};
+  window.mayTemplateAxes={get(){const state=templateAxisState();return {enabled:!!state,manualH:!!state?.item.templateAxes?.manualH?.visible,manualV:!!state?.item.templateAxes?.manualV?.visible,capturePaint:templateAxisPaintMode(state?.item)==='pickup',transferPaint:templateAxisPaintMode(state?.item)==='deposit',operation:MayatnikTemplateAxisTurn.operation(state?.item.templateAxes?.operation)};},toggle:id=>window.mayTemplateInline?.action('manualAxis:'+id)??toggleTemplateManualAxis(id),toggleOperation:id=>window.mayTemplateInline?.action('axisOperation:'+id)??toggleTemplateAxisOperation(id),turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id)};
   function renderTemplateAxisControls(ctx,ox,oy,s){
     const state=templateAxisState();templateAxesChanged();if(!state){templateAxisControls?.hide();window.mayTemplateInline?.render(ctx,null);return;}
-    if(!templateAxisControls)templateAxisControls=MayatnikTemplateAxisTurn.mount({turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id),beginMove:beginTemplateAxisMove,move:moveTemplateManualAxis,endMove:endTemplateAxisMove});
+    if(!templateAxisControls)templateAxisControls=MayatnikTemplateAxisTurn.mount({snapManual:true,turn:id=>window.mayTemplateInline?.turn(id)??turnTemplateAxis(id),beginMove:beginTemplateAxisMove,move:moveTemplateManualAxis,endMove:endTemplateAxisMove});
     const host=wrap.getBoundingClientRect(),screen={box:state.axisBox,axes:state.axes,left:host.left,top:host.top,width:wrap.clientWidth,height:wrap.clientHeight,ox:ox+(state.layer?.x||0),oy:oy+(state.layer?.y||0),factor:s/RK,rk:RK};if(axesAtShownScale()){templateAxisControls.render(ctx,screen);window.mayTemplateInline?.axes(templateAxisControls,screen);}else templateAxisControls.hide();window.mayTemplateInline?.render(ctx,state,screen);
   }
   function drawTemplateAxes(ctx,ox,oy,s){
@@ -13065,7 +13122,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function templateInlineTargets(){rememberTemplate();const active=colourTemplate,items=MayatnikTemplateInline.matching(active,templateItems,templatePickedIds).sort((a,b)=>(a===active?-1:b===active?1:0));for(const item of items)if(!item.inlineSourceKey)item.inlineSourceKey=MayatnikTemplateInline.signature(item);return items;}
   // These handlers only replace template/scene objects. A raster write or a draw
   // promotes the snapshot to the original full fallback before touching pixels.
-  const templateInlineSceneCommands=new Set(['height','taller','shorter','alpha','show','trail','proportional','flipH','flipV','clone','line','colour','return','move']);
+  const templateInlineSceneCommands=new Set(['height','taller','shorter','alpha','show','trail','proportional','flipH','flipV','clone','line','colour','return','move','capturePaint','transferPaint']);
   const templateInlineWriteCommands=new Set(['up','down','downValue','transfer']);
   function templateInlineSceneCommand(command){return templateInlineSceneCommands.has(command)||command?.startsWith('manualAxis:')||command?.startsWith('axisOperation:');}
   function templateInlineSnapshot(command,sync=true){return templateInlineSceneCommand(command)?{scene:sceneSnapshot(sync),paint:fillMask,bits:paintBits,sceneOnly:true}:editSnapshot(sync);}
@@ -13131,6 +13188,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   async function templateInlinePerform(command,value,items){
     const toggles={show:!templateVisible,transfer:!templateTransfer,trail:!$('templateTrail').checked,proportional:!$('templateProportional').checked};
     const operation=command.startsWith('axisOperation:')?command.slice(14):null,desiredOperation=operation&&MayatnikTemplateAxisTurn.operation(colourTemplate.templateAxes?.operation)===operation?null:operation,manualId=command.startsWith('manualAxis:')?command.slice(11):null,manualOn=manualId&&!colourTemplate.templateAxes?.[manualId]?.visible,saved=new Set();
+    const paintMode=command==='capturePaint'?'pickup':command==='transferPaint'?'deposit':'',paintOn=paintMode&&templateAxisPaintMode(colourTemplate)!==paintMode;
     if(command.startsWith('axis:')&&typeof templateAxisBuildTurn==='function')return templateInlineTurnPlans(command.slice(5),items);
     if(command==='move'){templateInlineHandlers.move?.();return;}
     if(command==='find'){await findAllTemplateOnce();return;}
@@ -13148,6 +13206,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       else if(command==='height'||command==='downValue'||command==='alpha')changeTemplate({height:'templateHeight',downValue:'templateDown',alpha:'templateAlpha'}[command],value);
       else if(command.startsWith('axis:'))await templateInlineTurnOne(command.slice(5));
       else if(manualId){if(!!item.templateAxes?.[manualId]?.visible!==manualOn)toggleTemplateManualAxis(manualId);}
+      else if(paintMode){const current=templateAxisPaintMode(item);if(paintOn?current!==paintMode:current===paintMode)toggleTemplateAxisPaint(paintMode);}
       else if(operation){const current=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation);if(current!==desiredOperation)toggleTemplateAxisOperation(desiredOperation||current);}
       else templateInlineHandlers[command]?.();
       rememberTemplate();if(command!=='reset'&&templateItems.includes(item))templateInlineRememberEffects(item,raster);
@@ -13183,21 +13242,23 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const templateInlineTurnOne=turnTemplateAxis;
   function templateInlineTurn(id){return templateInlineTransaction?templateInlineTurnOne(id):templateInlineAction('axis:'+id);}
   function templateInlineTurnPlans(id,items){
-    const plans=[],width=img?img.width/RK:dispW();
-    for(const item of items){selectTemplate(item,false,false,true);const state=templateAxisState(),axis=state?.axes.find(a=>a.id===id);if(!state||!axis)throw Error('Эта ось отсутствует у одного из выбранных шаблонов');const op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation);plans.push({state,op,...templateAxisBuildTurn(state,axis,op,width)});}
-    for(const {state,op,prepared,candidate}of plans){const item=state.item;selectTemplate(item,false,false,true);const raster=templateInlineRaster();item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
+    const plans=[],width=img?img.width/RK:dispW(),paintContext=items.some(item=>templateAxisPaintMode(item))?templateAxisPaintContext():null;
+    for(const item of items){selectTemplate(item,false,false,true);const state=templateAxisState(),axis=state?.axes.find(a=>a.id===id);if(!state||!axis)throw Error('Эта ось отсутствует у одного из выбранных шаблонов');const op=MayatnikTemplateAxisTurn.operation(item.templateAxes?.operation);plans.push({state,op,...templateAxisBuildTurn(state,axis,op,width,paintContext)});}
+    if(plans.some(plan=>plan.deposit?.length))plans.sort((a,b)=>(a.state.layer?.order??templateItems.indexOf(a.state.item))-(b.state.layer?.order??templateItems.indexOf(b.state.item)));
+    templateAxisDepositPrepare(plans);
+    for(const plan of plans){const {state,op,prepared,candidate,captured,mode}=plan,item=state.item;selectTemplate(item,false,false,true);const raster=templateInlineRaster();item.parts=candidate.parts;if(candidate.matchOrientation===undefined)delete item.matchOrientation;else item.matchOrientation=candidate.matchOrientation;
       item.templateAxes=MayatnikTemplateAxisTurn.freezeFrame(item.templateAxes,state.axisBox,state.pose);
-      if(op){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
-      templateVacateSource(item,prepared);rememberTemplate();templateInlineRememberEffects(item,raster);
+      if(op||captured){$('templateHeight').value=100;$('templateDown').value=0;$('templateProportional').checked=false;templateOffsetX=0;templateLastDown=0;item.templateAxes=MayatnikTemplateAxisTurn.rebaseFrame(item.templateAxes,state.axisBox,[0,0,1,false,RK]);item.paintSource=false;item.lifted=null;item.pixels=item.parts.reduce((n,p)=>n+p.mask.count,0);}
+      if(!mode)templateVacateSource(item,prepared);if(mode==='deposit')templateAxisDepositApply(plan);rememberTemplate();templateInlineRememberEffects(item,raster);
     }
     templateReturn=null;templateMatchCache=null;window.mayTemplateLibrary?.clear();templateFollow?.acknowledge(templateFollowScope());return true;
   }
   function templateInlineRender(ctx,state,screen){
-    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,split:true});
+    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,split:true,expanded:true});
     if(!state){templateInlineControls.hide();templateInlineAxes?.cancel();return;}
     const {left,top,width,height,ox,oy,factor}=screen,o=templateOptions();
     const music=$('mayMusicSettingsPanel'),panel=music&&!music.hidden?music.getBoundingClientRect?.():null,freeWidth=panel&&panel.right>left&&panel.left<left+width&&panel.bottom>top&&panel.top<top+height?Math.max(0,panel.left-left-4):width;
-    templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTransfer,paint:!!templatePaintColour(state.item.id),trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
+    templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTransfer,paint:!!templatePaintColour(state.item.id),manualH:!!state.item.templateAxes?.manualH?.visible,manualV:!!state.item.templateAxes?.manualV?.visible,capturePaint:templateAxisPaintMode(state.item)==='pickup',transferPaint:templateAxisPaintMode(state.item)==='deposit',trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
   }
   function templateInlineAxisBegin(id,direction,event){
     if(!templateDragEnabled||templateInlineDrag||templateInlineTransaction||templateDragging)return false;const state=templateAxisState();if(!state)return false;

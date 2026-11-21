@@ -29,26 +29,42 @@
   const commands=[
     ['colour','Цвет выбранных шаблонов','●'],['save','Сохранить выбранные шаблоны в библиотеку','▣'],['split','Разобрать сборный шаблон на отдельные фигуры с сохранением положения и цветов','▦'],['clone','Добавить копии выбранных шаблонов','⧉'],['remove','Убрать выбранные шаблоны с поля','×'],['show','Показать / скрыть выбранные шаблоны','◉'],['find','Найти все такие же шаблоны','⌕'],
     ['flipH','Отразить выбранные шаблоны слева направо','↔'],['flipV','Отразить выбранные шаблоны сверху вниз','↕'],['return','Туда / назад','⇄'],['reset','Восстановить выбранные шаблоны','↶'],['taller','Увеличить высоту на 10 процентов','+'],['shorter','Уменьшить высоту на 10 процентов','−'],
-    ['up','Сдвинуть вверх на одну строку','↑'],['down','Сдвинуть вниз на одну строку','↓'],['fall','Спуск выбранных шаблонов до меняющихся битов','⇓'],['move','Двигать выбранные шаблоны за оси','✥'],['transfer','Переносить без следа','⇢'],['paint','Прокрасить выбранные шаблоны','▧'],['trail','Инвертировать след','◐'],['proportional','Пропорциональное изменение размера','⤢'],['line','Зеркальная копия по линии','⇅'],['xor1','XOR на строку ниже','⊕'],['xorNext','Следующий шаг XOR','⊕↓']
+    ['up','Сдвинуть вверх на одну строку','↑'],['down','Сдвинуть вниз на одну строку','↓'],['fall','Спуск выбранных шаблонов до меняющихся битов','⇓'],['move','Двигать выбранные шаблоны за оси','✥'],['transfer','Переносить без следа','⇢'],['paint','Прокрасить выбранные шаблоны','▧'],['trail','Инвертировать след','◐'],['proportional','Пропорциональное изменение размера','⤢'],['line','Зеркальная копия по линии','⇅'],['manualAxis:manualH','Показать ручную горизонтальную ось шаблона','↔'],['manualAxis:manualV','Показать ручную вертикальную ось шаблона','↕'],['capturePaint','Подхватывать краску с клеток поля после поворота шаблона','⇤'],['transferPaint','Передавать цвет шаблона клеткам поля после поворота','⇥'],['xor1','XOR на строку ниже','⊕'],['xorNext','Следующий шаг XOR','⊕↓']
   ];
   const groups=[
     ['Копии / библиотека',['save','split','clone','remove','find']],
     ['Цвет / видимость',['colour','show','paint']],
     ['Размер',['taller','shorter','proportional']],
     ['Сдвиг / след',['move','up','down','fall','transfer','trail']],
-    ['Зеркала / XOR',['flipH','flipV','line','xor1','xorNext']],
+    ['Зеркала / XOR',['manualAxis:manualH','manualAxis:manualV','capturePaint','transferPaint','flipH','flipV','line','xor1','xorNext']],
     ['Возврат',['return','reset']]
   ];
-  const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
+  const captions={split:'Разобрать',save:'В библиотеку',clone:'Копия',remove:'Убрать',find:'Найти такие',colour:'Цвет',show:'Показать',paint:'Прокрасить',taller:'Высота +10%',shorter:'Высота −10%',proportional:'Пропорции',move:'Двигать',up:'Вверх',down:'Вниз',fall:'Спуск',transfer:'Без следа',trail:'Инв. след',flipH:'Лево / право',flipV:'Верх / низ',line:'По линии','manualAxis:manualH':'Гориз. ось','manualAxis:manualV':'Верт. ось',capturePaint:'Подхват краски',transferPaint:'Передача краски',xor1:'XOR +1',xorNext:'Шаг XOR',return:'Туда / назад',reset:'Восстановить'};
   function mount(options){
-    const doc=options.document||document,root=doc.defaultView||globalThis,NS='http://www.w3.org/2000/svg',storageKey='mayatnik-template-inline-layout-v1';
+    const doc=options.document||document,root=doc.defaultView||globalThis,NS='http://www.w3.org/2000/svg';
+    const expanded=options.expanded===true,legacyKey='mayatnik-template-inline-layout-v1';
+    const storageKey=expanded?'mayatnik-template-inline-layout-v2':legacyKey;
     const caption=text=>typeof root.sharedHubButtonText==='function'?root.sharedHubButtonText(text):(root.HubButtonText?.shortCaption(text)||text);
-    const host=doc.createElement('div');host.className='may-template-inline';host.setAttribute('aria-label','Действия выбранного шаблона');host.setAttribute('data-no-mini','');host.hidden=true;doc.body.append(host);
+    const host=doc.createElement('div');host.className='may-template-inline';host.classList.toggle('inline-expanded',expanded);host.setAttribute('aria-label','Действия выбранного шаблона');host.setAttribute('data-no-mini','');host.hidden=true;doc.body.append(host);
     const labels=[],buttons=new Map(),inputs=new Map(),sections=new Map(),groupViews=new Map(),banks=[],extraControls=[],frames=[],holds=[];
     const keys=['copies','appearance','size','motion','mirrors','restore'],colours=['#ffd35b','#74df76','#65d9ff','#b48cff','#ff9c6b','#8fd3ff'];
-    let preferences={left:keys.slice(0,3),right:keys.slice(3),open:'appearance',pinned:[]};
-    try{const saved=JSON.parse(root.localStorage.getItem(storageKey));if(saved){const seen=new Set(),take=list=>(Array.isArray(list)?list:[]).filter(id=>keys.includes(id)&&!seen.has(id)&&seen.add(id));const left=take(saved.left),right=take(saved.right);for(const id of keys)if(!seen.has(id))(keys.indexOf(id)<3?left:right).push(id);preferences={left,right,open:keys.includes(saved.open)?saved.open:null,pinned:(Array.isArray(saved.pinned)?saved.pinned:[]).filter(id=>keys.includes(id))};}}catch(_){}
-    let mini=[];try{const saved=JSON.parse(root.localStorage.getItem(storageKey));if(Array.isArray(saved?.mini))mini=saved.mini.filter(key=>typeof key==='string');}catch(_){}preferences.mini=mini;
+    const preferences={left:keys.slice(0,3),right:keys.slice(3),open:expanded?null:'appearance',pinned:expanded?[...keys]:[],mini:[]};
+    try{
+      const saved=JSON.parse(root.localStorage.getItem(storageKey));
+      const layout=saved||(expanded?JSON.parse(root.localStorage.getItem(legacyKey)):null);
+      if(layout){
+        const seen=new Set(),take=list=>(Array.isArray(list)?list:[]).filter(id=>keys.includes(id)&&!seen.has(id)&&seen.add(id));
+        const left=take(layout.left),right=take(layout.right);
+        for(const id of keys)if(!seen.has(id))(keys.indexOf(id)<3?left:right).push(id);
+        preferences.left=left;
+        preferences.right=right;
+        if(Array.isArray(layout.mini))preferences.mini=layout.mini.filter(key=>typeof key==='string');
+      }
+      if(saved){
+        preferences.open=keys.includes(saved.open)?saved.open:null;
+        preferences.pinned=(Array.isArray(saved.pinned)?saved.pinned:[]).filter(id=>keys.includes(id));
+      }
+    }catch(_){}
     let currentState=null,dismissed=false,dismissedKey=null,geometryDirty=true,layoutKey='',drag=null,captionSource=null,captionOwner=null;
     const palette=doc.createElement('div');palette.className='may-template-inline-palette';palette.hidden=true;
     const set=(node,key,value)=>{value=String(value);if(node.getAttribute(key)!==value)node.setAttribute(key,value);};
@@ -64,7 +80,14 @@
     for(const name of ['pointerdown','pointerup','pointermove','dblclick','contextmenu'])host.addEventListener(name,e=>e.stopPropagation());
     function arrange(){for(let i=0;i<banks.length;i++)for(const id of preferences[i?'right':'left'])banks[i].append(groupViews.get(id).section);geometryDirty=true;layoutKey='';}
     function syncGroups(){for(const [id,view]of groupViews){const pinned=preferences.pinned.includes(id),open=preferences.open===id||pinned;view.body.hidden=!open;view.section.classList.toggle('inline-open',open);view.head.classList.toggle('may-standard-open',open);view.header?.sync({open,pinned});set(view.head,'aria-expanded',open);set(view.pin,'aria-pressed',pinned);}geometryDirty=true;layoutKey='';if(currentState)render(currentState);}
-    function toggle(id){preferences.open=preferences.open===id?null:id;if(preferences.open!==id)preferences.pinned=preferences.pinned.filter(key=>key!==id);palette.hidden=true;save();syncGroups();}
+    function toggle(id){
+      const open=preferences.open===id||preferences.pinned.includes(id);
+      if(open){
+        if(preferences.open===id)preferences.open=null;
+        preferences.pinned=preferences.pinned.filter(key=>key!==id);
+      }else preferences.open=id;
+      palette.hidden=true;save();syncGroups();
+    }
     function pin(id){const on=preferences.pinned.includes(id);preferences.pinned=on?preferences.pinned.filter(key=>key!==id):[...preferences.pinned,id];if(!on)preferences.open=id;save();syncGroups();}
     function moveGroup(id,side,index){preferences.left=preferences.left.filter(key=>key!==id);preferences.right=preferences.right.filter(key=>key!==id);const target=preferences[side];target.splice(Math.max(0,Math.min(target.length,index)),0,id);save();arrange();if(currentState)render(currentState);}
     function bindDrag(view,id){
@@ -85,7 +108,7 @@
     function button(id,title,glyph,parent,swatch=false){const node=doc.createElement('button');node.type='button';node.className=swatch?'may-template-inline-button may-template-inline-swatch':'gz-hx may-standard may-template-inline-button';node.dataset.command=id;node.title=title;node.setAttribute('aria-label',title);
       if(swatch)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="inline-face" d="M12 1 23 12 12 23 1 12Z"/><path class="inline-hover" d="m6 6-5 6 5 6m12-12 5 6-5 6"/></svg>';
       else{const icon=doc.createElement('span');icon.className='gz-ic';icon.setAttribute('aria-hidden','true');icon.textContent=glyph;const label=doc.createElement('span');label.className='gz-nm';labelText(label,captions[id]);node.append(icon,label);outline(node);}parent.append(node);return node;}
-    for(const [id,title,glyph]of commands){if(id==='split'&&!options.split)continue;const node=button(id,title,glyph,sections.get(id));buttons.set(id,node);miniButton(node,'command:'+id);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){palette.hidden=!palette.hidden;geometryDirty=true;if(currentState)render(currentState);return;}if(!palette.hidden){palette.hidden=true;geometryDirty=true;}options.action(id);});}
+    for(const [id,title,glyph]of commands){if(id==='split'&&!options.split||!expanded&&(id.startsWith('manualAxis:')||id==='capturePaint'||id==='transferPaint'))continue;const node=button(id,title,glyph,sections.get(id));buttons.set(id,node);miniButton(node,'command:'+id);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){palette.hidden=!palette.hidden;geometryDirty=true;if(currentState)render(currentState);return;}if(!palette.hidden){palette.hidden=true;geometryDirty=true;}options.action(id);});}
     for(const colour of options.colours||['#ffffff','#000000','#ff4040','#ffb347','#ffd646','#74df76','#65d9ff','#5795ff','#b48cff','#5b6475']){const swatch=button('colour:'+colour,'Цвет '+colour,'',palette,true);swatch.style.setProperty('--sample',colour);swatch.addEventListener('click',()=>options.action('colour',colour));}
     const custom=doc.createElement('input');custom.type='color';custom.title='Собственный цвет выбранных шаблонов';custom.setAttribute('aria-label',custom.title);custom.addEventListener('input',()=>options.action('colour',custom.value));palette.append(custom);sections.get('colour').append(palette);
     function repeatStep(node,step){let timer=0,held=false,pointer=null,suppressClick=false,serial=0;
@@ -106,11 +129,17 @@
       if(geometryDirty){for(const bank of banks)bank.inlineHeight=bank.scrollHeight||80;geometryDirty=false;}
       if(narrow)return;
       const minX=state.left+4,maxX=state.left+state.width-128,minY=state.top+4,maxY=state.top+viewportHeight-4,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-      const leftX=clamp(state.box.x-150,minX,maxX-126),rightX=clamp(state.box.x+state.box.width+26,leftX+126,maxX);
+      const gap=expanded?42:26,bankWidth=124;
+      const leftX=clamp(state.box.x-bankWidth-gap,minX,maxX-126),rightX=clamp(state.box.x+state.box.width+gap,leftX+126,maxX);
       banks.forEach((bank,index)=>{const h=Math.min(bank.inlineHeight,limit);style(bank,'left',(index?rightX:leftX)+'px');style(bank,'top',clamp(state.box.y,minY,maxY-h)+'px');});
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
-      for(const [id,node]of buttons){disabled(node,state.busy||state.disabled?.includes(id));if(['show','move','transfer','paint','trail','proportional','fall'].includes(id))set(node,'aria-pressed',!!state[id]);}
+      const checked={'manualAxis:manualH':state.manualH,'manualAxis:manualV':state.manualV,capturePaint:state.capturePaint,transferPaint:state.transferPaint};
+      for(const [id,node]of buttons){
+        disabled(node,state.busy||state.disabled?.includes(id));
+        if(Object.hasOwn(checked,id))set(node,'aria-pressed',!!checked[id]);
+        else if(['show','move','transfer','paint','trail','proportional','fall'].includes(id))set(node,'aria-pressed',!!state[id]);
+      }
       const colour=state.colour||'#ffffff';if(custom.value!==colour)custom.value=colour;if(buttons.get('colour').style.getPropertyValue('--sample')!==colour)buttons.get('colour').style.setProperty('--sample',colour);for(const swatch of palette.children)disabled(swatch,state.busy);for(const node of extraControls)disabled(node,state.busy);
       for(const [id,input]of inputs){if(doc.activeElement!==input){const value=state[id],nearest=Math.round(value),text=String(typeof value==='number'&&Math.abs(value-nearest)<1e-9?nearest:value??'');if(input.value!==text)input.value=text;}disabled(input,state.busy);}
       place(state);
