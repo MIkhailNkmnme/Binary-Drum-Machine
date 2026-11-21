@@ -48,7 +48,7 @@ a:hover { color: #d0faf3; }
   padding-block: clamp(2.8rem, 7vw, 6.2rem) 2.7rem;
 }
 .intro-motif { display: grid; justify-items: center; gap: .65rem; justify-self: center; width: min(100%, 24rem); }
-.intro-motif img { display: block; width: 100%; height: auto; }
+.intro-motif img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
 .journal-version { display: block; margin-bottom: .65rem; color: var(--muted); font-size: .9rem; }
 .intro h1, .entry h2 { margin: 0; font-weight: 700; line-height: 1.04; letter-spacing: normal; text-wrap: balance; }
 .intro h1 { font-size: clamp(2.85rem, 7vw, 6.6rem); max-width: 14ch; }
