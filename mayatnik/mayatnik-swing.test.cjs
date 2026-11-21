@@ -5,6 +5,7 @@ test('each shown transition advances once; arrows, x2, backward and same-frame p
   let index=0,last=10;const shown=[12,12,13,15,14,12],expected=[-1,-1,-2,-3,-2,-1];
   for(let i=0;i<shown.length;i++){index=S.advance(index,last,shown[i]);last=shown[i];assert.equal(S.STEPS[index],expected[i]);}
   const saved=JSON.parse(JSON.stringify({index,last}));assert.equal(S.advance(saved.index,saved.last,saved.last),saved.index);
+  assert.equal(S.STEPS[S.advance(2,127,0,true)],-3);
   assert.deepEqual(S.STEPS,[0,-1,-2,-3,-2,-1,0,1,2,3,2,1]);
 });
 test('seven base divisions measured from visible triangle, including cropped top',()=>{

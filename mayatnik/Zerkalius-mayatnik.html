@@ -552,7 +552,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="../_js/retriangle.js?v=1"></script>
 <script src="mayatnik-colour-auto.js?v=1024"></script>
 <link rel="stylesheet" href="mayatnik-cell-selection-view.css?v=543">
-<script src="mayatnik-swing.js?v=1071"></script>
+<script src="mayatnik-swing.js?v=1071.1"></script>
 <script src="mayatnik-view-rotation.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-view-rotation.css?v=600">
 <script src="mayatnik-face-transform.js?v=600"></script>
@@ -938,7 +938,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   viewRotation.set(!!st.viewUpsideDown);
   function viewRotationSync(){viewRotation.set(!!st.viewUpsideDown);$('bViewUpsideDown').setAttribute('aria-pressed',String(!!st.viewUpsideDown));notifyXorromField();}
   $('bViewUpsideDown').onclick=()=>{st.viewUpsideDown=!st.viewUpsideDown;viewRotationSync();save();queueDigits();};
-  var swingShownOwner=null,swingShownFrame=-1;
+  var swingShownOwner=null,swingShownFrame=-1,swingShownLap=0;
   function swingReason(){
     if(!f||!geo)return 'Сначала постройте поле.';
     if(gpuBig?.large||rombP()>=0||joinedOn()||staggeredOn()||animatrixOn()||phoneOn()||bothOn()||st.edgeRhombOn||st.gifScaleStack||document.body.classList.contains('may-fold-active'))return 'Качание доступно для одиночного плоского треугольника: Биты или Цвета, без ромбов, сборки, свёртки и коллажа.';
@@ -950,12 +950,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     // A real displayed transition is one swing step, for arrows ±1 as well as player ×2.
     // Repaints, unfinished GPU/paint frames and restoring F5 never advance it.
     let index=((Math.trunc(Number(st.swingPhaseIndex)||0)%12)+12)%12;
-    if(on&&swingShownOwner===f&&!cacheRestoring&&sessionReady&&frame!==st.swingLastFrame){index=MayatnikSwing.advance(index,st.swingLastFrame,frame);st.swingPhaseIndex=index;st.swingLastFrame=frame;queueSession();}
+    const lap=st.edgeWrap&&!edgeFlowOn()?edgeLaps:0,wrapped=lap>swingShownLap;
+    if(on&&swingShownOwner===f&&!cacheRestoring&&sessionReady&&(frame!==st.swingLastFrame||wrapped)){index=MayatnikSwing.advance(index,st.swingLastFrame,frame,wrapped);st.swingPhaseIndex=index;st.swingLastFrame=frame;queueSession();}
     else if(on&&!cacheRestoring&&sessionReady)st.swingLastFrame=frame;
     let geometry=null;
     if(on&&img){try{const semantic=visibleSemanticContext(false,true);geometry=MayatnikSwing.triangle(img.width,img.height,semantic.readBit);}catch(_){}}
     const amount=on&&geometry?MayatnikSwing.STEPS[index]*geometry.width/(7*geometry.height):0;
-    viewRotation.setSwing(amount,on?cv:null,geometry?geometry.top/img.height:0);swingShownOwner=f;swingShownFrame=frame;
+    viewRotation.setSwing(amount,on?cv:null,geometry?geometry.top/img.height:0);swingShownOwner=f;swingShownFrame=frame;swingShownLap=lap;
     const button=$('bViewSwing');button.setAttribute('aria-pressed',String(!!st.viewSwing));
     button.title=reason||'Качание плоского треугольника: семь делений основания; 0, −1, −2, −3, −2, −1, 0, +1, +2, +3, +2, +1. Вершина неподвижна, основание горизонтально. Один показанный переход — одно деление; назад — обратная фаза.';
     document.body.classList.toggle('may-swing-active',!!on);

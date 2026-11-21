@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikSwing=api;})(globalThis,function(){
   'use strict';
   const STEPS=Object.freeze([0,-1,-2,-3,-2,-1,0,1,2,3,2,1]);
-  function advance(index,previous,frame){return ((index+(Number.isFinite(previous)?Math.sign(frame-previous):0))%12+12)%12;}
+  function advance(index,previous,frame,wrapped=false){return ((index+(wrapped?1:Number.isFinite(previous)?Math.sign(frame-previous):0))%12+12)%12;}
   function triangle(width,height,read){
     let top=-1,bottom=-1,left=width,right=-1;
     for(let y=0;y<height&&top<0;y++)for(let x=0;x<width;x++)if(read(x,y)>=0){top=y;break;}
