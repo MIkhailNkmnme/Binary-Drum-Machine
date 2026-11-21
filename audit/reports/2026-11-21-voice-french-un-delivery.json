@@ -1,0 +1,32 @@
+{
+  "commit": "7325779241728a416ad78a9fa2f6a83bd3bf4e7d",
+  "version": "0.033",
+  "files": [
+    {
+      "file": "voice/index.html",
+      "url": "https://1001100.online/voice/index.html?v=033",
+      "match": true,
+      "sha256": "0928500c15c054dd7abcc1d5cd2e6c5aec3085b2a11092e85ab6e8621ce7daa6"
+    },
+    {
+      "file": "voice/digits.js",
+      "url": "https://1001100.online/voice/digits.js?v=033",
+      "match": true,
+      "sha256": "c3928a5a235ef7feeb22a38d73d063f795ea04410fbef53070c98494837e9b1e"
+    },
+    {
+      "file": "voice/README.md",
+      "url": "https://1001100.online/voice/README.md?v=033",
+      "match": true,
+      "sha256": "f97c98db1a3618971a4741f40d35ad27061a758122c6b8a4618b7f208277d18a"
+    },
+    {
+      "file": "voice/index.html",
+      "url": "https://1001100.online/voice/",
+      "match": true,
+      "sha256": "0928500c15c054dd7abcc1d5cd2e6c5aec3085b2a11092e85ab6e8621ce7daa6"
+    }
+  ],
+  "allMatch": true,
+  "runtimeTests": "Not run; source read by root. User acceptance."
+}
