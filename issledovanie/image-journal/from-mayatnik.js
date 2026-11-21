@@ -10,6 +10,9 @@
     link.className = 'image-link';
     link.dataset.viewImage = '';
     link.href = frame.url;
+    figure.dataset.journalKey = new URL(frame.url).pathname.slice(1);
+    link.dataset.summary = frame.summary || (label + ' · ' + frame.width + ' × ' + frame.height + ' пикс. Параметры построения не записаны.');
+    if (frame.scene) link.dataset.scene = frame.scene;
     const img = document.createElement('img');
     img.loading = 'lazy';
     img.decoding = 'async';

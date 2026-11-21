@@ -1,4 +1,6 @@
 import { DurableObject } from 'cloudflare:workers';
+import { editorRoute, JournalEditor } from './editor.mjs';
+export { JournalEditor };
 
 const ORIGIN = 'https://1001100.online';
 const FILE = /^\d{13}-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.png$/;
@@ -9,6 +11,31 @@ function newFile() {
 const PREFIX = 'from-mayatnik/';
 const MAX_BYTES = 8 * 1024 * 1024;
 const WINDOW = 60000;
+const MAX_CODE = 400000;
+const MAX_FORM_BYTES = MAX_BYTES + MAX_CODE + 16 * 1024;
+const SCENE_KEY = 'journal-scenes/';
+const DIGEST = /^[a-f0-9]{64}$/;
+const CODE = /^[01]\.[A-Za-z0-9_-]+$/;
+const encoder = new TextEncoder();
+
+function encodeSummary(summary) {
+  const text = summary.trim().replace(/[\u0000-\u001f\u007f]/g, ' ');
+  // R2 metadata has a 2048-byte aggregate limit. Keep Unicode intact and use ASCII on the wire.
+  const bytes = new Uint8Array(1024);
+  const {written} = encoder.encodeInto(text, bytes);
+  return btoa(String.fromCharCode(...bytes.subarray(0, written)));
+}
+
+function decodeSummary(metadata) {
+  return metadata.summary64 ? new TextDecoder().decode(Uint8Array.from(atob(metadata.summary64), c => c.charCodeAt(0))) : '';
+}
+
+async function storeScene(media, code) {
+  const hash = await crypto.subtle.digest('SHA-256', encoder.encode(code));
+  const digest = Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2,'0')).join('');
+  await media.put(SCENE_KEY + digest + '.txt', code, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'text/plain; charset=utf-8'}});
+  return digest;
+}
 
 export class UploadWindow extends DurableObject {
   async reserve() {
@@ -94,29 +121,56 @@ async function readPng(data) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (request.method === 'GET' && url.pathname === '/mayatnik-api/ready') return reply({file:newFile()});
-    if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX)) {
-      const key = url.pathname.slice(1);
-      if (!FILE.test(key.slice(PREFIX.length))) return reply({}, 404);
-      const object = request.method === 'GET' ? await env.MEDIA.get(key) : await env.MEDIA.head(key);
-      if (!object) return reply({}, 404);
-      return new Response(object.body || null, {headers:{'Content-Type':'image/png',
-        'Content-Length':String(object.size), 'Cache-Control':'public, max-age=31536000, immutable',
-        'ETag':object.httpEtag, 'X-Content-Type-Options':'nosniff'}});
-    }
-    if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);
-    if (request.method === 'OPTIONS') return reply({}, 200, {'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'});
     try {
+      if (request.method === 'OPTIONS' && url.pathname.startsWith('/mayatnik-api/')) {
+        return reply({}, 200, {'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'});
+      }
+      if (request.method === 'POST' && request.headers.get('Origin') !== ORIGIN) {
+        return reply({error:'Откройте Маятник или журнал на 1001100.online.'}, 403);
+      }
+      if (url.pathname.startsWith('/mayatnik-api/editor/')) {
+        const response = await editorRoute(request, env, url);
+        const headers = new Headers(response.headers);
+        headers.set('Access-Control-Allow-Origin', ORIGIN);
+        headers.set('Access-Control-Expose-Headers', 'Retry-After');
+        headers.set('Cache-Control', 'no-store');
+        return new Response(response.body, {status:response.status, headers});
+      }
+      if (request.method === 'GET' && url.pathname === '/mayatnik-api/scene') {
+        const id = url.searchParams.get('id');
+        if (!DIGEST.test(id || '')) return reply({error:'Некорректный адрес параметров кадра.'}, 400);
+        const stored = await env.MEDIA.get(SCENE_KEY + id + '.txt');
+        return stored ? reply({code:await stored.text()}) : reply({error:'Параметры кадра не найдены.'}, 404);
+      }
+      if (request.method === 'GET' && url.pathname === '/mayatnik-api/ready') return reply({file:newFile()});
+      if (['GET','HEAD'].includes(request.method) && url.pathname.startsWith('/' + PREFIX)) {
+        const key = url.pathname.slice(1);
+        if (!FILE.test(key.slice(PREFIX.length))) return reply({}, 404);
+        const object = request.method === 'GET' ? await env.MEDIA.get(key) : await env.MEDIA.head(key);
+        if (!object) return reply({}, 404);
+        return new Response(object.body || null, {headers:{'Content-Type':'image/png',
+          'Content-Length':String(object.size), 'Cache-Control':'public, max-age=31536000, immutable',
+          'ETag':object.httpEtag, 'X-Content-Type-Options':'nosniff'}});
+      }
+      if (url.pathname !== '/mayatnik-api/frames') return reply({}, 404);
       if (request.method === 'GET') {
-        const page = await env.MEDIA.list({prefix:PREFIX, limit:24, cursor:url.searchParams.get('cursor') || undefined, include:['customMetadata']});
-        const frames = page.objects.map(obj => ({url:url.origin + '/' + obj.key, frame:Number(obj.customMetadata.frame),
-          width:Number(obj.customMetadata.width), height:Number(obj.customMetadata.height), created:obj.uploaded.toISOString()}));
+        const editor = env.EDITOR.get(env.EDITOR.idFromName('journal'));
+        const [page, hiddenKeys] = await Promise.all([
+          env.MEDIA.list({prefix:PREFIX, limit:24, cursor:url.searchParams.get('cursor') || undefined, include:['customMetadata']}),
+          editor.hidden()
+        ]);
+        const hidden = new Set(hiddenKeys);
+        const frames = page.objects.filter(obj => !hidden.has(obj.key)).map(obj => {
+          const meta = obj.customMetadata || {};
+          return {url:url.origin + '/' + obj.key, frame:Number(meta.frame), width:Number(meta.width), height:Number(meta.height),
+            created:obj.uploaded.toISOString(), scene:meta.scene || '', summary:decodeSummary(meta)};
+        });
         return reply({frames, cursor:page.truncated ? page.cursor : null});
       }
       if (request.method !== 'POST') return reply({}, 405);
-      if (request.headers.get('Origin') !== ORIGIN) return reply({error:'Откройте Маятник на 1001100.online.'}, 403);
-      const type = request.headers.get('Content-Type');
-      if (type && type !== 'image/png') return reply({error:'Нужен PNG.'}, 415);
+      const type = request.headers.get('Content-Type') || '';
+      const multipart = /^multipart\/form-data(?:;|$)/i.test(type);
+      if (!multipart && type && type !== 'image/png') return reply({error:'Нужен PNG.'}, 415);
       const frame = url.searchParams.get('frame');
       if (!/^\d{1,10}$/.test(frame ?? '')) return reply({error:'Некорректный номер кадра.'}, 400);
       const file = url.searchParams.get('file') ?? newFile();
@@ -124,7 +178,8 @@ export default {
         return reply({error:'Срок отправки истёк. Нажмите кнопку ещё раз.'}, 400);
       const key = PREFIX + file;
       const length = Number(request.headers.get('Content-Length'));
-      if (!request.body || length > MAX_BYTES) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
+      const limit = multipart ? MAX_FORM_BYTES : MAX_BYTES;
+      if (!request.body || length > limit) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
       const ip = request.headers.get('CF-Connecting-IP');
       if (!ip) return reply({error:'Не удалось определить адрес для ограничения частоты.'}, 503);
       const limiter = env.LIMITS.get(env.LIMITS.idFromName(ip));
@@ -134,14 +189,29 @@ export default {
       let received = 0;
       for await (const chunk of request.body) {
         received += chunk.length;
-        if (received > MAX_BYTES) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
+        if (received > limit) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
         chunks.push(chunk);
       }
-      const png = await readPng(new Uint8Array(await new Blob(chunks).arrayBuffer()));
+      let image = new Blob(chunks), code = '', summary64 = '';
+      if (multipart) {
+        let fields;
+        try { fields = await new Response(image, {headers:{'Content-Type':type}}).formData(); }
+        catch { return reply({error:'Не удалось прочитать отправленный кадр.'}, 400); }
+        image = fields.get('png');
+        code = fields.get('code');
+        const summary = fields.get('summary');
+        if (!(image instanceof Blob) || image.size > MAX_BYTES) return reply({error:'Для журнала нужен PNG до 8 МиБ.'}, 413);
+        if (typeof code !== 'string' || code.length > MAX_CODE || !CODE.test(code) || typeof summary !== 'string') {
+          return reply({error:'Некорректные параметры кадра.'}, 400);
+        }
+        summary64 = encodeSummary(summary);
+      }
+      const png = await readPng(new Uint8Array(await image.arrayBuffer()));
       if (!png) return reply({error:'Нужен корректный PNG из Маятника до 32 Мпикс.'}, 400);
+      const sceneMeta = code ? {scene:await storeScene(env.MEDIA, code), summary64} : {};
       // Lexicographic R2 listing returns the most recent images first.
       const saved = await env.MEDIA.put(key, png.blob, {onlyIf:new Headers({'If-None-Match':'*'}), httpMetadata:{contentType:'image/png'}, customMetadata:{
-        frame, width:String(png.width), height:String(png.height)
+        frame, width:String(png.width), height:String(png.height), ...sceneMeta
       }});
       return reply({url:url.origin + '/' + key}, saved ? 201 : 200);
     } catch {

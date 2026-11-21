@@ -6,6 +6,6 @@
   "preview_urls": false,
   "routes": [{ "pattern": "media.1001100.online/mayatnik-api/*", "zone_name": "1001100.online" }],
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "zerkalius-media" }],
-  "durable_objects": { "bindings": [{ "name": "LIMITS", "class_name": "UploadWindow" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["UploadWindow"] }]
+  "durable_objects": { "bindings": [{ "name": "LIMITS", "class_name": "UploadWindow" }, { "name": "EDITOR", "class_name": "JournalEditor" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["UploadWindow"] }, { "tag": "v2", "new_sqlite_classes": ["JournalEditor"] }]
 }
