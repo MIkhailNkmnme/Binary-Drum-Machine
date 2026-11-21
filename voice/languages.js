@@ -5,13 +5,13 @@
    kanji fail explicitly. These recipes do not establish intelligibility. */
 (function(root){
   'use strict';
-  const version='language-recipes-v1.0.0',copy=v=>JSON.parse(JSON.stringify(v));
+  const version='language-recipes-v1.0.1',copy=v=>JSON.parse(JSON.stringify(v));
   const supported=new Set(['fr','it','es','ja']);
   const vowels=new Set(['a','e','i','o','u','ax','en_eh','en_aw','de_ue','de_oe','fr_un','fr_in','fr_an','fr_on']);
   const targets={
     fr_un:{kind:'vowel',formants:[270,500,1440,2470],bandwidths:[90,135,210,280],weights:[.62,1,.68,.2],voice:1,noise:.012},
     fr_in:{kind:'vowel',formants:[270,575,1810,2580],bandwidths:[90,135,210,280],weights:[.61,1,.76,.23],voice:1,noise:.012},
-    fr_r:{kind:'fricative',formants:[660,1300,2360,3970],bandwidths:[480,690,1050,1400],weights:[.6,1,.42,.17],voice:.52,noise:.48},
+    fr_r:{kind:'fricative',formants:[660,1300,2200,3200],bandwidths:[360,520,760,1000],weights:[.6,1,.12,.025],voice:.72,noise:.10},
     fr_an:{kind:'vowel',formants:[280,730,1240,2580],bandwidths:[95,145,220,290],weights:[.6,1,.66,.22],voice:1,noise:.012},
     fr_on:{kind:'vowel',formants:[270,520,930,2520],bandwidths:[95,140,215,285],weights:[.62,1,.62,.21],voice:1,noise:.012}
   };

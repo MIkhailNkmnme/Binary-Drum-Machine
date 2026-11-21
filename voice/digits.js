@@ -1,7 +1,7 @@
 /* ГОЛ-030. Handwritten digit names and original phoneme durations. */
 (function(root){
   'use strict';
-  const version='counting-recipes-v1.0.0';
+  const version='counting-recipes-v1.0.1';
   const example='1, 0, 0… 1, 1, 0, 0.';
   // First ten rows map to 0–9. Further rows give alternate pronunciations
   // by name only. A plus marks the stressed vowel in the phoneme score.
@@ -79,7 +79,7 @@
   const targets={
     fr_un:{kind:'vowel',formants:[270,500,1440,2470],bandwidths:[90,135,210,280],weights:[.62,1,.68,.2],voice:1,noise:.012},
     fr_in:{kind:'vowel',formants:[270,575,1810,2580],bandwidths:[90,135,210,280],weights:[.61,1,.76,.23],voice:1,noise:.012},
-    fr_r:{kind:'fricative',formants:[660,1300,2360,3970],bandwidths:[480,690,1050,1400],weights:[.6,1,.42,.17],voice:.52,noise:.48}
+    fr_r:{kind:'fricative',formants:[660,1300,2200,3200],bandwidths:[360,520,760,1000],weights:[.6,1,.12,.025],voice:.72,noise:.10}
   };
   function read(language,word){
     const table=recipes.get(language);
