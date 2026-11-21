@@ -66,6 +66,7 @@
   async function loadPage() {
     if (more.disabled) return;
     more.disabled = true;
+    more.textContent = 'Загрузка…';
     status.textContent = 'Загрузка кадров…';
     try {
       const page = await window.MayatnikJournal.list(cursor);
@@ -75,7 +76,7 @@
       more.textContent = 'Ещё кадры';
       status.textContent = wall.children.length ? '' : 'Пока нет публикаций.';
     } catch {
-      status.textContent = 'Не удалось загрузить публикации.'
+      status.textContent = 'Не удалось загрузить список кадров. Повторите попытку.'
       more.textContent = 'Повторить';
       more.hidden = false;
     } finally { more.disabled = false; }

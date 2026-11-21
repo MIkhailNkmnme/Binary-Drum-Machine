@@ -83,32 +83,55 @@
     return dispose;
   }
 
+  async function requestHost(host, path, options, timeout, signal) {
+    if (signal?.aborted) throw new DOMException('Публикация остановлена.', 'AbortError');
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal?.addEventListener('abort', abort, {once:true});
+    const timer = setTimeout(abort, timeout);
+    try {
+      const response = await fetch(host + '/mayatnik-api/' + path, {
+        ...options, signal:controller.signal, cache:'no-store', credentials:'omit'
+      });
+      const data = await response.json();
+      if (response.status >= 500) throw Error('Сервис журнала временно недоступен.');
+      if (!response.ok) {
+        const refusal = new Refused(data.error || 'Сервис журнала отклонил запрос (HTTP ' + response.status + ').');
+        refusal.status = response.status;
+        throw refusal;
+      }
+      return data;
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
+  }
+
   async function request(path, options, timeout, first = preferred, signal) {
     for (const host of [first, ...hosts.filter(other => other !== first)]) {
-      const controller = new AbortController();
-      if (signal?.aborted) throw new DOMException('Публикация остановлена.', 'AbortError');
-      const abort = () => controller.abort();
-      signal?.addEventListener('abort', abort, {once:true});
-      const timer = setTimeout(() => controller.abort(), timeout);
       try {
-        const response = await fetch(host + '/mayatnik-api/' + path, {
-          ...options, signal:controller.signal, cache:'no-store', credentials:'omit'
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          if (response.status >= 500) continue;
-          const refusal = new Refused(data.error || 'Сервис журнала отклонил запрос (HTTP ' + response.status + ').');
-          refusal.status = response.status;
-          throw refusal;
-        }
+        const data = await requestHost(host, path, options, timeout, signal);
         preferred = host;
         return {data, host};
       } catch (error) {
         if (signal?.aborted) throw new DOMException('Публикация остановлена.', 'AbortError');
         if (error instanceof Refused) throw error;
-      } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
+      }
     }
     throw Error('Не удалось связаться с журналом по двум адресам.');
+  }
+
+  // These public GETs read the same catalog on both hosts. Keep writes sequential.
+  async function readCatalog(path, valid) {
+    const pending = new AbortController();
+    try {
+      const {data, host} = await Promise.any(hosts.map(async host => {
+        const data = await requestHost(host, path, {}, 5500, pending.signal);
+        if (!valid(data)) throw Error('Сервис вернул некорректный каталог.');
+        return {data, host};
+      }));
+      preferred = host;
+      return data;
+    } catch {
+      throw Error('Не удалось получить каталог журнала по двум адресам.');
+    } finally { pending.abort(); }
   }
   window.MayatnikJournal = {
     loadMedia,
@@ -171,11 +194,11 @@
       return data;
     },
     async withdrawn() {
-      return (await request('editor/hidden', {}, 5500)).data.keys;
+      return (await readCatalog('editor/hidden', data => Array.isArray(data?.keys))).keys;
     },
     async list(cursor) {
       const query = cursor ? '?' + new URLSearchParams({cursor}) : '';
-      return (await request('frames' + query, {}, 5500)).data;
+      return readCatalog('frames' + query, data => Array.isArray(data?.frames) && (data.cursor === null || typeof data.cursor === 'string'));
     }
   };
 })();
