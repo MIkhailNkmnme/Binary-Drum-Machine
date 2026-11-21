@@ -1,0 +1,58 @@
+{
+  "deployment_status": "completed",
+  "deployment_conclusion": "success",
+  "archive": "E:\\GD\\_pzl\\Zerkulis\\archive\\Zerkalius-mayatnik\\v1051\\source-88a8ff48.zip",
+  "task": "ПОМ-001",
+  "date": "2026-11-21",
+  "model": "gpt-oss:20b",
+  "runtime_checkout": "E:\\GD\\_pzl\\Zerkulis\\_scratch\\assistant-local-20261121",
+  "model_connection": {
+    "cold_response_seconds": 137.4,
+    "successful_suggestions": [
+      "bitOneColour",
+      "bitZeroColour",
+      "speed",
+      "frameT"
+    ],
+    "known_limit": "Mixed request asking both change and explain sometimes returns explanation with no changes; no settings applied.",
+    "warm_response_seconds": "2-3"
+  },
+  "local_endpoint": "http://127.0.0.1:11435",
+  "deployment_run": 44850063636,
+  "version": "1.051",
+  "commit": "88a8ff48f7592c788ccaf5bffb08b209c1e90c42",
+  "allowed_settings": 8,
+  "review": {
+    "syntax_checks": "not run",
+    "ui_browser": "not run; user acceptance",
+    "source_read": true,
+    "automated_tests": "not run"
+  },
+  "http": [
+    {
+      "path": "mayatnik/Zerkalius-mayatnik.html",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.js",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/mayatnik-assistant.css",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/assistant-controls.json",
+      "http": 200,
+      "matches": true
+    },
+    {
+      "path": "mayatnik/instruction/index.html",
+      "http": 200,
+      "matches": true
+    }
+  ]
+}
