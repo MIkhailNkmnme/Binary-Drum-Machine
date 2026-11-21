@@ -65,7 +65,7 @@ class ImageRedirect(HTTPRedirectHandler):
 
 
 def download(url, label, *, absent_ok=False):
-    request = Request(url, headers={'Cache-Control': 'no-cache'})
+    request = Request(url, headers={'Cache-Control': 'no-cache', 'User-Agent': 'ZerkaliusImageJournal/1.0'})
     try:
         with build_opener(ImageRedirect()).open(request, timeout=45) as response:
             data = response.read(MAX_BYTES + 1)
