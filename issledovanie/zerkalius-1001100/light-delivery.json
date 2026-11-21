@@ -1,0 +1,31 @@
+{
+  "file": "zerkalius-1001100-symbiosis-v10-light-720p.mp4",
+  "bytes": 60459533,
+  "originalBytes": 305766181,
+  "smallerBy": 5.057369215868737,
+  "aacStreamIdentical": true,
+  "sha256": "sha256:d6c378caac92dd20d34c9786712d2aa21f55d9904c4aec4dd3bb626358a6b4c9",
+  "url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/zerkalius-1001100-symbiosis-v10/zerkalius-1001100-symbiosis-v10-light-720p.mp4",
+  "media": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1280,
+        "height": 720,
+        "r_frame_rate": "24/1"
+      },
+      {
+        "codec_name": "aac",
+        "sample_rate": "48000",
+        "channels": 2,
+        "r_frame_rate": "0/0"
+      }
+    ],
+    "format": {
+      "duration": "450.000000",
+      "size": "60459533"
+    }
+  }
+}
