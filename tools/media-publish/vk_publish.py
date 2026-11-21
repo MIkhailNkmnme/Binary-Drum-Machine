@@ -12,6 +12,8 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import uuid4
 
+import r2_release
+
 
 GROUP_ID = 240613453
 JOURNAL_URL = 'https://1001100.online/issledovanie/image-journal/'
@@ -58,14 +60,19 @@ def releases(queue, cards):
     selected = {}
     for file in sorted(Path(queue).glob('*.json')):
         entry = json.loads(file.read_text(encoding='utf-8-sig'))
-        if not isinstance(entry, dict) or set(entry) != {'entry', 'image'}:
-            raise ValueError(f'{file.name}: укажите поля entry и image.')
+        fields = {'entry', 'image'}
+        staged_fields = fields | {'source_url', 'sha256'}
+        if not isinstance(entry, dict) or set(entry) not in (fields, staged_fields):
+            raise ValueError(f'{file.name}: нужны поля entry и image. Для загрузки добавьте source_url и sha256.')
+        if 'source_url' in entry:
+            r2_release.check_release_url(entry['source_url'])
+            entry['sha256'] = r2_release.parse_digest(entry['sha256'])
         anchor, image = entry['entry'], entry['image']
         if not isinstance(anchor, str) or not re.fullmatch(r'[a-z0-9][a-z0-9-]*', anchor):
             raise ValueError(f'{file.name}: некорректный якорь записи.')
         if not isinstance(image, str) or (anchor, image) not in indexed or anchor in selected:
             raise ValueError(f'{file.name}: нужен один оригинал из указанной записи журнала.')
-        selected[anchor] = indexed[anchor, image]
+        selected[anchor] = (entry, indexed[anchor, image])
     return list(selected.values())
 
 
@@ -106,10 +113,12 @@ def wall_posts(token, entry_urls):
         time.sleep(.35)
 
 
-def upload_photo(token, image_url):
+def upload_photo(token, image_url, digest=None):
     from PIL import Image
 
     source = fetch(image_url, 'Оригинал из R2')
+    if digest is not None and hashlib.sha256(source).hexdigest() != digest:
+        raise ValueError('SHA-256 полученного из R2 оригинала не совпадает с заявкой.')
     buffer = BytesIO()
     with Image.open(BytesIO(source)) as image:
         if image.width * image.height > MAX_PIXELS:
@@ -153,23 +162,23 @@ def check():
     return dict(wall_read=True, photo_upload_server=True, posted=[])
 
 
-def publish(queue, local_cards, parse_cards):
-    expected = releases(queue, local_cards)
-    if not expected:
+def publish(selected, parse_cards):
+    if not selected:
         return dict(reason='Очередь VK пуста', posted=[])
     token = os.environ.get('VK_USER_TOKEN', '').strip()
     if not token:
         return dict(reason='Секрет VK_USER_TOKEN пока не настроен', posted=[])
 
+    expected = [card for _, card in selected]
     wait_for_journal(expected, parse_cards)
     found = wall_posts(token, {item['entry_url'] for item in expected})
     posted, existing = [], []
-    for card in expected:
+    for release, card in selected:
         entry = card['entry_url']
         if entry in found:
             existing.append(f"https://vk.com/wall{-GROUP_ID}_{found[entry]}")
             continue
-        attachment = upload_photo(token, card['image_url'])
+        attachment = upload_photo(token, card['image_url'], release.get('sha256'))
         # A retry after an unconfirmed response uses the same VK request identifier.
         guid = hashlib.sha256(entry.encode()).hexdigest()[:32]
         result = api('wall.post', token, owner_id=-GROUP_ID, from_group=1,

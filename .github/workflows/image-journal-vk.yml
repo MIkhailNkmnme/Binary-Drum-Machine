@@ -1,4 +1,4 @@
-name: Publish chosen image journal entries to VK
+name: Image Journal · R2 and VK
 
 on:
   push:
@@ -8,10 +8,22 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Проверка подключения или выпуск очереди
+        description: Проверка ВК или R2, загрузка в R2 либо выпуск очереди
         type: choice
-        options: [check, publish]
+        options: [check, check-r2, upload-r2, publish]
         default: check
+      object_key:
+        description: Ключ файла в R2 для upload-r2
+        type: string
+      source_url:
+        description: Прямая ссылка на файл GitHub Release для upload-r2
+        type: string
+      sha256:
+        description: SHA-256 исходного файла для upload-r2
+        type: string
+      image_base64:
+        description: Данные небольшого файла для upload-r2 вместо ссылки
+        type: string
 
 permissions:
   contents: read
@@ -34,7 +46,37 @@ jobs:
         env:
           VK_USER_TOKEN: ${{ secrets.VK_USER_TOKEN }}
         run: python3 tools/media-publish/media.py check-vk
-      - name: Convert covers to VK JPEG
+      - name: Install R2 client
+        if: github.event_name == 'push' || inputs.mode == 'publish' || inputs.mode == 'check-r2' || inputs.mode == 'upload-r2'
+        run: python3 -m pip install --disable-pip-version-check -r tools/media-publish/requirements.txt
+      - name: Check read access to R2
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check-r2'
+        env:
+          ZERKALIUS_R2_ENDPOINT: ${{ secrets.ZERKALIUS_R2_ENDPOINT }}
+          ZERKALIUS_R2_ACCESS_ID: ${{ secrets.ZERKALIUS_R2_ACCESS_ID }}
+          ZERKALIUS_R2_SECRET: ${{ secrets.ZERKALIUS_R2_SECRET }}
+        run: python3 tools/media-publish/media.py check-r2
+      - name: Upload one image to R2
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'upload-r2'
+        env:
+          ZERKALIUS_R2_ENDPOINT: ${{ secrets.ZERKALIUS_R2_ENDPOINT }}
+          ZERKALIUS_R2_ACCESS_ID: ${{ secrets.ZERKALIUS_R2_ACCESS_ID }}
+          ZERKALIUS_R2_SECRET: ${{ secrets.ZERKALIUS_R2_SECRET }}
+          R2_OBJECT_KEY: ${{ inputs.object_key }}
+          R2_SOURCE_URL: ${{ inputs.source_url }}
+          R2_SHA256: ${{ inputs.sha256 }}
+          R2_IMAGE_BASE64: ${{ inputs.image_base64 }}
+        run: |
+          python3 tools/media-publish/media.py upload-r2 \
+            --key "$R2_OBJECT_KEY" --sha256 "$R2_SHA256" --source-url "$R2_SOURCE_URL"
+      - name: Upload journal originals to R2
+        if: github.event_name == 'push' || inputs.mode == 'publish'
+        env:
+          ZERKALIUS_R2_ENDPOINT: ${{ secrets.ZERKALIUS_R2_ENDPOINT }}
+          ZERKALIUS_R2_ACCESS_ID: ${{ secrets.ZERKALIUS_R2_ACCESS_ID }}
+          ZERKALIUS_R2_SECRET: ${{ secrets.ZERKALIUS_R2_SECRET }}
+        run: python3 tools/media-publish/media.py upload-vk-media --queue issledovanie/image-journal/vk
+      - name: Install VK cover converter
         if: github.event_name == 'push' || inputs.mode == 'publish'
         run: python3 -m pip install --disable-pip-version-check 'Pillow==12.2.0'
       - name: Announce releases

@@ -99,6 +99,48 @@ HTTPS оригиналы с `media.1001100.online`. На каждую фигур
 
 Подготовка черновиков работает локально. Для отправки действует отдельный способ ниже.
 
+## Загрузка в R2 через GitHub Actions
+
+В настройках репозитория откройте **Settings → Secrets and variables → Actions**
+и сохраните три **repository secrets**. Для S3 используйте разрешение
+**Object Read & Write** на бакет `zerkalius-media`.
+
+| Секрет | Значение |
+| --- | --- |
+| `ZERKALIUS_R2_ENDPOINT` | S3 API endpoint из настроек R2, включая `https://` |
+| `ZERKALIUS_R2_ACCESS_ID` | Access Key ID |
+| `ZERKALIUS_R2_SECRET` | Secret Access Key |
+
+[Секреты репозитория](https://github.com/MIkhailNkmnme/Binary-Drum-Machine/settings/secrets/actions) ·
+[Cloudflare R2 S3 credentials](https://developers.cloudflare.com/r2/api/tokens/)
+
+Откройте [Image Journal · R2 and VK](https://github.com/MIkhailNkmnme/Binary-Drum-Machine/actions/workflows/image-journal-vk.yml)
+и выберите **Run workflow** на ветке `main`. Режим `check-r2` проверяет чтение
+бакета. Режим `upload-r2` публикует один файл в R2 и сверяет его SHA-256 и MIME
+по HTTPS на `media.1001100.online`. Он не запускает анонс в ВК.
+
+Для `upload-r2` укажите `object_key` вида `image-journal-ГГГГ-ММ-ДД/имя.gif`
+и `sha256`. Имена внутри ключа пишутся латиницей с цифрами, точками, дефисами
+или подчёркиваниями. Поддерживаются PNG, JPEG, GIF и WebP до 50 МиБ. Хеш файла
+можно получить в PowerShell.
+
+```powershell
+(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+```
+
+Выберите один источник. Для `source_url` приложите файл к опубликованному
+[выпуску репозитория](https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases)
+и возьмите его прямую ссылку `releases/download/<тег>/<имя>`. Файл выпуска доступен
+публично и хранится отдельно от истории Git. Для файла размером до 36 000 байт
+можно заполнить `image_base64` строкой из буфера обмена.
+
+```powershell
+Set-Clipboard -Value ([Convert]::ToBase64String([IO.File]::ReadAllBytes($file)))
+```
+
+При повторном запуске workflow использует уже доступный файл, если хеш совпадает.
+Для изменившегося файла укажите новый ключ.
+
 ## Автоматический анонс выбранной записи в VK
 
 Получите **пользовательский токен VK** через приложение, которому VK разрешает
@@ -111,7 +153,7 @@ HTTPS оригиналы с `media.1001100.online`. На каждую фигур
 
 В GitHub сохраните пользовательский токен в репозитории сайта через **Settings
 → Secrets and variables → Actions → New repository secret** с именем `VK_USER_TOKEN`.
-Для первичной проверки откройте workflow **Publish chosen image journal entries to VK**
+Для первичной проверки откройте workflow **Image Journal · R2 and VK**
 и запустите его в режиме `check`. Этот режим проверяет чтение стены и получение
 сервера загрузки фото. Отправку первого поста подтверждает ответ `wall.post`
 с `post_id`. [Секреты GitHub Actions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)
@@ -127,8 +169,14 @@ JSON-файл с якорем статьи и URL выбранного ориг�
 }
 ```
 
-Пуш заявки в `main` запускает workflow. Он ждёт совпадения карточки на живом сайте,
-загружает JPEG для ВК и публикует от имени группы текст со ссылкой на запись.
+Если оригинал ещё нужно загрузить, добавьте в ту же заявку поля `source_url`
+(прямая ссылка на файл выпуска этого репозитория) и `sha256` (64 шестнадцатеричных
+символа). Поле `image` по-прежнему указывает на будущий URL оригинала в R2.
+
+Пуш заявки в `main` или ручной режим `publish` запускает цепочку выпуска. Workflow
+сначала загружает приложенные оригиналы в R2 и подтверждает их публичную доставку,
+затем ждёт совпадения карточки на живом сайте и публикует в группе JPEG со ссылкой
+на запись. Заявке с уже опубликованным оригиналом достаточно полей `entry` и `image`.
 Если на стене группы уже есть её точная ссылка, выпуск пропускается. Пока заявка
 остаётся в очереди, она может быть обработана следующим выпуском. Перед удалением
 анонса из ВК уберите его заявку из очереди. Старые статьи и загрузки прямо из

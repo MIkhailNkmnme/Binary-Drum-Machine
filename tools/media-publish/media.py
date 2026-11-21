@@ -10,6 +10,7 @@ import sys
 from urllib.parse import quote, urlsplit, urlunsplit
 
 import image_api
+import r2_release
 import vk_publish
 
 BUCKET = 'zerkalius-media'
@@ -166,12 +167,14 @@ def network(args):
     except ImportError:
         raise ValueError('Установите requirements.txt в частный venv по README.') from None
     endpoint = os.environ.get('ZERKALIUS_R2_ENDPOINT', '')
+    if not endpoint:
+        raise ValueError('Укажите ZERKALIUS_R2_ENDPOINT в локальном профиле или Secrets Actions.')
     if not re.fullmatch(r'https://[a-f0-9]{32}(?:\.(?:eu|us|fedramp))?\.r2\.cloudflarestorage\.com', endpoint):
         raise ValueError('Некорректный endpoint Cloudflare R2.')
     access_id = os.environ.get('ZERKALIUS_R2_ACCESS_ID', '')
     secret = os.environ.get('ZERKALIUS_R2_SECRET', '')
     if not access_id or not secret:
-        raise ValueError('Нет credentials; используйте media.ps1 configure.')
+        raise ValueError('Укажите ZERKALIUS_R2_ACCESS_ID и ZERKALIUS_R2_SECRET в локальном профиле или Secrets Actions.')
     # Explicit credentials prevent fallback to unrelated AWS profiles or IMDS.
     client = boto3.client('s3', endpoint_url=endpoint, aws_access_key_id=access_id,
                           aws_secret_access_key=secret, region_name='auto',
@@ -179,6 +182,10 @@ def network(args):
                                         retries={'mode': 'standard', 'max_attempts': 2},
                                         s3={'addressing_style': 'path'}))
     try:
+        if args.command == 'check-r2':
+            client.list_objects_v2(Bucket=BUCKET, Prefix='image-journal-', MaxKeys=1)
+            emit(dict(bucket=BUCKET, read_access=True))
+            return
         if args.command == 'list':
             # One bounded read, with cursor rather than implicitly listing everything.
             response = client.list_objects_v2(Bucket=BUCKET, Prefix=args.prefix, MaxKeys=100)
@@ -205,7 +212,7 @@ def network(args):
             if str(exc.response.get('Error', {}).get('Code')) not in ('404', 'NoSuchKey', 'NotFound'):
                 raise
         else:
-            raise ValueError('Объект уже существует. Перезапись запрещена; выберите новый key.')
+            raise r2_release.ObjectAlreadyExists('Объект уже существует. Выберите новый key.')
         operation = client.meta.service_model.operation_model('PutObject')
         if 'IfNoneMatch' not in operation.input_shape.members:
             raise ValueError('boto3 не поддерживает условный PUT. Обновите зависимости; загрузка отменена.')
@@ -217,6 +224,8 @@ def network(args):
         # Never print SDK exception strings: they can contain request details.
         code = str(exc.response.get('Error', {}).get('Code', 'unknown'))
         status = exc.response.get('ResponseMetadata', {}).get('HTTPStatusCode')
+        if args.command == 'upload' and (status == 412 or code == 'PreconditionFailed'):
+            raise r2_release.ObjectAlreadyExists('Объект уже существует. Выберите новый key.') from None
         safe_code = code if re.fullmatch(r'[A-Za-z0-9_.-]{1,80}', code) else 'unknown'
         raise ValueError(f'R2 отказ: {safe_code}; HTTP {status}. Изменения не подтверждены.') from None
     finally:
@@ -237,8 +246,13 @@ def main():
     draft.add_argument('--journal-url', required=True)
     image_api.add_arguments(commands.add_parser('generate-image'))
     commands.add_parser('check-vk')
-    release = commands.add_parser('publish-vk')
-    release.add_argument('--queue', required=True)
+    commands.add_parser('check-r2')
+    staged_upload = commands.add_parser('upload-r2')
+    staged_upload.add_argument('--key', required=True)
+    staged_upload.add_argument('--sha256', required=True)
+    staged_upload.add_argument('--source-url', default='')
+    for name in ('upload-vk-media', 'publish-vk'):
+        commands.add_parser(name).add_argument('--queue', required=True)
     args = parser.parse_args()
     try:
         if args.command == 'prepare-vk':
@@ -247,10 +261,16 @@ def main():
             emit(image_api.generate(args, REPOSITORY, image_type, MAX_IMAGE_BYTES))
         elif args.command == 'check-vk':
             emit(vk_publish.check())
-        elif args.command == 'publish-vk':
+        elif args.command == 'upload-r2':
+            emit(r2_release.upload_one(args, network, image_type))
+        elif args.command in ('upload-vk-media', 'publish-vk'):
             journal = REPOSITORY / 'issledovanie/image-journal/index.html'
             cards = journal_cards(journal.read_text(encoding='utf-8-sig'), vk_publish.JOURNAL_URL)
-            emit(vk_publish.publish(args.queue, cards, journal_cards))
+            releases = vk_publish.releases(args.queue, cards)
+            if args.command == 'upload-vk-media':
+                emit(r2_release.upload_selected(releases, network, image_type))
+            else:
+                emit(vk_publish.publish(releases, journal_cards))
         else:
             network(args)
     except (ValueError, OSError) as exc:
