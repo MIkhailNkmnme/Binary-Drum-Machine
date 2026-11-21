@@ -3,11 +3,11 @@
   'use strict';
   const themes=[
     ['map','Карта',['triangleMapSource','axisPalette','crossLabels','triangleMapAxes','triangleMapMask','triangleMapMirror']],
-    ['symmetry','Симметрия',['autoAxes','sym','symChessDirs','symPlainDirs','symV','symH','symD','symPlainV','symPlainH','symPlainD','symBits','symTriangles','bTriangleAxes']],
+    ['symmetry','Симметрия',['autoAxes','autoAxesPaint','sym','symChessDirs','symPlainDirs','symV','symH','symD','symPlainV','symPlainH','symPlainD','symBits','symTriangles','bTriangleAxes']],
     ['limits','Пределы',['symTriangleRows','symRowsRange','symBitsRange']],
     ['actions','Действия',['fixTri','fixAxis3','bFrameWindow','bRuler','clrAxes']]
   ];
-  const kinds={triangleMapSource:'tri',axisPalette:'colour',crossLabels:'sector',triangleMapAxes:'target',triangleMapMask:'half',triangleMapMirror:'mirror',autoAxes:'magnet',sym:'eye',symV:'chessV',symH:'chessH',symD:'chessD',symPlainV:'axisV',symPlainH:'axisH',symPlainD:'axisD',symTriangles:'tri',bTriangleAxes:'nest',symBits:'grid4',bFrameWindow:'corners',bRuler:'line',fixTri:'pin',clrAxes:'cross'};
+  const kinds={triangleMapSource:'tri',axisPalette:'colour',crossLabels:'sector',triangleMapAxes:'target',triangleMapMask:'half',triangleMapMirror:'mirror',autoAxes:'magnet',autoAxesPaint:'colour',sym:'eye',symV:'chessV',symH:'chessH',symD:'chessD',symPlainV:'axisV',symPlainH:'axisH',symPlainD:'axisD',symTriangles:'tri',bTriangleAxes:'nest',symBits:'grid4',bFrameWindow:'corners',bRuler:'line',fixTri:'pin',clrAxes:'cross'};
   function mount(row,options={}){
     if(!row||row.hasAttribute('data-axes-panel'))return null;row.dataset.axesPanel='';
     const doc=row.ownerDocument,win=doc.defaultView,frameApi=options.frame||win.ZerkControlFrame;
