@@ -6,7 +6,7 @@
   const SHARED_KEY=KEY+'.library',LAST_ENGINE_KEY=KEY+'.current-engine';
   const TEXT_FADE=.004;
   const engineStorageKey=id=>KEY+'.engine.'+id;
-  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceDigits||!globalThis.VoiceProsody||!globalThis.VoiceText||!globalThis.VoiceWaveform||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Компоненты редактора не загрузились. Обновите страницу после доставки файлов.';return;}
+  if(!R||!globalThis.VoiceEnglish||!globalThis.VoiceDigits||!globalThis.VoiceLetters||!globalThis.VoiceProsody||!globalThis.VoiceText||!globalThis.VoiceWaveform||!Array.isArray(globalThis.VoiceCatalog)){$('status').textContent='Компоненты редактора не загрузились. Обновите страницу после доставки файлов.';return;}
   const speechField=$('speech-text');
   const speechHighlight=$('text-cursor');
   const waveform=VoiceWaveform({
@@ -23,6 +23,12 @@
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
   const SPEECH_EXAMPLES={fr:VoiceDigits.example,it:VoiceDigits.example,es:VoiceDigits.example,ja:VoiceDigits.example,ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
+  const speechCatalog=[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])];
+  const alphabetExamples=Object.fromEntries(Object.keys(SPEECH_EXAMPLES).map(language=>{
+    const symbols=speechCatalog.filter(r=>r.lang===language&&r.kind==='name'&&Array.from(r.symbol).length===1)
+      .map(r=>r.symbol);
+    return [language,[...new Set(symbols)].join(' ')];
+  }));
   const PREVIOUS_EXAMPLES={en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
   const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
   function letterTrial(count,separator,previous=false){
@@ -42,7 +48,7 @@
   const isFactoryText=(text,language)=>text===SPEECH_EXAMPLES[language]
     ||(language==='ru'&&(text===PLAIN_RUSSIAN_EXAMPLE||text===PREVIOUS_RUSSIAN_EXAMPLE))
     ||(PREVIOUS_EXAMPLES[language]||[]).includes(text);
-  const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechProsody:{...VoiceProsody.defaults},speechPlayback:{rate:1,volume:1},speechCaret:0};
+  const state={engineId:R.defaultId||'robot',profiles:{},library:[],languages:[],silent:false,kind:'sound',compareMode:'profiles',legacyDraft:null,speechText:DEFAULT_SPEECH,speechLanguage:'ru',speechSpell:false,speechProsody:{...VoiceProsody.defaults},speechPlayback:{rate:1,volume:1},speechCaret:0};
   for(const item of R.list){const e=R.get(item.id);state.profiles[item.id]={settings:{...e.defaults},phones:{},userPhones:{}};}
   let E=R.get(state.engineId),worker=null,jobId=0,epoch=0,revision=0,importTicket=0;
   let context=null,source=null,sourceDone=null,textOutput=null,textLevel=null,current=null,selectedId='';
@@ -128,9 +134,9 @@
   function stopAudio(except=null){stopTextUI();retireSource();sequencePlaying=false;paused=false;pauseControls(false);document.querySelectorAll('audio').forEach(a=>{if(a!==except)a.pause();});}
   function begin(except=null){epoch++;cancelWorker();stopAudio(except);return epoch;}
   function capturePage(){
-    const {speechText,speechLanguage,speechProsody,speechPlayback,speechCaret,kind,silent,compareMode,variationSeed}=state;
+    const {speechText,speechLanguage,speechSpell,speechProsody,speechPlayback,speechCaret,kind,silent,compareMode,variationSeed}=state;
     return {
-      speechText,speechLanguage,speechProsody,speechPlayback:{...speechPlayback},speechCaret,kind,silent,compareMode,variationSeed,
+      speechText,speechLanguage,speechSpell,speechProsody,speechPlayback:{...speechPlayback},speechCaret,kind,silent,compareMode,variationSeed,
       topic:activeTopic,compactTabs:[...compactTabs],
       editor:{title:$('title').value,symbol:$('symbol').value,lang:$('lang-code').value,langName:$('lang-name').value,
         scoreText:$('score').value,recipeId:selectedId,recipeMode:$('recipe-mode').value,recipeLanguage:$('language').value,
@@ -162,7 +168,7 @@
   }
   function invalidate(text='Изменения сохранены. Для живого WAV заново нажмите «Слушать».'){revision++;importTicket++;begin();current=null;textCache=null;wholeTextCache=null;waveform.setResult(null);$('text-wav').disabled=true;$('text-json').disabled=true;$('wav').disabled=true;$('prosody-note').textContent='Параметры изменены. Нажмите «Плей» для нового разбора.';$('prosody-trace').replaceChildren();if(comparisons.length)$('compare-status').textContent='Ниже предыдущие снимки. Вычислите сравнение заново для текущих настроек.';status(text);save();}
   function settingsFrom(value,e=E){if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Неверные настройки.');const out={};for(const p of e.parameters){if(!Object.hasOwn(value,p.key))throw Error('Нет параметра '+p.key);out[p.key]=finite(value[p.key],p.min,p.max,p.label);}return e.normalize(out);}
-  function languagePhones(e,overrides,score){const phones=globalThis.VoiceGerman?VoiceGerman.resolve(e,overrides,score):clone(overrides);return VoiceEnglish.resolve(e,phones,score);}
+  function languagePhones(e,overrides,score){const phones=globalThis.VoiceGerman?VoiceGerman.resolve(e,overrides,score):clone(overrides);return VoiceDigits.resolve(e,VoiceEnglish.resolve(e,phones,score),score);}
   function validatePhone(value,e=E){
     if(!value||typeof value!=='object'||Array.isArray(value)||!e.kinds.some(k=>k.id===value.kind))throw Error('Неизвестный тип фонемы.');const l=e.limits,out={kind:value.kind};
     for(const [key,min,max]of [['formants',l.minFrequency,l.maxFrequency],['bandwidths',l.minBandwidth,l.maxBandwidth],['weights',0,l.maxWeight]]){if(!Array.isArray(value[key])||value[key].length!==4)throw Error('Нужны четыре значения '+key);out[key]=value[key].map(v=>finite(v,min,max,key));}
@@ -225,8 +231,8 @@
     document.title=label(id)+' · '+$('voice-name').textContent+' '+$('voice-version').textContent;
     buildParameters();refreshPhones();syncParameters();
   }
-  function allRecipes(){const list=[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],unique=[...new Map(list.map(r=>[r.id,r])).values()];return [...unique.map(r=>({...r,title:r.label,builtin:true})),...state.library];}
-  function refreshLanguages(wanted=$('language').value||'ru'){const map=new Map([['ru','Русский'],['en','English'],['de','Deutsch']]);for(const x of state.languages)map.set(x.code,x.label);for(const r of allRecipes())if(!map.has(r.lang))map.set(r.lang,r.lang);$('language').replaceChildren();for(const [code,text]of map)option($('language'),code,text);$('language').value=map.has(wanted)?wanted:'ru';$('lang-name').value=map.get($('language').value);}
+  function allRecipes(){const unique=[...new Map(speechCatalog.map(r=>[r.id,r])).values()];return [...unique.map(r=>({...r,title:r.label,builtin:true})),...state.library];}
+  function refreshLanguages(wanted=$('language').value||'ru'){const map=new Map([['ru','Русский'],['en','English'],['de','Deutsch'],['fr','Français'],['it','Italiano'],['es','Español'],['ja','日本語']]);for(const x of state.languages)map.set(x.code,x.label);for(const r of allRecipes())if(!map.has(r.lang))map.set(r.lang,r.lang);$('language').replaceChildren();for(const [code,text]of map)option($('language'),code,text);$('language').value=map.has(wanted)?wanted:'ru';$('lang-name').value=map.get($('language').value);}
   function refreshRecipes(wanted=''){const select=$('recipe');select.replaceChildren();option(select,'','Выберите рецепт');for(const r of allRecipes().filter(r=>r.lang===$('language').value&&(r.own||r.kind==='digit'||r.kind===$('recipe-mode').value)))option(select,r.id,(r.symbol||'')+' · '+r.title+(r.silent?' · немая':'')+(r.own?' · '+label(r.engineId):''));if(state.legacyDraft)option(select,'legacy:v1','Черновик из v1 · Банк');if(state.engineId==='robot')for(const r of E.sourceProfiles||[])option(select,'source:'+r.id,'Исходный робот · '+r.label);select.value=wanted;$('delete-recipe').disabled=!state.library.some(r=>r.id===wanted);}
   function applyLegacyDraft(){
     const d=state.legacyDraft;if(!d)return;begin();openEngine('bank',{navigate:true});selectTopic('tab-score');profile().settings=clone(d.settings);profile().phones=clone(d.phones);selectedId='legacy:v1';state.kind=d.kind;state.silent=d.silent;state.variationSeed=undefined;
@@ -377,20 +383,20 @@
     textButton();
   }
   function showProsodyTrace(trace,duration=null,parts=0){
-    const p=trace.config,sources={manual:'вручную',yo:'ё',dict:'открытый словарь',unknown:'неизвестно, нейтрально',catalog:'каталожная цифра','count-word':'название цифры','en-dictionary':'EN · словарь произношения','en-rules':'EN · приближённые правила'},contours={auto:'по знакам препинания',flat:'без добавочного контура',question:'вопрос',statement:'утверждение'};
+    const p=trace.config,sources={manual:'вручную',yo:'ё',dict:'открытый словарь',unknown:'неизвестно, нейтрально',catalog:'каталожная цифра','count-word':'название цифры','letter-name':'названия букв или слоги','en-dictionary':'EN · словарь произношения','en-rules':'EN · приближённые правила'},contours={auto:'по знакам препинания',flat:'без добавочного контура',question:'вопрос',statement:'утверждение'};
     $('prosody-note').textContent=(p.mode==='original'?'Исходно, без наложения просодии. ':'Речь · выразительность '+p.expressiveness+' · контур '+contours[p.contour]+' · связность '+p.transitionMs+' мс. ')+trace.note+(duration===null?'':' Фактически: '+duration.toFixed(3)+' с, частей '+parts+'. Параметры каждой части доступны в паспорте JSON.');
     const list=$('prosody-trace');list.replaceChildren();for(const word of trace.words){const item=document.createElement('li');item.textContent=word.word+' — '+(sources[word.source]||word.source)+(word.stressIndex===null?'':'; ударная гласная в позиции '+(word.stressIndex+1));list.append(item);}
   }
   async function prepareText(ticket,text){
-    readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),language=$('speech-language').value,prosody=readSpeechProsody();
-    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});
+    readControls();const e=E,engineId=state.engineId,settings=clone(profile().settings),phones=clone(profile().phones),language=state.speechLanguage,spell=state.speechSpell,prosody=readSpeechProsody();
+    const key=JSON.stringify({engineId,version:e.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,lettersVersion:VoiceLetters.version,spell,plannerVersion:VoiceProsody.version,prosody,settings,phones,text,language});
     const cached=[textCache,wholeTextCache].find(entry=>entry?.key===key);
     if(cached){
       textCache=cached;
       showProsodyTrace(cached.trace,cached.result.duration,cached.passport.parts.length);
       return cached;
     }
-    const plan=VoiceText.plan({text,language,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:e,settings,phones,prosody});showProsodyTrace(plan.prosody);
+    const plan=VoiceText.plan({text,language,spell,catalog:speechCatalog,engine:e,settings,phones,prosody});showProsodyTrace(plan.prosody);
     const pieces=[],timeline=[],parts=[];let offset=0,actual=null;
     for(let i=0;i<plan.chunks.length;i++){
       if(!active(ticket))return null;const chunk=plan.chunks[i];$('text-status').textContent='Вычисляю текст · '+label(engineId)+' · часть '+(i+1)+' / '+plan.chunks.length;
@@ -403,7 +409,7 @@
       if(offset>VoiceText.maxSeconds*plan.rate)throw Error('Готовый круг превысил лимит '+VoiceText.maxSeconds+' секунд. Сократите текст.');
     }
     if(!offset||!actual)throw Error('Нет звучащего текста.');const samples=new Float32Array(offset);let at=0;for(const piece of pieces){samples.set(piece,at);at+=piece.length;}
-    const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
+    const passport={format:'zerkalius-voice-text',version:1,text,language,engineId,engineVersion:actual.engineVersion,plannerVersion:VoiceProsody.version,germanVersion:globalThis.VoiceGerman?.version,englishVersion:VoiceEnglish.version,digitsVersion:VoiceDigits.version,lettersVersion:VoiceLetters.version,spell,controls:clone(prosody),settings:clone(actual.settings),phones:clone(actual.phones),stressTrace:clone(plan.prosody.words),parts,sampleRate:plan.rate,sampleCount:offset,duration:offset/plan.rate,timeline:clone(timeline)};
     const cache={key,text,language,timeline,trace:plan.prosody,passport,result:{samples,sampleRate:plan.rate,duration:offset/plan.rate,engineId,engineVersion:actual.engineVersion,settings:clone(actual.settings),phones:clone(actual.phones),seed:actual.seed}};
     if(!active(ticket))return null;
     textCache=cache;
@@ -594,7 +600,7 @@
       drawTextCursor();
       // Plan before opening the audio device: silent signs and invalid text
       // never create an AudioContext, a zero-length buffer or a repeat task.
-      readControls();const preflight=VoiceText.plan({text,language:$('speech-language').value,catalog:[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])],engine:E,settings:profile().settings,phones:profile().phones,prosody:readSpeechProsody()});showProsodyTrace(preflight.prosody);
+      readControls();const preflight=VoiceText.plan({text,language:state.speechLanguage,spell:state.speechSpell,catalog:speechCatalog,engine:E,settings:profile().settings,phones:profile().phones,prosody:readSpeechProsody()});showProsodyTrace(preflight.prosody);
       await unlock();if(!active(ticket))return;const cache=await prepareText(ticket,text);if(!cache||!active(ticket))return;
       const result=cache.result,buffer=context.createBuffer(1,result.samples.length,result.sampleRate);
       buffer.copyToChannel(result.samples,0);
@@ -703,17 +709,43 @@
     speechField.scrollLeft=0;
     drawTextCursor();
   }
+  function setSpeechSpell(spell){
+    state.speechSpell=spell;
+    $('speech-reading').value=spell?'letters':'default';
+  }
+  function isSpeechSample(text,language){
+    return isFactoryText(text,language)||text===alphabetExamples[language]
+      ||language==='ru'&&Object.values(LETTER_TRIALS).includes(text);
+  }
   $('speech-language').onchange=()=>{
     const text=speechField.value,language=state.speechLanguage;
-    const factory=isFactoryText(text,language)||(language==='ru'&&Object.values(LETTER_TRIALS).includes(text));
+    const factory=isSpeechSample(text,language);
     state.speechLanguage=$('speech-language').value;
-    if(factory)useSpeechExample();
+    if(factory)useSpeechExample(state.speechSpell?alphabetExamples[state.speechLanguage]:undefined);
     invalidate('Язык текстового чтения изменён. Нажмите «Плей».');
-    if(VoiceDigits.supports(state.speechLanguage))$('text-status').textContent='Введите цифры 0–9 или их названия. «Сброс текста» загружает счёт 1001100.';
   };
-  $('text-example').onclick=()=>{useSpeechExample();invalidate('Исходный пример выбранного языка восстановлен.');$('text-status').textContent='Исходный текст восстановлен.';};
+  $('speech-reading').onchange=()=>{
+    const factory=isSpeechSample(speechField.value,state.speechLanguage);
+    setSpeechSpell($('speech-reading').value==='letters');
+    if(factory)useSpeechExample(state.speechSpell?alphabetExamples[state.speechLanguage]:undefined);
+    invalidate('Способ чтения изменён. Нажмите «Плей».');
+  };
+  $('text-alphabet').onclick=()=>{
+    setSpeechSpell(true);
+    useSpeechExample(alphabetExamples[state.speechLanguage]);
+    invalidate('Алфавит выбранного языка вставлен.');
+    $('text-status').textContent='Нажмите «Плей», чтобы прослушать алфавит, или выделите часть.';
+    speechField.focus({preventScroll:true});
+  };
+  $('text-example').onclick=()=>{
+    setSpeechSpell(false);
+    useSpeechExample();
+    invalidate('Исходный пример выбранного языка восстановлен.');
+    $('text-status').textContent='Исходный текст восстановлен.';
+  };
   function loadLetterTrial(mode){
     $('speech-language').value=state.speechLanguage='ru';
+    setSpeechSpell(false);
     useSpeechExample(LETTER_TRIALS[mode]);
     invalidate('В поле 31 строка пробы русских букв.');
     $('text-status').textContent='Проба букв. Нажмите «Плей» или выделите одну строку.';
@@ -830,6 +862,7 @@
     }
     restoreSpeechCaret(caret);
     $('speech-language').value=state.speechLanguage;
+    setSpeechSpell(page.speechSpell===true);
     try{state.speechProsody=VoiceProsody.normalize(page.speechProsody??undefined);}
     catch{state.speechProsody=VoiceProsody.normalize();}
     syncSpeechProsody();drawTextCursor();textButton();

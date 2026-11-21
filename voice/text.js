@@ -10,28 +10,49 @@
   const MAX_HOLD_SECONDS=1.5;
   const softNext=new Set(Array.from('ЕЁЮЯИЬ'));
   const iotated=new Set(Array.from('ЕЁЮЯ'));
-  function plan({text,language,catalog,engine,settings,phones,prosody}){
+  function takeLetter(names,letters,index){
+    // Consume a kana combination or a base letter with combining accents as one sign.
+    for(let size=Math.min(3,letters.length-index);size>0;size--){
+      const symbol=letters.slice(index,index+size).join('').normalize('NFC').toLowerCase();
+      const recipe=names.get(symbol);
+      if(recipe)return {recipe,size};
+    }
+    return null;
+  }
+  function plan({text,language,catalog,engine,settings,phones,prosody,spell=false}){
     const counting=root.VoiceDigits?.supports(language);
     if(typeof text!=='string'||!(['ru','en','de'].includes(language)||counting))throw Error('Выберите доступный язык чтения.');
     const raw=Array.from(text),rate=engine.limits.sampleRate,tail=engine.engineId==='robot'?Math.round(.018*rate):0;
     if(!raw.length||raw.length>MAX_CHARS)throw Error('Текст: от 1 до '+MAX_CHARS+' символов.');
-    const prepared=root.VoiceProsody.prepare(text,language,prosody),letters=prepared.letters;
+    const prepared=root.VoiceProsody.prepare(text,language,prosody,spell),letters=prepared.letters;
+    const wordStarts=new Map(prepared.words.map(word=>[word.start,word]));
+    const names=spell||counting?new Map(catalog.filter(r=>r.lang===language&&r.kind==='name')
+      .map(r=>[r.symbol.normalize('NFC').toLowerCase(),r])):null;
     const sounds=new Map(catalog.filter(r=>r.lang===language&&r.kind==='sound').map(r=>[r.symbol.toUpperCase(),r]));
     const digits=new Map(catalog.filter(r=>r.lang===(language==='de'?'de':'ru')&&r.kind==='digit').map(r=>[r.symbol,r]));
     const characters=prepared.characters;let units=[],sounding=false;
     for(let index=0;index<letters.length;index++){
       const char=letters[index],upper=char.toUpperCase(),start=characters[prepared.rawIndices[index]].start;
-      let score=[],boundary=false,length=1,english=null,counted=null,countingDigit=false;
+      let score=[],boundary=false,length=1,english=null,counted=null,separate=false;
       if(/\s/u.test(char)){score=[{id:'_',duration:.10}];boundary=true;}
       else if(/[.,!?;:…—–\-()«»„“”‚‘’"']/u.test(char)||(counting&&/[、。]/u.test(char))){score=[{id:'_',duration:/[.!?…。]/u.test(char) ? 0.28 : /[,;:、]/u.test(char) ? 0.16 : 0.08}];boundary=true;}
-      else if(counting){
-        countingDigit=/^[0-9]$/.test(char);
-        const word=countingDigit?null:prepared.words.find(w=>w.start===index);
-        const name=word?.word??char;
-        counted=root.VoiceDigits.read(language,name);
-        if(!counted)throw Error('«'+name+'» в позиции '+(start+1)+'. В '+language.toUpperCase()+' доступны цифры 0–9 и их названия.');
-        if(word){length=word.end-index;word.source='count-word';}
-        score=counted.score.map(token=>({...token}));
+      else if(names){
+        const digit=/^[0-9]$/.test(char),word=wordStarts.get(index);
+        if(counting&&(digit||!spell&&word))counted=root.VoiceDigits.read(language,digit?char:word.word);
+        let recipe=counted;
+        if(digit){
+          recipe??=language==='en'?root.VoiceEnglish.take(letters,index):digits.get(char);
+        }else if(counted){
+          length=word.end-index;
+          word.source='count-word';
+        }else{
+          const entry=takeLetter(names,letters,index);
+          if(entry){recipe=entry.recipe;length=entry.size;}
+          if(word){word.source='letter-name';word.stressIndex=null;}
+        }
+        if(!recipe)throw Error('Символ «'+char+'» в позиции '+(start+1)+' не поддерживается в '+language.toUpperCase()+'.');
+        score=recipe.score.map(token=>({...token}));
+        separate=true;
         sounding=true;
       }
       else{
@@ -76,7 +97,7 @@
         if(score.some(t=>t.id!=='_'))sounding=true;
       }
       const cleanIndices=Array.from({length},(_,i)=>index+i),indices=cleanIndices.map(i=>prepared.rawIndices[i]);
-      units.push({index:indices[0],indices,cleanIndices,score,boundary,countingDigit,
+      units.push({index:indices[0],indices,cleanIndices,score,boundary,separate,
         ...(english?{stressTokens:english.stressTokens,tokenLetters:english.tokenLetters.map(i=>index+i)}:counted?{stressTokens:counted.stressTokens}:{})});
       index+=length-1;
     }
@@ -94,11 +115,11 @@
       }
     }
     if(!sounding)throw Error('В тексте нет звучащих букв или цифр. Ъ, Ь и паузы не зацикливаются отдельно.');
-    const annotation=root.VoiceProsody.apply(units,prepared,language,engine,effectivePhones,settings);units=annotation.units;
+    const annotation=root.VoiceProsody.apply(units,prepared,language,engine,effectivePhones,settings,spell);units=annotation.units;
     // Keep each word together. Separators belong to the preceding word; a
     // leading separator stays with the first word. No per-letter DSP restart.
     const words=[];let word=[];
-    for(const unit of units){word.push(unit);if(unit.boundary||unit.countingDigit){if(word.some(u=>!u.boundary)){words.push(word);word=[];}else if(words.length){words[words.length-1].push(...word);word=[];}}}
+    for(const unit of units){word.push(unit);if(unit.boundary||unit.separate){if(word.some(u=>!u.boundary)){words.push(word);word=[];}else if(words.length){words[words.length-1].push(...word);word=[];}}}
     if(word.length)words.push(word);
     const chunks=[];let chunk={score:[],marks:[],prosodySegments:[]},count=0,totalSamples=0;
     const duration=score=>score.reduce((sum,t)=>sum+Math.round(t.duration/settings.speed*rate),0);
