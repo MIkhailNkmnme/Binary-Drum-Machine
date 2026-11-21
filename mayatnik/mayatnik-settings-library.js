@@ -11,6 +11,8 @@
   const THROUGH_DEFAULTS={templateFrameSearch:null,templateFrameSearchName:'',ochkiThrough:false,ochkiSkipSpaces:false,ochkiEveryFrame:false,ochkiRowReverseMask:false,gifScaleStack:false,gifScaleStackStep:8,gifScaleStackPhasePage:0,gifScaleStackOverlay:'off',gifScaleStackOverlayIndex:0,gifScaleStackOutline:false,gifScaleStackPaintZero:null,gifScaleStackPaintOne:null,gifScaleStackMethod:'canvas',gifScaleStackMode:'rows',gifScaleStackBase:2,gifScaleStackHeight:'original'};
   const INVERT_DEFAULTS={invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null};
   const ISOLATED_DEFAULTS={paintIsolated0:false,paintIsolated1:false,paintEmptyNeighbours:false};
+  const AUTO_AXIS_COLOURS=['autoAxesZeroColour','autoAxesOneColour'];
+  for(const key of AUTO_AXIS_COLOURS){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   for(const key of ['kraftShadows','heatHoldZero','heatMode','heatPeriod','edgeRhombOn','romboRow','romboAngle','romboAssembly','romboSeam',...Object.keys(INVERT_DEFAULTS),...Object.keys(ISOLATED_DEFAULTS)]){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   for(const key of ['gifScaleStackOverlay','gifScaleStackOverlayIndex','gifScaleStackOutline','gifScaleStackPaintZero','gifScaleStackPaintOne']){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('gifScaleStackPhasePage','gifScaleStackHeight','gifScaleStackMethod','gifScaleStackMode','gifScaleStackBase');NEW_STATE_KEYS.add('gifScaleStackPhasePage');NEW_STATE_KEYS.add('gifScaleStackHeight');NEW_STATE_KEYS.add('gifScaleStackMethod');NEW_STATE_KEYS.add('gifScaleStackMode');NEW_STATE_KEYS.add('gifScaleStackBase');
@@ -29,7 +31,13 @@
     values.autoAxesPaint=state.autoAxesPaint===true;if(values.autoAxesPaint)values.autoAxes=true;
     Object.assign(values,Pit.normalize(state));
     const modes={};for(const key of TOOL_KEYS)modes[key]=tools[key]??(key==='templatePickMode'?'one':key==='autoVertical'?0:false);
-    const clocks={};for(const key of ['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour','axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour']){const q=colourAuto[key];if(q&&['off','build','frame'].includes(q.mode)&&/^#[0-9a-f]{6}$/i.test(q.color))clocks[key]={mode:q.mode,color:q.color};}
+    const clocks={};for(const key of ['fillColour','verticalFillColour','stolbFillColour','midZeroColour','midOneColour','axesFillColour',...AUTO_AXIS_COLOURS,'autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour']){const q=colourAuto[key];if(q&&['off','build','frame'].includes(q.mode)&&/^#[0-9a-f]{6}$/i.test(q.color))clocks[key]={mode:q.mode,color:q.color};}
+    const previousClock=clocks.axesFillColour||(state.axesFillColour==null?clocks.fillColour:null);
+    for(const key of AUTO_AXIS_COLOURS){
+      if(values[key]!=null)continue;
+      if(!clocks[key]&&previousClock)clocks[key]={...previousClock};
+      values[key]=state.axesFillColour||controls.fillColour||'#ff7f27';
+    }
     return {version:1,colourAuto:clocks,state:values,parity:Parity.normalize(state.parity),tools:modes,controls:{fillColour:controls.fillColour||'#ff7f27',fillMirror:controls.fillMirror!==false}};
   }
   function validate(value){
@@ -48,7 +56,7 @@
     if(value.state.heatPeriod!=null&&(!Number.isInteger(value.state.heatPeriod)||value.state.heatPeriod<1||value.state.heatPeriod>64))throw Error('Некорректный период тепла');
     for(const [key,values]of [['heatMode',['all','one','zero','alternate']],['paintFrameMode',['off','colour','cells']],['bitContourMode',['single','same','double','directional']],['bitContourColours',['auto','custom']],['triangleMapSource',['static','time']],['axisPalette',['purple-black','purple-red']],['crossMirrorMode',['lr','rl','tb','bt','sector']],['crossMirrorSector',['A1','A2','B1','B2','a1','a2','b1','b2','C1','C2']]])if(value.state[key]!=null&&!values.includes(value.state[key]))throw Error('Некорректная настройка: '+key);
     for(const key of ['ochkiThrough','ochkiSkipSpaces','ochkiEveryFrame','ochkiRowReverseMask','gifScaleStack','zLimit','zOverview','fillWholeColour','rowStepOutline','ochkiHalf','joined180','kraftShadows','autoAxes','autoAxesPaint','triangleMapAxes','triangleMapMask','triangleMapMirror','crossMirror','crossLabels','viewUpsideDown','autoFillPalette','growOwnColour'])if(value.state[key]!=null&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка: '+key);
-    for(const key of ['axesFillColour','autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour'])if(value.state[key]!=null&&!/^#[0-9a-f]{6}$/i.test(value.state[key]))throw Error('Некорректный цвет: '+key);
+    for(const key of ['axesFillColour',...AUTO_AXIS_COLOURS,'autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour'])if(value.state[key]!=null&&!/^#[0-9a-f]{6}$/i.test(value.state[key]))throw Error('Некорректный цвет: '+key);
     if(value.state.gifScaleStackPhasePage!=null&&(!Number.isInteger(value.state.gifScaleStackPhasePage)||value.state.gifScaleStackPhasePage<0||value.state.gifScaleStackPhasePage>1562499))throw Error('Некорректная страница фаз');
     if(value.state.gifScaleStackOverlay!=null&&!['off','xor','and','rgb','paint'].includes(value.state.gifScaleStackOverlay))throw Error('Некорректное наложение нижней копии');
     if(value.state.gifScaleStackOutline!=null&&typeof value.state.gifScaleStackOutline!=='boolean')throw Error('Некорректная настройка обводки нижней копии');

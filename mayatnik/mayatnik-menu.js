@@ -1179,13 +1179,34 @@
   }
   for(const [id,key] of [['bPaintMeet','meetFillColour'],['bPaintAxis','axisFillColour'],['meetGrow','growFillColour']]){const b=gMeet.querySelector('[data-n="'+id+'"]');if(b&&$(key)){const d=dotIn(b,key);window.MayatnikColourAuto?.adaptPalette(d,key,()=>$(key).value,null,{paint:false});}}
 
-  // ПОМ-005: native live auto-axis colour switch, alongside its axes control.
-  {const b=gAxis.querySelector('[data-n="autoAxesPaint"]'),src=$('axesFillColour');if(b&&src){
-    const dot=dotIn(b,'axesFillColour','Цвет автораскраски по автоосям');dot.tabIndex=0;dot.setAttribute('role','button');dot.setAttribute('aria-label','Выбрать цвет автораскраски по автоосям');
-    dot.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();dot.click();}});
-    window.MayatnikColourAuto?.adaptPalette(dot,'axesFillColour',()=>src.value,null,{paint:false});
-    toolSync.push(()=>b.setAttribute('aria-label',tip($('autoAxesPaint'))));
-  }}
+  {
+    const button=gAxis.querySelector('[data-n="autoAxesPaint"]');
+    if(button){
+      const separateColours=$('autoAxesZeroColour') && $('autoAxesOneColour');
+      const colours=separateColours
+        ? [['autoAxesZeroColour','0','Цвет нулей по автоосям'],['autoAxesOneColour','1','Цвет единиц по автоосям']]
+        : [['axesFillColour','','Цвет автораскраски по автоосям']];
+      button.classList.toggle('pt-bit-colours',Boolean(separateColours));
+      for(const [id,bit,label] of colours){
+        const source=$(id);
+        if(!source)continue;
+        const dot=dotIn(button,id,label);
+        dot.textContent=bit;
+        dot.tabIndex=0;
+        dot.setAttribute('role','button');
+        dot.setAttribute('aria-label',label);
+        dot.addEventListener('contextmenu',event=>event.stopPropagation());
+        dot.addEventListener('keydown',event=>{
+          if(event.key!=='Enter' && event.key!==' ')return;
+          event.preventDefault();
+          event.stopPropagation();
+          if(!event.repeat)dot.click();
+        });
+        window.MayatnikColourAuto?.adaptPalette(dot,id,()=>source.value,null,{paint:false});
+      }
+      toolSync.push(()=>button.setAttribute('aria-label',tip($('autoAxesPaint'))));
+    }
+  }
 
   if($('axisPalette')){const src=$('axisPalette'),b=ptBtn('axisPalette','axes',src,()=>{src.value=src.value==='purple-red'?'purple-black':'purple-red';src.dispatchEvent(new Event('change',{bubbles:true}));});
     toolSync.push(()=>{const title=src.value==='purple-red'?'Фиол / красн':'Фиол / чёрн';b.title=src.parentElement.title+' · сейчас '+src.selectedOptions[0].textContent;b.setAttribute('aria-label',b.title);const name=b.querySelector('.gz-nm');if(name)name.textContent=title;});gAxis.prepend(b);}
