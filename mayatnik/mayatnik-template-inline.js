@@ -150,6 +150,7 @@
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
       const noSelection=state.noSelection===true;
+      host.classList.toggle('inline-foreground',!!fieldRect&&!noSelection);
       for(const [id,group]of groupViews)group.section.hidden=noSelection&&id!=='motion';
       const message=noSelection?'Выберите шаблон на поле':state.motionStatus||'';
       if(motionStatus.textContent!==message)motionStatus.textContent=message;

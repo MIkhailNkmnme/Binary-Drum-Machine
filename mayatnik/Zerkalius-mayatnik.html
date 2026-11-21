@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.084</title>
+<title>Zerkalius Маятнкъ — v1.085</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.084</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.085</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -658,8 +658,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-axis-turn.js?v=1077"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1084"></script>
-<link rel="stylesheet" href="mayatnik-template-inline.css?v=1084">
+<script src="mayatnik-template-inline.js?v=1085"></script>
+<link rel="stylesheet" href="mayatnik-template-inline.css?v=1085">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=1077">
 <script src="mayatnik-bit-contours.js?v=562"></script>
 <script src="mayatnik-kraft-shadows.js?v=954"></script>
@@ -7150,12 +7150,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return {items,skipped:scan.skipped,ignored};
   }
   var columnTemplateRuns;
+  let columnTemplateAutoSelect=true;
   function columnTemplatesOn(){return !!st.linesOn&&zlList().some(z=>z.k==='v'&&z.templatesOn&&zlAxisOn(z));}
   function columnTemplateStatus(id){return zlAxis(id)?.templatesOn&&gpuBig?.large?'Автоподбор требует полного точного CPU-растра; в режиме большого GPU-поля он недоступен.':columnTemplateRuns?.get(id)?.message||(zlAxis(id)?.templatesOn?'Автоподбор включён · ожидание готового кадра':'');}
   function pickTemplatesOnColumn(id){
     const axis=zlAxis(id);if(axis?.k!=='v')return 'Сначала выберите вертикальную ось';
     if(templateDragging)return 'Сначала завершите перемещение шаблона';
     columnTemplateRuns||=new Map();axis.templatesOn=!axis.templatesOn;
+    if(axis.templatesOn)columnTemplateAutoSelect=true;
     // Switching off keeps the last visible figures as ordinary editable copies.
     if(!axis.templatesOn)for(const item of templateItems)if(item.autoColumnAxis===id)delete item.autoColumnAxis;
     columnTemplateRuns.set(id,{message:axis.templatesOn?'Автоподбор включён · ожидание готового кадра':'Автоподбор выключен · последний набор оставлен на поле'});
@@ -7195,7 +7197,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       }catch(error){message='Кадр '+k+' · '+(error?.message||String(error));}
       const own=templateItems.filter(t=>t.autoColumnAxis===id),items=result?.items||[];
       templateItems=templateItems.filter(t=>t.autoColumnAxis!==id);for(const item of own)templatePickedIds.delete(item.id);
-      for(const item of items){item.id='axis-auto:'+id+':'+Date.now()+':'+(++templateSerial);item.autoColumnAxis=id;item.sourcePreserving=true;item.sourceKind='copy';item.paintSource=false;item.lifted=null;templateItems.push(item);templatePickedIds.add(item.id);}
+      for(const item of items){item.id='axis-auto:'+id+':'+Date.now()+':'+(++templateSerial);item.autoColumnAxis=id;item.sourcePreserving=true;item.sourceKind='copy';item.paintSource=false;item.lifted=null;templateItems.push(item);if(columnTemplateAutoSelect)templatePickedIds.add(item.id);}
       columnTemplateRuns.set(id,{...stamp,ids:items.map(t=>t.id),message});changed=true;
     }
     if(!changed)return;
@@ -13325,20 +13327,37 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
   function clearTemplateSelection(){
     dismissRowBuildHighlight();
-    if(templateDragging)return false;
     const library=window.mayTemplateLibrary;
-    if(!colourTemplate&&!templatePickedIds.size&&!library?.getState().selectedId&&!library?.getSelection()&&!templateFindOnceRunning&&!templateFollow?.on&&!templateFrameBatch?.on)return false;
+    if(!colourTemplate&&!templatePickedIds.size&&!library?.getState().selectedId&&!library?.getSelection()&&!templateFindOnceRunning&&!templateFollow?.on&&!templateFrameBatch?.on&&!templateDragging&&!templatePickEnabled&&!templateDragEnabled&&!templateInlineDrag&&!templateAxisMove&&!templateInlineFall)return false;
+    if(columnTemplatesOn())columnTemplateAutoSelect=false;
+    if(templateInlineTransaction)templateInlineTransaction.selectionChanged=true;
+    window.mayTemplateInline?.cancel();
+    templateAxisControls?.hide();
+    if(templateDragging){
+      const {id}=templateDragging;
+      finishTemplateDrag();
+      if(wrap.hasPointerCapture(id))wrap.releasePointerCapture(id);
+    }
     templateFindOnceRun++;templateFindOnceRunning=false;templateFindNotify=false;
     if(templateFollow?.on)templateFollow.off();if(templateFrameBatch?.on)templateFrameBatch.off();
-    templateMove=false;templateHover=null;selectTemplate(null,false);library?.clear();savePaint();return true;
+    templatePickEnabled=false;templateDragEnabled=false;templateMove=false;templateHover=null;
+    templatePickSync();
+    if(lastAct?.kind==='tpl')actSet(null);
+    selectTemplate(null,false);library?.clear();window.mayTemplateInline?.clear();savePaint();return true;
   }
   window.mayTemplateUnselect=clearTemplateSelection;
+  addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||event.defaultPrevented||event.isComposing)return;
+    const target=event.target;
+    if(target.closest?.('dialog,[aria-modal="true"]')||[...document.querySelectorAll('dialog[open],[aria-modal="true"]')].some(node=>node.getClientRects().length))return;
+    if(target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')&&!target.closest('.may-template-inline'))return;
+    if(clearTemplateSelection()){event.preventDefault();event.stopImmediatePropagation();}
+  },true);
   function exitInteractiveModes(e){
     if(e.key!=='Escape'||e.defaultPrevented||e.isComposing||e.target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"],dialog,[aria-modal="true"]')||document.querySelector('dialog[open],[aria-modal="true"]')||!fillMode&&!st.manualSnake)return false;
     e.preventDefault();if(fillMode){fillMode=false;clearFillPreview();fillSync();}if(st.manualSnake)$('bManualSnake').onclick();return true;
   }
   addEventListener('keydown', e => {
-    if(e.key==='Escape'&&!e.defaultPrevented&&!e.isComposing&&!e.target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"],dialog,[aria-modal="true"]')&&!document.querySelector('dialog[open],[aria-modal="true"]')&&clearTemplateSelection()){e.preventDefault();return;}
     if(e.key==='Escape'&&typeof exitInteractiveModes==='function'&&exitInteractiveModes(e))return;
     if(e.key==='Escape'&&!e.defaultPrevented&&snakePathOverlay?.get().selected&&!e.target.closest('input,select,textarea,[contenteditable]')){e.preventDefault();snakePathOverlay.choose(snakePathOverlay.get().selected);return;}
     if(e.key==='Escape'&&!e.defaultPrevented&&ochkiSelectionCurrent()&&!e.target.closest('input,select,textarea,[contenteditable]')){e.preventDefault();window.mayOchkiSelection.clear();return;}
