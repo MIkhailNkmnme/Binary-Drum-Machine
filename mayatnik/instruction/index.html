@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Подробная инструкция по Маятнику: построение, RGB-соседи, ширина краёв xN−1, раскраска, шаблоны, оси, зеркала, библиотека и экспорт. Схемы и пошаговые примеры.">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Инструкция по Маятнику · 0.159</title>
+<title>Инструкция по Маятнику · 0.160</title>
 <link rel="stylesheet" href="guide.css?v=6">
 <style>@media (max-width:760px){.book-main{overflow-wrap:anywhere}.book-main code{white-space:normal}}</style>
 </head>
 <body id="top">
-<header class="book-header"><a href="../Zerkalius-mayatnik.html">← Маятник</a><a href="../../issledovanie/Zerkalius-issledovanie.html">Исследование</a><button id="printGuide" class="no-print" type="button">Печать / PDF</button><span>Инструкция 0.159 · 21 ноября 2026</span></header>
+<header class="book-header"><a href="../Zerkalius-mayatnik.html">← Маятник</a><a href="../../issledovanie/Zerkalius-issledovanie.html">Исследование</a><button id="printGuide" class="no-print" type="button">Печать / PDF</button><span>Инструкция 0.160 · 21 ноября 2026</span></header>
 <div class="book-title"><h1>Маятник: построение, цвет и работа с полем</h1><p class="lead">От первого треугольника до цветовых масок, широких краёв, шаблонов и сохранения опыта. Схемы, таблицы и действия, которые можно повторить на своём поле.</p><p class="scope">Описаны инструменты версии 0.891. Группа «Поиск / Очки» пока не включена. Рисунки — поясняющие схемы; живые примеры секторов и зеркал ниже используют ядро Маятника. Нажмите рисунок, чтобы открыть его отдельно.</p><nav class="jump-links" aria-label="Быстрые переходы"><a href="#start">Начать</a><a href="#rgb">RGB подробно</a><a href="#edge">Край xN−1</a><a href="#rombo">Ромбо</a><a href="#paint">Раскраска</a><a href="#templates">Шаблоны</a><a href="#export">Сохранить</a></nav></div>
 <div class="book-layout">
 <aside class="book-toc"><details open><summary>Содержание</summary><nav aria-label="Главы инструкции"><ol class="toc-list"><li><a href="#assistant">Локальный помощник</a></li><li><a href="#about">Что строит Маятник</a></li>
@@ -816,7 +816,7 @@
 
 <section id="export">
   <h2>Экспорт: изображение, данные и запись</h2>
-  <p>В «Экспорт» собраны сохранение, открытие и полезные команды выгрузки. PNG сохраняет статическое изображение. «Строки .txt» записывает 0/1, пустые клетки обозначаются точкой. «Диагонали .txt» выгружает диагонали ↘ и ↙ обеих решёток текущего кадра и окна показа. «Кадр отдельно» открывает фиксированный кадр для отдельного просмотра.</p>
+  <p>В «Экспорт» собраны сохранение, открытие и полезные команды выгрузки. «PNG» скачивает текущий кадр. На сверхбольшом поле GPU сохраняется видимая область. «PNG в журнал» публикует этот же снимок в разделе <a href="../../issledovanie/image-journal/#from-mayatnik">«Из Маятника»</a>. С одного IP можно отправить до 10 кадров за 60 секунд. «Строки .txt» записывает 0/1, пустые клетки обозначаются точкой. «Диагонали .txt» выгружает диагонали ↘ и ↙ обеих решёток текущего кадра и окна показа. «Кадр отдельно» открывает фиксированный кадр для отдельного просмотра.</p>
   <figure><a href="assets/save-types.svg"><img loading="lazy" src="assets/save-types.svg" alt="Различия между картинкой PNG, полной работой, шаблоном, настройками, ссылкой и резервной копией" width="1120" height="690"></a><figcaption>Выбирайте формат по тому, что нужно сохранить: вид, фигуру, состояние или всю библиотеку.</figcaption></figure>
   <p>«Сохранить всё» создаёт полную работу .mayatnik с текущим кадром, краской, шаблонами, библиотекой, зеркалами и подсветкой. «Открыть работу» принимает этот файл и старую раскраску JSON. Ссылка переносит построение и настройки текущего кадра; слишком большой результат удобнее передавать полной работой. Для всех библиотек сразу используйте резервную копию.</p>
   <h3>GIF и видео</h3>

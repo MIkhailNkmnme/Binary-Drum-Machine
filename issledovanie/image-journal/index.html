@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- ИСС-126 · v0.006. XORoXORиус в шапке журнала. -->
+<!-- ИСС-126 · v0.007. XORoXORиус в шапке журнала. -->
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -9,6 +9,7 @@
   <script defer src="/_js/site-clarity.js?v=1"></script>
 <title>Журнал картинок · Зеркалиус</title>
   <link rel="stylesheet" href="style.css?v=006">
+  <script defer src="from-mayatnik.js?v=1"></script>
   <script defer src="viewer.js?v=003"></script>
 </head>
 <body>
@@ -26,10 +27,11 @@
   <main class="shell" id="journal">
     <header class="intro">
       <div class="intro-copy">
-        <small class="journal-version">v0.006</small>
+        <small class="journal-version">v0.007</small>
         <h1>Журнал картинок</h1>
         <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
         <nav class="contents" aria-label="Записи журнала">
+          <a href="#from-mayatnik">Из Маятника</a>
           <a href="#axes">Осевая раскраска</a>
           <a href="#treug">Кадры «Треуг»</a>
           <a href="#hub-xor">XOR Хаба</a>
@@ -41,6 +43,16 @@
         <span>XORoXORиус</span>
       </a>
     </header>
+
+    <article class="entry" id="from-mayatnik">
+      <header class="entry-heading">
+        <h2>Из Маятника</h2>
+        <p>Кадры, опубликованные кнопкой «PNG в журнал» в <a href="../../mayatnik/Zerkalius-mayatnik.html">Маятнике</a>.</p>
+      </header>
+      <div class="figures frame-grid" id="mayatnik-frames"></div>
+      <p role="status" id="mayatnik-feed-status">Загрузка кадров…</p>
+      <button type="button" id="mayatnik-more" hidden>Ещё кадры</button>
+    </article>
 
     <article class="entry" id="axes">
       <header class="entry-heading">

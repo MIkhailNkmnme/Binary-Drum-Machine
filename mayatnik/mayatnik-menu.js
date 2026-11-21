@@ -55,7 +55,7 @@
   const popupRight=()=>innerWidth;
   const tip = e => e.title || e.closest('label')?.title || e.getAttribute('aria-label') || e.textContent.trim();
   const icon = (e, kind) => { e.dataset.miIcon = kind; return ZerkMenuIcons.iconFor(e); };
-  const name = e => ({ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
+  const name = e => ({bPngJournal:'PNG в журнал',ochkiSkipSpaces:'Без пробелов',ochkiEveryFrame:'Каждый кадр',ochkiHalf:'Полуинверсия',ochkiRowReverseMask:'Пустоты реверса',bOchkiSnake:'Змея',zFit:'Шрна по Оси',bTemplateDrag:'Двигать',bPaintSave:'Сохранить',bPaintOpen:'Открыть',bRowRun:'Построчно',bFrameWindow:'Кадр',bPaintMid:'Центр',bAutoVertical:'Столб',bDiag:'Диаг. .txt',edgeWrapTop:'Перескок',edgeBounceTop:'Отскок',edgeWidthTop:'Ширина',edgeMarkTop:'Роз.',edgeWidthCycle:'Ширина',edgeEndsTop:'Концы',edgeEndsMinus:'−',edgeEndsPlus:'+',edgeRhombTop:'Ромб',edgeCloseTop:'Краями'}[e.id] || ZerkMenuIcons.shortOf(e));   // v0.174: короткие — длинные обрезались
   const button = (id, kind) => {
     const e = $(id);if(!e)return null;
     return { type: 'toggle', name: name(e), icon: icon(e, kind), tip: tip(e),
@@ -208,7 +208,7 @@
     { id:'library',title:'Шаблоны',color:GROUP_COLOURS['rail:library'],items:[control('templateLibraryChoices'),button('bLibPage','grid4'),button('bTemplateImport','folder'),button('bTemplateExport','save')] },
     { id: 'export', title: 'Экспорт', color: GROUP_COLOURS['rail:export'], items: [
       button('bShareLink','link'),button('bPaintSave','save'),button('bPaintOpen','load'),button('bFrameWindow','corners'),
-      button('bPng', 'image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
+      button('bPng', 'image'), button('bPngJournal','image'), button('bRec', 'record'), button('bGif','record'), button('bTxt', 'save'), button('bDiag', 'steps') ] }
   ];
   if(window.MayatnikListening)groups.push({id:'listening',title:'Музыка',color:GROUP_COLOURS['rail:listening'],items:[
     {type:'toggle',name:'Слушать',icon:'M5 9h4l5-4v14l-5-4H5z M17 8q5 4 0 8',tip:'Открыть или закрыть видимый плеер YouTube: Elektronische Träume · KOBTRAX. Запуск вручную; закрытие останавливает ролик.',on:()=>window.MayatnikListening.isOpen(),click:()=>window.MayatnikListening.toggle(document.querySelector('.gz-group[data-id="listening"] .gz-soty > .gz-hx'))}

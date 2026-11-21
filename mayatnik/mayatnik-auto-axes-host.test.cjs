@@ -65,11 +65,19 @@ test('menu, clear/undo, restores and export include the auto-axes state',()=>{
   assert.match(html,/symTriangles:false,autoAxes:false/);assert.match(html,/paintAutoAxes\(cg,automatic,0,0,RK\)/);
   assert.match(html,/!!st\.autoAxes!==autoAxesOn/);assert.match(html,/if\(!symPending&&!autoAxesPending\)/);
 });
-test('PNG refuses an incomplete/error result and exports the full accepted axes',()=>{
-  const handler=html.slice(html.indexOf("  $('bPng').onclick = () =>"),html.indexOf('  function frameSnapshot(){'));
-  const nodes={bPng:{},fillInfo:{textContent:''}},calls={capture:0,axes:0,download:0};let result=null;
-  const ctx={viewRotation:{capture:c=>c},$:id=>nodes[id],st:{autoAxes:true},f:{},img:{},autoAxesGet:()=>result,capturePicture:()=>{calls.capture++;return {width:12,height:14};},document:{createElement:()=>({getContext:()=>({putImageData(){}}),toBlob:callback=>callback({})})},paintBitContours(){},paintTemplate(){},paintGeomCenter(){},paintAutoAxes(g,a){assert.equal(a,result);calls.axes++;},RK:1,download(){calls.download++;},fname:()=> 'field.png'};
-  vm.runInNewContext(handler,ctx);nodes.bPng.onclick();assert.equal(calls.capture,0);assert.match(nodes.fillInfo.textContent,/дождитесь/);
-  result={error:'failed'};nodes.bPng.onclick();assert.equal(calls.capture,0);assert.match(nodes.fillInfo.textContent,/failed/);
-  result={triangles:[],segments:[{x:1.5,y0:2,y1:8,h:6}]};nodes.bPng.onclick();assert.deepEqual(calls,{capture:1,axes:1,download:1});
+test('PNG waits for the current axes and draws the accepted result',async()=>{
+  const source=html.slice(html.indexOf('  async function pngCanvas('),html.indexOf('  let pngBusy='));
+  const calls={capture:0,axes:0};let release;
+  const data={triangles:[],segments:[{x:1.5,y0:2,y1:8,h:6}]};
+  const ctx={window:{},viewRotation:{capture:c=>c},st:{autoAxes:true},f:{},k:4,gpuBig:null,img:{},
+    autoAxesPaintData:()=>new Promise(resolve=>{release=resolve;}),
+    capturePicture:()=>{calls.capture++;return {width:12,height:14};},
+    document:{createElement:()=>({getContext:()=>({putImageData(){}})})},
+    paintBitContours(){},paintTemplate(){},paintGeomCenter(){},parityExportMask(){},
+    paintAutoAxes(g,a){assert.equal(a,data);calls.axes++;},RK:1};
+  vm.runInNewContext(source,ctx);
+  const capture=ctx.pngCanvas(4,ctx.f);await Promise.resolve();await new Promise(setImmediate);
+  assert.equal(calls.capture,0);release(data);await capture;assert.deepEqual(calls,{capture:1,axes:1});
+  ctx.autoAxesPaintData=async()=>{throw Error('failed');};
+  await assert.rejects(ctx.pngCanvas(4,ctx.f),/failed/);
 });

@@ -1,3 +1,4 @@
+<!-- МЕД-ПНГ · v1.056 · Скачивание PNG и публикация кадра в журнал. -->
 <!-- ПОМ-005 · v1.055. Автоокраска от автоосей: отдельный живой слой каждого кадра, собственный цвет, ожидание точного расчёта. -->
 <!-- ПОМ-002 · v1.052. Перекрытие по начальной поверхности и перемещаемое окно помощника. Проверки пользователем. -->
 <!-- ПОМ-001 · v1.051. Локальный помощник: документация, предложения настроек и отмена. Проверки интерфейса пользователем. -->
@@ -85,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.055</title>
+<title>Zerkalius Маятнкъ — v1.056</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -206,6 +207,7 @@ body.may-fold-active #cvGpu{opacity:0}
 #cellInkBar{position:fixed;bottom:48px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:1040px;max-width:94vw;padding:8px 12px;background:#142232;color:#e8edf5;border:1px solid #5ce1e6;font:12px monospace}
 #cellInkBar button{color:inherit;background:#24394e;padding:5px 10px;border:0;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 50%,calc(100% - 7px) 100%,7px 100%,0 50%)}#cellInkBar button[aria-pressed=true]{background:#007b91}#cellInkHint{flex-basis:100%;color:#b8cbd9;min-height:32px;line-height:16px}
 @media(max-width:600px){.bar{gap:8px;padding:8px}.bar button,.bar a{min-height:36px}.grp{gap:4px}#imageStats{padding:6px 8px}#stat{white-space:normal;margin-left:0}}
+#pngNotice:not([hidden]){position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:100000;background:#141922;color:#fff;border:1px solid #ffd166;padding:.55rem .85rem;max-width:85vw;font:14px/1.4 system-ui}#pngNotice a{color:#ffd166}
 </style>
 <link rel="stylesheet" href="../_js/grozd.css?v=50">
 <!-- v0.162: пока не собралось меню (скрипты в конце страницы), сырая панель кнопок не мелькает; не соберётся — покажется после загрузки -->
@@ -237,7 +239,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.055</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.056</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -519,7 +521,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       <button id="bTemplateColour" class="gz-hx" disabled title="Изменить цвет выбранной фигуры"><span>Цвет</span></button>
       <input id="templateColour" type="color" value="#ff7f27" aria-label="Цвет выбранного шаблона" tabindex="-1">
     </span>
-    <button id="bPng" title="Картинка поля, пиксель = бит">PNG</button>
+    <button id="bPng" title="Скачать текущий кадр в PNG">PNG</button>
+    <button id="bPngJournal" title="Опубликовать текущий PNG в разделе «Из Маятника»">PNG в журнал</button>
     <button id="bAxisPick" aria-pressed="false" title="Остановить кадр, показать оси симметрии и выбрать ось щелчком или касанием">Выбрать ось</button>
     <button id="bKonus" disabled title="Сначала выбери ось на поле">◯ в Соляриус</button>
     <output id="konusInfo" aria-live="polite">Ось не выбрана</output>
@@ -10992,15 +10995,29 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     };
     refresh();continuationGifDialog=dialog;document.body.append(dialog);dialog.showModal();
   }
-  $('bPng').onclick = async () => {   // v0.017: полная картинка «пиксель = бит», а не уменьшенная с экрана
-    try{await window.mayManualAxisPaint?.whenIdle();}catch(error){$('fillInfo').textContent='PNG не сохранён: '+(error?.message||error);return;}
-    if(window.mayPhone?.art()){window.mayPhone.capture(1080,2400).toBlob(blob=>blob&&download('oboi-'+st.phoneScene+'-'+k+'.png',blob));return;}
-    if (!f||!img) return;
-    if(st.edgeRhombOn&&window.mayRombo){viewRotation.capture(window.mayRombo.capture()).toBlob(b=>b&&download(fname('png'),b));return;}
-    const automatic=st.autoAxes?autoAxesGet():null;
-    if(st.autoAxes&&(!automatic||automatic.error)){$('fillInfo').textContent=automatic?.error?'PNG не сохранён: '+automatic.error:'PNG: дождитесь завершения поиска автоосей и нажмите ещё раз.';return;}
-    const map=st.triangleMapAxes?triangleMapGet():null;if(map?.error){$('fillInfo').textContent='PNG не сохранён: '+map.error;return;}
-    if((st.crossMirror||st.crossLabels)&&crossMirrorReason()){$('fillInfo').textContent='PNG не сохранён: '+crossMirrorReason();return;}
+  async function pngCanvas(frame,owner){
+    const current=()=>k===frame&&f===owner;
+    if(!owner)throw Error('Сначала постройте поле.');
+    await window.mayManualAxisPaint?.whenIdle();
+    if(!current())throw Error('Кадр изменился. Повторите сохранение.');
+    if(window.mayPhone?.art())return window.mayPhone.capture(1080,2400);
+    if(st.edgeRhombOn&&window.mayRombo)return viewRotation.capture(window.mayRombo.capture());
+    if(gpuBig?.large||gpuBig?.skip?.includes('окно не помещается в видеокарту')){
+      const c=document.createElement('canvas');c.width=wrap.clientWidth;c.height=wrap.clientHeight;
+      if(!c.width||!c.height)throw Error('Окно поля пустое.');
+      return gifViewFrame(c,c.width,c.height);
+    }
+    if(gpuBig&&(!img||!gpuBig.fresh||gpuBig.k!==frame)){
+      gpuFlush();
+      if(!gpuBig.fresh||gpuBig.k!==frame)await gpuReadSoon(0,false);
+      if(!current()||!gpuBig?.fresh||gpuBig.k!==frame)throw Error('Чтение кадра с видеокарты прервано.');
+      if(gpuCpuDisplay())draw();else{gpuPicture();await gpuPost();}
+    }
+    if(!current()||!img)throw Error('Не удалось получить изображение кадра.');
+    const automatic=st.autoAxes?await autoAxesPaintData(current):null;
+    if(!current())throw Error('Кадр изменился. Повторите сохранение.');
+    const map=st.triangleMapAxes?triangleMapGet():null;if(map?.error)throw Error(map.error);
+    if((st.crossMirror||st.crossLabels)&&crossMirrorReason())throw Error(crossMirrorReason());
     const picture=capturePicture(),c = document.createElement('canvas'); c.width = picture.width; c.height = picture.height;
     const cg=c.getContext('2d');cg.putImageData(picture,0,0);if(st.crossLabels)paintCrossSectors(cg,0,0,RK);paintBitContours(cg,0,0,RK,c.width,c.height);
     if(st.sym&&!playing&&symCache?.key===symKey())paintSymmetry(cg,symCache,0,0,RK,c.width,c.height,true);
@@ -11008,8 +11025,42 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(map)paintTriangleMapAxes(cg,map,0,0,RK);
     if(st.crossLabels)paintCrossLabels(cg,0,0,RK,c.width,c.height);
     paintTemplate(cg,0,0,RK);paintGeomCenter(cg,0,0,RK,c.width,c.height);
-    parityExportMask(c);viewRotation.capture(c).toBlob(b => b && download(fname('png'), b));
-  };
+    parityExportMask(c);return viewRotation.capture(c);
+  }
+  let pngBusy=false,pngNoticeTimer;
+  function pngNotice(message,inJournal=false){
+    const note=$('pngNotice');
+    clearTimeout(pngNoticeTimer);note.textContent=message;note.hidden=false;
+    if(inJournal){
+      const link=document.createElement('a');link.href='../issledovanie/image-journal/#from-mayatnik';
+      link.target='_blank';link.rel='noopener';link.textContent='Из Маятника';note.append(' · ',link);
+    }
+    pngNoticeTimer=setTimeout(()=>{note.hidden=true;},12000);
+  }
+  async function exportPng(publish){
+    if(pngBusy)return;
+    pngBusy=true;$('bPng').disabled=$('bPngJournal').disabled=true;
+    try{
+      stopFrameTransports();
+      const frame=k,owner=f,phone=window.mayPhone?.art(),viewport=!phone&&!st.edgeRhombOn&&(gpuBig?.large||gpuBig?.skip?.includes('окно не помещается в видеокарту'));
+      const filename=phone?'oboi-'+st.phoneScene+'-'+frame+'.png':fname('png').replace(/\.png$/, '-k'+frame+(viewport?'-okno':'')+'.png');
+      pngNotice('Подготовка PNG…');
+      const canvas=await pngCanvas(frame,owner);
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?.size?resolve(b):reject(Error('Браузер не смог создать PNG.')),'image/png'));
+      if(!publish){download(filename,blob);pngNotice((viewport?'Видимая область':'Кадр '+frame)+' · PNG передан на скачивание.');return;}
+      if(blob.size>8*1024*1024||canvas.width*canvas.height>32*1024*1024)throw Error('Для журнала нужен PNG до 8 МиБ и 32 Мпикс.');
+      pngNotice('Публикация кадра '+frame+'…');
+      let response;
+      try{response=await fetch('https://media.1001100.online/mayatnik-api/frames?frame='+frame,{method:'POST',body:blob,credentials:'omit',signal:AbortSignal.timeout(60000)});}
+      catch{throw Error('Нет ответа от сервиса журнала. Проверьте раздел «Из Маятника».');}
+      const result=await response.json().catch(()=>null);
+      if(response.status!==201||!result?.url)throw Error(result?.error||'Сервис публикации пока недоступен.');
+      pngNotice((viewport?'Видимая область кадра ':'Кадр ')+frame+' опубликован',true);
+    }catch(error){pngNotice(error.message||String(error));}
+    finally{pngBusy=false;$('bPng').disabled=$('bPngJournal').disabled=false;}
+  }
+  $('bPng').onclick=()=>exportPng(false);
+  $('bPngJournal').onclick=()=>exportPng(true);
   function frameSnapshot(){
     const rp=rombP(),joined=joinedOn(),W=joined?dispW():VW,H=joined?dispH():VH,anchor=geo.anchor-VX,val=new Int8Array(W*H).fill(-1);
     if(joined){const jg=joinedGeometry();for(let y=0;y<jg.height;y++)for(let x=0;x<jg.width;x++){const cell=jg.inverse(x,y);if(!cell||!parityVisible(cell.r,cell.c)||outShow(cell.r,cell.c))continue;const sourcePixel=parityRow(cell.r)*VW+cell.c-VX;val[cell.displayQ]=gpuDisplay()?(paintBits?.[sourcePixel]>=0?paintBits[sourcePixel]:parityValues()[cell.q]):rasterBit(Math.floor((x+.5)*RK),Math.floor((y+.5)*RK));}}
@@ -14081,7 +14132,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1055"></script>
+<script src="mayatnik-menu.js?v=1056"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">
@@ -14097,5 +14148,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-side-dock.js?v=887b"></script>
 <link rel="stylesheet" href="mayatnik-assistant.css?v=1054">
 <script src="mayatnik-assistant.js?v=1054"></script>
+<output id="pngNotice" role="status" aria-live="polite" hidden></output>
 </body>
 </html>

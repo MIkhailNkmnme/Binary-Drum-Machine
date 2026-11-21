@@ -86,7 +86,7 @@ test('actual GIF adapter draws registered content once before services, and reta
   const svc=canvas(1,1);Object.assign(svc,{tagName:'CANVAS'});Object.assign(svc.style,{left:'11px',top:'21px',width:'1px',height:'1px'});const r=svc.getBoundingClientRect();svc.getBoundingClientRect=()=>({...r,right:12,bottom:22});
   const legacy=canvas(1,1);legacy.tagName='CANVAS';legacy.style.visibility='hidden';C.document.querySelectorAll=q=>q==='.may-layer-service'?[svc]:[legacy];const out=canvas(4,4),G=out.getContext('2d');G.drawImage=()=>serviceDraws++;
   vm.runInContext(html.slice(html.indexOf('  function gifViewFrame('),html.indexOf("  $('bGif').onclick")),C);C.gifViewFrame(out,4,4);assert.equal(paints,1);assert.equal(serviceDraws,1);
-  const png=html.slice(html.indexOf("  $('bPng').onclick"),html.indexOf('  function frameSnapshot'));assert.ok(png.includes('const picture=capturePicture()'));assert.ok(png.includes('cg.putImageData(picture,0,0)'));assert.ok(!png.includes('mayLayers'));
+  const png=html.slice(html.indexOf('  async function pngCanvas('),html.indexOf('  function frameSnapshot'));assert.ok(png.includes('const picture=capturePicture()'));assert.ok(png.includes('cg.putImageData(picture,0,0)'));assert.ok(!png.includes('mayLayers'));
 });
 test('individual template adapter and hit testing use display offsets/order while preserving paint/view data',()=>{
   const e=adapter(),C=e.ctx,M=C.mayLayers;C.RK=1;C.VW=8;C.playing=false;C.joinedOn=()=>false;C.dispH=()=>8;C.templateSelectionSkipped=()=>false;C.rememberTemplate=()=>{};C.colourTemplate=null;

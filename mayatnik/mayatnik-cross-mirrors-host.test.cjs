@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const html=fs.readFileSync(require.resolve('./Zerkalius-mayatnik.html'),'utf8'),M=require('./mayatnik-cross-mirrors.js');
 function host(){
   const W=27,H=21,nodes=new Map(),points=[[0,0,7,12.5,13],[0,0,13,13,12.5]],c={st:{rows:H,view:'bits',crossMirror:true,crossLabels:true,crossMirrorMode:'sector',crossMirrorSector:'A1'},f:{W,H,val:new Int8Array(W*H)},geo:{anchor:13},k:7,bmGen:0,VX:0,VW:W,VH:H,RK:1,img:{width:W,height:H},gpuBig:null,window:{},MayatnikCrossMirrors:M,contourBits:Int32Array.from({length:W*H},(_,q)=>q),rombP:()=>-1,parityVisible:(y,x)=>(x+y)%7!==0,outShow:(y,x)=>y===0&&x<3,fixSegments:()=>points,fixPts:s=>new Map(s.map((p,i)=>[i,p])),$:id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',value:'',checked:false});return nodes.get(id);}};
-  vm.createContext(c);vm.runInContext(html.slice(html.indexOf('  let crossMirrorCache='),html.indexOf('  function fixShown()')),c);return {c,api:c.window.mayCrossMirrors,nodes,points};
+  c.axesAtShownScale=()=>true;c.parityValues=()=>c.f.val;vm.createContext(c);vm.runInContext(html.slice(html.indexOf('  let crossMirrorCache='),html.indexOf('  function fixShown()')),c);return {c,api:c.window.mayCrossMirrors,nodes,points};
 }
 test('host mirrors the immutable packed image and contour semantics, never field bits',()=>{
   const {c,api}=host(),data=api.get(),original=Uint32Array.from({length:c.VW*c.VH},(_,q)=>q+100),pixels=original.slice(),bits=c.f.val.slice(),semantic=c.contourBits.slice();
@@ -55,10 +55,11 @@ test('sector cache tracks actual frame, masks, geometry, rows, crop and field re
   for(const change of [()=>c.k++,()=>c.bmGen++,()=>c.st.rows--,()=>c.st.view='col',()=>c.st.noband=2,()=>c.st.parity={colsOdd:false},()=>points[0][3]++,()=>points[0][4]++,()=>points[0][2]++,()=>c.VX++,()=>c.VW--,()=>c.f={...c.f,val:c.f.val.slice()}]){change();const next=api.sectors();assert.notStrictEqual(next,data);assert.strictEqual(api.sectors(),next);data=next;}
 });
 
-test('PNG paints the same cached sector mask before contours/axes and keeps fill independent of mirror',()=>{
+test('PNG paints the same cached sector mask before contours/axes and keeps fill independent of mirror',async()=>{
   const {c,nodes}=host(),canvases=canvasHost(c),trace=[],ctx={save(){},restore(){},drawImage(){}};c.st.crossMirror=false;const data=c.paintCrossSectors(ctx,0,0,5);
   Object.assign(c,{playing:false,capturePicture:()=>({width:c.VW,height:c.VH}),paintBitContours:()=>trace.push('contours'),paintTemplate(){},paintGeomCenter(){},viewRotation:{capture:canvas=>canvas},download:(name,blob)=>trace.push(blob.type),fname:()=> 'frame.png'});
-  const source=html.slice(html.indexOf("  $('bPng').onclick ="),html.indexOf('  function frameSnapshot()'));vm.runInContext(source,c);nodes.get('bPng').onclick();
-  assert.equal(canvases.length,2);assert.strictEqual(canvases[1].calls[0][0],data.canvas);assert.deepEqual(canvases[1].calls[0].slice(1),[0,0,c.VW,c.VH]);assert.deepEqual(trace,['contours','image/png']);
+  const source=html.slice(html.indexOf('  async function pngCanvas('),html.indexOf('  let pngBusy='));
+  c.parityExportMask=()=>{};vm.runInContext(source,c);await c.pngCanvas(c.k,c.f);
+  assert.equal(canvases.length,2);assert.strictEqual(canvases[1].calls[0][0],data.canvas);assert.deepEqual(canvases[1].calls[0].slice(1),[0,0,c.VW,c.VH]);assert.deepEqual(trace,['contours']);
   const png=source.indexOf('paintCrossSectors'),contours=source.indexOf('paintBitContours');assert.ok(png<contours);assert.ok(html.indexOf('paintCrossSectors(symG')<html.indexOf('if(data)paintSymmetry(symG'));
 });
