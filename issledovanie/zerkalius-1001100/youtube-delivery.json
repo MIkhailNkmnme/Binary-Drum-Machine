@@ -1,8 +1,16 @@
 {
-  "status": "not-uploaded",
-  "channelId": "UCfSuKG2l-kwR5faL9TsStyg",
-  "visibilityRequested": "public",
-  "sourceVideo": "zerkalius-1001100-symbiosis-fullhd-v10-seven.mp4",
-  "reason": "Chrome Studio navigation timed out. Windows Computer Use stopped Firefox interaction because browser URL policy enforcement is not supported. No upload initiated.",
-  "nextStep": "Resume in a supported authenticated browser or upload the prepared Full HD file manually."
+  "status": "published",
+  "videoId": "_Cdhl9iWcx8",
+  "url": "https://youtu.be/_Cdhl9iWcx8",
+  "channelId": "UClRqXH-ow5WtTR8WXqZwE6w",
+  "channelName": "Mikhail Nikname",
+  "channelHandle": "@MikhailNikname",
+  "visibility": "public",
+  "uploadBy": "Owner",
+  "metadataBy": "Codex, explicitly requested by owner",
+  "title": "Zerkalius 1001100 — Симбиоз | Seven Languages · 96 BPM",
+  "sourceFile": "zerkalius-1001100-symbiosis-fullhd-v10-seven.mp4",
+  "studioConfirmation": "Все изменения сохранены.; Для всех",
+  "independentOembedHttp": 200,
+  "notes": "Owner selected and uploaded to this channel. No duplicate upload performed."
 }

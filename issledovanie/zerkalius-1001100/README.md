@@ -4,7 +4,7 @@
 
 [Видео и полный пакет для пересборки](https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/tag/zerkalius-1001100-symbiosis-v10)
 
-Это расширение принятого владельцем варианта v9. Семиязычная сборка готова для пользовательского просмотра и слуховой оценки; на YouTube не опубликована.
+Это расширение принятого владельцем варианта v9. Семиязычная сборка готова для пользовательского просмотра и слуховой оценки; [опубликована на YouTube](https://youtu.be/_Cdhl9iWcx8).
 
 | Время | Содержание |
 |---|---|
@@ -58,4 +58,4 @@ python encode_v10.py
 
 [720p MP4](https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/zerkalius-1001100-symbiosis-v10/zerkalius-1001100-symbiosis-v10-light-720p.mp4) — 60.5 МБ вместо305,8МБ. Длительность7:30. AAC-дорожка скопирована без перекодирования; совпадение аудиопотока подтвержденоSHA-256. Громкость голоса, музыки и дождя не менялась. Рецепт: encode_light_v10.py.
 
-YouTube: прямой запрос на публикацию получен, загрузка не началась из-за ограничения управления браузером. Название/описание подготовлены в youtube-title.txt и youtube-description.txt; статус — youtube-delivery.json.
+YouTube: [«Симбиоз»](https://youtu.be/_Cdhl9iWcx8) — владелец загрузил Full HD в выбранный им канал Mikhail Nikname; название, описание, таймкоды и ссылки сохранены по его поручению. Открытый доступ подтверждён в Studio. Статус — youtube-delivery.json.
