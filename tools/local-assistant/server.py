@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MODEL = "gpt-oss:20b"
 OLLAMA = "http://127.0.0.1:11434"
 PUBLIC = "https://1001100.online/"
-KNOWLEDGE_VERSION = "page-scopes-v1"
+KNOWLEDGE_VERSION = "page-actions-v2"
 SHARED_SOURCES = ("КНОПКИ.md", "ЗВУК.md")
 # A document belongs to its page, not to every page in the repository.
 # These profiles preserve all manuals; only retrieval eligibility changes.
@@ -90,6 +90,19 @@ def valid_value(control, value):
         if abs(ticks - round(ticks)) > 1e-6:
             return False
     return True
+
+
+def action_controls():
+    data = json.loads((ROOT / "mayatnik/assistant-controls.json").read_text(encoding="utf-8-sig"))
+    items = data.get("actions", [])
+    if not isinstance(items, list) or len(items) > 1:
+        raise ValueError("Некорректный список действий помощника")
+    result = {}
+    for item in items:
+        if not isinstance(item, dict) or item.get("id") != "paintAutoAxes":
+            raise ValueError("Недопустимое действие помощника")
+        result[item["id"]] = item
+    return result
 
 
 class GuideParser(HTMLParser):
@@ -200,7 +213,7 @@ def documentation(page):
 DOCUMENTS = {page: documentation(page) for page in PAGE_PROFILES}
 
 
-def retrieve(message, state, allowed, history, page="mayatnik"):
+def retrieve(message, state, allowed, history, page="mayatnik", actions=None):
     query = terms(message)
     prior = next((terms(item["content"][-1000:]) for item in reversed(history)
                   if item["role"] == "user"), set())
@@ -216,6 +229,12 @@ def retrieve(message, state, allowed, history, page="mayatnik"):
                                "url": PUBLIC + "mayatnik/instruction/index.html#assistant",
                                "text": text, "scope": page, "terms": terms(text),
                                "heading_terms": terms(control.get("label", key))})
+    for key, action in (actions or {}).items():
+        text = key + ": " + action.get("label", key) + ". " + action.get("description", "")
+        control_chunks.append({"title": "Помощник: " + action.get("label", key),
+                               "url": PUBLIC + "mayatnik/instruction/index.html#assistant",
+                               "text": text, "scope": page, "terms": terms(text),
+                               "heading_terms": terms(action.get("label", key))})
     # Filter by page before scoring, never search another page as a fallback.
     for chunk in DOCUMENTS[page] + control_chunks:
         score = len(query & chunk["terms"]) + 2 * len(query & chunk["heading_terms"])
@@ -237,13 +256,17 @@ def retrieve(message, state, allowed, history, page="mayatnik"):
 
 
 OUTPUT_SCHEMA = {
-    "type": "object", "required": ["answer", "changes", "source_ids"], "additionalProperties": False,
+    "type": "object", "required": ["answer", "changes", "actions", "source_ids"], "additionalProperties": False,
     "properties": {
         "answer": {"type": "string"},
         "changes": {"type": "array", "maxItems": 8, "items": {
             "type": "object", "required": ["id", "value", "reason"], "additionalProperties": False,
             "properties": {"id": {"type": "string"},
                            "value": {"type": ["string", "number", "boolean"]},
+                           "reason": {"type": "string"}}}},
+        "actions": {"type": "array", "maxItems": 1, "items": {
+            "type": "object", "required": ["id", "reason"], "additionalProperties": False,
+            "properties": {"id": {"type": "string", "enum": ["paintAutoAxes"]},
                            "reason": {"type": "string"}}}},
         "source_ids": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 5}}
     }
@@ -264,6 +287,7 @@ def chat(data):
     if page != "mayatnik" and mode == "settings":
         raise RequestError("Применение настроек подключено только к Маятнику")
     allowed = controls() if page == "mayatnik" else {}
+    actions_allowed = action_controls() if page == "mayatnik" and mode == "settings" else {}
     state = data.get("state", {})
     if not isinstance(state, dict) or len(state) > len(allowed):
         raise RequestError("Некорректное состояние")
@@ -287,7 +311,7 @@ def chat(data):
     # Only history explicitly tied to the current page and corpus may continue.
     if data.get("knowledge_version") != KNOWLEDGE_VERSION or data.get("history_page") != page:
         messages = []
-    selected = retrieve(message, state, allowed, messages, page)
+    selected = retrieve(message, state, allowed, messages, page, actions_allowed)
     excerpts = [{"source_id": n, "title": item["title"], "url": item["url"],
                  "scope": item["scope"], "text": item["text"][:1400]}
                 for n, item in enumerate(selected)]
@@ -305,31 +329,46 @@ def chat(data):
         "Не выдумывай функции или ссылки. Ответ только JSON по схеме. source_ids — номера реально "
         "использованных выдержек. У каждой рекомендации должна быть содержательная reason и ссылка "
         "на соответствующую выдержку в source_ids. При отсутствии подходящих выдержек changes=[]. "
-        "В режиме explain всегда changes=[]. В settings предлагай только настройки из allowlist, "
+        "В режиме explain всегда changes=[] и actions=[]. В settings предлагай только настройки из allowlist, "
         "строго в диапазонах и с точным типом. Это предложения для подтверждения пользователем. "
         "В settings, когда пользователь просит изменить поддерживаемые параметры, заполни changes: "
         "одного описания новых значений в answer недостаточно. Просьба объяснить последствия не отменяет "
         "подбор настроек. Включай только реально изменяющиеся значения, не больше восьми. "
+        "Для просьбы разово раскрасить текущий кадр от автоматических осей используй ОТДЕЛЬНОЕ "
+        "действие actions=[{\"id\":\"paintAutoAxes\",\"reason\":\"причина\"}] из actions_allowlist. "
+        "При этом changes=[]: действия и настройки НИКОГДА не совмещаются в одном предложении. "
+        "Это разовая раскраска ТОЛЬКО от автоосей, текущим цветом «От осей», с текущими параметрами "
+        "Область/Зеркально. Действие останавливает кадр и включает автооси. Требуется подтверждение "
+        "пользователя. Отмена раскраски — штатная в Раскраске, не отмена настроек помощника. "
+        "Не обещай смену цвета, включение ручных осей или непрерывную автоматическую раскраску. "
+        "Без подходящих выдержек actions=[]. Для других страниц actions=[]. "
+        "В explain на странице mayatnik, если пользователь просит раскрасить кадр от автоосей, "
+        "объясни, что это действие доступно после выбора ромба ◇ (подбор), и попроси повторить "
+        "запрос в этом режиме. Не говори, что действие не поддерживается; верни actions=[]. "
         "Не предлагай импорт, экспорт, сетевые обращения, загрузки, исполнение кода и запуск звука. "
         "Музыка и звук проекта создаются математически с нуля; чужие записи, мелодии и готовые "
         "голоса неизвестного происхождения запрещены. Не утверждай, что предложение уже применено. "
         "СТРОГИЙ ФОРМАТ ОТВЕТА: один завершённый JSON-объект, без Markdown, префикса и суффикса. "
-        "На верхнем уровне разрешены ТОЛЬКО три ключа: answer, changes, source_ids. "
+        "На верхнем уровне разрешены ТОЛЬКО четыре ключа: answer, changes, actions, source_ids. "
         "answer — строка с ответом пользователю. changes — массив объектов ТОЛЬКО с ключами "
-        "id, value, reason. source_ids — общий массив целых номеров источников. "
+        "id, value, reason. actions — массив объектов только id, reason (максимум один). "
+        "source_ids — общий массив целых номеров источников. "
         "Не возвращай mode, state, old, new или source_ids внутри отдельных изменений. "
         "Новое значение настройки записывай в value. Не копируй входной контекст как ответ. "
         "Пример формы ответа (значения и номера выбирай по текущему вопросу и документам): "
         '{"answer":"Предлагаю уменьшить скорость движения.","changes":'
         '[{"id":"speed","value":1,"reason":"Меньше вершин за шаг — медленнее движение."}],'
-        '"source_ids":[0]}. '
+        '"actions":[],"source_ids":[0]}. '
+        'Пример действия: {"answer":"Предлагаю раскрасить текущий кадр от автоосей.",'
+        '"changes":[],"actions":[{"id":"paintAutoAxes","reason":"Разовая раскраска от автоосей текущим цветом От осей."}],"source_ids":[0]}. '
         "При отсутствии подходящего источника или в explain changes должен быть пустым массивом. "
         "Закрой все кавычки, квадратные и фигурные скобки. Точная JSON Schema ответа: "
         + json.dumps(OUTPUT_SCHEMA, ensure_ascii=False)
     )
     context = {"page": page, "page_title": PAGE_PROFILES[page]["title"],
                "knowledge_version": KNOWLEDGE_VERSION, "mode": mode, "state": state,
-               "allowlist": list(allowed.values()), "documents": excerpts}
+               "allowlist": list(allowed.values()), "actions_allowlist": list(actions_allowed.values()),
+               "documents": excerpts}
     # History is bounded above; keep recent messages to reserve context for current docs/settings.
     payload = {"model": MODEL, "stream": False, "think": "low", "format": OUTPUT_SCHEMA,
                "messages": [{"role": "system", "content": instruction + "\n" + json.dumps(context, ensure_ascii=False)}]
@@ -353,6 +392,15 @@ def chat(data):
     if not isinstance(ids, list) or any(type(i) is not int or i < 0 or i >= len(selected) for i in ids):
         raise RequestError("Модель указала неподтверждённый источник. Повторите запрос.", 502)
     changes = result.get("changes", []) if mode == "settings" else []
+    actions = result.get("actions", [])
+    if (not isinstance(actions, list) or len(actions) > 1 or (actions and changes)
+            or (actions and not actions_allowed)):
+        raise RequestError("Модель смешала настройки и действия либо предложила недоступное действие.", 502)
+    for action in actions:
+        if (not isinstance(action, dict) or set(action) != {"id", "reason"}
+                or not isinstance(action.get("id"), str) or action["id"] not in actions_allowed
+                or not isinstance(action.get("reason"), str) or not action["reason"].strip() or not ids):
+            raise RequestError("Действие модели не прошло проверку разрешений и источников.", 502)
     if not isinstance(changes, list) or len(changes) > 8:
         raise RequestError("Модель вернула некорректные предложения.", 502)
     seen = set()
@@ -370,7 +418,7 @@ def chat(data):
         item = selected[index]
         if not any(source["url"] == item["url"] for source in sources):
             sources.append({"title": item["title"], "url": item["url"]})
-    return {"answer": result["answer"][:16000], "changes": changes, "sources": sources,
+    return {"answer": result["answer"][:16000], "changes": changes, "actions": actions, "sources": sources,
             "model": MODEL, "page": page, "knowledge_version": KNOWLEDGE_VERSION}
 
 

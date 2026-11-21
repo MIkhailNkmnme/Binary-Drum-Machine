@@ -1,4 +1,4 @@
-<!-- ПОМ-003 · v1.053. Источники помощника разделены по страницам; руководство Genesis сохранено. -->
+<!-- ПОМ-004 · v1.054. Компактный помощник, раскраска по автоосям, стандартная золотая/синяя палитра. -->
 <!-- ПОМ-002 · v1.052. Перекрытие по начальной поверхности и перемещаемое окно помощника. Проверки пользователем. -->
 <!-- ПОМ-001 · v1.051. Локальный помощник: документация, предложения настроек и отмена. Проверки интерфейса пользователем. -->
 <!-- МАЯ-699 · v1.050. Цвета шаблона и сохранение поля в зоне самоналожения при повороте. Проверки пользователем. -->
@@ -85,7 +85,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.053</title>
+<title>Zerkalius Маятнкъ — v1.054</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -237,7 +237,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.053</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.054</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -321,8 +321,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <label title="Общий геометрический центр всей показанной фигуры и подцентры её копий. 0 и 1 равноправны, пустые и скрытые клетки не участвуют; перекрытия считаются один раз. Ромбо и отражения учитываются."><input id="geomCenter" type="checkbox" data-mi-short="Геоцентр"> Геоцентр</label>
     <label title="Границы фигуры и сетка битов. Щелчком ставь диагонали: 1 — \, 2 — /; NumPad 5/0 — верх/низ. ПКМ убирает косые. Биты не меняются."><input id="cellInk" type="checkbox" data-mi-short="Грани"> Грани</label>
     <label title="Тонкие линии: между ними — часть поля, которую оставшиеся вершины уже не изменят (от ближайших будущих вершин вниз под 45°)"><input id="fixLines" type="checkbox" data-mi-short="Застыло"> застыло</label>
-    <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#e8edf5"></label>
-    <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#5b6475"></label>
+    <label title="Цвет клеток-единиц во всех видах">Бит 1 <input id="bitOneColour" type="color" value="#ffd700"></label>
+    <label title="Цвет клеток-нулей во всех видах">Бит 0 <input id="bitZeroColour" type="color" value="#00008b"></label>
     <label title="Геометрия обводки битов">Обводка <select id="bitContourMode"><option value="single">Общий контур участков</option><option value="same">Между равными битами</option><option value="double">Двойной между разными</option><option value="directional">Между битами 1, между строками 0</option></select></label>
     <label title="Цвета обводки: противоположного бита или свои">Цвета обводки <select id="bitContourColours"><option value="auto">Цвет противоположного бита</option><option value="custom">Свои цвета контура</option></select></label>
     <label title="Свой цвет контура нулей; также цвет общего контура">Контур 0 <input id="bitContourColour1" type="color" value="#ffe969" title="Свой цвет контура нулей в режиме «Свои»; также цвет общего контура"></label>
@@ -548,7 +548,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-view-rotation.css?v=600">
 <script src="mayatnik-face-transform.js?v=600"></script>
 <script src="mayatnik-pit-copies.js?v=939"></script>
-<script src="mayatnik-reset-state.js?v=1033"></script>
+<script src="mayatnik-reset-state.js?v=1054"></script>
 <script src="mayatnik-cell-selection.js?v=542"></script>
 <script src="mayatnik-cell-selection-view.js?v=542"></script>
 <script src="mayatnik-xorrom.js?v=871"></script>
@@ -856,7 +856,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   if(!['sides','corners','diagonal','chess0','bit'].includes(st.fillArea))st.fillArea='sides';
   st.paintFrameMode=MayatnikPaintRepeat.mode(st.paintFrameMode);
   st.paintSame=!!st.paintSame;st.paintSymmetric=!!st.paintSymmetric;
-  for(const [id,fallback]of [['digitOneColour','#e8edf5'],['digitZeroColour','#7cbcff'],['bitOneColour','#e8edf5'],['bitZeroColour','#5b6475'],['bitContourColour1','#ffe969'],['bitContourColour2','#ffffff'],['overOneColour','#4f9bff'],['overZeroColour','#ff5a4f']])if(!/^#[0-9a-f]{6}$/i.test(st[id]||''))st[id]=fallback;
+  for(const [id,fallback]of [['digitOneColour','#e8edf5'],['digitZeroColour','#7cbcff'],['bitOneColour','#ffd700'],['bitZeroColour','#00008b'],['bitContourColour1','#ffe969'],['bitContourColour2','#ffffff'],['overOneColour','#4f9bff'],['overZeroColour','#ff5a4f']])if(!/^#[0-9a-f]{6}$/i.test(st[id]||''))st[id]=fallback;
   if(st.view==='bitContours'){st.view='bits';st.viewContours=true;}else if(st.view==='digits'||st.view==='digitsOnly'){st.view='bits';st.viewDigits=true;}
   st.viewContours=!!st.viewContours;st.viewDigits=!!st.viewDigits;
   if(!['single','same','double','directional'].includes(st.bitContourMode))st.bitContourMode='single';if(!['auto','custom'].includes(st.bitContourColours))st.bitContourColours='auto';
@@ -4975,15 +4975,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     else if(!(st.sym&&!st.symTriangles)&&!st.autoAxes&&!st.triangleMapAxes&&!MayatnikNAxes.normaliseSets(st.nAxisSets).some(s=>s.row<dispH())&&!(guides||axesColourGuides()).length&&!axesColourManualGuides().length)reason='Нет показанных осей. Включите ручные линии, оси симметрии, N-оси, автооси, линии Точки встречи или ось якоря.';
     return {ready:!reason&&!axesColourBusy,busy:axesColourBusy,reason};
   }
-  function axesColourSeeds(requestedAxis=null){
-    const guides=requestedAxis?[]:axesColourGuides(),manualGuides=axesColourManualGuides(!!requestedAxis).filter(g=>!requestedAxis||g.key==='manual:'+requestedAxis.id),state=requestedAxis?{reason:''}:axesColourStatus(guides);if(state.reason)throw Error(state.reason);
-    const found=!requestedAxis&&st.sym&&!st.symTriangles?symGet():null;
-    if(!requestedAxis&&st.sym&&!st.symTriangles&&!found)throw Error('Дождитесь завершения поиска осей.');
+  function axesColourSeeds(requestedAxis=null,source='all'){
+    const onlyAuto=source==='auto',guides=requestedAxis||onlyAuto?[]:axesColourGuides(),manualGuides=onlyAuto?[]:axesColourManualGuides(!!requestedAxis).filter(g=>!requestedAxis||g.key==='manual:'+requestedAxis.id),state=requestedAxis?{reason:''}:axesColourStatus(guides);if(state.reason)throw Error(state.reason);
+    if(onlyAuto&&!st.autoAxes)throw Error('Включите автооси перед раскраской.');
+    const found=!requestedAxis&&!onlyAuto&&st.sym&&!st.symTriangles?symGet():null;
+    if(!requestedAxis&&!onlyAuto&&st.sym&&!st.symTriangles&&!found)throw Error('Дождитесь завершения поиска осей.');
     if(found?.error)throw Error(found.error);
     const automatic=!requestedAxis&&st.autoAxes?autoAxesGet():null;
     if(!requestedAxis&&st.autoAxes&&!automatic)throw Error('Дождитесь завершения поиска автоосей.');
     if(automatic?.error)throw Error(automatic.error);
-    const map=!requestedAxis&&st.triangleMapAxes?triangleMapGet():null;if(map?.error)throw Error(map.error);
+    const map=!requestedAxis&&!onlyAuto&&st.triangleMapAxes?triangleMapGet():null;if(map?.error)throw Error(map.error);
     const A=geo.anchor-VX,joined=joinedOn(),rp=rombP(),H=dispH(),panels=joined?joinedGeometry().parts.map(({p,sourceParity,matrix:m})=>({p:joinedWhole()?sourceParity:p,ox:0,m,
       box:[Math.min(m[4],m[0]*VW+m[4]),Math.min(m[5],m[3]*VH+m[5]),Math.max(m[4],m[0]*VW+m[4]),Math.max(m[5],m[3]*VH+m[5])]})):
       (rp===2?[[0,0],[1,VW+RG]]:[[rp,0]]).map(([p,ox])=>({p,ox,m:[1,0,0,1,ox,0],box:[ox,0,ox+VW,VH]}));
@@ -5001,7 +5002,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         const transform=(p,t)=>[m[0]*(p[0]-VX+.5+t*dx*.4)+m[4],m[3]*(p[1]+.5+t*dy*.4)+m[5]];
         line(transform(a,-1),transform(b,1),panel,sg);
       }
-      for(const set of requestedAxis?[]:MayatnikNAxes.normaliseSets(st.nAxisSets)){if(set.row>=H)continue;for(const x of MayatnikNAxes.positions(set))line([x+A+.5,0],[x+A+.5,H],panel,`n:${set.id}:${x}`);}
+      for(const set of requestedAxis||onlyAuto?[]:MayatnikNAxes.normaliseSets(st.nAxisSets)){if(set.row>=H)continue;for(const x of MayatnikNAxes.positions(set))line([x+A+.5,0],[x+A+.5,H],panel,`n:${set.id}:${x}`);}
       for(const axis of map?.axes||[]){if(panel.p>=0&&panel.p!==axis.p)continue;const m=panel.m,point=v=>[m[0]*(v[0]-VX)+m[4],m[3]*v[1]+m[5]];line(point(axis.a),point(axis.b),panel,axis);}
       for(const sg of automatic?.segments||[]){const m=panel.m;line([m[0]*sg.x+m[4],m[3]*sg.y0+m[5]],[m[0]*sg.x+m[4],m[3]*sg.y1+m[5]],panel,sg);}
       for(const sg of manualGuides)line(sg.a,sg.b,panel,sg.key);
@@ -5009,13 +5010,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(rp<0)for(const sg of guides)line(sg.a,sg.b,panels[0],sg);
     return {indices:Uint32Array.from(unique),axes:visibleAxes.size};
   }
-  async function axesColourApply(){
+  async function axesColourApply(options={}){
+    const source=options.source==='auto'?'auto':'all';
     if(axesColourBusy)return {changed:0,reason:'Раскраска от осей уже выполняется.'};
     const message=text=>{$('fillInfo').textContent=text;return {changed:0,reason:text};};
     if(!sessionReady||cacheRestoring||frameLibraryBusy||templateDragging||!f||!geo)return message(axesColourStatus().reason);
     stopFrameTransports();
-    const field=f,frame=k,gpu=gpuBig,generation=bmGen,settings=JSON.stringify(st),colour=paintToolColour('axesFillColour'),mirror=$('fillMirror').checked,deadline=performance.now()+120000;
-    const current=()=>f===field&&k===frame&&gpuBig===gpu&&bmGen===generation&&JSON.stringify(st)===settings&&paintToolColour('axesFillColour')===colour&&$('fillMirror').checked===mirror;
+    const field=f,frame=k,gpu=gpuBig,generation=bmGen,settings=JSON.stringify(st),colour=paintToolColour('axesFillColour'),mirror=$('fillMirror').checked,deadline=performance.now()+120000,paintEntry=fillHistory.at(-1),paintRedo=fillRedo.at(-1),paintLayer=fillMask;
+    const current=()=>f===field&&k===frame&&gpuBig===gpu&&bmGen===generation&&JSON.stringify(st)===settings&&paintToolColour('axesFillColour')===colour&&$('fillMirror').checked===mirror&&(source!=='auto'||fillHistory.at(-1)===paintEntry&&fillRedo.at(-1)===paintRedo&&fillMask===paintLayer);
     axesColourBusy=true;$('bAxesColour').disabled=true;
     if(gpu)gpuPaintRequests++;
     try{
@@ -5032,7 +5034,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         if(img&&!navQuick()&&(!gpuBig||gpuBig.fresh&&gpuBig.k===k)){
           if(quietDraw){quietDraw=false;draw();if(!current())continue;}
           const key=[VX,VW,VH,RK,RG,geo.anchor].join('|');if(projection!==null&&key!==projection)return message('Проекция поля изменилась — повторите раскраску от осей.');projection=key;
-          try{data=axesColourSeeds();break;}catch(e){if(!symPending&&!autoAxesPending)return message(e.message);}
+          try{data=axesColourSeeds(null,source);break;}catch(e){if(!(source==='auto'?autoAxesPending:symPending||autoAxesPending))return message(e.message);}
         }
         $('fillInfo').textContent='Жду остановленный кадр и найденные оси…';await new Promise(resolve=>setTimeout(resolve,20));
       }
@@ -10437,7 +10439,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return MayatnikGifSearch.search(grid,{patterns,pattern:own?'initial':st.ochkiPattern||'initial',min:st.ochkiLength||5,inverse:!!st.ochkiInv,reverse:!!st.ochkiRev,half:!!st.ochkiHalf,rowReverseMask:!!st.ochkiRowReverseMask,skipSpaces:!!st.ochkiSkipSpaces,direction:st.ochkiThrough?'loops':query.direction||st.ochkiMode||'row',cancelled:query.cancelled,maxHits:query.maxHits});
   }
   function gifScaleViewerOptions(){return {
-    digits:digitsOn(),onFrameSet:({variant,frames,delay,operation})=>{const colours={one:hexRGB(st.bitOneColour||'#e8edf5'),zero:hexRGB(st.bitZeroColour||'#5b6475'),background:[...EMPTY]};if(variant?.method==='phases'&&variant.phase&&operation==='xor'){const Phase=window.MayatnikGifPhase;if(!Phase)throw Error('Модуль фаз Гиф-Масштаба не загружен');return Phase.combine(window,variant,frames,delay,colours);}return MayatnikGifFrameSet.build(window,variant,frames,delay,operation,colours);},
+    digits:digitsOn(),onFrameSet:({variant,frames,delay,operation})=>{const colours={one:hexRGB(st.bitOneColour||'#ffd700'),zero:hexRGB(st.bitZeroColour||'#00008b'),background:[...EMPTY]};if(variant?.method==='phases'&&variant.phase&&operation==='xor'){const Phase=window.MayatnikGifPhase;if(!Phase)throw Error('Модуль фаз Гиф-Масштаба не загружен');return Phase.combine(window,variant,frames,delay,colours);}return MayatnikGifFrameSet.build(window,variant,frames,delay,operation,colours);},
     sequence:$('gifScaleSequence').value,delay:Number($('gifScaleDelay').value),search:gifScaleSearch,searchEnabled:()=>!!st.ochki,searchDirection:st.ochkiThrough?'loops':st.ochkiMode||'row',
     onSelection:detail=>{gifScaleSelection=detail;},onRecord:selection=>{if(selection?.variant?.method==='phases'){gifScaleMessage('Лента фаз уже готова: сохраните её кнопкой «Скачать».');return Promise.resolve(false);}if(!gifScaleLive)throw Error('Модуль записи масштаба не загружен');return gifScaleLive.start(selection);},onStackToggle:()=>gifScaleToggleStack(),
     onGenerate:settings=>startGifScale({settings}),onCancel:()=>gifScaleJob?.cancel(),onMontage:()=>window.MayatnikGifViewer?.openEditor(),
@@ -13931,9 +13933,35 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function assistantSnapshot(){
     const state={};for(const id of assistantKeys){const value=id==='fixLines'?st.fixLines!==false:['outline','geomCenter'].includes(id)?!!st[id]:st[id];if(assistantValueValid(id,value))state[id]=value;}return state;
   }
+  // Keep field/paint references here, outside the model request and localStorage.
+  let assistantActionSerial=0,assistantActionPending=null;
+  function assistantActionContext(){
+    const token=String(++assistantActionSerial);
+    assistantActionPending={token,field:f,frame:k,generation:bmGen,gpu:gpuBig,settings:JSON.stringify(st),paint:fillHistory.at(-1),redo:fillRedo.at(-1),layer:fillMask,mirror:$('fillMirror').checked,area:$('fillArea').value,colour:paintToolColour('axesFillColour')};
+    return token;
+  }
+  async function assistantRunAction(id,token){
+    if(id!=='paintAutoAxes')throw Error('Это действие помощнику недоступно.');
+    const context=assistantActionPending;
+    if(!context||context.token!==token)throw Error('Предложение устарело — повторите запрос.');
+    if(!sessionReady||!f||!geo||cacheRestoring||frameLibraryBusy||templateDragging||axesColourBusy)throw Error('Дождитесь загрузки поля и завершения текущего действия.');
+    if(phoneOn()||snakeSandbox)throw Error('Раскраска помощником доступна в обычном Маятнике.');
+    if(f!==context.field||k!==context.frame||bmGen!==context.generation||gpuBig!==context.gpu||JSON.stringify(st)!==context.settings||fillHistory.at(-1)!==context.paint||fillRedo.at(-1)!==context.redo||fillMask!==context.layer||$('fillMirror').checked!==context.mirror||$('fillArea').value!==context.area||paintToolColour('axesFillColour')!==context.colour)throw Error('Кадр, краска или настройки изменились. Остановите плеер и повторите запрос.');
+    assistantActionPending=null;
+    stopFrameTransports();
+    st.autoAxes=true;$('autoAxes').checked=true;save();draw();queueDigits();
+    dispatchEvent(new Event('may-transport-change'));
+    const suffix=' При запуске действия плеер остановлен и автооси включены.';
+    try{
+      const result=await axesColourApply({source:'auto'});
+      return {...result,message:result.changed?`По автоосям окрашено ${result.changed.toLocaleString('ru-RU')} пикселей. Отмена краски — в группе «Раскраска».${suffix}`:(result.reason||'Раскраска не изменилась.')+suffix};
+    }catch(error){throw Error('Ошибка раскраски: '+error.message+suffix);}
+  }
   window.mayAssistantControls={
     snapshot:assistantSnapshot,
     ready:()=>sessionReady&&!!f,
+    actionContext:assistantActionContext,
+    runAction:assistantRunAction,
     apply(changes){
       if(!sessionReady||!f)throw new Error('Дождитесь загрузки поля Маятника.');
       if(phoneOn()||snakeSandbox)throw new Error('Подбор применяется в обычном Маятнике. Для этого специального режима доступно объяснение.');
@@ -13996,7 +14024,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-point-dock.js?v=996"></script>
 <link rel="stylesheet" href="mayatnik-side-dock.css?v=901">
 <script src="mayatnik-side-dock.js?v=887b"></script>
-<link rel="stylesheet" href="mayatnik-assistant.css?v=1052">
-<script src="mayatnik-assistant.js?v=1053"></script>
+<link rel="stylesheet" href="mayatnik-assistant.css?v=1054">
+<script src="mayatnik-assistant.js?v=1054"></script>
 </body>
 </html>
