@@ -1,7 +1,7 @@
 /* ГОЛ-030. Handwritten digit names and original phoneme durations. */
 (function(root){
   'use strict';
-  const version='counting-recipes-v1.0.1';
+  const version='counting-recipes-v1.0.2';
   const example='1, 0, 0… 1, 1, 0, 0.';
   // First ten rows map to 0–9. Further rows give alternate pronunciations
   // by name only. A plus marks the stressed vowel in the phoneme score.
@@ -20,7 +20,7 @@
     ],
     fr:[
       ['zéro zero','z:87 e:125 fr_r:78 +o:195'],
-      ['un','+fr_un:219'],
+      ['un','+fr_un:360'],
       ['deux','d:72 +de_oe:216'],
       ['trois','t:67 fr_r:76 w:61 +a:183'],
       ['quatre','k:72 +a:174 t:62 fr_r:79'],
