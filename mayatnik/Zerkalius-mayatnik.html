@@ -86,7 +86,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.082</title>
+<title>Zerkalius Маятнкъ — v1.083</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -240,7 +240,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.082</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.083</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -408,6 +408,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <button id="bTxt" title="Строки поля текстом: 0 и 1, пустые клетки — точка">Строки .txt</button>
     <button id="bDiag" title="Ромбы построчно: у каждой решётки (чётная — вершины 0, ±2…, нечётная — ±1, ±3…) ромбы стоят рядами по диагоналям. В файле — правые диагонали ↘ и левые ↙ обеих решёток; строка — одна диагональ сверху вниз, диагонали слева направо. Текущий кадр, окно показа">Диагонали .txt</button>
     <a id="mirrorLink" href="../zazerkalius/Zerkalius-zazerkalius.html?mayatnik=1#zerkalius" style="color:var(--acc)">Зеркальный маятник</a>
+    <button id="bBitLight" aria-pressed="false" title="Битовый свет: ромб из клеток текущего кадра освещает поле в такт маятнику.">Битовый свет</button>
     <button id="bViewSwing" aria-pressed="false" title="Качание плоского треугольника: семь делений основания, три шага вправо и влево. Вершина неподвижна, основание горизонтально.">Качанье</button>
     <button id="bViewUpsideDown" aria-pressed="false" title="Повернуть весь видимый холст на 180° вместе с осями, зеркалами и подписями. Меню остаются на месте.">Вверх ногами</button>
     <button id="bFaceRotate" title="Выделите прямоугольный фрагмент в Ячейках и поверните его на 180°. Окружающий рисунок сохраняется.">Выделение 180°</button>
@@ -552,12 +553,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="../_js/retriangle.js?v=1"></script>
 <script src="mayatnik-colour-auto.js?v=1024"></script>
 <link rel="stylesheet" href="mayatnik-cell-selection-view.css?v=543">
-<script src="mayatnik-swing.js?v=1071.1"></script>
+<script src="mayatnik-swing.js?v=1083"></script>
 <script src="mayatnik-view-rotation.js?v=1071"></script>
 <link rel="stylesheet" href="mayatnik-view-rotation.css?v=600">
 <script src="mayatnik-face-transform.js?v=600"></script>
 <script src="mayatnik-pit-copies.js?v=939"></script>
-<script src="mayatnik-reset-state.js?v=1080"></script>
+<script src="mayatnik-reset-state.js?v=1083"></script>
 <script src="mayatnik-cell-selection.js?v=542"></script>
 <script src="mayatnik-cell-selection-view.js?v=542"></script>
 <script src="mayatnik-xorrom.js?v=871"></script>
@@ -632,7 +633,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-search-frame-store.js?v=1000"></script>
 <script src="mayatnik-template-follow.js?v=651"></script>
 <script src="mayatnik-template-batch.js?v=1024"></script>
-<script src="mayatnik-settings-library.js?v=1071"></script>
+<script src="mayatnik-settings-library.js?v=1083"></script>
 <script src="mayatnik-template-dim.js?v=524"></script>
 <script src="mayatnik-template-visibility.js?v=1074"></script>
 <script src="mayatnik-gif.js?v=1008"></script>
@@ -959,23 +960,43 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return '';
   }
   function swingSync(frame=k){
-    const reason=st.viewSwing?swingReason():'',on=st.viewSwing&&!reason;
+    const requested=st.viewSwing||st.bitLight;
+    const reason=requested?swingReason():'';
+    const lightReason=reason||(st.bitLight&&!['bits','col'].includes(st.view)?'Для битового света выберите вид «Биты» или «Цвета».':'');
+    const light=st.bitLight&&!lightReason, shear=st.viewSwing&&!st.bitLight&&!reason;
+    const on=light||shear;
     // A real displayed transition is one swing step, for arrows ±1 as well as player ×2.
     // Repaints, unfinished GPU/paint frames and restoring F5 never advance it.
     let index=((Math.trunc(Number(st.swingPhaseIndex)||0)%12)+12)%12;
     const lap=st.edgeWrap&&!edgeFlowOn()?edgeLaps:0,wrapped=lap>swingShownLap;
     if(on&&swingShownOwner===f&&!cacheRestoring&&sessionReady&&(frame!==st.swingLastFrame||wrapped)){index=MayatnikSwing.advance(index,st.swingLastFrame,frame,wrapped);st.swingPhaseIndex=index;st.swingLastFrame=frame;queueSession();}
     else if(on&&!cacheRestoring&&sessionReady)st.swingLastFrame=frame;
-    let geometry=null;
-    if(on&&img){try{const semantic=visibleSemanticContext(false,true);geometry=MayatnikSwing.triangle(img.width,img.height,semantic.readBit);}catch(_){}}
-    const amount=on&&geometry?MayatnikSwing.STEPS[index]*geometry.width/(7*geometry.height):0;
-    viewRotation.setSwing(amount,on?cv:null,geometry?geometry.top/img.height:0);swingShownOwner=f;swingShownFrame=frame;swingShownLap=lap;
+    let geometry=null,semantic=null;
+    if(on&&img){try{semantic=visibleSemanticContext(false,true);geometry=MayatnikSwing.triangle(img.width,img.height,semantic.readBit);}catch(_){}}
+    const amount=shear&&geometry?MayatnikSwing.STEPS[index]*geometry.width/(7*geometry.height):0;
+    viewRotation.setSwing(amount,shear?cv:null,geometry?geometry.top/img.height:0);swingShownOwner=f;swingShownFrame=frame;swingShownLap=lap;
     const button=$('bViewSwing');button.setAttribute('aria-pressed',String(!!st.viewSwing));
     button.title=reason||'Качание плоского треугольника: семь делений основания; 0, −1, −2, −3, −2, −1, 0, +1, +2, +3, +2, +1. Вершина неподвижна, основание горизонтально. Один показанный переход — одно деление; назад — обратная фаза.';
-    document.body.classList.toggle('may-swing-active',!!on);
+    const lightButton=$('bBitLight');
+    lightButton.setAttribute('aria-pressed',String(!!st.bitLight));
+    lightButton.title=lightReason||'Битовый свет: ромб из клеток текущего кадра освещает поле в такт маятнику.';
+    document.body.classList.toggle('may-swing-active',!!shear);
     window.mayFlow?.invalidate();
+    return light&&geometry?{geometry,readBit:semantic.readBit,index}:null;
   }
-  $('bViewSwing').onclick=()=>{st.viewSwing=!st.viewSwing;if(st.viewSwing){st.swingStartFrame=k;st.swingLastFrame=k;st.swingPhaseIndex=0;}save();queueSession();if(f)draw();else $('bViewSwing').setAttribute('aria-pressed',String(!!st.viewSwing));};
+  function toggleSwingMode(key,other){
+    const switching=!!st[other];
+    st[key]=!st[key];
+    if(st[key]){
+      st[other]=false;
+      if(!switching){st.swingStartFrame=k;st.swingLastFrame=k;st.swingPhaseIndex=0;}
+    }
+    $('bViewSwing').setAttribute('aria-pressed',String(!!st.viewSwing));
+    $('bBitLight').setAttribute('aria-pressed',String(!!st.bitLight));
+    save();queueSession();if(f)draw();
+  }
+  $('bViewSwing').onclick=()=>toggleSwingMode('viewSwing','bitLight');
+  $('bBitLight').onclick=()=>toggleSwingMode('bitLight','viewSwing');
   window.maySwing={get:()=>({enabled:!!st.viewSwing,active:viewRotation.swinging,frame:swingShownFrame,start:Number(st.swingStartFrame)||0,step:MayatnikSwing.STEPS[st.swingPhaseIndex||0],shear:viewRotation.shear,reason:st.viewSwing?swingReason():''}),sync:()=>{if(f)draw();}};
 
 
@@ -1198,7 +1219,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function clearLargeBuildRequest(){largeBuildSerial++;setLargeBuildMessage();}
   const gpuSnapshot = MayatnikGpuSnapshot.create();
   const gpuCpuOchki = () => !!gpuBig && !!st.ochki;
-  const gpuManualCpu = () => !!gpuBig && (st.viewSwing&&!swingReason()||manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
+  const gpuManualCpu = () => !!gpuBig && ((st.viewSwing||st.bitLight&&['bits','col'].includes(st.view))&&!swingReason()||manualPaintOn()||rombP()>=0&&manualMirrorPlan().length>0);
   let gpuPaintRequests=0;
   const gpuPaintCpu = () => !!gpuBig&&(gpuPaintRequests>0||columnTemplatesOn()||midPaintOn()||st.pitCopiesOn||st.paintEmptyNeighbours||st.paintIsolated0||st.paintIsolated1||st.paintFrameMode!=='off'&&!!paintRepeatSeed||!!st.manualSnake&&(rombP()>=0||!visibleSemanticCanLazy())||!!fillMask||!!templatePaintLayer||!!templateMatchLayer||!!manualPaintCurrent()?.layer||!!manualPaintCurrent()?.patterns||fillHistory.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e))||fillRedo.some(e=>paintHistoryCurrent(e.raster)||!!e.beforeScene?.templatePaint||!!e.afterScene?.templatePaint||manualPaintEntryCurrent(e)));
   const gpuCpuDisplay = () => !!gpuBig&&!gpuBig.large&&(wolframActive()||!!window.mayGifScaleNeedsCpu?.()||st.heat&&rombP()<0||st.fillWholeColour&&fillMode||st.geomCenter||st.edgeRhombOn||joinedWhole()||st.joined180&&contoursOn()||st.view==='rgbNeighbours'||gpuCpuOchki()||gpuManualCpu()||gpuPaintCpu()||templateFollowActive());
@@ -3718,7 +3739,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(gpuRaf){cancelAnimationFrame(gpuRaf);gpuRaf=0;}if(gpuCv)gpuCv.hidden=true;
       if(gpuBig.snapshotError?.key===ochkiKey())throw Error(gpuBig.snapshotError.message);
       if(!same){
-        if(!viewRotation.swinging||swingShownOwner!==f||!gpuBig.cpuRaster||!img){
+        if(!(viewRotation.swinging||st.bitLight)||swingShownOwner!==f||!gpuBig.cpuRaster||!img){
           cv.width=1;cv.height=1;gpuBig.cpuRaster=false;img=null;digitCanvas.hidden=true;
           if(window.mayLayers){layerOriginalBase(cv);layerOriginalDigits(false,false);if(layerCpuService)layerCpuService.style.display='none';}cellSelectionView?.render();
         }
@@ -10008,7 +10029,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function present(quick) {
     if(autoAxesSeekPending())return;
     if(!templateVisibilityAvailable())templateVisibility.hide();
-    swingSync(k);
+    const light=swingSync(k);
     window.mayPhone?.sync();
     axesScaleSync();
     if(window.mayPixelExact&&f&&geo){
@@ -10021,7 +10042,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(window.mayLayers){if(quick){layerOriginalDigits(false,false);if(layerCpuService)layerCpuService.style.display='none';}if(gpuDisplay()&&layerCpuService)layerCpuService.style.display='none';}
     if (gpuDisplay()) { gpuQueue(); align(); anchorDash(); flashDraw(); areaFreezeDraw(); ovlDraw(); sectorDraw(); rowLabDraw(); if (gpuBig.fresh) axisLogTick(); fixOvDraw(); vtxLabelsDraw(); queueLineMeasures(); manualSnakeShown(); notifyXorromField(); return; }   // v0.468–v0.469: слои без картинки процессора (зеркала, контур, «право-лево» — пока нет)
     if (!img) {notifyXorromField();return;}
-    const pic = pxView();present.romboNative={owner:img,pic};present.serial=(present.serial||0)+1;
+    const basePicture=pxView();
+    const pic=light?MayatnikSwing.lightPicture(basePicture,light.geometry,light.readBit,light.index):basePicture;
+    present.romboNative={owner:img,pic};present.serial=(present.serial||0)+1;
     if(staggeredOn()){
       present.clean={pic};
       const d=DPR(),r=cv.getBoundingClientRect(),step=scale()*d/2;
@@ -10955,7 +10978,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(!semantic.current())throw Error('Поле изменилось во время сохранения; повторите перестроение.');
       semantic.release();semantic=null;
       const defaults=MayatnikResetState.defaults(),clean={};
-      for(const key of 'parity joined180 joined180Whole viewUpsideDown viewSwing swingStartFrame swingLastFrame swingPhaseIndex edgeRhombOn blackMirror fixMirror fixLow fixWide fixLowOut fixRot fixHor fixDown triTop thirds crossMirror triangleMapMirror triangleMapMask linesOn mirAxis ovl paintFrameMode paintSame paintSymmetric paintIsolated0 paintIsolated1 paintEmptyNeighbours pitCopiesOn manualSnake paintMid paintAxis paintMeet midOneOn midZeroOn cellSelection'.split(' '))clean[key]=defaults[key];
+      for(const key of 'parity joined180 joined180Whole viewUpsideDown viewSwing bitLight swingStartFrame swingLastFrame swingPhaseIndex edgeRhombOn blackMirror fixMirror fixLow fixWide fixLowOut fixRot fixHor fixDown triTop thirds crossMirror triangleMapMirror triangleMapMask linesOn mirAxis ovl paintFrameMode paintSame paintSymmetric paintIsolated0 paintIsolated1 paintEmptyNeighbours pitCopiesOn manualSnake paintMid paintAxis paintMeet midOneOn midZeroOn cellSelection'.split(' '))clean[key]=defaults[key];
       const algorithm=st.animatrixAlgorithm==='copyRows'?'two':st.animatrixAlgorithm;
       animatrixInstall(source,{...clean,animatrixAlgorithm:algorithm,inverted:false,invertAuto:false,animatrixColours:'inherit',animatrixTiming:'rows',animatrixCycles:1,animatrixCycleMode:'finite'});installed=true;
       const after=frameWorkOnly(paintSnapshot());if(!after)throw Error('Не удалось сохранить результат для повтора.');after.frameHost=frameHostSnapshot();
@@ -14161,6 +14184,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   cleanupAdd('folds','Свёртки','reset',()=>!!(foldTransport?.active||foldTransportV?.active),foldCloseAll);
   cleanupAdd('rowBuild','Построенная строка','select',()=>!!(rowBuildHighlight&&st.rowStepOutline!==false&&rowBuildHighlightDismissedOwner!==rowBuildHighlight.owner),()=>dismissRowBuildHighlight());
   cleanupAdd('thirds','Трети','reset',()=>!!st.thirds,()=>$('bThirds').onclick());
+  cleanupAdd('bitLight','Битовый свет','reset',()=>!!st.bitLight,()=>$('bBitLight').onclick());
   cleanupAdd('swing','Качанье','reset',()=>!!st.viewSwing,()=>$('bViewSwing').onclick());
   cleanupAdd('upsideDown','Вверх ногами','reset',()=>!!st.viewUpsideDown,()=>$('bViewUpsideDown').onclick());
   cleanupAdd('originalLayer','Свойства оригинала','reset',()=>!!window.mayLayers?.list().some(layer=>layer.kind==='original'&&(!layer.visible||layer.opacity!==100||layer.tint||layer.x||layer.y)),()=>window.mayLayers.reset('original'));
@@ -14223,7 +14247,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const reason=message=>({reason:message});
     if(!f||!geo)return reason('сначала постройте поле');
     if(gpuBig?.large)return reason('большое GPU-поле не имеет доступной маски; выберите до 4096 строк');
-    if(!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||gpuBig.pend?.length)||st.viewSwing&&(swingShownOwner!==f||swingShownFrame!==k))return {pending:true,reason:'ожидание точного показанного кадра'};
+    if(!img||gpuBig&&(!gpuBig.fresh||gpuBig.k!==k||gpuBig.pend?.length)||(st.viewSwing||st.bitLight)&&(swingShownOwner!==f||swingShownFrame!==k))return {pending:true,reason:'ожидание точного показанного кадра'};
     if(window.mayPhone?.art())return reason('выберите Обои → Клетки');
     if(st.edgeRhombOn)return reason('сборка Ромбо: вернитесь к исходному полю');
     if(document.body.classList.contains('may-fold-active'))return reason('выключите свёртку поля');
@@ -14775,7 +14799,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1079"></script>
+<script src="mayatnik-menu.js?v=1083"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

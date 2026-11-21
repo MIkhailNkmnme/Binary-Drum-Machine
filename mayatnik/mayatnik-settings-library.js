@@ -17,7 +17,7 @@
   for(const key of ['gifScaleStackOverlay','gifScaleStackOverlayIndex','gifScaleStackOutline','gifScaleStackPaintZero','gifScaleStackPaintOne']){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('gifScaleStackPhasePage','gifScaleStackHeight','gifScaleStackMethod','gifScaleStackMode','gifScaleStackBase');NEW_STATE_KEYS.add('gifScaleStackPhasePage');NEW_STATE_KEYS.add('gifScaleStackHeight');NEW_STATE_KEYS.add('gifScaleStackMethod');NEW_STATE_KEYS.add('gifScaleStackMode');NEW_STATE_KEYS.add('gifScaleStackBase');
   for(const key of Object.keys(Pit.DEFAULTS)){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
-  for(const key of ['viewSwing','swingStartFrame','swingLastFrame','swingPhaseIndex']){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
+  for(const key of ['viewSwing','bitLight','swingStartFrame','swingLastFrame','swingPhaseIndex']){STATE_KEYS.push(key);NEW_STATE_KEYS.add(key);}
   STATE_KEYS.push('excelDigitPalette','animatrixStaggeredGrid','staggeredGrid','staggeredBlocks');
   NEW_STATE_KEYS.add('excelDigitPalette');
   NEW_STATE_KEYS.add('animatrixStaggeredGrid');
@@ -29,6 +29,7 @@
     const values={};for(const key of STATE_KEYS){const v=state[key];values[key]=v===undefined?null:key==='lineFamilies'||key==='templateFindAll'||key==='templateFrameSearch'?clone(v):v;}
     for(const [key,value]of Object.entries({...INVERT_DEFAULTS,...THROUGH_DEFAULTS}))if(state[key]===undefined)values[key]=value;
     for(const [key,value]of Object.entries(ISOLATED_DEFAULTS))if(state[key]===undefined)values[key]=value;
+    values.bitLight=state.bitLight===true;
     values.autoAxesPaint=state.autoAxesPaint===true;if(values.autoAxesPaint)values.autoAxes=true;
     Object.assign(values,Pit.normalize(state));
     const modes={};for(const key of TOOL_KEYS)modes[key]=tools[key]??(key==='templatePickMode'?'one':key==='autoVertical'?0:false);
@@ -56,7 +57,7 @@
     if(value.state.heatHoldZero!=null&&typeof value.state.heatHoldZero!=='boolean')throw Error('Некорректный режим сохранения тепла на нуле');
     if(value.state.heatPeriod!=null&&(!Number.isInteger(value.state.heatPeriod)||value.state.heatPeriod<1||value.state.heatPeriod>64))throw Error('Некорректный период тепла');
     for(const [key,values]of [['heatMode',['all','one','zero','alternate']],['paintFrameMode',['off','colour','cells']],['bitContourMode',['single','same','double','directional']],['bitContourColours',['auto','custom']],['triangleMapSource',['static','time']],['axisPalette',['purple-black','purple-red']],['crossMirrorMode',['lr','rl','tb','bt','sector']],['crossMirrorSector',['A1','A2','B1','B2','a1','a2','b1','b2','C1','C2']]])if(value.state[key]!=null&&!values.includes(value.state[key]))throw Error('Некорректная настройка: '+key);
-    for(const key of ['ochkiThrough','ochkiSkipSpaces','ochkiEveryFrame','ochkiRowReverseMask','gifScaleStack','zLimit','zOverview','fillWholeColour','rowStepOutline','ochkiHalf','joined180','kraftShadows','autoAxes','autoAxesPaint','triangleMapAxes','triangleMapMask','triangleMapMirror','crossMirror','crossLabels','viewUpsideDown','viewSwing','autoFillPalette','growOwnColour'])if(value.state[key]!=null&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка: '+key);
+    for(const key of ['ochkiThrough','ochkiSkipSpaces','ochkiEveryFrame','ochkiRowReverseMask','gifScaleStack','zLimit','zOverview','fillWholeColour','rowStepOutline','ochkiHalf','joined180','kraftShadows','autoAxes','autoAxesPaint','triangleMapAxes','triangleMapMask','triangleMapMirror','crossMirror','crossLabels','viewUpsideDown','viewSwing','bitLight','autoFillPalette','growOwnColour'])if(value.state[key]!=null&&typeof value.state[key]!=='boolean')throw Error('Некорректная настройка: '+key);
     for(const key of ['axesFillColour',...AUTO_AXIS_COLOURS,'autoFillColour','growFillColour','meetFillColour','axisFillColour','isolatedOneColour','isolatedZeroColour'])if(value.state[key]!=null&&!/^#[0-9a-f]{6}$/i.test(value.state[key]))throw Error('Некорректный цвет: '+key);
     if(value.state.gifScaleStackPhasePage!=null&&(!Number.isInteger(value.state.gifScaleStackPhasePage)||value.state.gifScaleStackPhasePage<0||value.state.gifScaleStackPhasePage>1562499))throw Error('Некорректная страница фаз');
     if(value.state.gifScaleStackOverlay!=null&&!['off','xor','and','rgb','paint'].includes(value.state.gifScaleStackOverlay))throw Error('Некорректное наложение нижней копии');
