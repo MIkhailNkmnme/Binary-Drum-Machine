@@ -1,0 +1,21 @@
+{
+  "tag": "zerkalius-1001100-symbiosis-v10",
+  "releaseUrl": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/tag/zerkalius-1001100-symbiosis-v10",
+  "sourceCommit": "13600d56f1f206af30f50f002f15c92e644f0eb0",
+  "publishedAt": "2026-11-21T11:09:48Z",
+  "draft": false,
+  "assets": [
+    {
+      "name": "zerkalius-1001100-symbiosis-fullhd-v10-seven.mp4",
+      "size": 305766181,
+      "digest": "sha256:dfed406f88c9e881e17d3f549307937ba4d56c1fcc0298cecedf95c7279c05b7",
+      "browser_download_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/zerkalius-1001100-symbiosis-v10/zerkalius-1001100-symbiosis-fullhd-v10-seven.mp4"
+    },
+    {
+      "name": "zerkalius-1001100-symbiosis-v10-source.zip",
+      "size": 43203554,
+      "digest": "sha256:8d1b4fbda8f6ed42f2fdd2f4391ce2e8823e66932317e33fdd6ee3d72ae9dd50",
+      "browser_download_url": "https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/zerkalius-1001100-symbiosis-v10/zerkalius-1001100-symbiosis-v10-source.zip"
+    }
+  ]
+}
