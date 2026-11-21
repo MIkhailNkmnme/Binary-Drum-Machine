@@ -4,6 +4,7 @@
   const init = async () => {
     if (document.getElementById('mayAssistantLauncher')) return;
     const endpoint = 'http://127.0.0.1:11435';
+    const page='mayatnik',knowledgeVersion='page-scopes-v1';
     const undoKey = 'zerk_may_assistant_undo_v1';
     const node = (tag, cls, text) => {
       const el = document.createElement(tag); if (cls) el.className = cls;
@@ -136,6 +137,7 @@
     async function health(){
       say('Проверяю локальный помощник…');
       try{const data=await request('/api/health');available=data.available===true;
+        if(data.knowledge_version!==knowledgeVersion){available=false;connection.open=true;say('Перезапустите локальный сервис помощника: требуется версия с источниками по страницам.',true);return;}
         say(available?`На этом компьютере · ${data.model||'локальная модель'}`:(data.error||data.message||'Сервис работает, но модель пока недоступна.'),!available);
         if(!available)connection.open=true;
       }catch(_){available=false;connection.open=true;say('Нет связи с локальным помощником. Запусти «Помощник Зеркалиуса» на рабочем столе или открой инструкцию подключения.',true);}
@@ -203,7 +205,8 @@
       addMessage('Ты',message);setBusy(true);say('Читаю документацию и готовлю ответ. Первый ответ может занять больше времени…');
       controller=new AbortController();const timer=setTimeout(()=>controller?.abort(),200000);
       try{
-        const data=await request('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({message,mode:requestMode,state:baseline,history:turns.slice(-4).map(item=>({role:item.role,content:item.content.slice(-2000)}))})});
+        const data=await request('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({page,history_page:page,knowledge_version:knowledgeVersion,message,mode:requestMode,state:baseline,history:turns.slice(-4).map(item=>({role:item.role,content:item.content.slice(-2000)}))})});
+        if(data.page!==page||data.knowledge_version!==knowledgeVersion)throw new Error('Ответ относится к другой странице или прежней версии источников. Перезапустите локальный помощник.');
         if(typeof data.answer!=='string'||!data.answer.trim())throw new Error('Модель вернула пустой ответ.');
         const article=addMessage('Помощник',data.answer);sources(article,data.sources);
         turns.push({role:'user',content:message},{role:'assistant',content:data.answer.slice(0,4000)});turns=turns.slice(-6);
