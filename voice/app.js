@@ -22,7 +22,9 @@
   const engineTabs=[...$('engine-tabs').querySelectorAll('[data-engine]')];
   const topicTabs=[...$('voice-tabs').querySelectorAll('[role="tab"]')];
   const enginePages={};
-  const SPEECH_EXAMPLES={...VoiceLanguages.examples,ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
+  const BASE_SPEECH_EXAMPLES={...VoiceLanguages.examples,ru:DEFAULT_SPEECH,en:VoiceEnglish.example,de:'9876543210 Hallo Welt! Am frühen Morgen öffnet Käthe die Tür und grüßt den Bäcker. Draußen zwitschern Vögel, während ein weißer Fuchs über die grüne Wiese läuft. Jürgen trägt süße Äpfel, frisches Brot und zwölf kleine Bücher zur großen Mühle. Am klaren Quellbach malt Julia ein Quadrat, und Felix spielt Xylophon. Sylvia hört die fröhliche Musik und übt später Yoga. Max und Yvonne erzählen vom Zoo, von hübschen Häusern und einem heißen Sommer. Zum Abschied winken alle freundlich und wünschen sich viel Glück, Wärme und schöne Träume.'};
+  const SPEECH_LABELS={ru:'Русский',en:'English',de:'Deutsch',fr:'Français',it:'Italiano',es:'Español',ja:'日本語'};
+  const SPEECH_EXAMPLES=Object.freeze(Object.fromEntries(Object.entries(BASE_SPEECH_EXAMPLES).map(([lang,text])=>[lang,['ru','en','de'].includes(lang)?text+'\n\n1, 0, 0… 1, 1, 0, 0.':text])));
   const speechCatalog=[...VoiceCatalog,...(globalThis.VoiceLegacyCatalog||[])];
   const alphabetExamples=Object.fromEntries(Object.keys(SPEECH_EXAMPLES).map(language=>{
     const symbols=speechCatalog.filter(r=>r.lang===language&&r.kind==='name'&&Array.from(r.symbol).length===1)
@@ -30,6 +32,7 @@
     return [language,[...new Set(symbols)].join(' ')];
   }));
   const PREVIOUS_EXAMPLES={fr:[VoiceDigits.example],it:[VoiceDigits.example],es:[VoiceDigits.example],ja:[VoiceDigits.example],en:['Hello! 0 1 2 3.'],ru:['Привет, Зеркалиус! 0 1 2 3.','0123456789 Текст для проверки голоса. Утром 0 юный фотограф 1 Фёдор поднялся на холм, где 2 жёлтый фургон стоял у въезда. Рыжий ёж 3 шуршал в траве, а маленький щенок 4 прыгал через лужи. В центре двора 5 музыкант объяснял, как звучат флейта, цимбалы и бубен. Затем 6 Юлия и Яков съели хлеб, выпили чай и ещё раз произнесли фразу. Эхо 7 отвечало из чащи: «Здравствуй, мир!» Вечером 8 экскурсовод проверил объём ящика, а 9 белый конь спокойно ждал у двери.'],de:['Ich heiße Zerkalius. Schön! 0 1 2 3.']};
+  for(const lang of Object.keys(BASE_SPEECH_EXAMPLES))(PREVIOUS_EXAMPLES[lang]??=[]).push(BASE_SPEECH_EXAMPLES[lang]);
   const russianLetterNames=(globalThis.VoiceLegacyCatalog||[]).filter(entry=>entry.lang==='ru'&&entry.kind==='name');
   function letterTrial(count,separator,previous=false){
     return russianLetterNames.filter(({symbol})=>previous||!['Ъ','Ь'].includes(symbol)).map(({symbol,label})=>{
@@ -738,10 +741,17 @@
     speechField.focus({preventScroll:true});
   };
   $('text-example').onclick=()=>{
+    begin();
+    const language=$('speech-language').value;
+    if(!Object.hasOwn(SPEECH_EXAMPLES,language)){
+      $('text-status').textContent='Выберите язык текстового чтения.';return;
+    }
+    state.speechLanguage=language;
     setSpeechSpell(false);
-    useSpeechExample();
-    invalidate('Исходный пример выбранного языка восстановлен.');
-    $('text-status').textContent='Исходный текст восстановлен.';
+    useSpeechExample(SPEECH_EXAMPLES[language]);
+    invalidate('Текстовая заготовка восстановлена · '+SPEECH_LABELS[language]+'.');
+    $('text-status').textContent='Заготовка: '+SPEECH_LABELS[language]+'. Курсор в начале. Нажмите «Плей».';
+    speechField.focus({preventScroll:true});
   };
   function loadLetterTrial(mode){
     $('speech-language').value=state.speechLanguage='ru';
