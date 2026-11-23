@@ -1,0 +1,47 @@
+{
+  "source": "issledovanie/central-axis-film/central-axis-source.gif",
+  "source_sha256": "aeb51cd07daa9f6dd7ce422711698b3c6cfb30bb8e46bab70670fd96104c2f4f",
+  "atlas": "mayatnik/mayatnik-axis-512-atlas-data.js",
+  "figures": [
+    {
+      "figure": 16,
+      "frame": 7,
+      "x": 226,
+      "y": 0,
+      "width": 85,
+      "height": 143,
+      "crosses_band": true,
+      "file": "totem-016.png"
+    },
+    {
+      "figure": 28,
+      "frame": 12,
+      "x": 255,
+      "y": 235,
+      "width": 27,
+      "height": 54,
+      "crosses_band": true,
+      "file": "totem-028.png"
+    },
+    {
+      "figure": 35,
+      "frame": 16,
+      "x": 239,
+      "y": 0,
+      "width": 59,
+      "height": 160,
+      "crosses_band": true,
+      "file": "totem-035.png"
+    },
+    {
+      "figure": 36,
+      "frame": 16,
+      "x": 239,
+      "y": 217,
+      "width": 59,
+      "height": 80,
+      "crosses_band": true,
+      "file": "totem-036.png"
+    }
+  ]
+}
