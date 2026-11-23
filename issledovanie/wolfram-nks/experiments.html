@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Опыты для Маятника, Аниматрицы, Бит-Байта и музыки Зеркалиуса по всем двенадцати главам книги Стивена Вольфрама «Новый вид науки».">
+  <title>Опыты Зеркалиуса по Вольфраму</title>
+  <link rel="stylesheet" href="style.css?v=002">
+  <script defer src="/_js/site-clarity.js?v=1"></script>
+  <style>
+    .experiment-route {
+      padding: clamp(16px, 3vw, 28px);
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .experiment-route ol { margin: 0; padding-left: 24px; }
+    .experiment-route li + li { margin-top: 6px; }
+    .chapter-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 20px; }
+    .chapter-links a { overflow-wrap: anywhere; }
+    .experiment-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .chapter {
+      min-width: 0;
+      padding: clamp(14px, 2vw, 24px);
+      border: 1px solid var(--line);
+    }
+    .chapter:target, .experiment:target {
+      outline: 2px solid var(--cyan);
+      outline-offset: 3px;
+    }
+    .chapter h3 { margin: 0; font-size: 19px; line-height: 1.3; }
+    .experiment { scroll-margin-top: 16px; }
+    .experiment + .experiment { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .experiment h4 { margin: 12px 0 6px; font-size: 16px; }
+    .reference { color: var(--muted); font-size: 13px; }
+    @media (max-width: 720px) { .experiment-grid { grid-template-columns: 1fr; } }
+    @media print {
+      :root { color-scheme: light; --bg: #fff; --panel: #fff; --text: #000; --muted: #444; --cyan: #000; }
+      main { padding: 0; }
+      .page-nav, .chapter-links { display: none; }
+      .experiment-grid { display: block; }
+      .chapter { margin-bottom: 1em; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav class="page-nav" aria-label="Разделы Зеркалиуса">
+      <a href="../Zerkalius-issledovanie.html">Исследования</a>
+      <a href="./">Простые программы</a>
+      <a href="xor-pendulum-comparison.html">Сравнение XOR-маятника</a>
+      <a href="../../wolfram/">Конусная лаборатория</a>
+      <a href="../image-journal/">Журнал картинок</a>
+    </nav>
+    <header>
+      <h1>Опыты Зеркалиуса по Вольфраму</h1>
+      <p class="lead">План опытов для Маятника, Аниматрицы, Бит-Байта и музыки по 12 главам книги Стивена Вольфрама «Новый вид науки».</p>
+      <p class="reference">Номера страниц относятся к печатному оригиналу. <a href="https://www.wolframscience.com/nks/">Английское издание</a></p>
+    </header>
+
+    <section id="mayatnik" class="experiment-route" aria-labelledby="route-title">
+      <h2 id="route-title">С чего начать в Маятнике</h2>
+      <ol>
+        <li><a href="#rule-90">Сравнить первый конус с правилом 90</a>.</li>
+        <li><a href="#mobile">Записать дискретное качание и моменты смены направления</a>.</li>
+        <li><a href="#fractals">Сопоставить узор Серпинского с волной Code</a>.</li>
+        <li><a href="#initial-condition">Проверить, как одна клетка меняет следующие кадры</a>.</li>
+      </ol>
+      <p><a href="../../wolfram/#lab-title">Открыть конусное поле</a> · <a href="../../mayatnik/Zerkalius-mayatnik.html">Открыть Маятник</a></p>
+    </section>
+
+    <section aria-labelledby="chapters-title">
+      <h2 id="chapters-title">Опыты по главам</h2>
+      <nav class="chapter-links" aria-label="Главы книги">
+        <a href="#chapter-1">1. Основы</a>
+        <a href="#chapter-2">2. Правило 90</a>
+        <a href="#chapter-3">3. Подвижные автоматы</a>
+        <a href="#chapter-4">4. Числа</a>
+        <a href="#chapter-5">5. Фракталы</a>
+        <a href="#chapter-6">6. Начальные условия</a>
+        <a href="#chapter-7">7. Случайность</a>
+        <a href="#chapter-8">8. Рост узоров</a>
+        <a href="#chapter-9">9. Физика</a>
+        <a href="#chapter-10">10. Восприятие</a>
+        <a href="#chapter-11">11. Вычисления</a>
+        <a href="#chapter-12">12. Эквивалентность</a>
+      </nav>
+
+      <div class="experiment-grid">
+        <article class="chapter" id="chapter-1">
+          <h3>1. Основы нового вида науки</h3>
+          <div class="experiment">
+            <h4>Воспроизвести кадр по рецепту</h4>
+            <p>К кадру из Журнала приложить правило, режим, исходное поле, размер и шаг. В новом сеансе построить кадр по этим данным и сравнить битовые поля.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p1/">С. 1–2 · Основные идеи</a> · <a href="../image-journal/">Журнал картинок</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-2">
+          <h3>2. Решающий эксперимент</h3>
+          <div class="experiment" id="rule-90">
+            <h4>Первый и второй конус</h4>
+            <p>Построить первый конус в обычном режиме Маятника по пустому полю и сравнить его с правилом 90 из одной клетки. После второго хода сравнить накопленное поле с XOR двух отдельно построенных конусов. Сохранить маску различий и параметры границ, чтобы проверить влияние старых клеток и порядка обхода.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p26/">С. 25–26 · Правило 90</a> · <a href="./#experiment-title">Лаборатория правил</a> · <a href="xor-pendulum-comparison.html">Разбор XOR-маятника</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-3">
+          <h3>3. Мир простых программ</h3>
+          <div class="experiment" id="mobile">
+            <h4>Маршрут дискретного качания</h4>
+            <p>Записать все положения активной позиции и отдельно отметить моменты смены направления. Пройти один маршрут с двумя правилами обновления. Сравнить места, которые затронул проход, и рисунок, который остался в поле.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p71/">С. 71–74 · Подвижные автоматы</a> · <a href="../../wolfram/#lab-title">Конусное поле</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-4">
+          <h3>4. Системы, основанные на числах</h3>
+          <div class="experiment">
+            <h4>Двоичные разряды и накопительный XOR</h4>
+            <p>Выложить двоичные записи чисел в Бит-Байте с одинаковой шириной слова и одинаковым порядком разрядов. Рядом построить накопительные суммы по модулю 2 вдоль каждого ряда. Сравнить рисунок в исходных разрядах и после преобразования.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p117/">С. 117 · Двоичная запись</a> · <a href="https://www.wolframscience.com/nks/p128/">С. 128–130 · Рекурсивные последовательности</a> · <a href="../../bit-byte/">Бит-Байт</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-5">
+          <h3>5. Два измерения и далее</h3>
+          <div class="experiment" id="fractals">
+            <h4>Три построения узора Серпинского</h4>
+            <p>Показать рядом уровни двумерной замены, первый изолированный конус правила 90 и двоичную фазу Аниматрицы Code. Для Code повторить префиксную сумму по модулю 2. В Аниматрице Маятника и Excel отдельно проверить влияние диагональных соседей.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p187/">С. 187–189 · Системы замен и фракталы</a> · <a href="https://www.wolframscience.com/nks/notes-5-4--sierpinski-pattern/">С. 931 · Узор Серпинского</a> · <a href="../../wolfram/animatrix.html">Две Аниматрицы</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-6">
+          <h3>6. Начиная со случайности</h3>
+          <div class="experiment" id="initial-condition">
+            <h4>Изменить одну клетку</h4>
+            <p>Проиграть одно правило дважды, поменяв во втором запуске одну исходную клетку. На каждом шаге сохранить XOR-маску отличий и посчитать изменённые клетки. Для выбранной фигуры сравнить, сколько кадров она распознаётся по битам и сколько по цвету.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p250/">С. 250 · Чувствительность к начальному состоянию</a> · <a href="https://www.wolframscience.com/nks/p281/">С. 281 · Локальные структуры</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-7">
+          <h3>7. Механизмы в программах и природе</h3>
+          <div class="experiment">
+            <h4>Три источника сложного рисунка</h4>
+            <p>Подготовить три прогона с одинаковым правилом и оформлением. В первом взять фиксированное поле, во втором — случайное начальное поле, в третьем — случайные возмущения на каждом шаге. Сохранить начальное значение генератора там, где оно используется, и проверить, какие кадры удаётся повторить.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p299/">С. 299 · Три механизма случайности</a> · <a href="https://www.wolframscience.com/nks/p315/">С. 315–316 · Порождение случайности</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-8">
+          <h3>8. Следствия для повседневных систем</h3>
+          <div class="experiment">
+            <h4>Граница роста и касание оси</h4>
+            <p>Для одного кадра сделать два слоя раскраски. В первом отметить новые клетки, касающиеся старой области, во втором — фигуры, пересекающие центральный столбец. Сопоставить площадь и границы двух масок.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p369/">С. 369–370 · Рост кристаллов</a> · <a href="https://www.wolframscience.com/nks/p422/">С. 422–423 · Узоры пигментации</a> · <a href="../image-journal/#central-axis-templates">Шаблоны в Журнале</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-9">
+          <h3>9. Фундаментальная физика</h3>
+          <div class="experiment" id="conservation">
+            <h4>Посчитать клетки после поворота</h4>
+            <p>При повороте шаблона записать размер исходной маски, число занятых клеток внутри поля и число клеток за его краем. Повторить после полного цикла. Биты и цвет считать отдельно, чтобы найти, где меняется геометрия и где остаётся цветовой след.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p458/">С. 458–460 · Сохраняющиеся величины</a></p>
+          </div>
+          <div class="experiment" id="update-order">
+            <h4>Поменять порядок обновления</h4>
+            <p>Для одного снимка и одного конуса сравнить чтение исходного поля с чтением уже обновлённых рядов. Записать первый шаг и ряд, где расходятся биты. Затем повторить тот же режим с другим размером пакета вычислений и проверить, меняется ли итог.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/notes-9-10--sequential-cellular-automata/">С. 1034–1035 · Последовательные автоматы</a> · <a href="../../wolfram/#lab-title">Конусное поле</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-10">
+          <h3>10. Процессы восприятия и анализа</h3>
+          <div class="experiment" id="compression">
+            <h4>Сравнить размер кадра и его рецепта</h4>
+            <p>Для кадров одного размера записать объём битовой маски, сжатого изображения и рецепта построения. Повторить с отключённым цветовым слоем, чтобы увидеть вклад раскраски в размер файла.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p560/">С. 560–576 · Сжатие данных</a></p>
+          </div>
+          <div class="experiment" id="listen">
+            <h4>Услышать повторения на оси</h4>
+            <p>Озвучить одно поле двумя способами. В первом звук отмечает биты центрального столбца, во втором длительности задаются интервалами между касаниями оси. Сопоставить ритмы и спектры с контрольным прогоном по перемешанной последовательности с тем же числом событий.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p585/">С. 585–587 · Слуховое восприятие</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-11">
+          <h3>11. Понятие вычисления</h3>
+          <div class="experiment" id="bit-operations">
+            <h4>Проверить XOR и AND на шаблонах</h4>
+            <p>Выложить две маленькие маски, затем показать выходы XOR и AND для входов 00, 01, 10 и 11. Если операция строится как эволюция автомата, заранее указать, каким клеткам соответствуют входы и на каком шаге читать результат.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p638/">С. 638–656 · Вычисления в клеточных автоматах</a></p>
+          </div>
+          <div class="experiment" id="rule-110">
+            <h4>Сравнить правила 90 и 110</h4>
+            <p>Построить оба поля с одинаковыми шириной, границами и числом шагов. Отметить локальные фигуры в поле правила 110 и проследить, как они ведут себя при столкновениях.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p675/">С. 675–691 · Правило 110</a> · <a href="./#experiment-title">Лаборатория правил</a></p>
+          </div>
+        </article>
+
+        <article class="chapter" id="chapter-12">
+          <h3>12. Принцип вычислительной эквивалентности</h3>
+          <div class="experiment" id="fast-frame">
+            <h4>Перейти к далёкому кадру</h4>
+            <p>Сверить пошаговый эталон, восстановление из контрольного кадра и быстрый расчёт. Отдельно проверить биты, пустоты, цвет и маски. Повторить опыт на пустом поле, на непустом поле и на границе.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p737/">С. 737–749 · Вычислительная несводимость</a></p>
+          </div>
+          <div class="experiment" id="textures">
+            <h4>Три текстуры из одного правила</h4>
+            <p>Сохранить три изображения с одной палитрой, размером и шагом, меняя только начальное поле. Приложить к каждому рецепт и исходную маску, чтобы можно было воспроизвести разницу.</p>
+            <p class="reference"><a href="https://www.wolframscience.com/nks/p840/">С. 840–843 · Применения в технологии</a> · <a href="../image-journal/">Журнал картинок</a></p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
