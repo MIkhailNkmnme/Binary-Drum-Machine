@@ -17,4 +17,13 @@
   rows?.addEventListener('input',widths);
   if(document.getElementById('rgbDemo'))rgb();if(rows)widths();
   document.getElementById('printGuide')?.addEventListener('click',()=>window.print());
+
+  // The live diagrams above Templates can change the initial fragment position.
+  if (location.hash === '#templates') {
+    window.addEventListener('load', () => requestAnimationFrame(() => {
+      if (location.hash === '#templates') {
+        document.getElementById('templates')?.scrollIntoView({behavior: 'instant'});
+      }
+    }), {once: true});
+  }
 })();
