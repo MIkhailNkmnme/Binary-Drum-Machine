@@ -1,3 +1,4 @@
+<!-- МАЯ-710 · v1.099 · Шаблон от четырёх клеток. -->
 <!-- МАЯ-709 · v1.098 · Команды выбранного шаблона. -->
 <!-- МАЯ-706 · v1.095 · Перенос шаблонов без следа по умолчанию. -->
 <!-- ПОМ-041 · v1.094 · Атлас центральной оси 4096 в Битотеке. -->
@@ -96,7 +97,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.098</title>
+<title>Zerkalius Маятнкъ — v1.099</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -250,7 +251,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.098</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.099</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -702,7 +703,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-axis-4096-data.js?v=1094"></script>
 <script src="mayatnik-axis-512.js?v=1094"></script>
 <script src="mayatnik-template-matcher.js?v=1024"></script>
-<script src="mayatnik-template-limit.js?v=1092"></script>
+<script src="mayatnik-template-limit.js?v=1099"></script>
 <script src="mayatnik-cell-area.js?v=658"></script>
 <script src="mayatnik-template-transient.js?v=651"></script>
 <script src="mayatnik-template-baseline.js?v=651"></script>
@@ -4368,7 +4369,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const x0=Math.max(joinedOn()?0:ox*RK,Math.floor(cx-half)),x1=Math.min(joinedOn()?img.width:(ox+VW)*RK,Math.ceil(cx+half)),y0=Math.max(0,Math.floor(cy-half)),y1=Math.min(img.height,Math.ceil(cy+half));
     for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){if(p>=0){const cc=fieldCellAt(x,y);if(!cc||cc.c!==c||cc.r!==r||joinedWhole()&&cc.p!==p)continue;}if(fillBit(x,y)>=0)visit(y*img.width+x);}
   }
-  function templateLimitRefusal(){const message=MayatnikTemplateLimit.error(st.templateMaxArea).message;$('templateInfo').textContent=message;$('paintCacheInfo').textContent=message;dispatchEvent(new CustomEvent('may-template-limit-rejected',{detail:{message}}));return false;}
+  function templateSelectionRefusal(message){$('templateInfo').textContent=message;$('paintCacheInfo').textContent=message;dispatchEvent(new CustomEvent('may-template-limit-rejected',{detail:{message}}));return false;}
+  function templateLimitRefusal(){return templateSelectionRefusal(MayatnikTemplateLimit.error(st.templateMaxArea).message);}
+  function templateMinimumRefusal(){return templateSelectionRefusal('Для шаблона нужно минимум '+MayatnikTemplateLimit.MIN_CELLS+' занятые клетки.');}
   function templateItemAllowed(item){return !item||item.parts.every(part=>{const r=templateRect(part,false,item);return MayatnikTemplateLimit.allowed(r.width/RK,r.height/RK,st.templateMaxArea);});}
   function templateShapeAllowed(shape,scaled=true){
     const scale=scaled?(Number(shape.height)||100)/100:1,rk=shape.rk||1;
@@ -4399,8 +4402,24 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(large)scan.skipped++;return cells;
     }:L.flood;
     const cells=MayatnikCellArea.select({seed:first,mode,bit,match,move,topology:joinedSquare()?'square':undefined,point:cell=>joinedOn()?[cell.x,cell.y]:[cell.c,cell.r],limit:st.templateMaxArea,flood});
+    const occupied=new Set();
+    for(const cell of cells){occupied.add(cell.r*f.W+cell.c);if(occupied.size>=L.MIN_CELLS)break;}
+    if(occupied.size<L.MIN_CELLS)return {indices:[],tooSmall:occupied.size>0};
     const seen=new Set(),indices=[];for(const cell of cells)cellPixels(cell,q=>{if(!seen.has(q)){seen.add(q);indices.push(q);}});
     return {indices};
+  }
+  function templateColourHasMinimumCells(parts){
+    const occupied=new Set();
+    for(const {mask} of parts){
+      for(let q=0;q<mask.data.length;q++){
+        if(!mask.data[q])continue;
+        const cell=fieldCellAt(mask.x+q%mask.width,mask.y+Math.floor(q/mask.width));
+        if(!cell)continue;
+        occupied.add(cell.r*f.W+cell.c);
+        if(occupied.size>=MayatnikTemplateLimit.MIN_CELLS)return true;
+      }
+    }
+    return false;
   }
   function columnSeed(x,y,bit=fillBit(x,y)){
     const cell=fieldCellAt(x,y);return cell&&(bit===0||bit===1)?{c:cell.c,r:cell.r,bit,...(joinedWhole()?{copy:cell.copy}:{})}:null;
@@ -6285,10 +6304,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // v0.277: «вырезай все разом: все области — в шаблоны, кадр пустеет»: каждая область — фигура (рамка, клетки её цвета); одинаковые (тот же бит, цвет,
   // форма) — один шаблон «авто · N бит · 1/0 · ×сколько» в библиотеке «Шаблоны», от малых. Кадр пустеет краской цвета пустоты поверх (биты поля не трогаются);
   // одна запись отмены — «Отмена» возвращает кадр
-  async function autoTplCut(S){if(!S||S.err||!img)return 'нечего вырезать';const before={...editSnapshot(),templateOwned:true},W=S.W,H=S.H,cells=S.byId.map(()=>[]);
-    for(let q=0;q<W*H;q++){const R=S.id[q];if(R>=0)cells[R].push(q);}
+  async function autoTplCut(S){if(!S||S.err||!img)return 'нечего вырезать';
+    const minimum=MayatnikTemplateLimit.MIN_CELLS,regions=S.regs.filter(g=>g.n>=minimum);
+    if(!regions.length)return 'Нет областей от '+minimum+' клеток';
+    const before={...editSnapshot(),templateOwned:true},W=S.W,H=S.H,cells=S.byId.map(()=>[]);
+    for(let q=0;q<W*H;q++){const R=S.id[q];if(R>=0&&S.byId[R].n>=minimum)cells[R].push(q);}
     const groups=new Map();
-    for(const g of S.regs){const rel=cells[g.i].map(q=>(Math.floor(q/W)-g.y)*g.w+(q%W-g.x)).join(','),sig=g.bit+'|'+g.col+'|'+g.w+'x'+g.h+'|'+rel;
+    for(const g of regions){const rel=cells[g.i].map(q=>(Math.floor(q/W)-g.y)*g.w+(q%W-g.x)).join(','),sig=g.bit+'|'+g.col+'|'+g.w+'x'+g.h+'|'+rel;
       const e=groups.get(sig);if(e)e.count++;else groups.set(sig,{g,count:1});}
     await libraryReady;const stamp=Date.now();let j=0;
     for(const {g,count}of groups.values()){const data=new Array(g.w*g.h).fill(0);for(const q of cells[g.i])data[(Math.floor(q/W)-g.y)*g.w+(q%W-g.x)]=g.col;
@@ -6299,17 +6321,17 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         shape:{hex,rk:1,libraryProof:proofParts?window.mayTemplateDedup.proof(proofParts):null,parts:[{width:g.w,height:g.h,y:g.y,center:g.x+g.w/2-(geo.anchor-VX+.5),data}],height:100,down:0,x:0,proportional:false}};
       if(window.mayTemplateDedup)window.mayTemplateDedup.append([entry]);else templateLibrary.push(entry);}
     const n=img.width*img.height,E=rgba(EMPTY);if(!fillMask||fillMask.length!==n)fillMask=new Uint32Array(n);
-    for(let q=0;q<W*H;q++)if(S.id[q]>=0){if(window.mayTemplateBaseline)window.mayTemplateBaseline.write(q,E,paintBits?.[q]??-1);else fillMask[q]=E;}
+    for(const g of regions)for(const q of cells[g.i]){if(window.mayTemplateBaseline)window.mayTemplateBaseline.write(q,E,paintBits?.[q]??-1);else fillMask[q]=E;}
     finishEdit(before);draw();savePaint();libraryList();
     try{await MayatnikPaintCache.write(templateLibrary,'templates');}catch(_){}
-    return '✂ вырезано '+S.regs.length+' · форм '+groups.size+' → «Шаблоны»';}
+    return '✂ вырезано '+regions.length+' · форм '+groups.size+' → «Шаблоны»';}
   $('bLibPage').onclick=()=>window.open('Zerkalius-mayatnik-shablony.html','_blank');   // v0.284: страница «Шаблоны Маятника»
   $('bAutoTpl').onclick=()=>{let box=$('autoTplBox');if(box){box.remove();return;}stop();target=k;const S=autoTplStats();if(!S)return;
     box=document.createElement('div');box.id='autoTplBox';box.className='may-rc';Object.assign(box.style,{left:'50%',top:'80px',transform:'translateX(-50%)',maxWidth:'min(760px,96vw)'});
     const NL=String.fromCharCode(10),FAM={w:'бел.',k:'чёрн.',b:'син.',r:'красн.',y:'жёлт.','?':'др.'};
     if(S.err){box.textContent=S.err;}else{const R=S.regs,by=new Map();for(const g of R){const e=by.get(g.n)||{c:0,one:0};e.c++;if(g.bit)e.one++;by.set(g.n,e);}
       const ones=R.filter(g=>g.bit).length,sizes=[...by.entries()].sort((a,b)=>a[0]-b[0]);
-      const head='<div class="rc-h">Кадр '+k+' · областей '+R.length+' (из 1 — '+ones+', из 0 — '+(R.length-ones)+') · бит '+R.reduce((s,g)=>s+g.n,0)+' · <button type="button" data-a="copy">Копировать CSV</button> <button type="button" data-a="cut" title="Все области — в «Шаблоны» (одинаковые формы — одним шаблоном, ×сколько), кадр пустеет; «Отмена» вернёт">✂ Вырезать все</button> <button type="button" data-a="close">✕</button></div>';
+      const head='<div class="rc-h">Кадр '+k+' · областей '+R.length+' (из 1 — '+ones+', из 0 — '+(R.length-ones)+') · бит '+R.reduce((s,g)=>s+g.n,0)+' · <button type="button" data-a="copy">Копировать CSV</button> <button type="button" data-a="cut" title="Области от четырёх клеток — в «Шаблоны». «Отмена» вернёт вырезанное.">✂ Вырезать шаблоны</button> <button type="button" data-a="close">✕</button></div>';
       const hist='<div class="rc-n" style="max-width:none">По размеру (бит: областей, из них из 1): '+sizes.slice(0,60).map(([n,e])=>n+': '+e.c+(e.one?' ('+e.one+')':'')).join(' · ')+(sizes.length>60?' · …':'')+'</div>';
       const rows=R.slice(0,400).map((g,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+g.n+'</b></td><td>'+g.bit+'</td><td>'+FAM[g.fam]+'</td><td>'+g.w+'×'+g.h+'</td><td>'+g.b+'</td><td>'+g.v+'</td><td>'+g.d+'</td><td>'+(g.x+VX-geo.anchor)+', '+(g.y+1)+'</td></tr>').join('');
       box.innerHTML=head+hist+'<table><thead><tr><th>№</th><th>бит</th><th>1/0</th><th>цвет</th><th>рамка</th><th>бок</th><th>верт</th><th>шахм.</th><th>место (ст., стр.)</th></tr></thead><tbody>'+rows+'</tbody></table>'+(R.length>400?'<div class="rc-n">показаны 400 самых малых из '+R.length+'; все — в CSV</div>':'');
@@ -6320,11 +6342,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!img)return;stop();target=k;const hex=$('fillColour').value,colour=rgba([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),pixels=new Uint32Array(img.data.buffer),rp=rombP();
     const parts=[];for(const [p,ox]of rp===2?[[0,0],[1,VW+RG]]:[[rp,0]]){
       let mask;try{mask=MayatnikTemplateLimit.capture(pixels,img.width,img.height,colour,ox*RK,(ox+VW)*RK,RK,st.templateMaxArea);}catch(e){if(e.name==='TemplateAreaLimitError')return templateLimitRefusal();throw e;}if(!mask)continue;
-      const canvas=document.createElement('canvas');canvas.width=mask.width;canvas.height=mask.height;
-      canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(mask.data.buffer),mask.width,mask.height),0,0);
-      parts.push({mask,canvas,p,ox,axis:mask.x+mask.width/2,symmetry:MayatnikTemplate.symmetry(mask)});
+      parts.push({mask,p,ox});
     }
     if(!parts.length){$('templateInfo').textContent='Нет пикселей выбранного цвета. Выбери цвет залитой фигуры в «Раскраске».';return;}
+    if(!templateColourHasMinimumCells(parts))return templateMinimumRefusal();
+    for(const part of parts){const {mask}=part,canvas=document.createElement('canvas');canvas.width=mask.width;canvas.height=mask.height;
+      canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(mask.data.buffer),mask.width,mask.height),0,0);
+      Object.assign(part,{canvas,axis:mask.x+mask.width/2,symmetry:MayatnikTemplate.symmetry(mask)});
+    }
     rememberTemplate();templateTransfer=true;templateAxisUnlocked=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(hex);templateSync();openSelectedTemplateMenus();queueDigits();savePaint();
     $('templateName').value=hex;   // Размер отображается отдельно от имени шаблона.
@@ -6345,7 +6370,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     stop();target=k;
     const pixels=new Uint32Array(img.data.buffer),q=y*img.width+x,c=pixels[q],half=joinedOn()?[0,(x+.5)/RK]:halfOf((x+.5)/RK);if(!half)return false;
     const p=half[0],ox=rombP()===2&&p===1?VW+RG:0;
-    let ids;try{ids=templatePickSelection(x,y).indices;}catch(e){if(e.name==='TemplateAreaLimitError')return templateLimitRefusal();throw e;}if(!ids.length)return false;
+    let selection;try{selection=templatePickSelection(x,y);}catch(e){if(e.name==='TemplateAreaLimitError')return templateLimitRefusal();throw e;}
+    const {indices:ids,tooSmall}=selection;if(!ids.length)return tooSmall?templateMinimumRefusal():false;
     let x0=img.width,x1=0,y0=img.height,y1=0;
     for(const i of ids){const xx=i%img.width,yy=Math.floor(i/img.width);x0=Math.min(x0,xx);x1=Math.max(x1,xx);y0=Math.min(y0,yy);y1=Math.max(y1,yy);}
     const width=x1-x0+1,height=y1-y0+1,data=new Uint32Array(width*height);

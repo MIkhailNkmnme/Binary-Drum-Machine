@@ -1,6 +1,6 @@
 (function(root){
   'use strict';
-  const DEFAULT=4096,MAX=1048576;
+  const DEFAULT=4096,MAX=1048576,MIN_CELLS=4;
   function normalize(value,fallback=DEFAULT){if(value===0||typeof value==='string'&&value.trim()==='0')return 0;const n=Number(value);return Number.isFinite(n)&&n>0?Math.max(1,Math.min(MAX,Math.floor(n))):fallback;}
   function area(width,height){return Math.max(1,Math.ceil(width-1e-9))*Math.max(1,Math.ceil(height-1e-9));}
   function error(limit){const n=normalize(limit),e=new Error(n===0?'Ограничение площади шаблона отключено.':`Шаблон не выделен: площадь больше ${n.toLocaleString('ru-RU')} бит. Лимит — кнопкой «Лимит» в разделе «Шаблоны» библиотеки.`);e.name='TemplateAreaLimitError';return e;}
@@ -26,5 +26,5 @@
     for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y+y0)*w+x+x0]===colour)data[y*width+x]=colour;
     return {x:x0,y:y0,width,height,data,count};
   }
-  const api={DEFAULT,MAX,normalize,area,allowed,error,flood,capture};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateLimit=api;
+  const api={DEFAULT,MAX,MIN_CELLS,normalize,area,allowed,error,flood,capture};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateLimit=api;
 })(typeof window==='object'?window:globalThis);
