@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Атласы масштабов · Маятник</title>
+  <link rel="stylesheet" href="atlas.css?v=1">
+  <script src="../../_js/hub-button-text.js?v=540" defer></script>
+  <script src="atlas.js?v=1" type="module"></script>
+</head>
+<body data-mi-scope="mayatnik">
+  <header class="topbar">
+    <nav class="shell" aria-label="Зеркалиус">
+      <a class="brand" href="../Zerkalius-mayatnik.html">Маятник</a>
+      <a href="../instruction/#export">Инструкция</a>
+      <a href="../../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
+    </nav>
+  </header>
+  <main class="shell">
+    <header class="intro">
+      <h1>Атласы масштабов</h1>
+      <p>Все фазы уменьшения для полей 128, 256, 512 и 1024. Выберите кадр и размер, затем добавьте нужные фазы в сборку.</p>
+    </header>
+    <div class="workspace">
+      <section aria-labelledby="catalog-heading" class="panel catalog">
+        <h2 id="catalog-heading">Фазы кадра</h2>
+        <div class="controls">
+          <label>Набор <select id="rows"><option value="128">128</option><option value="256">256</option><option value="512">512 · запись</option><option value="1024">1024</option></select></label>
+          <label>Кадр <select id="frame" disabled></select></label>
+          <label>Размер фазы <select id="factor" disabled></select></label>
+          <label>Порядок размеров <select id="order"><option value="large">Крупные сначала</option><option value="small">Мелкие сначала</option></select></label>
+        </div>
+        <p class="note" id="source-note"></p>
+        <div class="paging">
+          <button id="previous" type="button" aria-label="Предыдущая страница фаз" disabled>←</button>
+          <label>Страница <input id="page" type="number" min="1" step="1" value="1" disabled></label>
+          <span id="page-count"></span>
+          <button id="next" type="button" aria-label="Следующая страница фаз" disabled>→</button>
+          <label class="check"><input id="hide-empty" type="checkbox" checked> Скрыть пустые</label>
+        </div>
+        <p id="catalog-status" class="note" role="status">Загрузка атласа…</p>
+        <div id="tiles" class="tiles"></div>
+      </section>
+      <section aria-labelledby="composition-heading" class="panel composition">
+        <h2 id="composition-heading">Сборка</h2>
+        <div class="composition-actions">
+          <label>Расположение <select id="mode"><option value="free">Свободное</option><option id="phase-mode" value="phases" disabled>По исходной сетке</option></select></label>
+          <button id="save-composition" type="button" disabled>Скачать PNG</button>
+        </div>
+        <p id="composition-status" class="note" role="status">Добавьте фазы из каталога.</p>
+        <div class="surface" id="composition-surface" hidden><canvas id="board" aria-label="Результат сборки фаз"></canvas></div>
+        <ol id="selection" class="selection" aria-label="Фазы в сборке"></ol>
+        <details>
+          <summary>Как складываются фазы</summary>
+          <p>При свободном расположении X и Y задают позицию фазы в пикселях. Более поздняя фаза ложится поверх предыдущей.</p>
+          <p>В исходной сетке коэффициент и набор должны совпадать. Клетка фазы с координатами (x, y) попадает в (q × x + dx, q × y + dy). Можно брать фазы из разных кадров.</p>
+        </details>
+      </section>
+    </div>
+    <details class="sources">
+      <summary>Источники и индексы</summary>
+      <p>Поля 128 и 256 построены штатным ядром, в каталог входят все последовательные кадры. Набор 512 использует 194 кадра записи центральной оси, набор 1024 — 256 кадров опубликованного расчёта. Фазы считаются из исходных пикселей без усреднения.</p>
+      <p><a href="index-128.json" download>128 · JSON</a> · <a href="index-256.json" download>256 · JSON</a> · <a href="index-512.json" download>512 · JSON</a> · <a href="index-1024.json" download>1024 · JSON</a></p>
+    </details>
+  </main>
+  <dialog id="preview" aria-labelledby="preview-title">
+    <h2 id="preview-title"></h2>
+    <div class="surface"><canvas id="preview-canvas" aria-label="Пиксельный рисунок фазы"></canvas></div>
+    <div class="dialog-actions">
+      <button type="button" id="save-phase">Скачать PNG</button>
+      <form method="dialog"><button type="submit">Закрыть</button></form>
+    </div>
+  </dialog>
+</body>
+</html>
