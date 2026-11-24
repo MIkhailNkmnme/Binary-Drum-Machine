@@ -10,6 +10,8 @@ const rotations = [[1, 0, 0, 1], [0, 1, -1, 0], [-1, 0, 0, -1], [0, -1, 1, 0]];
 const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 const cell = (value, max) => Math.max(0, Math.min(max, Math.round(value)));
 const zoomLimit = value => Math.max(1 / 16384, Math.min(32, value));
+const colourValue = value => /^#[0-9a-f]{6}$/i.test(value) ? value : null;
+const defaultColour = '#ffd778';
 
 function bounds(layer) {
   const { width, height } = layer.sprite;
@@ -68,11 +70,13 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   const field = $('field'), context = field.getContext('2d');
   const list = $('field-layers'), status = $('field-status'), empty = $('field-empty');
   const xInput = $('layer-x'), yInput = $('layer-y');
+  const layerColour = $('layer-colour'), allColour = $('all-colour');
   const up = $('layer-up'), down = $('layer-down'), remove = $('layer-remove');
   const left = $('turn-left'), right = $('turn-right');
   const sampler = document.createElement('canvas');
   sampler.width = sampler.height = 1;
   const sample = sampler.getContext('2d', { willReadFrequently: true });
+  const tintCanvas = document.createElement('canvas'), tint = tintCanvas.getContext('2d');
   const pack = packedAtlases(), layers = [], sprites = new Map();
   let active = null, drag = null, serial = 0, drawFrame = 0, saveTimer = 0;
   let camera = null, fitted = true, writes = Promise.resolve();
@@ -142,6 +146,66 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     context.stroke();
   }
 
+  function drawRaster(target, layer, box) {
+    const { sprite } = layer, region = sprite.region;
+    if (!layer.turn && !layer.mirrored) {
+      target.drawImage(region.image, region.x, region.y, sprite.width, sprite.height, box.x, box.y, sprite.width, sprite.height);
+      return;
+    }
+    target.save();
+    target.transform(...rotations[layer.turn], layer.x, layer.y);
+    target.translate(-Math.floor(sprite.width / 2), -Math.floor(sprite.height / 2));
+    if (layer.mirrored) { target.translate(sprite.width, 0); target.scale(-1, 1); }
+    target.drawImage(region.image, region.x, region.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
+    target.restore();
+  }
+
+  function drawLayers(start, end, ratio, priority) {
+    const zoom = camera.zoom * ratio, x = camera.x * ratio, y = camera.y * ratio;
+    let colour = null, left, top, right, bottom;
+    // Adjacent layers with the same ink need only one alpha mask in the viewport.
+    function flushTint() {
+      if (!colour) return;
+      const width = right - left, height = bottom - top;
+      tint.setTransform(1, 0, 0, 1, 0, 0);
+      tint.globalCompositeOperation = 'source-in';
+      tint.fillStyle = colour;
+      tint.fillRect(left, top, width, height);
+      tint.globalCompositeOperation = 'source-over';
+      context.save();
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.drawImage(tintCanvas, left, top, width, height, left, top, width, height);
+      context.restore();
+      tint.clearRect(left, top, width, height);
+      colour = null;
+    }
+    for (const layer of layers) {
+      const sprite = layer.sprite, box = bounds(layer);
+      if (box.x + box.width <= start.x || box.x >= end.x || box.y + box.height <= start.y || box.y >= end.y) continue;
+      if (!sprite.region) {
+        if (!sprite.loading && !sprite.failed) priority.add(sprite);
+        continue;
+      }
+      const ink = layer.colour ?? null;
+      if (ink !== colour) flushTint();
+      if (!ink) { drawRaster(context, layer, box); continue; }
+      if (!colour) {
+        colour = ink;
+        left = field.width; top = field.height; right = bottom = 0;
+        if (tintCanvas.width !== field.width) tintCanvas.width = field.width;
+        if (tintCanvas.height !== field.height) tintCanvas.height = field.height;
+        tint.imageSmoothingEnabled = false;
+        tint.setTransform(zoom, 0, 0, zoom, x, y);
+      }
+      drawRaster(tint, layer, box);
+      left = Math.min(left, Math.max(0, Math.floor(x + box.x * zoom)));
+      top = Math.min(top, Math.max(0, Math.floor(y + box.y * zoom)));
+      right = Math.max(right, Math.min(field.width, Math.ceil(x + (box.x + box.width) * zoom)));
+      bottom = Math.max(bottom, Math.min(field.height, Math.ceil(y + (box.y + box.height) * zoom)));
+    }
+    flushTint();
+  }
+
   function draw() {
     const { width, height } = view();
     if (!width || !height) return;
@@ -162,25 +226,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     context.rect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
     context.clip();
     context.imageSmoothingEnabled = false;
-    for (const layer of layers) {
-      const sprite = layer.sprite, box = bounds(layer);
-      if (box.x + box.width <= start.x || box.x >= end.x || box.y + box.height <= start.y || box.y >= end.y) continue;
-      const region = sprite.region;
-      if (!region) {
-        if (!sprite.loading && !sprite.failed) priority.add(sprite);
-        continue;
-      }
-      if (!layer.turn && !layer.mirrored) {
-        context.drawImage(region.image, region.x, region.y, sprite.width, sprite.height, box.x, box.y, sprite.width, sprite.height);
-        continue;
-      }
-      context.save();
-      context.transform(...rotations[layer.turn], layer.x, layer.y);
-      context.translate(-Math.floor(sprite.width / 2), -Math.floor(sprite.height / 2));
-      if (layer.mirrored) { context.translate(sprite.width, 0); context.scale(-1, 1); }
-      context.drawImage(region.image, region.x, region.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
-      context.restore();
-    }
+    drawLayers(start, end, ratio, priority);
     if (active) {
       const box = bounds(active);
       context.strokeStyle = '#ffd778';
@@ -219,7 +265,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
       fieldWidth: FIELD_WIDTH, fitted, camera: { ...camera }, active: active?.id,
       sprites: assets.map(([key, sprite]) => ({ key, width: sprite.width, height: sprite.height,
         ...(sprite.atlas ? { atlas: sprite.atlas } : { rgba: sprite.rgba }) })),
-      layers: layers.map(({ id, key, name, x, y, turn, mirrored }) => ({ id, key, name, x, y, turn, mirrored }))
+      layers: layers.map(({ id, key, name, x, y, turn, mirrored, colour }) => ({ id, key, name, x, y, turn, mirrored, colour }))
     };
   }
 
@@ -244,6 +290,18 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   function updateCoordinates() {
     xInput.value = active?.x ?? '';
     yInput.value = active?.y ?? '';
+  }
+
+  function updateColours() {
+    if (layerColour) {
+      layerColour.disabled = !active;
+      layerColour.value = active?.colour ?? defaultColour;
+    }
+    if (allColour) {
+      allColour.disabled = !layers.length;
+      const ink = layers[0]?.colour;
+      allColour.value = ink && layers.every(layer => layer.colour === ink) ? ink : defaultColour;
+    }
   }
 
   function renderLayerList() {
@@ -293,6 +351,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     }
     renderLayerList();
     updateCoordinates();
+    updateColours();
     redraw();
   }
 
@@ -389,7 +448,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
         const sprite = sprites.get(layer.key);
         if (!sprite || !Number.isSafeInteger(layer.id) || !Number.isFinite(layer.x) || !Number.isFinite(layer.y)) continue;
         layers.push({ ...layer, x: cell(layer.x + oldX, FIELD_WIDTH), y: cell(layer.y + oldY, FIELD_HEIGHT),
-          turn: rotations[layer.turn] ? layer.turn : 0, sprite });
+          turn: rotations[layer.turn] ? layer.turn : 0, colour: colourValue(layer.colour), sprite });
         serial = Math.max(serial, layer.id);
       }
       if ([saved.camera?.x, saved.camera?.y, saved.camera?.zoom].every(Number.isFinite)) {
@@ -447,6 +506,20 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   $('zoom-in').onclick = () => zoomAt(Math.SQRT2);
   $('zoom-out').onclick = () => zoomAt(Math.SQRT1_2);
   $('fit-field').onclick = fit;
+  layerColour?.addEventListener('change', () => {
+    if (!active) return;
+    active.colour = layerColour.value;
+    updateColours();
+    redraw();
+    scheduleSave();
+  });
+  allColour?.addEventListener('change', () => {
+    const ink = allColour.value;
+    for (const layer of layers) layer.colour = ink;
+    updateColours();
+    redraw();
+    scheduleSave();
+  });
   left.onclick = () => rotate(-1);
   right.onclick = () => rotate(1);
   up.onclick = () => reorder(1);
@@ -471,6 +544,13 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   }
   field.addEventListener('keydown', keyMove);
   list.addEventListener('keydown', keyMove);
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Delete' || !active || drag || event.defaultPrevented || event.isComposing ||
+        event.ctrlKey || event.altKey || event.metaKey || event.target.isContentEditable ||
+        event.target.closest?.('input,textarea,select,[role="textbox"]')) return;
+    event.preventDefault();
+    if (!event.repeat) deleteLayer();
+  });
 
   field.addEventListener('pointerdown', event => {
     if (drag || (event.button !== 0 && event.button !== 1)) return;

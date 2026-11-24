@@ -87,11 +87,14 @@ input, select { min-width: 0; max-width: 100%; min-height: 28px; padding: 3px 7p
 #field:active { cursor: grabbing; }
 #field-empty { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; color: var(--secondary); text-align: center; pointer-events: none; }
 .field-help { margin: 7px 12px; color: var(--secondary); font-size: 11px; }
-.field-controls, .coordinates { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.field-controls, .coordinates, .field-colours { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .field-controls { justify-content: space-between; padding: 6px 12px; border-top: 1px solid var(--rule); }
 .coordinates { font-family: var(--mono); }
-.coordinates label { display: flex; gap: 4px; align-items: center; }
+.coordinates label, .field-colours label { display: flex; gap: 4px; align-items: center; }
 .coordinates input { width: 68px; }
+.field-colours label { color: var(--secondary); font-size: 12px; }
+.field-colours input { width: 34px; height: 28px; padding: 2px; cursor: pointer; }
+.field-colours input:disabled { opacity: .45; cursor: default; }
 #field-layers { position: relative; list-style: none; max-height: 104px; overflow: auto; overflow-anchor: none; margin: 0 12px 8px; padding: 0; }
 .layer-row { position: absolute; left: 0; right: 0; height: 26px; }
 .layer-label { width: max-content; max-width: 100%; font-size: 11px; }

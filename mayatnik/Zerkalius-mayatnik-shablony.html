@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11151c">
   <meta name="description" content="Шаблоны Маятника для шести размеров поля и редактор побитовых композиций.">
-  <title>Шаблоны Маятника · v0.005 · Зеркалиус</title>
+  <title>Шаблоны Маятника · v0.006 · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=5">
+  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=6">
   <script defer src="/_js/site-clarity.js?v=1"></script>
   <script defer src="mayatnik-paint-cache.js?v=1"></script>
   <script defer src="mayatnik-user-templates.js?v=1"></script>
   <script defer src="mayatnik-template.js"></script>
   <script defer src="../_js/hub-button-text.js?v=540"></script>
-  <script type="module" src="mayatnik-template-catalogue.js?v=4"></script>
+  <script type="module" src="mayatnik-template-catalogue.js?v=6"></script>
 </head>
 <body>
   <header class="site-bar">
@@ -30,7 +30,7 @@
     <header class="page-heading">
       <div class="catalogue-title">
         <h1>Шаблоны Маятника</h1>
-        <span class="catalogue-version" title="Версия каталога">v0.005</span>
+        <span class="catalogue-version" title="Версия каталога">v0.006</span>
       </div>
       <a href="#composition" class="jump-to-field">К полю ↓</a>
     </header>
@@ -117,11 +117,15 @@
           <canvas id="field" tabindex="0" aria-label="Поле композиции. Стрелки двигают выделенный шаблон на одну клетку."></canvas>
           <p id="field-empty">Добавьте шаблон из каталога</p>
         </div>
-        <p class="field-help">1 клетка = 1 бит. Стрелки двигают фигуру на одну клетку. Потяните фон, чтобы сдвинуть поле.</p>
+        <p class="field-help">1 клетка = 1 бит. Стрелки двигают фигуру на одну клетку. Delete убирает выделенную фигуру. Потяните фон, чтобы сдвинуть поле.</p>
         <div class="field-controls">
           <div class="coordinates" role="group" aria-label="Координаты центра фигуры в клетках">
             <label>X <input id="layer-x" type="number" step="1" aria-label="Координата X в клетках" disabled></label>
             <label>Y <input id="layer-y" type="number" step="1" aria-label="Координата Y в клетках" disabled></label>
+          </div>
+          <div class="field-colours" role="group" aria-label="Цвет шаблонов">
+            <label>Цвет фигуры <input id="layer-colour" type="color" value="#ffd778" title="Перекрасить выделенную фигуру" disabled></label>
+            <label>Цвет всех <input id="all-colour" type="color" value="#ffd778" title="Перекрасить все фигуры на поле" disabled></label>
           </div>
           <div class="tools" role="group" aria-label="Поворот фигуры">
             <button type="button" id="turn-left" class="gz-hx compact" title="Повернуть на 90° влево" aria-label="Повернуть на 90° влево" disabled><span>↶ 90°</span></button>
