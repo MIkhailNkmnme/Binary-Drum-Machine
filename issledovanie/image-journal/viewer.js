@@ -128,6 +128,7 @@
     error.hidden = true;
     clearStage();
     stage.append(media);
+    viewer.toggleAttribute('data-view-natural-size', link.hasAttribute('data-view-natural-size'));
     viewer.showModal();
     viewer.dataset.key = link.closest('[data-journal-key]')?.dataset.journalKey || new URL(link.href).pathname.replace(/^\/+/, '');
     viewer.dataset.label = name.textContent;
@@ -136,7 +137,7 @@
     cancelMedia = window.MayatnikJournal.loadMedia(media, link.href);
   });
 
-  const outsideImage = target => !target.closest('img, video, .viewer-info, .viewer-toolbar');
+  const outsideImage = target => !target.closest('img, video, .viewer-info, .viewer-toolbar, [data-view-natural-size] .viewer-stage');
   let pressedOutside = false;
   viewer.addEventListener('pointerdown', event => {
     pressedOutside = event.button === 0 && outsideImage(event.target);
@@ -151,6 +152,7 @@
     selected = null;
     if (document.fullscreenElement === shell) document.exitFullscreen().catch(() => {});
     setExpanded(false);
+    viewer.removeAttribute('data-view-natural-size');
     clearStage();
   });
 })();

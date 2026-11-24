@@ -76,6 +76,8 @@ figcaption p { margin: .35rem 0 .6rem; color: var(--muted); }
 .figure-links { gap: .22rem .85rem; font-size: .89rem; margin-top: .2rem; }
 .figures, .axis-wall, .axis-side { display: grid; gap: clamp(.75rem, 1.7vw, 1.35rem); align-items: start; }
 .axis-wall { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.totem-preview-pair { display: flex; gap: .75rem; }
+.totem-preview-pair img { width: auto; height: min(25rem, 78vw); }
 .frame-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .concept-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 details { margin-top: 1.2rem; border: 1px solid var(--line); background: var(--panel); }
@@ -163,6 +165,12 @@ code { font-family: var(--journal-font); font-size: .9em; }
 .viewer-toolbar button { width: auto; min-width: 7.5rem; padding-inline: .8rem; }
 .viewer-stage { display: grid; place-items: center; min-height: min(32vh, 14rem); }
 .viewer-stage :is(img, video) { display: block; max-width: 100%; max-height: 80vh; max-height: 80dvh; object-fit: contain; }
+.image-viewer[data-view-natural-size]:not(.viewer-expanded) .viewer-stage {
+  display: flex; align-items: flex-start; overflow: auto; max-height: 80vh; max-height: 80dvh;
+}
+.image-viewer[data-view-natural-size]:not(.viewer-expanded) .viewer-stage img {
+  flex: none; max-width: none; max-height: none; margin-inline: auto;
+}
 #viewer-error { padding-inline: .85rem; }
 .image-viewer.viewer-expanded {
   inset: 0; margin: 0; width: 100%; max-width: none; height: 100%; max-height: none; border: 0;
