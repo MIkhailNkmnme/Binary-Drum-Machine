@@ -1,4 +1,9 @@
 (() => {
+  const motif = document.querySelector('.intro-motif-image');
+  motif?.addEventListener('click', () => {
+    motif.setAttribute('aria-pressed', String(motif.getAttribute('aria-pressed') !== 'true'));
+  });
+
   const viewer = document.getElementById('image-viewer');
   if (typeof viewer.showModal !== 'function') return;
 

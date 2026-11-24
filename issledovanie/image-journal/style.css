@@ -48,7 +48,23 @@ a:hover { color: #d0faf3; }
   padding-block: clamp(2.8rem, 7vw, 6.2rem) 2.7rem;
 }
 .intro-motif { display: grid; justify-items: center; gap: .65rem; justify-self: center; width: min(100%, 24rem); }
-.intro-motif img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.intro-motif-image {
+  width: 100%;
+  aspect-ratio: 324 / 168;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: var(--bg) url("xoroxorius-frames.gif") no-repeat 0 0 / 100% 300%;
+  image-rendering: pixelated;
+  animation: intro-motif-flip 2060ms step-end infinite;
+}
+.intro-motif-image[aria-pressed="true"] { animation-play-state: paused; }
+/* Two 850 ms poses, each followed by the same 180 ms transition frame. */
+@keyframes intro-motif-flip {
+  0% { background-position-y: 0%; }
+  41.262136%, 91.262136% { background-position-y: 50%; }
+  50% { background-position-y: 100%; }
+}
 .journal-version { display: block; margin-bottom: .65rem; color: var(--muted); font-size: .9rem; }
 .intro h1, .entry h2 { margin: 0; font-weight: 700; line-height: 1.04; letter-spacing: normal; text-wrap: balance; }
 .intro h1 { font-size: clamp(2.85rem, 7vw, 6.6rem); max-width: 14ch; }

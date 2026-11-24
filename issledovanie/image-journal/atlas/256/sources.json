@@ -1,0 +1,78 @@
+{
+  "source": {
+    "rows": 256,
+    "steps": 256,
+    "mode": "pend",
+    "bg": "empty",
+    "first": 4,
+    "last": 256,
+    "interval": 4,
+    "connectivity": 8,
+    "bitRule": "same",
+    "axis": "center-column",
+    "link": "https://1001100.online/mayatnik/Zerkalius-mayatnik.html?chisto&n=256&s=256&k={frame}&mode=pend"
+  },
+  "size": [
+    766,
+    256
+  ],
+  "center": 383,
+  "figures": [
+    {
+      "figure": 94,
+      "frame": 64,
+      "x": 368,
+      "y": 5,
+      "width": 30,
+      "height": 25,
+      "counts": [
+        206,
+        0
+      ],
+      "file": "figure-0094.png",
+      "sha256": "25bec2aecfbb697628f45db19f1a09e34232803c03e646f5605b95befc1055e6"
+    },
+    {
+      "figure": 199,
+      "frame": 136,
+      "x": 376,
+      "y": 109,
+      "width": 14,
+      "height": 10,
+      "counts": [
+        0,
+        56
+      ],
+      "file": "figure-0199.png",
+      "sha256": "8ab1d009ada097c2f4fd060125eca41925f7e5b9ff0eb8696a07fbe909442309"
+    },
+    {
+      "figure": 324,
+      "frame": 236,
+      "x": 379,
+      "y": 125,
+      "width": 8,
+      "height": 15,
+      "counts": [
+        66,
+        0
+      ],
+      "file": "figure-0324.png",
+      "sha256": "005b3c2ff74e95ad447adfed9ed0c468b4ad13f04a6fa237ea8f4d5736de3f15"
+    },
+    {
+      "figure": 321,
+      "frame": 232,
+      "x": 375,
+      "y": 216,
+      "width": 16,
+      "height": 20,
+      "counts": [
+        0,
+        130
+      ],
+      "file": "figure-0321.png",
+      "sha256": "3fef6926393579f977b26d52943ec2faff10c0ee7b4ed9f0fc185e8657532e52"
+    }
+  ]
+}

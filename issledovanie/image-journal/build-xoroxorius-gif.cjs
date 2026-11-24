@@ -1,4 +1,4 @@
-// Run with Node to rebuild the journal emblem from the linked Mayatnik scene.
+// Run with Node to rebuild the GIF and its pausable frame strip from the linked scene.
 const { readFileSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { inflateRawSync } = require('node:zlib');
@@ -7,7 +7,7 @@ const Construction = require('../../mayatnik/mayatnik-construction.js');
 const { encoder } = require('../../mayatnik/mayatnik-gif.js');
 
 const page = readFileSync(join(__dirname, 'index.html'), 'utf8');
-const source = /class="intro-motif" href="[^"]*#s=1\.([A-Za-z0-9_-]+)"/.exec(page);
+const source = /class="intro-motif-link" href="[^"]*#s=1\.([A-Za-z0-9_-]+)"/.exec(page);
 if (!source) throw Error('Нет ссылки на сцену знака XORoXORиус.');
 const scene = JSON.parse(inflateRawSync(Buffer.from(source[1], 'base64url')));
 const { state } = scene;
@@ -49,7 +49,7 @@ const maskSize = mask.width * mask.height;
 const poseDelay = 85;
 const edgeDelay = 18;
 
-function render(turned, showFigure, delay) {
+function render(turned, showFigure) {
   const pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     const row = Math.floor(y / unit) - 1;
@@ -72,17 +72,23 @@ function render(turned, showFigure, delay) {
       pixels[pixel + 3] = 255;
     }
   }
-  gif.add(pixels, delay);
+  return pixels;
 }
 
-for (const turned of [false, true]) {
-  render(turned, true, poseDelay);
-  render(turned, false, edgeDelay);
-}
+const poses = [render(false, true), render(false, false), render(true, true)];
+gif.add(poses[0], poseDelay);
+gif.add(poses[1], edgeDelay);
+gif.add(poses[2], poseDelay);
+gif.add(poses[1], edgeDelay);
 
-gif.finish().arrayBuffer().then(data => {
-  writeFileSync(join(__dirname, 'xoroxorius-flip.gif'), Buffer.from(data));
-}).catch(error => {
+const strip = encoder(width, height * poses.length);
+strip.add(Buffer.concat(poses), 1);
+Promise.all([
+  ['xoroxorius-flip.gif', gif.finish()],
+  ['xoroxorius-frames.gif', strip.frame()]
+].map(async ([file, blob]) => {
+  writeFileSync(join(__dirname, file), Buffer.from(await blob.arrayBuffer()));
+})).catch(error => {
   console.error(error.message);
   process.exitCode = 1;
 });
