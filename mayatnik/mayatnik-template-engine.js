@@ -52,7 +52,7 @@
     }
     async function selectEntry(entry,temporary=false,options={}){
       const id=temporary?null:entry.id;
-      if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.()||'Template area limit'};emit();if(options.follow)throw Error(state.message);return {...state};}
+      if(host.selectionAllowed?.(entry)===false){state={...state,message:host.selectionMessage?.(entry)||'Template area limit'};emit();if(options.follow)throw Error(state.message);return {...state};}
       const run=++serial;selection=null;cardId=options.preview?id:null;state={...state,selectedId:id,count:0,busy:true,message:'Поиск в текущих строках…'};emit();
       if(!temporary)host.choose(id);if(!options.follow)host.stop();host.redrawSelection();
       try{

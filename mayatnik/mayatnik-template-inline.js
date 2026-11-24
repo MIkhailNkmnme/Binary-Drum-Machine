@@ -176,7 +176,7 @@
       for(const [id,input]of inputs){if(doc.activeElement!==input){const value=state[id],nearest=Math.round(value),text=String(typeof value==='number'&&Math.abs(value-nearest)<1e-9?nearest:value??'');if(input.value!==text)input.value=text;}disabled(input,unavailable);}
       place(state);
     }
-    function hide(resetDismissal=true){for(const stop of holds)stop();host.hidden=true;palette.hidden=true;currentState=null;geometryDirty=true;layoutKey='';if(resetDismissal){dismissed=false;dismissedKey=null;}}
+    function hide(resetDismissal=true){for(const stop of holds)stop();host.hidden=true;palette.hidden=true;currentState=null;geometryDirty=true;layoutKey='';if(resetDismissal){dismissed=false;dismissedKey=null;if(selectionOpen.size){selectionOpen.clear();syncGroups(false);}}}
     function outside(event){if(fieldRect||host.hidden||host.contains(event.target)||event.target.closest?.('.may-template-axis-controls'))return;dismissed=true;dismissedKey=currentState?.key;hide(false);}
     function ready(){refreshLabels();if(currentState&&!host.hidden)render(currentState);}
     const observer=typeof root.ResizeObserver==='function'?new root.ResizeObserver(()=>{geometryDirty=true;if(currentState&&!host.hidden)place(currentState);}):null;for(const bank of banks)observer?.observe(bank);

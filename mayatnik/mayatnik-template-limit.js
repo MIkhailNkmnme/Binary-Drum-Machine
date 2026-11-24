@@ -5,6 +5,19 @@
   function area(width,height){return Math.max(1,Math.ceil(width-1e-9))*Math.max(1,Math.ceil(height-1e-9));}
   function error(limit){const n=normalize(limit),e=new Error(n===0?'Ограничение площади шаблона отключено.':`Шаблон не выделен: площадь больше ${n.toLocaleString('ru-RU')} бит. Лимит — кнопкой «Лимит» в разделе «Шаблоны» библиотеки.`);e.name='TemplateAreaLimitError';return e;}
   function allowed(width,height,limit){const n=normalize(limit);return n===0||area(width,height)<=n;}
+  function hasMinimumCells(parts,cellAt){
+    const occupied=new Set();
+    for(const part of parts){
+      const {data}=part.mask||part;
+      for(let q=0;q<data.length;q++){
+        if(!data[q])continue;
+        const cell=cellAt(part,q);
+        if(cell!=null)occupied.add(cell);
+        if(occupied.size>=MIN_CELLS)return true;
+      }
+    }
+    return false;
+  }
   // No field-sized masks or queues. Bounding area is monotone, including holes.
   function flood({seed,key=q=>q,match,neighbours,point,limit}){
     const seen=new Set(),queue=[seed],indices=[];let head=0,x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
@@ -26,5 +39,5 @@
     for(let y=0;y<height;y++)for(let x=0;x<width;x++)if(pixels[(y+y0)*w+x+x0]===colour)data[y*width+x]=colour;
     return {x:x0,y:y0,width,height,data,count};
   }
-  const api={DEFAULT,MAX,MIN_CELLS,normalize,area,allowed,error,flood,capture};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateLimit=api;
+  const api={DEFAULT,MAX,MIN_CELLS,normalize,area,allowed,hasMinimumCells,error,flood,capture};if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateLimit=api;
 })(typeof window==='object'?window:globalThis);
