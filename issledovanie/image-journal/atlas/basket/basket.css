@@ -1,0 +1,65 @@
+.basket { padding-block: clamp(2rem, 5vw, 4.5rem) 3rem; }
+.basket h1 { margin: 0; font-size: clamp(2.8rem, 7vw, 5rem); line-height: 1.08; }
+.basket-help, #basket-empty { color: var(--muted); }
+#basket-status:empty { display: none; }
+.basket-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(10rem, 12.5rem); gap: .9rem; align-items: start; }
+.field-scroll { overflow: auto; max-height: 72vh; border: 1px solid var(--line); }
+#composition-field {
+  --cell: 2px;
+  position: relative;
+  width: calc(var(--field-width) * var(--cell));
+  height: calc(var(--field-height) * var(--cell));
+  background-color: #697586;
+  background-image: linear-gradient(to right, #606b7a 1px, transparent 1px),
+                    linear-gradient(to bottom, #606b7a 1px, transparent 1px);
+  background-size: calc(8 * var(--cell)) calc(8 * var(--cell));
+  isolation: isolate;
+}
+.basket-figure {
+  position: absolute;
+  left: calc(var(--x) * var(--cell));
+  top: calc(var(--y) * var(--cell));
+  width: calc(var(--width) * var(--cell));
+  height: calc(var(--height) * var(--cell));
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.basket-figure:active { cursor: grabbing; }
+.basket-figure[aria-pressed="true"] { outline: 1px dashed var(--accent); outline-offset: 2px; }
+.basket-figure:focus-visible { outline: 2px solid var(--accent); }
+.basket-figure img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+}
+.basket-layers { border: 1px solid var(--line); background: var(--panel); padding: .7rem; }
+.basket-layers h2 { margin: 0 0 .55rem; font-size: 1.2rem; }
+.layer-controls { display: flex; flex-wrap: wrap; gap: .3rem; }
+.basket-layers button {
+  border: 1px solid var(--line);
+  padding: .3rem .45rem;
+  color: var(--ink);
+  background: var(--bg);
+  font: inherit;
+  cursor: pointer;
+}
+.basket-layers button:hover:not(:disabled),
+.basket-layers button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.basket-layers button:disabled { color: var(--muted); opacity: .45; cursor: default; }
+#layers { display: grid; gap: .25rem; list-style: none; margin: .65rem 0 0; padding: 0; }
+#layers button { width: 100%; display: flex; align-items: center; gap: .5rem; text-align: left; }
+#layers img { width: 24px; height: 24px; object-fit: contain; image-rendering: pixelated; }
+
+@media (max-width: 50rem) {
+  .basket-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 40rem) {
+  #composition-field { --cell: 1px; }
+}

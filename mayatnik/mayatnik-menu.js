@@ -2710,6 +2710,24 @@
     });
     const saveMenuOpen=()=>{if(window.mayBackupRestoring)return;try{localStorage.setItem('mayatnik-dd-open',open?keyOf(open):'');}catch(_){}};window.mayMenuFlush=saveMenuOpen;addEventListener('pagehide',saveMenuOpen);
     buttonLayoutRestorers.push(values=>{pins=new Set(layoutValue(values,PIN_DD,[]));folds=new Set(layoutValue(values,FOLD_DD,[]));open=null;for(const g of groupsAll())if(!g.classList.contains('pt-btn'))setOpen(g,stay(g));const target=groupsAll().find(g=>keyOf(g)===values['mayatnik-dd-open']&&!g.classList.contains('pt-btn'));if(target&&!stay(target))show(target);pinsSync();});
+    addEventListener('may-field-template-selected', () => {
+      open = null;
+      searchRevealGroups.clear();
+      for (const group of groupsAll()) {
+        clearTimeout(group._leave);
+        if (!group.classList.contains('pt-open')) continue;
+        if (pinned(group)) folds.add(keyOf(group));
+        setOpen(group, false);
+      }
+      saveDd();
+      saveMenuOpen();
+      rail.collapseAll();
+      groupHover?.clear();
+      for (const group of document.querySelectorAll('.may-mobile-open')) group.classList.remove('may-mobile-open');
+      if (window.MayatnikTemplatePanel?.isOpen()) window.MayatnikTemplatePanel.setOpen(false);
+      if (window.MayatnikMusicPanel?.isOpen()) window.MayatnikMusicPanel.close();
+      placeTools();
+    });
     addEventListener('pointerdown', e => { if(e.target.closest?.('[data-may-search-ui]'))return;if (open && !open.contains(e.target) && !popupContains(open, e.target)) shut(); }, true);
     addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
     tools.addEventListener('scroll', shut, { passive: true }); }

@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#101317">
   <title>Атлас · Журнал картинок Зеркалиуса</title>
   <link rel="stylesheet" href="../style.css?v=016">
-  <link rel="stylesheet" href="atlas.css?v=1">
-  <script defer src="atlas.js?v=1"></script>
+  <link rel="stylesheet" href="atlas.css?v=2">
+  <script type="module" src="atlas.js?v=2"></script>
 </head>
 <body>
   <a class="skip" href="#atlas">К атласу</a>
@@ -19,13 +19,14 @@
         <a href="../../Zerkalius-issledovanie.html">Исследования</a>
         <a href="../../../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
         <a href="../../../">Хаб</a>
+        <a class="basket-link" href="basket/">Корзина <span id="basket-count" hidden></span></a>
       </div>
     </nav>
   </header>
   <main class="shell atlas" id="atlas">
     <header class="atlas-heading">
       <h1>Атлас</h1>
-      <p>Четыре фигуры с центральной оси Маятника для каждого размера поля. Под листом можно скачать отдельные PNG в исходном размере.</p>
+      <p>Четыре фигуры с центральной оси Маятника для каждого размера поля. Нажмите на фигуру, чтобы добавить её в корзину. Повторное нажатие снимает выбор.</p>
     </header>
     <nav class="contents atlas-tabs" aria-label="Число строк поля">
       <a id="tab-128" href="#atlas-128">128</a>
@@ -35,11 +36,20 @@
       <a id="tab-2048" href="#atlas-2048">2048</a>
       <a id="tab-4096" href="#atlas-4096">4096</a>
     </nav>
+    <p id="basket-status" role="status" hidden></p>
 
     <section class="atlas-panel" id="atlas-128" aria-labelledby="heading-128">
       <h2 id="heading-128">Тотемы из атласа 128</h2>
       <p>Связные фигуры одного цвета касаются центрального столбца поля.</p>
-      <a class="image-link atlas-sheet" href="128/totems.png"><img src="128/totems.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 128" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="128/totems.png" width="960" height="384" alt="Четыре тотема атласа 128" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="128:32" data-width="38" data-height="30" aria-label="Тотем 0032 из атласа 128" title="Тотем 0032" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="128:73" data-width="28" data-height="16" aria-label="Тотем 0073 из атласа 128" title="Тотем 0073" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="128:151" data-width="14" data-height="16" aria-label="Тотем 0151 из атласа 128" title="Тотем 0151" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="128:140" data-width="8" data-height="6" aria-label="Тотем 0140 из атласа 128" title="Тотем 0140" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="128/figure-0032.png" download>PNG 0032</a>
@@ -63,6 +73,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="128/totems.png">Лист PNG</a>
         <a href="128/sources.json">Координаты фигур</a>
       </p>
     </section>
@@ -70,7 +81,15 @@
     <section class="atlas-panel" id="atlas-256" aria-labelledby="heading-256">
       <h2 id="heading-256">Тотемы из атласа 256</h2>
       <p>Связные фигуры одного цвета касаются центрального столбца поля.</p>
-      <a class="image-link atlas-sheet" href="256/totems.png"><img src="256/totems.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 256" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="256/totems.png" width="960" height="384" alt="Четыре тотема атласа 256" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="256:94" data-width="30" data-height="25" aria-label="Тотем 0094 из атласа 256" title="Тотем 0094" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="256:199" data-width="14" data-height="10" aria-label="Тотем 0199 из атласа 256" title="Тотем 0199" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="256:324" data-width="8" data-height="15" aria-label="Тотем 0324 из атласа 256" title="Тотем 0324" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="256:321" data-width="16" data-height="20" aria-label="Тотем 0321 из атласа 256" title="Тотем 0321" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="256/figure-0094.png" download>PNG 0094</a>
@@ -94,6 +113,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="256/totems.png">Лист PNG</a>
         <a href="256/sources.json">Координаты фигур</a>
       </p>
     </section>
@@ -101,7 +121,15 @@
     <section class="atlas-panel" id="atlas-512" aria-labelledby="heading-512">
       <h2 id="heading-512">Тотемы из атласа 512</h2>
       <p>Четыре фигуры из ранних кадров GIF пересекают границы прежних вырезок.</p>
-      <a class="image-link atlas-sheet" href="../recipes/totem-axis-512/totems-512.png"><img src="../recipes/totem-axis-512/totems-512.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 512" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="../recipes/totem-axis-512/totems-512.png" width="960" height="384" alt="Четыре тотема атласа 512" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="512:16" data-width="85" data-height="143" aria-label="Тотем 016 из атласа 512" title="Тотем 016" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="512:28" data-width="27" data-height="54" aria-label="Тотем 028 из атласа 512" title="Тотем 028" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="512:35" data-width="59" data-height="160" aria-label="Тотем 035 из атласа 512" title="Тотем 035" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="512:36" data-width="59" data-height="80" aria-label="Тотем 036 из атласа 512" title="Тотем 036" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="../recipes/totem-axis-512/totem-016.png" download>PNG 016</a>
@@ -125,6 +153,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="../recipes/totem-axis-512/totems-512.png">Лист PNG</a>
         <a href="../recipes/totem-axis-512/sources.json">Координаты фигур</a>
         <a href="../#central-axis-templates">Исходная анимация в журнале</a>
       </p>
@@ -133,7 +162,15 @@
     <section class="atlas-panel" id="atlas-1024" aria-labelledby="heading-1024">
       <h2 id="heading-1024">Тотемы из атласа 1024</h2>
       <p>Связные фигуры одного цвета касаются центрального столбца поля.</p>
-      <a class="image-link atlas-sheet" href="1024/totems.png"><img src="1024/totems.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 1024" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="1024/totems.png" width="960" height="384" alt="Четыре тотема атласа 1024" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="1024:1912" data-width="10" data-height="14" aria-label="Тотем 1912 из атласа 1024" title="Тотем 1912" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="1024:1737" data-width="18" data-height="20" aria-label="Тотем 1737 из атласа 1024" title="Тотем 1737" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="1024:2112" data-width="14" data-height="17" aria-label="Тотем 2112 из атласа 1024" title="Тотем 2112" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="1024:2726" data-width="8" data-height="14" aria-label="Тотем 2726 из атласа 1024" title="Тотем 2726" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="1024/figure-1912.png" download>PNG 1912</a>
@@ -157,6 +194,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="1024/totems.png">Лист PNG</a>
         <a href="1024/sources.json">Координаты фигур</a>
         <a href="../../../mayatnik/axis-1024/">Каталог крупных фигур и полный атлас</a>
       </p>
@@ -165,7 +203,15 @@
     <section class="atlas-panel" id="atlas-2048" aria-labelledby="heading-2048">
       <h2 id="heading-2048">Тотемы из атласа 2048</h2>
       <p>Связные фигуры одного цвета касаются центрального столбца поля.</p>
-      <a class="image-link atlas-sheet" href="2048/totems.png"><img src="2048/totems.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 2048" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="2048/totems.png" width="960" height="384" alt="Четыре тотема атласа 2048" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="2048:5477" data-width="24" data-height="27" aria-label="Тотем 5477 из атласа 2048" title="Тотем 5477" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="2048:5330" data-width="16" data-height="28" aria-label="Тотем 5330 из атласа 2048" title="Тотем 5330" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="2048:7570" data-width="14" data-height="27" aria-label="Тотем 7570 из атласа 2048" title="Тотем 7570" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="2048:8023" data-width="16" data-height="21" aria-label="Тотем 8023 из атласа 2048" title="Тотем 8023" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="2048/figure-5477.png" download>PNG 5477</a>
@@ -189,6 +235,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="2048/totems.png">Лист PNG</a>
         <a href="2048/sources.json">Координаты фигур</a>
         <a href="../../../mayatnik/axis-2048/">Каталог крупных фигур и полный атлас</a>
       </p>
@@ -197,7 +244,15 @@
     <section class="atlas-panel" id="atlas-4096" aria-labelledby="heading-4096">
       <h2 id="heading-4096">Тотемы из атласа 4096</h2>
       <p>Связные фигуры одного цвета касаются центрального столбца поля.</p>
-      <a class="image-link atlas-sheet" href="4096/totems.png"><img src="4096/totems.png" width="960" height="384" alt="Открыть лист с четырьмя тотемами атласа 4096" loading="lazy" decoding="async"></a>
+      <figure class="image-link atlas-sheet">
+        <img src="4096/totems.png" width="960" height="384" alt="Четыре тотема атласа 4096" loading="lazy" decoding="async">
+        <div class="atlas-selectors">
+          <button type="button" class="atlas-pick" data-figure="4096:17723" data-width="30" data-height="41" aria-label="Тотем 17723 из атласа 4096" title="Тотем 17723" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="4096:18474" data-width="30" data-height="34" aria-label="Тотем 18474 из атласа 4096" title="Тотем 18474" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="4096:19337" data-width="28" data-height="35" aria-label="Тотем 19337 из атласа 4096" title="Тотем 19337" aria-pressed="false"></button>
+          <button type="button" class="atlas-pick" data-figure="4096:19179" data-width="18" data-height="30" aria-label="Тотем 19179 из атласа 4096" title="Тотем 19179" aria-pressed="false"></button>
+        </div>
+      </figure>
       <ul class="atlas-downloads" aria-label="PNG фигур в исходном размере">
         <li>
           <a href="4096/figure-17723.png" download>PNG 17723</a>
@@ -221,6 +276,7 @@
         </li>
       </ul>
       <p class="entry-links">
+        <a href="4096/totems.png">Лист PNG</a>
         <a href="4096/sources.json">Координаты фигур</a>
         <a href="../../../mayatnik/axis-4096/">Каталог крупных фигур и полный атлас</a>
       </p>

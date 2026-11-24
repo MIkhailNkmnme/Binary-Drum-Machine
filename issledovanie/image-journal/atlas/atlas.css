@@ -8,7 +8,37 @@
 .atlas-panel { padding-block: 1.65rem 1rem; }
 .atlas-panel h2 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.16; }
 .atlas-panel > p:first-of-type { margin: .65rem 0 1rem; }
+.site-links .basket-link { color: var(--accent); }
+.atlas-sheet { position: relative; }
 .atlas-sheet img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.atlas-selectors { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+.atlas-pick {
+  position: relative;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.atlas-pick:focus-visible { outline-offset: -4px; }
+.atlas-pick:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+.atlas-pick[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.atlas-pick::after {
+  content: "+";
+  position: absolute;
+  top: .35rem;
+  right: .35rem;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font: 1rem/1 system-ui, sans-serif;
+  text-shadow: none;
+}
+.atlas-pick[aria-pressed="true"]::after { content: "✓"; border-color: var(--accent); color: var(--accent); }
 .atlas-downloads {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

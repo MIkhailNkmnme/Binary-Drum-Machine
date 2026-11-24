@@ -1,3 +1,5 @@
+import { basketKey, readBasket, updateBasket } from './basket-state.js?v=1';
+
 (() => {
   const list = document.querySelector('.atlas-tabs');
   const tabs = [...list.querySelectorAll('a')];
@@ -61,3 +63,34 @@
   window.addEventListener('popstate', selectFromHash);
   selectFromHash();
 })();
+
+const picks = [...document.querySelectorAll('.atlas-pick')];
+const count = document.getElementById('basket-count');
+const basketStatus = document.getElementById('basket-status');
+
+function showBasket(items) {
+  const selected = new Set(items.map(item => item.id));
+  count.textContent = '(' + selected.size + ')';
+  count.hidden = false;
+  for (const pick of picks) {
+    pick.setAttribute('aria-pressed', String(selected.has(pick.dataset.figure)));
+  }
+}
+
+for (const pick of picks) {
+  pick.addEventListener('click', () => {
+    const { figure: id, width, height } = pick.dataset;
+    const items = updateBasket(current => current.some(item => item.id === id)
+      ? current.filter(item => item.id !== id)
+      : [...current, { id, width: Number(width), height: Number(height) }]);
+    basketStatus.hidden = Boolean(items);
+    basketStatus.textContent = items ? '' : 'Браузер не сохранил выбор в корзине.';
+    if (items) showBasket(items);
+  });
+}
+
+window.addEventListener('storage', event => {
+  if (event.key === basketKey || event.key === null) showBasket(readBasket());
+});
+window.addEventListener('pageshow', () => showBasket(readBasket()));
+showBasket(readBasket());

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101317">
+  <title>Корзина · Атлас Зеркалиуса</title>
+  <link rel="stylesheet" href="../../style.css?v=016">
+  <link rel="stylesheet" href="basket.css?v=1">
+  <script type="module" src="basket.js?v=1"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav class="shell site-nav" aria-label="Разделы сайта">
+      <a class="brand" href="../">Атлас</a>
+      <div class="site-links">
+        <a href="../../">Журнал картинок</a>
+        <a href="../../../../mayatnik/Zerkalius-mayatnik.html">Маятник</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell basket">
+    <h1>Корзина</h1>
+    <p id="basket-empty" hidden>Выберите фигуры центральной оси в <a href="../">Атласе</a>.</p>
+    <p id="basket-status" role="status"></p>
+    <noscript><p>Для работы с корзиной нужен JavaScript.</p></noscript>
+    <div id="basket-work" hidden>
+      <p class="basket-help">Перетаскивайте фигуры по полю. Стрелки двигают выбранную фигуру на одну клетку, вместе с Shift — на десять.</p>
+      <div class="basket-layout">
+        <div class="field-scroll" role="region" tabindex="0" aria-label="Поле композиции">
+          <div id="composition-field"></div>
+        </div>
+        <aside class="basket-layers" aria-labelledby="layer-heading">
+          <h2 id="layer-heading">Фигуры</h2>
+          <div class="layer-controls">
+            <button type="button" id="raise-layer" title="Поднять на один слой">Выше</button>
+            <button type="button" id="lower-layer" title="Опустить на один слой">Ниже</button>
+            <button type="button" id="remove-layer" title="Убрать выбранную фигуру из корзины">Убрать</button>
+          </div>
+          <ol id="layers"></ol>
+        </aside>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!-- МАЯ-708 · v1.097 · Ромбы масштаба у пульта кадра. -->
+<!-- МАЯ-709 · v1.098 · Команды выбранного шаблона. -->
 <!-- МАЯ-706 · v1.095 · Перенос шаблонов без следа по умолчанию. -->
 <!-- ПОМ-041 · v1.094 · Атлас центральной оси 4096 в Битотеке. -->
 <!-- МАЯ-706 · v1.093 · Перенос выделенных шаблонов мышью и пульт без дублей осей. -->
@@ -96,7 +96,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.097</title>
+<title>Zerkalius Маятнкъ — v1.098</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -250,7 +250,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.097</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.098</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -667,7 +667,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-axis-turn.js?v=1077"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1093"></script>
+<script src="mayatnik-template-inline.js?v=1098"></script>
 <link rel="stylesheet" href="mayatnik-template-inline.css?v=1085">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=1077">
 <script src="mayatnik-bit-contours.js?v=562"></script>
@@ -5607,13 +5607,17 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(t)$('templateName').value=t.name||t.hex;
     templateStatsKey='';if(!t)$('templateInfo').textContent='';templateSync();queueDigits();if(persist)savePaint();
   }
+  function openSelectedTemplateMenus(){
+    templateInlineExpandPending=true;
+    window.dispatchEvent(new Event('may-field-template-selected'));
+  }
   function unpickTemplate(item){
     if(!item||!templatePickedIds.has(item.id)&&colourTemplate!==item)return false;
     rememberTemplate();templatePickedIds.delete(item.id);
     if(colourTemplate===item)selectTemplate(templateItems.filter(t=>templatePickedIds.has(t.id)).at(-1)||null,false,false,true);
     templateMove=!!colourTemplate;templateHover=null;templateSync();queueDigits();savePaint();return true;
   }
-  $('templateActive').onchange=()=>{if(selectTemplate(templateItems.find(t=>t.id===$('templateActive').value))===false){$('templateActive').value=colourTemplate?.id||'';return;}templateMove=!!colourTemplate;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();};
+  $('templateActive').onchange=()=>{if(selectTemplate(templateItems.find(t=>t.id===$('templateActive').value))===false){$('templateActive').value=colourTemplate?.id||'';return;}templateMove=!!colourTemplate;fillMode=false;autoVertical=0;autoSync();fillSync();templateSync();if(colourTemplate)openSelectedTemplateMenus();};
   $('templateName').addEventListener('change',()=>{if(!colourTemplate)return;colourTemplate.name=$('templateName').value.trim()||colourTemplate.hex;templateStatsKey='';fieldTemplateList();queueDigits();savePaint();});
   function duplicateTemplate(downShift=2,duringDrag=false){
     if(!colourTemplate)return;rememberTemplate();const original=colourTemplate;
@@ -6322,7 +6326,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     if(!parts.length){$('templateInfo').textContent='Нет пикселей выбранного цвета. Выбери цвет залитой фигуры в «Раскраске».';return;}
     rememberTemplate();templateTransfer=true;templateAxisUnlocked=false;colourTemplate={parts,hex,paintSource:true,pixels:parts.reduce((n,p)=>n+p.mask.count,0)};colourTemplate.bits=templateBits(true);
-    templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(hex);templateSync();queueDigits();savePaint();
+    templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(hex);templateSync();openSelectedTemplateMenus();queueDigits();savePaint();
     $('templateName').value=hex;   // Размер отображается отдельно от имени шаблона.
   };
   // Выбор берёт связную область любого цвета, включая исходные 0/1.
@@ -6335,7 +6339,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(hit&&!templateItemAllowed(hit.item))return templateLimitRefusal();
     if(hit){
       if(extendSelection&&unpickTemplate(hit.item))return true;
-      selectTemplate(hit.item,true,false,extendSelection);templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;autoSync();fillSync();axisLinesSync();templateSync();queueDigits();return true;
+      selectTemplate(hit.item,true,false,extendSelection);templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;autoSync();fillSync();axisLinesSync();templateSync();openSelectedTemplateMenus();queueDigits();return true;
     }
     if(toolBitAt(x,y)<0)return false;
     stop();target=k;
@@ -6353,7 +6357,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     colourTemplate={parts:[{mask,canvas,p,ox,axis:x0+width/2,symmetry:MayatnikTemplate.symmetry(mask)}],hex,paintSource:true,pixels:ids.length};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;
     autoSync();fillSync();axisLinesSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';
-    const name=hex;registerTemplate(name,extendSelection);$('templateName').value=name;templateSync();queueDigits();finishEdit(before);savePaint();return true;   // v0.112: в список — при выносе за треугольник
+    const name=hex;registerTemplate(name,extendSelection);$('templateName').value=name;templateSync();openSelectedTemplateMenus();queueDigits();finishEdit(before);savePaint();return true;   // v0.112: в список — при выносе за треугольник
   }
   $('bTemplateShow').onclick=()=>{templateVisible=!templateVisible;templateSync();templateStatus();queueDigits();savePaint();};
   function returnTemplate(){
@@ -13559,7 +13563,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templatePickEnabled=false;templateDragEnabled=false;templateMove=false;templateHover=null;
     templatePickSync();
     if(lastAct?.kind==='tpl')actSet(null);
-    selectTemplate(null,false);library?.clear();window.mayTemplateInline?.clear();savePaint();return true;
+    templateInlineExpandPending=false;selectTemplate(null,false);library?.clear();window.mayTemplateInline?.clear();savePaint();return true;
   }
   window.mayTemplateUnselect=clearTemplateSelection;
   addEventListener('keydown',event=>{
@@ -13645,7 +13649,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function completeEdit(){if(typeof templateInlineTransaction!=='undefined'&&templateInlineTransaction)return;const before=templateHistoryCapture;templateHistoryCapture=null;finishEdit(before);}
   for(const id of historyButtons){$(id).addEventListener('click',captureEdit,true);$(id).addEventListener('click',completeEdit);}
   for(const id of ['templateHeight','templateDown','templateAlpha','templateName'])for(const ev of ['input','change']){$(id).addEventListener(ev,captureEdit,true);$(id).addEventListener(ev,completeEdit);}
-  var templateInlineTransaction=null,templateInlineControls=null,templateInlineAxes=null,templateInlineDrag=null,templateInlineQueue=Promise.resolve(),templateInlineQueued=0,templateInlineFall=null,templateInlineError=null;
+  var templateInlineTransaction=null,templateInlineControls=null,templateInlineExpandPending=false,templateInlineAxes=null,templateInlineDrag=null,templateInlineQueue=Promise.resolve(),templateInlineQueued=0,templateInlineFall=null,templateInlineError=null;
   const templateInlineButtons={clone:'bTemplateClone',remove:'bTemplateRemove',show:'bTemplateShow',find:'bTemplateFindAll',flipH:'bTemplateFlipH',flipV:'bTemplateFlipV',return:'bTemplateReturn',taller:'bTemplateTaller',shorter:'bTemplateShorter',up:'bTemplateUp',down:'bTemplateDown',move:'bTemplateDrag',transfer:'bTemplateTransfer',paint:'bTemplatePaint',line:'bMirrorByLine',xor1:'bXor1',xorNext:'bXor2'};
   const templateInlineHandlers=Object.fromEntries(Object.entries(templateInlineButtons).map(([name,id])=>[name,$(id).onclick]));
   const templateInlineChecks={trail:$('templateTrail').onchange,proportional:$('templateProportional').onchange};
@@ -13940,6 +13944,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       templateInlineAxes?.cancel();
       templateInlineControls.render({key:null,left,top,width:freeWidth,viewportHeight:height,noSelection:true});
       return;
+    }
+    if(templateInlineExpandPending){
+      templateInlineExpandPending=false;
+      templateInlineControls.expandAll();
     }
     templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,motionStatus:templateInlineError?.id===state.item.id?templateInlineError.message:templateOffsetX?'Сдвиг по горизонтали '+templateOffsetX+' кл.':'',box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,axis512Palette:!!state.item.axis512Palette,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTurnUnderlayEnabled(state.item),paint:!!templatePaintColour(state.item.id),manualH:!!state.item.templateAxes?.manualH?.visible,manualV:!!state.item.templateAxes?.manualV?.visible,underlayOne:templateTurnUnderlayEnabled(state.item),capturePaint:templateAxisPaintMode(state.item)==='pickup',transferPaint:templateAxisPaintMode(state.item)==='deposit',trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
   }
@@ -15210,7 +15218,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="../_js/recorder.js?v=1018" data-bez-knopki></script>
 <script src="../_js/menu-icons.js?v=895"></script>
 <script src="../_js/group-header.js?v=2"></script>
-<script src="../_js/grozd.js?v=887b"></script>
+<script src="../_js/grozd.js?v=1098"></script>
 <link rel="stylesheet" href="mayatnik-template-panel.css?v=1094">
 <script src="mayatnik-template-folders.js?v=1094"></script>
 <script src="mayatnik-library-export.js?v=748"></script>
@@ -15231,7 +15239,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1097"></script>
+<script src="mayatnik-menu.js?v=1098"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

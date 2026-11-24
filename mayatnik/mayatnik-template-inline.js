@@ -69,6 +69,7 @@
       }
     }catch(_){}
     let currentState=null,dismissed=false,dismissedKey=null,geometryDirty=true,layoutKey='',drag=null,captionSource=null,captionOwner=null;
+    const selectionOpen=new Set();
     const palette=doc.createElement('div');palette.className='may-template-inline-palette';palette.hidden=true;
     const set=(node,key,value)=>{value=String(value);if(node.getAttribute(key)!==value)node.setAttribute(key,value);};
     const style=(node,key,value)=>{if(node.style[key]!==value)node.style[key]=value;};
@@ -82,16 +83,19 @@
     for(const side of ['left','right']){const bank=doc.createElement('div');bank.className='may-template-inline-bank';bank.dataset.side=side;host.append(bank);banks.push(bank);}
     for(const name of ['pointerdown','pointerup','pointermove','dblclick','contextmenu'])host.addEventListener(name,e=>e.stopPropagation());
     function arrange(){for(let i=0;i<banks.length;i++)for(const id of preferences[i?'right':'left'])banks[i].append(groupViews.get(id).section);geometryDirty=true;layoutKey='';}
-    function syncGroups(){for(const [id,view]of groupViews){const pinned=preferences.pinned.includes(id),open=preferences.open===id||pinned;view.body.hidden=!open;view.section.classList.toggle('inline-open',open);view.head.classList.toggle('may-standard-open',open);view.header?.sync({open,pinned});set(view.head,'aria-expanded',open);set(view.pin,'aria-pressed',pinned);}geometryDirty=true;layoutKey='';if(currentState)render(currentState);}
+    const groupOpen=id=>selectionOpen.has(id)||preferences.open===id||preferences.pinned.includes(id);
+    function syncGroups(refresh=true){for(const [id,view]of groupViews){const pinned=preferences.pinned.includes(id),open=groupOpen(id);view.body.hidden=!open;view.section.classList.toggle('inline-open',open);view.head.classList.toggle('may-standard-open',open);view.header?.sync({open,pinned});set(view.head,'aria-expanded',open);set(view.pin,'aria-pressed',pinned);}geometryDirty=true;layoutKey='';if(refresh&&currentState)render(currentState);}
+    function expandAll(){for(const id of keys)selectionOpen.add(id);palette.hidden=true;syncGroups(false);}
     function toggle(id){
-      const open=preferences.open===id||preferences.pinned.includes(id);
+      const open=groupOpen(id);
+      selectionOpen.delete(id);
       if(open){
         if(preferences.open===id)preferences.open=null;
         preferences.pinned=preferences.pinned.filter(key=>key!==id);
       }else preferences.open=id;
       palette.hidden=true;save();syncGroups();
     }
-    function pin(id){const on=preferences.pinned.includes(id);preferences.pinned=on?preferences.pinned.filter(key=>key!==id):[...preferences.pinned,id];if(!on)preferences.open=id;save();syncGroups();}
+    function pin(id){const on=preferences.pinned.includes(id);selectionOpen.delete(id);preferences.pinned=on?preferences.pinned.filter(key=>key!==id):[...preferences.pinned,id];if(!on)preferences.open=id;save();syncGroups();}
     function moveGroup(id,side,index){preferences.left=preferences.left.filter(key=>key!==id);preferences.right=preferences.right.filter(key=>key!==id);const target=preferences[side];target.splice(Math.max(0,Math.min(target.length,index)),0,id);save();arrange();if(currentState)render(currentState);}
     function bindDrag(view,id){
       view.head.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('.zgh-pin')||currentState?.busy)return;drag={id,pointer:e.pointerId,x:e.clientX,y:e.clientY,node:view.head,moved:false};view.head.setPointerCapture?.(e.pointerId);});
@@ -154,6 +158,7 @@
     }
     function render(state){if(!state||state.width<130){hide();return;}if(dismissed&&dismissedKey===state.key)return;dismissed=false;dismissedKey=null;currentState=state;if(host.hidden){host.hidden=false;geometryDirty=true;}refreshLabels();
       const noSelection=state.noSelection===true;
+      if(noSelection&&selectionOpen.size){selectionOpen.clear();syncGroups(false);}
       host.classList.toggle('inline-foreground',!!fieldRect&&!noSelection);
       for(const [id,group]of groupViews)group.section.hidden=noSelection&&id!=='motion';
       const message=noSelection?'Выберите шаблон на поле':state.motionStatus||'';
@@ -177,7 +182,7 @@
     const observer=typeof root.ResizeObserver==='function'?new root.ResizeObserver(()=>{geometryDirty=true;if(currentState&&!host.hidden)place(currentState);}):null;for(const bank of banks)observer?.observe(bank);
     if(fieldRect)root.addEventListener('resize',queuePosition);
     arrange();syncGroups();doc.addEventListener('DOMContentLoaded',ready,{once:true});doc.addEventListener('pointerdown',outside,true);
-    return {host,render,hide,reposition:queuePosition,destroy(){for(const stop of holds)stop();observer?.disconnect();if(positionFrame)root.cancelAnimationFrame(positionFrame);root.removeEventListener('resize',queuePosition);for(const frame of frames)frame.dispose?.();doc.removeEventListener('DOMContentLoaded',ready);doc.removeEventListener('pointerdown',outside,true);host.remove();}};
+    return {host,render,hide,expandAll,reposition:queuePosition,destroy(){for(const stop of holds)stop();observer?.disconnect();if(positionFrame)root.cancelAnimationFrame(positionFrame);root.removeEventListener('resize',queuePosition);for(const frame of frames)frame.dispose?.();doc.removeEventListener('DOMContentLoaded',ready);doc.removeEventListener('pointerdown',outside,true);host.remove();}};
   }
   // The existing axis component owns turns and perpendicular manual-axis edits.
   // This adapter contributes translation grips only while the Move control is on.
