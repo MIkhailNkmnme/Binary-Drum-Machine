@@ -1,4 +1,5 @@
 import { basketKey, figureDetails, readBasket, updateBasket } from '../basket-state.js?v=1';
+import { catalogueImage } from '../figures/figure-data.js?v=1';
 
 const field = document.getElementById('composition-field');
 const layers = document.getElementById('layers');
@@ -57,9 +58,13 @@ function figureButton(item, className) {
   button.dataset.item = item.id;
   button.setAttribute('aria-label', label);
   const img = document.createElement('img');
-  img.src = src;
   img.alt = '';
   img.draggable = false;
+  if (item.catalogue) {
+    catalogueImage(item.id).then(png => { img.src = png; }).catch(() => { img.alt = 'Фигура недоступна'; });
+  } else {
+    img.src = src;
+  }
   button.append(img);
   return { button, label };
 }

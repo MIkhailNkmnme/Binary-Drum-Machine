@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Отдельные PNG фигур центральной оси Маятника, с исходными кадрами и корзиной.">
+  <meta name="theme-color" content="#101317">
+  <title>Фигуры по одной · Атлас Зеркалиуса</title>
+  <link rel="stylesheet" href="../../style.css?v=017">
+  <link rel="stylesheet" href="figures.css?v=1">
+  <script type="module" src="figures.js?v=1"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav class="shell site-nav" aria-label="Разделы сайта">
+      <a class="brand" id="atlas-link" href="../#atlas-512">Атлас</a>
+      <div class="site-links">
+        <a href="../../">Журнал картинок</a>
+        <a id="basket-link" href="../basket/">Корзина</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell figure-catalogue">
+    <header class="figure-catalogue-heading">
+      <h1>Фигуры по одной</h1>
+      <p>Здесь фигуры центрального столбца из записей Атласа. Выберите кадр, чтобы увидеть их сверху вниз.</p>
+    </header>
+    <nav class="contents catalogue-sizes" aria-label="Число строк поля">
+      <a href="?size=128" data-size="128">128</a>
+      <a href="?size=256" data-size="256">256</a>
+      <a href="?size=512" data-size="512">512</a>
+      <a href="?size=1024" data-size="1024">1024</a>
+      <a href="?size=2048" data-size="2048">2048</a>
+      <a href="?size=4096" data-size="4096">4096</a>
+    </nav>
+    <div class="catalogue-controls">
+      <label>Кадр <select id="source-frame" disabled><option value="">Все кадры</option></select></label>
+      <button type="button" id="last-frame" disabled>Последний кадр</button>
+      <form id="figure-search">
+        <label>Номер фигуры <input id="figure-number" inputmode="numeric" type="number" min="1" required disabled></label>
+        <button id="find-figure" type="submit" disabled>Найти</button>
+      </form>
+      <a id="recording-link" href="../../#central-axis-templates">Анимация</a>
+    </div>
+    <p id="catalogue-status" role="status">Загружаются фигуры…</p>
+    <p id="catalogue-feedback" role="status"></p>
+    <noscript><p>Для просмотра отдельных фигур нужен JavaScript.</p></noscript>
+    <div id="catalogue-figures" class="catalogue-figures"></div>
+    <nav id="catalogue-pager" class="catalogue-pager" aria-label="Страницы фигур" hidden>
+      <button type="button" id="previous-page">Назад</button>
+      <span id="page-number"></span>
+      <button type="button" id="next-page">Дальше</button>
+    </nav>
+  </main>
+  <dialog id="figure-view" class="catalogue-view" aria-labelledby="view-title">
+    <div class="catalogue-view-toolbar">
+      <h2 id="view-title"></h2>
+      <form method="dialog"><button type="submit" autofocus>Закрыть</button></form>
+    </div>
+    <div id="view-image" class="catalogue-view-image"></div>
+    <div class="catalogue-view-toolbar">
+      <div class="catalogue-view-navigation">
+        <button type="button" id="previous-figure">Предыдущая</button>
+        <button type="button" id="next-figure">Следующая</button>
+      </div>
+      <span class="entry-links"><a id="download-figure" download>PNG</a><button type="button" id="pick-figure">В корзину</button></span>
+    </div>
+  </dialog>
+</body>
+</html>
