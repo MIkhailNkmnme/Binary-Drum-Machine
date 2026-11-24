@@ -2025,15 +2025,28 @@
   // v0.179: «Видео (Запись, GIF) — ромбами как в хабе, справа по середине высоты, и Дзен также»: столбик ромбов у правого края,
   // виден и в дзене (там «Дзен» — «Меню»); группы «Видео» в полосе и «Дзен» в углу шапки больше нет — ромбы жмут прежние кнопки
   { const col = document.createElement('div'); col.id = 'mayRhombs'; document.body.append(col);
-    const mk = (id, src, label) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.className = 'may-rh'; b.textContent = label;
-      b.addEventListener('click', () => $(src)?.click()); col.append(b); return b; };
+    const mk = (id, src, label, parent = col) => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label;
+      if (parent === col) b.className = 'may-rh';
+      b.addEventListener('click', () => $(src)?.click()); parent.append(b); return b; };
     // v0.417: + и − — отдельные ромбы над Дзеном.
     const zoomIn = mk('mayRhZoomIn', 'zIn', '+'), zoomOut = mk('mayRhZoomOut', 'zOut', '−');
     for (const b of [zoomIn, zoomOut]) b.classList.add('may-rh-zoom');
+    const zoomButtons = [[zoomIn, 'zIn'], [zoomOut, 'zOut']];
+    if (document.body.hasAttribute('data-may-frame-zoom')) {
+      const frameZoomIn = mk('mayFrameZoomIn', 'zIn', '+', frameBar);
+      const frameZoomOut = mk('mayFrameZoomOut', 'zOut', '−', frameBar);
+      frameBar.classList.add('may-frame-has-zoom');
+      frameBar.prepend(frameZoomOut);
+      for (const b of [frameZoomIn, frameZoomOut]) {
+        b.classList.add('may-frame-zoom');
+        b.dataset.noMini = '';
+      }
+      zoomButtons.push([frameZoomIn, 'zIn'], [frameZoomOut, 'zOut']);
+    }
     const zen = mk('mayRhZen', 'mayZen', '◎\nДзен'), rec = mk('mayRhRec', 'bRec', '⏺\nВидео'), gif = mk('mayRhGif', 'bGif', 'GIF');
     const sync = () => { const z = document.body.classList.contains('may-zen'), t = z ? '◎\nМеню' : '◎\nДзен'; if (zen.textContent !== t) zen.textContent = t;
       zen.title = z ? 'Вернуть меню (Esc, щелчок колёсиком по полю)' : tip($('mayZen')); zen.setAttribute('aria-pressed', String(z));
-      for (const [b, id] of [[zoomIn, 'zIn'], [zoomOut, 'zOut']]) { const e = $(id); b.disabled = !e || e.disabled; b.title = e ? tip(e) : ''; b.setAttribute('aria-label', b.title); }
+      for (const [b, id] of zoomButtons) { const e = $(id); b.disabled = !e || e.disabled; b.title = e ? tip(e) : ''; b.setAttribute('aria-label', b.title); }
       const r = $('bRec'), on = !!r && r.matches('[aria-pressed="true"],.on'); rec.classList.toggle('on', on); rec.title = r ? tip(r) : '';
       const g = $('bGif'); gif.disabled = !!g?.disabled; gif.classList.toggle('on', g?.getAttribute('aria-pressed') === 'true'); gif.title = g ? tip(g) : ''; };
     const mo = new MutationObserver(sync); mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
