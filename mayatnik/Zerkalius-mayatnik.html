@@ -1,3 +1,4 @@
+<!-- МАЯ-705 · v1.090 · Перенос шаблонов с антибитом через Ctrl. -->
 <!-- ПОМ-035 · v1.089 · Атлас центральной оси на 1024 строках. -->
 <!-- ПОМ-033 / ПОМ-034 · v1.088 · Атлас 512 и редактор композиций. -->
 <!-- ПОМ-032 · v1.087 · Папка «512» и независимые палитры шаблонов. -->
@@ -89,7 +90,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.089</title>
+<title>Zerkalius Маятнкъ — v1.090</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -243,7 +244,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229">
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.089</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.090</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -475,7 +476,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <button id="bTemplatePick" hidden style="display:none!important" aria-pressed="false" title="Шаблон-выбор: касанием или левой кнопкой выбрать шаблон или связную область битов. Правый щелчок выбирает и без этого режима; протяжка правой переносит выбранный шаблон. Для переноса левой включите Двигать. Два пальца сдвигают и масштабируют поле">Шаблон-выбор</button>
     <button id="bTemplateFindAll" disabled aria-pressed="false" title="Найти и выделить все такие же шаблоны" aria-label="Найти и выделить все такие же шаблоны">Найти все</button>
     <select id="templatePickMode" title="Режим выбора шаблонов: Один заменяет выделение, Вместе добавляет к выделению"><option value="one">Один</option><option value="add">Вместе</option></select>
-    <button id="bTemplateDrag" aria-pressed="false" data-mi-short="Двигать" title="Двигать выбранные одинаковые шаблоны за оси: горизонтальная — только влево-вправо, вертикальная — только вверх-вниз. Два пальца сдвигают и масштабируют поле">↔ Двигать</button>
+    <button id="bTemplateDrag" aria-pressed="false" data-mi-short="Двигать" title="Перетаскивать выбранный шаблон за фигуру или за ось. Перетаскивание с Ctrl оставляет антибит на исходном месте. Два пальца сдвигают и масштабируют поле">↔ Двигать</button>
     <button id="bTemplateTake" title="Взять все пиксели выбранного цвета из текущей картинки в отдельный полупрозрачный шаблон">Взять цвет</button>
     <button id="bTemplateShow" aria-pressed="false" disabled title="Показать или скрыть копию цветной фигуры">Шаблон</button>
     <button id="bTemplateTaller" disabled title="Увеличить высоту шаблона на 10 процентов от исходной">Выше +</button>
@@ -661,7 +662,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-template-axis-turn.js?v=1077"></script>
 <script src="mayatnik-template-compound.js?v=1067"></script>
 <script src="mayatnik-template-dedup.js?v=651"></script>
-<script src="mayatnik-template-inline.js?v=1087"></script>
+<script src="mayatnik-template-inline.js?v=1090"></script>
 <link rel="stylesheet" href="mayatnik-template-inline.css?v=1085">
 <link rel="stylesheet" href="mayatnik-template-axis-turn.css?v=1077">
 <script src="mayatnik-bit-contours.js?v=562"></script>
@@ -6092,13 +6093,21 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       return pixels[q]!==fillBase[q]||fillMask?.[pq]||paintRepeatLayer?.[pq]||colReplayPaint?.[pq]||manualAxisPaintPixel(q)?pixels[q]:0;
     }};
   }
+  function templateCompoundPartVisible(item,part){
+    let group=item.compound;
+    for(const index of part.compoundPath||part.sourceOrigin?.compoundPath||[]){
+      const member=group?.members[index];
+      if(!member||member.visible===false||member.opacity===0)return false;
+      group=member.source.compound;
+    }
+    return true;
+  }
   function templateAxisCapture(state,candidate,context){
     const tinted=group=>group?.members?.some(member=>member.tint||tinted(member.source?.compound));
     if(templatePaintColour(state.item.id)||state.layer?.tint||tinted(candidate.compound))throw Error('Для подхвата краски отключите «Прокрасить» и тонировку слоя или частей сборного шаблона');
     const factor=RK/scale(),dx=(state.layer?.x||0)*factor,dy=(state.layer?.y||0)*factor;
-    const visible=part=>{let group=candidate.compound;for(const index of part.compoundPath||part.sourceOrigin?.compoundPath||[]){const member=group?.members[index];if(!member||member.visible===false||member.opacity===0)return false;group=member.source.compound;}return true;};
     return MayatnikTemplateAxisTurn.capturePaint(candidate.parts,candidate.parts.map(p=>templateRect(p,false,candidate)),(part,x,y)=>{
-      if(!visible(part)||!candidate.compound&&(x<part.ox*RK||x>=(part.ox+templatePartWidth(part))*RK||y<0||y>=dispH()*RK))return 0;
+      if(!templateCompoundPartVisible(candidate,part)||!candidate.compound&&(x<part.ox*RK||x>=(part.ox+templatePartWidth(part))*RK||y<0||y>=dispH()*RK))return 0;
       return context.paint(Math.floor(x+dx),Math.floor(y+dy));
     });
   }
@@ -6348,11 +6357,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     $('templateHeight').value=dest.height;$('templateDown').value=dest.down;$('templateProportional').checked=dest.proportional;templateOffsetX=dest.x;templateLastDown=Number(dest.down);templateVisible=true;templateStatsKey='';templateSync();queueDigits();savePaint();
   }
   $('bTemplateReturn').onclick=returnTemplate;
-  function changeTemplate(id,value,fromX=templateOffsetX){
+  function changeTemplate(id,value,fromX=templateOffsetX,editRaster=true){
     templateReturn=null;
     const el=$(id),min=Number(el.min),max=Number(el.max);el.value=clampInt(value,min,max,id==='templateHeight'?100:0);
     if(id==='templateAlpha'&&colourTemplate&&window.mayLayers)window.mayLayers.set('template:'+colourTemplate.id,{opacity:Number(el.value)});
-    if(id==='templateDown'){const next=Number(el.value);if(colourTemplate&&(next!==templateLastDown||fromX!==templateOffsetX)){liftTemplateSource(!templateTransfer&&!templateDragging?.pure);if($('templateTrail').checked&&!templateDragging?.pure&&templateDragging?.mode!=='scale')traceTemplate(templateLastDown,next,fromX,templateOffsetX);}templateLastDown=next;}
+    if(id==='templateDown'){const next=Number(el.value);if(editRaster&&colourTemplate&&(next!==templateLastDown||fromX!==templateOffsetX)){liftTemplateSource(!templateTransfer&&!templateDragging?.pure);if($('templateTrail').checked&&!templateDragging?.pure&&templateDragging?.mode!=='scale')traceTemplate(templateLastDown,next,fromX,templateOffsetX);}templateLastDown=next;}
     templateStatsKey='';queueDigits();if(!templateDragging)savePaint();
   }
   for(const id of ['templateHeight','templateDown','templateAlpha'])$(id).addEventListener('input',()=>{if($(id).value!==''){if(window.mayTemplateInline)window.mayTemplateInline.field(id,$(id).value);else changeTemplate(id,$(id).value);}});
@@ -6428,11 +6437,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const entries=Object.entries(layer.colours);if(entries.length>10000||entries.some(([,hex])=>typeof hex!=='string'||!/^#[0-9a-f]{6}$/i.test(hex)))throw Error('Повреждена окраска шаблонов');
     return entries.length?{version:2,colours:Object.fromEntries(entries)}:null;
   }
-  function templatePaintBuild(items){
+  function templatePaintBuild(items,antibit=false){
     const mapMask=triangleMapRasterMask(),indices=new Set(),factor=RK/scale();
-    for(const item of items){const layer=window.mayLayers?.get('template:'+item.id),dx=(layer?.x||0)*factor,dy=(layer?.y||0)*factor;
-      for(const p of item.parts){const box=templateRect(p,false,item),r={...box,x:box.x+dx,y:box.y+dy},left=p.ox*RK+dx,right=left+templatePartWidth(p)*RK;
-        const x0=Math.max(0,Math.ceil(left-.5),Math.floor(r.x)),x1=Math.min(img.width,Math.ceil(right-.5),Math.ceil(r.x+r.width)),y0=Math.max(0,Math.ceil(dy-.5),Math.floor(r.y)),y1=Math.min(img.height,Math.ceil(dy+dispH()*RK-.5),Math.ceil(r.y+r.height));
+    const base=antibit?window.mayLayers?.get('original'):null;
+    for(const item of items){const layer=window.mayLayers?.get('template:'+item.id),dx=((layer?.x||0)-(base?.x||0))*factor,dy=((layer?.y||0)-(base?.y||0))*factor;
+      for(const p of item.parts){
+        const compound=antibit&&item.compound;if(compound&&!templateCompoundPartVisible(item,p))continue;
+        const box=templateRect(p,false,item),r={...box,x:box.x+dx,y:box.y+dy},left=p.ox*RK+dx,right=left+templatePartWidth(p)*RK;
+        const x0=Math.max(0,compound?0:Math.ceil(left-.5),Math.floor(r.x)),x1=Math.min(img.width,compound?img.width:Math.ceil(right-.5),Math.ceil(r.x+r.width)),y0=Math.max(0,compound?0:Math.ceil(dy-.5),Math.floor(r.y)),y1=Math.min(img.height,compound?img.height:Math.ceil(dy+dispH()*RK-.5),Math.ceil(r.y+r.height));
         for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const q=y*img.width+x;if(!mapMask?.[q]&&MayatnikTemplate.contains(p.mask,r,x+.5,y+.5)&&rasterBit(x,y)>=0)indices.add(q);}
       }
     }
@@ -6440,7 +6452,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function templatePaintApply(px){
     const layer=templatePaintLayer;if(!layer||!img)return;
-    const items=templatePaintTargets(Object.keys(layer.colours)).sort((a,b)=>(window.mayLayers?.get('template:'+a.id)?.order||0)-(window.mayLayers?.get('template:'+b.id)?.order||0)),masks=items.flatMap(item=>item.parts.map(p=>p.mask));
+    // The template layer follows the pointer. Avoid a second painted copy on the field during this gesture.
+    const moving=typeof templateInlineDrag!=='undefined'&&templateInlineDrag?.antibits&&templateInlineDrag.started?templateInlineDrag.items:null;
+    const items=templatePaintTargets(Object.keys(layer.colours)).filter(item=>!moving?.includes(item)).sort((a,b)=>(window.mayLayers?.get('template:'+a.id)?.order||0)-(window.mayLayers?.get('template:'+b.id)?.order||0)),masks=items.flatMap(item=>item.parts.map(p=>p.mask));
     const key=JSON.stringify([k,VX,VW,VH,RK,st.view,!!st.joined180,bmGen,templateMatchRevision,img.width,img.height,scale(),items.map(item=>[item.id,window.mayLayers?.get('template:'+item.id),item.parts.map(p=>[p.ox,templateRect(p,false,item)])])]);
     let cache=templatePaintApply.cache;
     if(!cache||cache.key!==key||cache.owner!==layer||cache.masks.length!==masks.length||masks.some((m,i)=>m!==cache.masks[i])){
@@ -12261,6 +12275,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const touchPts=new Map();let touchGesture=false,manualSnakeTouch=null;
   function finishTemplateDrag(type='pointercancel'){
     const drag=templateDragging;if(!drag)return;templateDragging=null;
+    if(drag.mode==='antibit'){
+      wrap.classList.remove('drag');
+      templateInlineAxisEnd(type!=='pointerup');
+      return;
+    }
     if(type!=='pointerup'&&drag.unpickOnTap)templateContextSkip=true;
     if(drag.moved){templateContextSkip=true;if(drag.mode!=='pickOnly'&&drag.mode!=='edgeCopy'){libraryIfOutside(drag.wasOut);actSet('tpl');}}
     if(drag.mirrorEdge&&!drag.moved&&type==='pointerup')mirrorTemplate(drag.mirrorEdge,true);
@@ -12332,11 +12351,24 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const part=item.parts.find(p=>xx>=p.ox*RK&&xx<(p.ox+templatePartWidth(p))*RK&&MayatnikTemplate.contains(p.mask,templateRect(p,false,item),xx,yy));if(part)return {item,part,skipSelection:templateSelectionSkipped(item)};}
     return null;
   }
-  // v0.037: курсор подсказывает действие: над фигурой — двигать, Ctrl — копия, Alt — край зеркала.
+  wrap.addEventListener('pointerdown',e=>{
+    if(!e.ctrlKey||e.altKey||e.button!==0||e.pointerType==='touch'||e.defaultPrevented||!img||!templatePickedIds.size||playing||
+      rulerMode||axisLineMode||templateDragging||templateInlineDrag||templateInlineTransaction||
+      e.target.closest?.('button,input,select,textarea,[role="button"],.zl-hd,#zTopLine,#mayAxisHandles'))return;
+    const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);
+    if(!hit||hit.skipSelection||!templatePickedIds.has(hit.item.id)||!templateItemAllowed(hit.item))return;
+    selectTemplate(hit.item,false,false,true);
+    if(!templateInlineAxisBegin(null,null,e,true))return;
+    axisSelected=0;templateMove=true;window.mayTemplateLibrary?.clear();
+    templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,mode:'antibit'};
+    wrap.tabIndex=-1;wrap.focus({preventScroll:true});wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');
+    clearFillPreview();e.preventDefault();e.stopImmediatePropagation();
+  },true);
+  // Подсказка жеста над фигурой: Ctrl — перенос с антибитом, Alt — край зеркала.
   function hoverTemplate(cx,cy,mods){
     let next=null,cursor='';
-    if((templatePickEnabled||templateDragEnabled)&&img&&cx!=null&&!templateDragging&&!playing&&((!fillMode&&!autoVertical)||mods.ctrl)){const r=cv.getBoundingClientRect(),x=(cx-r.left)/r.width*img.width,y=(cy-r.top)/r.height*img.height,hit=templateItems.length?hitTemplate(x,y):null;
-      if(hit&&!hit.skipSelection&&templateItemAllowed(hit.item)){cursor='pointer';next={item:hit.item,part:hit.part,edge:mods.alt?templateEdge(hit,x,y):null};}}
+    if((templatePickEnabled||templateDragEnabled||mods.ctrl)&&img&&cx!=null&&!templateDragging&&!playing&&((!fillMode&&!autoVertical)||mods.ctrl)){const r=cv.getBoundingClientRect(),x=(cx-r.left)/r.width*img.width,y=(cy-r.top)/r.height*img.height,hit=templateItems.length?hitTemplate(x,y):null;
+      if(hit&&!hit.skipSelection&&templateItemAllowed(hit.item)){cursor=mods.ctrl&&templatePickedIds.has(hit.item.id)?'move':'pointer';next={item:hit.item,part:hit.part,edge:mods.alt?templateEdge(hit,x,y):null};}}
     if(!cursor&&cx!=null&&nearLine(cy))cursor='ns-resize';
     wrap.style.cursor=cursor;const changed=JSON.stringify([next?.item?.id,next?.edge])!==JSON.stringify([templateHover?.item?.id,templateHover?.edge]);templateHover=next;if(changed)queueDigits();
   }
@@ -13395,7 +13427,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if((e.button===2||templateDragEnabled&&e.button===0&&e.pointerType!=='touch')&&img&&templateItems.length){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height;
       const found=hitTemplate(x,y),hit=found&&!found.skipSelection&&templateItemAllowed(found.item)&&templatePickedIds.has(found.item.id)?found:null,part=hit?.part,unpickOnTap=e.button===2&&!e.altKey&&!e.ctrlKey&&!e.metaKey;if(hit){axisSelected=0;window.mayTemplateLibrary?.clear();if(!unpickOnTap){selectTemplate(hit.item,false,false,true);templateMove=true;}wrap.tabIndex=-1;wrap.focus({preventScroll:true});}
       if(part){const box=templateRect(part),off=window.mayLayers?.get('template:'+hit.item.id),cx=r.left+(box.x+box.width/2)/RK*scale()+(off?.x||0),cy=r.top+(box.y+box.height/2)/RK*scale()+(off?.y||0);
-        // v0.037: тянуть — по битам; Shift — одна ось; Ctrl — копия; Alt — щелчок у края: зеркальная копия, тянуть: размер.
         if(e.altKey){const edge=templateEdge(hit,x,y);templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),mirrorEdge:edge,pure:true,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:'edgeCopy',editBefore:editSnapshot()};}
         else templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),duplicate:e.ctrlKey||e.metaKey,pure:e.ctrlKey||e.metaKey||templateTransfer,unpickOnTap:unpickOnTap?hit.item.id:null,findAllOnTap:e.button===0&&e.pointerType!=='touch'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?hit.item.id:null,cx,cy,mode:templateDragEnabled&&e.button===0?'move':'pickOnly',itemId:hit.item.id,editBefore:editSnapshot()};
         wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');clearFillPreview();e.preventDefault();return;}}
@@ -13416,6 +13447,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(lineDrag?.id===e.pointerId){const r=cv.getBoundingClientRect();mirrorLineY=Math.max(0,Math.min(VH,Math.round((e.clientY-r.top)/scale())));queueDigits();e.preventDefault();return;}
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
+      if(d.mode==='antibit'){
+        const drag=templateInlineDrag;
+        if(drag)templateInlineTranslate(drag,templateDragDelta(drag.anchor,e,d));
+        d.moved=!!drag?.started;e.preventDefault();return;
+      }
       if(d.mode==='edgeCopy'||d.mode==='pickOnly'){d.moved=true;d.findAllOnTap=null;e.preventDefault();return;}
       if(!d.moved&&d.duplicate){const copy=duplicateTemplate(0,true);d.part=copy.parts[d.partIndex];}
       if(!d.moved&&d.mode!=='scale')liftTemplateSource(!d.pure);d.moved=true;if(!d.wasOut&&!colourTemplate?.libraryId&&templateOutside(colourTemplate))d.wasOut=true;   // v0.112   // v0.105: снова как до v0.104 — на исходном месте инверт-отпечаток, по пути следа нет («Отпечаток на месте»)
@@ -13425,12 +13461,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         // Середина фигуры остаётся на месте по обеим координатам.
         $('templateDown').value=d.down+(d.height-Number($('templateHeight').value))/100*d.part.mask.height/RK/2;templateLastDown=Number($('templateDown').value);
       }else{
-        // Дискретно по битам: целые столбцы и строки; на ромбах — только по своей решётке (dx+dy чётно).
-        let rx=(e.clientX-d.x)/scale(),ry=(e.clientY-d.y)/scale();
-        if(e.shiftKey){if(Math.abs(rx)>Math.abs(ry))ry=0;else rx=0;}
-        const fx=d.offsetX+rx,fy=d.down+ry;let nx=Math.round(fx),ny=Math.round(fy);
-        if(rombP()>=0&&(nx+ny-Math.round(d.offsetX)-Math.round(d.down))%2){if(rx&&(!ry||Math.abs(fx-nx)>Math.abs(fy-ny)))nx+=fx>nx?1:-1;else ny+=fy>ny?1:-1;}
-        const fromX=templateOffsetX;d.mode=e.shiftKey&&!rx?'shift':'move';templateOffsetX=nx;changeTemplate('templateDown',ny,fromX);
+        const delta=templateDragDelta({x:d.offsetX,down:d.down},e,d);
+        const fromX=templateOffsetX;d.mode=e.shiftKey&&!delta.x?'shift':'move';templateOffsetX=d.offsetX+delta.x;changeTemplate('templateDown',d.down+delta.y,fromX);
       }
       templateStatsKey='';queueDigits();e.preventDefault();return;}
     if (!pts.has(e.pointerId)) return;
@@ -13466,6 +13498,19 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     stop();target=k;konusPick(cell.c,cell.r,!e.shiftKey,cell.p);
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
+  wrap.addEventListener('lostpointercapture',e=>{if(templateDragging?.mode==='antibit'&&templateDragging.id===e.pointerId)finishTemplateDrag();});
+  function templateDragDelta(origin,event,start){
+    let dx=(event.clientX-start.x)/scale(),dy=(event.clientY-start.y)/scale();
+    if(event.shiftKey){if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0;}
+    const x=origin.x+dx,y=origin.down+dy;
+    let nextX=Math.round(x),nextY=Math.round(y);
+    // На ромбической решётке сдвиг сохраняет чётность клетки.
+    if(rombP()>=0&&(nextX+nextY-Math.round(origin.x)-Math.round(origin.down))%2){
+      if(dx&&(!dy||Math.abs(x-nextX)>Math.abs(y-nextY)))nextX+=x>nextX?1:-1;
+      else nextY+=y>nextY?1:-1;
+    }
+    return {x:nextX-origin.x,y:nextY-origin.down};
+  }
   function clearTemplateSelection(){
     dismissRowBuildHighlight();
     const library=window.mayTemplateLibrary;
@@ -13492,6 +13537,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const target=event.target;
     if(target.closest?.('dialog,[aria-modal="true"]')||[...document.querySelectorAll('dialog[open],[aria-modal="true"]')].some(node=>node.getClientRects().length))return;
     if(target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')&&!target.closest('.may-template-inline'))return;
+    if(templateDragging?.mode==='antibit'){
+      const {id}=templateDragging;
+      finishTemplateDrag();
+      if(wrap.hasPointerCapture(id))wrap.releasePointerCapture(id);
+      event.preventDefault();event.stopImmediatePropagation();return;
+    }
     if(clearTemplateSelection()){event.preventDefault();event.stopImmediatePropagation();}
   },true);
   function exitInteractiveModes(e){
@@ -13844,7 +13895,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateReturn=null;templateMatchCache=null;window.mayTemplateLibrary?.clear();templateFollow?.acknowledge(templateFollowScope());return true;
   }
   function templateInlineRender(ctx,state,screen){
-    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,visibilityMode:()=>templateVisibility.mode,split:true,expanded:true,
+    if(!templateInlineControls)templateInlineControls=MayatnikTemplateInline.mount({action:templateInlineAction,visibilityMode:()=>templateVisibility.mode,split:true,expanded:true,antibit:true,
       fieldRect:()=>viewRotation.physicalRect(cv)});
     if(!f||!img||!geo){templateInlineControls.hide();templateInlineAxes?.cancel();return;}
     if(!screen){const rect=wrap.getBoundingClientRect();screen={left:rect.left,top:rect.top,width:wrap.clientWidth,height:wrap.clientHeight};}
@@ -13857,31 +13908,68 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     templateInlineControls.render({key:state.item.id,left,top,width:freeWidth,viewportHeight:height,motionStatus:templateInlineError?.id===state.item.id?templateInlineError.message:templateOffsetX?'Сдвиг по горизонтали '+templateOffsetX+' кл.':'',box:{x:left+ox+state.box.x*factor,y:top+oy+state.box.y*factor,width:state.box.width*factor,height:state.box.height*factor},colour:state.item.hex,axis512Palette:!!state.item.axis512Palette,busy:!!templateInlineTransaction,show:templateVisible,move:templateDragEnabled,transfer:templateTurnUnderlayEnabled(state.item),paint:!!templatePaintColour(state.item.id),manualH:!!state.item.templateAxes?.manualH?.visible,manualV:!!state.item.templateAxes?.manualV?.visible,underlayOne:templateTurnUnderlayEnabled(state.item),capturePaint:templateAxisPaintMode(state.item)==='pickup',transferPaint:templateAxisPaintMode(state.item)==='deposit',trail:$('templateTrail').checked,proportional:o.proportional,fall:!!templateInlineFall,height:o.height*100,downValue:o.down/RK,alpha:Number($('templateAlpha').value),disabled:[...(mirrorLine?[]:['line']),...(state.item.compound?[]:['split'])]});
   }
-  function templateInlineAxisBegin(id,direction,event){
-    if(!templateDragEnabled||templateInlineDrag||templateInlineTransaction||templateDragging)return false;const state=templateAxisState();if(!state)return false;
-    const items=templateInlineTargets(),active=colourTemplate.id,picked=[...templatePickedIds],before=editSnapshot(),owner=f,frame=k;
-    before.templateOwned=true;templateInlineDrag={id,direction,items,active,picked,before,owner,frame,trackWrites:true,pointerId:event?.pointerId,origins:items.map(item=>({item,x:item.view.x||0,down:item.view.down||0})),started:false};if(event?.pointerType==='touch')touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});return true;
+  function templateInlineAxisBegin(id,direction,event,antibit=false){
+    if((!antibit&&!templateDragEnabled)||templateInlineDrag||templateInlineTransaction||templateDragging||antibit&&playing)return false;const state=templateAxisState();if(!state)return false;
+    const items=antibit?templatePaintTargets().filter(item=>templateItemAllowed(item)&&!window.mayTemplateTransient?.hidden(item)):templateInlineTargets();
+    if(!items.length)return false;
+    const active=colourTemplate.id,picked=[...templatePickedIds],before=editSnapshot(),owner=f,frame=k;
+    const origins=items.map(item=>({item,x:item.view.x||0,down:item.view.down||0}));
+    const anchor=origins.find(origin=>origin.item===colourTemplate);
+    before.templateOwned=true;templateInlineDrag={id,direction,items,active,picked,before,owner,frame,trackWrites:true,pointerId:event?.pointerId,origins,anchor,antibits:antibit?new Set():null,started:false};if(event?.pointerType==='touch')touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});return true;
   }
   function templateInlineAxisMove(direction,dx,dy,rk){
-    const drag=templateInlineDrag;if(!drag||drag.owner!==f||drag.frame!==k)return;const delta=MayatnikTemplateInline.constrained(direction,dx,dy,rk,rombP()>=0);if((!drag.started&&!delta.x&&!delta.y)||(drag.delta?.x===delta.x&&drag.delta?.y===delta.y))return;
+    const drag=templateInlineDrag;if(drag)templateInlineTranslate(drag,MayatnikTemplateInline.constrained(direction,dx,dy,rk,rombP()>=0));
+  }
+  function stampTemplateAntibits(item,stamped){
+    const {width,indices}=templatePaintBuild([item],true),colours=PAL.bits.map(colour=>rgba(colour[0]));
+    const copyRows=parityPlan().settings.rowFill!=='none';
+    for(const index of indices){
+      const x=index%width,y=Math.floor(index/width),q=copyRows?paritySourcePixel(x,y):index;
+      if(q<0||stamped.has(q))continue;
+      const bit=rasterBit(x,y);if(bit<0)continue;
+      templateBaselineWrite(q,colours[1-bit],storedBit(1-bit));
+      stamped.add(q);
+    }
+    if(!item.lifted){item.paintSource=false;item.lifted=null;}
+    fillBits=null;
+  }
+  function templateInlineTranslate(drag,delta){
+    if(drag.owner!==f||drag.frame!==k||(!drag.started&&!delta.x&&!delta.y)||(drag.delta?.x===delta.x&&drag.delta?.y===delta.y))return;
+    const down=$('templateDown'),min=Number(down.min),max=Number(down.max),first=!drag.started;
+    if(first&&drag.antibits&&!delta.x&&!drag.origins.some(origin=>clampInt(origin.down+delta.y,min,max,0)!==origin.down))return;
+    const previousStamps=drag.antibits?.size;
     templateInlineTransaction=drag;templateHistoryCapture=drag.before;
     try{
       for(const origin of drag.origins){if(!templateItems.includes(origin.item))continue;selectTemplate(origin.item,false,false,true);const raster=templateInlineRaster();
-        if(!drag.started)liftTemplateSource(!templateTransfer);const fromX=templateOffsetX;templateOffsetX=origin.x+delta.x;changeTemplate('templateDown',origin.down+delta.y,fromX);rememberTemplate();templateInlineRememberEffects(origin.item,raster);
+        const nextDown=clampInt(origin.down+delta.y,min,max,0);
+        if(drag.antibits){
+          if(!origin.stamped&&(delta.x||nextDown!==origin.down)){
+            stampTemplateAntibits(origin.item,drag.antibits);origin.stamped=true;
+          }
+        }else if(first){
+          liftTemplateSource(!templateTransfer);
+        }
+        const fromX=templateOffsetX;templateOffsetX=origin.x+delta.x;
+        changeTemplate('templateDown',nextDown,fromX,!drag.antibits);rememberTemplate();templateInlineRememberEffects(origin.item,raster);
       }
       drag.started=true;drag.delta=delta;templateInlineRestoreSelection(drag.active,drag.picked);queueDigits();
+      if(drag.antibits&&(first||drag.antibits.size!==previousStamps))draw();
     }finally{templateInlineTransaction=null;templateHistoryCapture=null;}
   }
   function templateInlineAxisEnd(cancel){
     const drag=templateInlineDrag;if(!drag)return;templateInlineDrag=null;
     if(drag.owner!==f||drag.frame!==k)return;
     if(drag.pointerId!=null)touchPts.delete(drag.pointerId);
-    if(cancel){templateInlineRestoreScene(drag.before.scene);fillMask=drag.before.paint;paintBits=drag.before.bits;templateInlineRestoreSelection(drag.active,drag.picked);}
+    if(drag.antibits&&!drag.started)return;
+    if(cancel||drag.antibits&&!drag.delta.x&&!drag.delta.y){
+      if(drag.antibits)for(const q of drag.antibits)templateBaselineWrite(q,drag.before.paint?.[q]||0,drag.before.bits?.[q]??-1);
+      templateInlineRestoreScene(drag.before.scene);fillMask=drag.before.paint;paintBits=drag.before.bits;templateInlineRestoreSelection(drag.active,drag.picked);
+    }
     else if(drag.started){templateInlineRestoreSelection(drag.active,drag.picked);templateInlineFinish(drag.before,drag.items.map(item=>item.id));actSet('tpl');}
     templateSync();fillSync();draw();queueDigits();savePaint();
   }
   function templateInlineAxesRender(controls,state){
-    if(!templateInlineAxes)templateInlineAxes=MayatnikTemplateInline.axisDrag(controls,MayatnikTemplateAxisTurn,{begin:templateInlineAxisBegin,move:templateInlineAxisMove,end:templateInlineAxisEnd,secondTouch(event,first){window.mayTemplateInline.cancel();touchPts.set(first.id,{x:first.x,y:first.y});touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});touchPinchStart();for(const id of touchPts.keys())wrap.setPointerCapture(id);}});
+    if(!templateInlineAxes)templateInlineAxes=MayatnikTemplateInline.axisDrag(controls,MayatnikTemplateAxisTurn,{antibit:true,begin:templateInlineAxisBegin,move:templateInlineAxisMove,end:templateInlineAxisEnd,secondTouch(event,first){window.mayTemplateInline.cancel();touchPts.set(first.id,{x:first.x,y:first.y});touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});touchPinchStart();for(const id of touchPts.keys())wrap.setPointerCapture(id);}});
     templateInlineAxes.render({...state,translateEnabled:templateDragEnabled&&(!templateInlineTransaction||!!templateInlineDrag)});
   }
   // Existing buttons keep their handlers and storage keys; their selected-template
