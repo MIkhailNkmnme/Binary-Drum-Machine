@@ -1,3 +1,4 @@
+<!-- МАЯ-712 · v1.101 · Перенос шаблонов под поле с антибитами и разшаблонка. -->
 <!-- МАЯ-711 · v1.100 · Выделение сохранённых шаблонов и контекстная панель. -->
 <!-- МАЯ-710 · v1.099 · Шаблон от четырёх клеток. -->
 <!-- МАЯ-709 · v1.098 · Команды выбранного шаблона. -->
@@ -98,7 +99,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.100</title>
+<title>Zerkalius Маятнкъ — v1.101</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -225,7 +226,7 @@ body.may-fold-active #cvGpu{opacity:0}
 <!-- v0.162: пока не собралось меню (скрипты в конце страницы), сырая панель кнопок не мелькает; не соберётся — покажется после загрузки -->
 <style>html.may-boot .bar,html.may-boot header .sub,html.may-boot #mayatnikStatus{visibility:hidden}</style>
 <script>document.documentElement.classList.add('may-boot');addEventListener('load',()=>setTimeout(()=>document.documentElement.classList.remove('may-boot'),0));</script>
-<link rel="stylesheet" href="mayatnik-menu.css?v=1097">
+<link rel="stylesheet" href="mayatnik-menu.css?v=1101">
 <link rel="stylesheet" href="mayatnik-axis-style.css?v=600">
 <link rel="stylesheet" href="mayatnik-manual-lines.css?v=1075">
 <link rel="stylesheet" href="../_js/zz-pult.css?v=1017">
@@ -252,7 +253,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.100</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.101</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -484,6 +485,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <button id="bTemplatePick" hidden style="display:none!important" aria-pressed="false" title="Шаблон-выбор: касанием или левой кнопкой выбрать шаблон или связную область битов. Правый щелчок выбирает и без этого режима; протяжка правой переносит выбранный шаблон. Для переноса левой включите Двигать. Два пальца сдвигают и масштабируют поле">Шаблон-выбор</button>
     <button id="bTemplateFindAll" disabled aria-pressed="false" title="Найти и выделить все такие же шаблоны" aria-label="Найти и выделить все такие же шаблоны">Найти все</button>
     <button id="bTemplateDrag" aria-pressed="false" data-mi-short="Двигать" title="Включить осевые ручки переноса. Выделенную фигуру можно тянуть за тело левой кнопкой. Перетаскивание с Ctrl перемещает шаблоны без следа">↔ Двигать</button>
+    <button id="bTemplateTrayPick" type="button" aria-pressed="false" title="Разшаблонка: правым щелчком перенести шаблон в таблицу под полем и оставить на его месте антибиты">Разшаблонка</button>
+    <button id="bTemplateTrayAll" type="button" disabled aria-pressed="false" title="Перенести все видимые шаблоны под поле, по одному от самого крупного по числу занятых клеток. Повторное нажатие останавливает перенос">Вынести все</button>
     <button id="bTemplateTake" title="Взять все пиксели выбранного цвета из текущей картинки в отдельный полупрозрачный шаблон">Взять цвет</button>
     <button id="bTemplateShow" aria-pressed="false" disabled title="Показать или скрыть копию цветной фигуры">Шаблон</button>
     <button id="bTemplateTaller" disabled title="Увеличить высоту шаблона на 10 процентов от исходной">Выше +</button>
@@ -550,7 +553,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <div id="imageStats"><output id="imageSize"></output><output id="bitBalance"></output><output id="geomCenterInfo"></output></div>
 <details id="ochkiBox" hidden style="display:none!important"><summary id="ochkiSum"></summary><div id="ochkiList"></div></details>
 <div id="wrap"><canvas id="cv" width="1" height="1" aria-label="Поле маятника"></canvas>
-<div id="edgeBelowWrap" style="display:none;position:relative;margin:0 auto;overflow:hidden;background:#050505"><canvas id="edgeBelow" width="1" height="1" aria-label="Копии левого и правого края под полем" style="display:block;margin:0;image-rendering:pixelated;height:auto"></canvas></div></div>
+<div id="edgeBelowWrap" style="display:none;position:relative;margin:0 auto;overflow:hidden;background:#050505"><canvas id="edgeBelow" width="1" height="1" aria-label="Копии левого и правого края под полем" style="display:block;margin:0;image-rendering:pixelated;height:auto"></canvas></div>
+<section id="mayTemplateTray" aria-label="Шаблоны под полем" hidden>
+  <p id="mayTemplateTrayDrop" hidden>Отпустите шаблон под полем</p>
+  <table hidden><caption>Шаблоны под полем</caption>
+    <thead><tr><th scope="col">№</th><th scope="col">Фигура</th><th scope="col">Шаблон</th><th scope="col">Клетки</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section></div>
 <canvas id="bitDigits" aria-label="Цифры исходных битов" hidden></canvas>
 <canvas id="fillPreview" aria-label="Область будущей заливки под курсором" hidden></canvas>
 <canvas id="colourTemplate" aria-label="Полупрозрачная копия цветной фигуры" hidden></canvas>
@@ -1034,7 +1044,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let templatePickEnabled=false,templateDragEnabled=false;
   const templatePickedIds=new Set();
   let compositionPlayback=null,compositionCarryFrame=null;
-  function pickedTemplates(){return templateItems.filter(t=>templatePickedIds.has(t.id)||t===colourTemplate);}
+  function pickedTemplates(){return templateItems.filter(t=>!t.view?.tray&&(templatePickedIds.has(t.id)||t===colourTemplate));}
   function templatePickSync(){
     $('bTemplatePick').setAttribute('aria-pressed',String(templatePickEnabled));
     $('bTemplateDrag').setAttribute('aria-pressed',String(templateDragEnabled));
@@ -1049,6 +1059,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   var templateFrameBatch=null,templateBatchLibraryRevision=0,templateBatchLibraryReady=false,templateBatchError='',templateBatchNotifying=null;
   var templateFollow=null,templateFollowReady=false,templateFollowQueue=Promise.resolve(),templateFollowTarget=null,templateNavigationSerial=0;
   let templateItems=[],templateSerial=0,templateTransfer=false,templateAxisUnlocked=false,templateHover=null;
+  let templateTrayRun=null,templateTrayScrollFrame=0;
   let faceLayer=null;
   let paintBits=null,fillRedo=[],templateHistoryCapture=null;
   let templateMatchLayer=null,templateMatchRevision=0,templateMatchCache=null;
@@ -5544,6 +5555,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function historyStep(redo){
     if(templateDragging||window.mayTemplateInline?.dragging?.())return;window.mayTemplateTransient?.sync();
+    if(templateTrayRun)templateTrayStop();
     const from=redo?fillRedo:fillHistory,entry=from[from.length-1];if(!entry)return;
     if(entry.workFrame)return gifScaleHistoryStep(entry,redo);
     if(entry.transientView){
@@ -5612,15 +5624,15 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     colourTemplate.view={skipSelection:!!colourTemplate.view?.skipSelection,height:Number($('templateHeight').value),down:Number($('templateDown').value),alpha:Number($('templateAlpha').value),proportional:$('templateProportional').checked,trail:$('templateTrail').checked,transfer:templateTransfer,axisUnlocked:templateAxisUnlocked,x:templateOffsetX,visible:templateVisible,paintBit:templatePaintBit,returnTo:templateReturn};
   }
   function fieldTemplateList(){
-    const list=$('templateActive'),key=JSON.stringify(templateItems.map(t=>[t.id,t.name||t.hex,t.view?.visible!==false]));
+    const list=$('templateActive'),items=templateItems.filter(t=>!t.view?.tray),key=JSON.stringify(items.map(t=>[t.id,t.name||t.hex,t.view?.visible!==false]));
     // Selection/busy updates do not change these options. Recreating them
     // wakes the menu's DOM observers and forces another full layout pass.
-    if(fieldTemplateList.key!==key||list.options.length!==Math.max(1,templateItems.length)){
+    if(fieldTemplateList.key!==key||list.options.length!==Math.max(1,items.length)){
       fieldTemplateList.key=key;list.replaceChildren();
-      for(let i=0;i<templateItems.length;i++){const t=templateItems[i];list.add(new Option(`${i+1}. ${t.name||t.hex}${t.view?.visible===false?' · скрыт':''}`,t.id));}
-      if(!templateItems.length)list.add(new Option('Нет шаблонов',''));
+      for(let i=0;i<items.length;i++){const t=items[i];list.add(new Option(`${i+1}. ${t.name||t.hex}${t.view?.visible===false?' · скрыт':''}`,t.id));}
+      if(!items.length)list.add(new Option('Нет шаблонов',''));
     }
-    list.value=colourTemplate?.id||'';list.disabled=!templateItems.length;
+    list.value=colourTemplate?.id||'';list.disabled=!items.length;
     syncLibraryChoices();
   }
   // v0.112: «в шаблоны помещай только те, что переместил в поле за треугольником, — те, что там побывали какой-то частью своей». Фигура «за
@@ -5645,6 +5657,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function selectTemplate(t,persist=true,duringDrag=false,add=false){
     if(templateDragging&&!duringDrag)return;
+    if(t?.view?.tray)return false;
     if(t&&persist&&!templateItemHasMinimumCells(t))return templateMinimumRefusal();
     if(t&&persist&&!templateItemAllowed(t)){templateLimitRefusal();return false;}
     rememberTemplate();colourTemplate=t||null;
@@ -5660,7 +5673,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     window.dispatchEvent(new Event('may-field-template-selected'));
   }
   function restoreFieldTemplateSelection(active,picked){
-    const selectable=templateItems.filter(templateItemHasMinimumCells),saved=Array.isArray(picked)?new Set(picked):null;
+    const selectable=templateItems.filter(item=>!item.view?.tray&&templateItemHasMinimumCells(item)),saved=Array.isArray(picked)?new Set(picked):null;
     selectTemplate(selectable.find(item=>item.id===active)||(saved?null:selectable[0])||null,false);
     if(saved){
       templatePickedIds.clear();
@@ -5909,6 +5922,164 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function templateOptions(){return {height:Number($('templateHeight').value)/100,down:Number($('templateDown').value)*RK,alpha:Number($('templateAlpha').value)/100,proportional:$('templateProportional').checked};}
   function templateRect(part,original=false,item=colourTemplate){if(original&&part.sourceOrigin)part=MayatnikTemplateAxisTurn.originalPart(part);const v=item?.view,o=item===colourTemplate?templateOptions():{height:(v?.height??100)/100,down:(v?.down??0)*RK,proportional:!!v?.proportional},r=MayatnikTemplate.rect(part.mask,part.axis,original?1:o.height,original?false:o.proportional,original?0:o.down);if(!original){r.x+=(item===colourTemplate?templateOffsetX:v?.x||0)*RK;if(Number.isFinite(part.axisOriginY))r.y=part.axisOriginY+(part.mask.y-part.axisOriginY)*o.height+o.down;}return r;}
+  function templateTrayAvailable(){
+    return !!(f&&geo&&img&&(!gpuBig?.large||gpuBig.cpuRaster)&&!st.gifScaleStack&&
+      !(st.edgeRhombOn&&window.mayRombo?.get().available));
+  }
+  function templateTrayReady(){
+    return templateTrayAvailable()&&!cacheRestoring&&!frameLibraryBusy&&!templateDragging&&
+      !templateAxisMove&&!templateInlineTransaction&&!window.mayTemplateInline?.dragging?.();
+  }
+  function templateTrayCandidate(item){
+    if(!item?.view?.visible||item.view.tray||window.mayTemplateTransient?.hidden(item))return false;
+    const layer=window.mayLayers?.get('template:'+item.id);
+    return layer?.visible!==false&&(layer?.opacity??item.view.alpha)!==0;
+  }
+  function templateTrayArea(item){
+    return item.parts.reduce((total,part)=>total+(part.mask.count??part.mask.data.reduce((n,pixel)=>n+Number(!!pixel),0)),0);
+  }
+  function templateTraySize(item){
+    const height=(item.view.height??100)/100;
+    return Math.max(1,Math.round(templateTrayArea(item)*height*(item.view.proportional?height:1)/(RK*RK)));
+  }
+  function templateTrayRow(item,size){
+    const row=document.createElement('tr'),preview=document.createElement('canvas');
+    row.templateItem=item;row.templateName=item.name||item.hex;
+    preview.width=64;preview.height=48;preview.setAttribute('aria-hidden','true');
+    const rects=item.parts.map(part=>templateRect(part,false,item)),box=MayatnikTemplateAxisTurn.bounds(rects);
+    if(box?.width>0&&box.height>0){
+      const ctx=preview.getContext('2d'),zoom=Math.min(preview.width/box.width,preview.height/box.height);
+      const left=(preview.width-box.width*zoom)/2,top=(preview.height-box.height*zoom)/2;
+      ctx.imageSmoothingEnabled=false;
+      item.parts.forEach((part,i)=>{
+        const r=rects[i];
+        ctx.drawImage(templateDisplayCanvas(part,item,true),left+(r.x-box.x)*zoom,top+(r.y-box.y)*zoom,r.width*zoom,r.height*zoom);
+      });
+    }
+    row.insertCell().textContent=String(item.view.tray);
+    row.insertCell().append(preview);
+    row.insertCell().textContent=row.templateName;
+    row.insertCell().textContent=size.toLocaleString('ru-RU');
+    return row;
+  }
+  function templateTraySync(){
+    const tray=$('mayTemplateTray'),available=templateTrayAvailable();
+    const dragging=available&&templateDragging?.mode==='groupMove'&&templateDragging.toTray;
+    const records=templateItems.filter(item=>item.view?.tray).sort((a,b)=>a.view.tray-b.view.tray);
+    tray.hidden=!records.length&&!dragging;
+    $('mayTemplateTrayDrop').hidden=!dragging;
+    const table=tray.querySelector('table'),body=table.tBodies[0];
+    table.hidden=!records.length;
+    const rows=Array.from(body.rows);
+    if(rows.length!==records.length||records.some((item,i)=>rows[i]?.templateItem!==item||rows[i]?.templateName!==(item.name||item.hex))){
+      const byId=new Map(rows.map(row=>[row.templateItem.id,row]));
+      body.replaceChildren(...records.map(item=>{
+        const row=byId.get(item.id);
+        return row?.templateItem===item&&row.templateName===(item.name||item.hex)
+          ?row:templateTrayRow(item,item.view.traySize??templateTraySize(item));
+      }));
+    }
+    const pick=$('bTemplateTrayPick'),all=$('bTemplateTrayAll'),armed=String(!!st.templateTrayPick),running=String(!!templateTrayRun);
+    const pickDisabled=!available,disabled=!templateTrayRun&&(!available||!templateItems.some(templateTrayCandidate));
+    if(pick.disabled!==pickDisabled)pick.disabled=pickDisabled;
+    if(all.disabled!==disabled)all.disabled=disabled;
+    if(pick.getAttribute('aria-pressed')!==armed)pick.setAttribute('aria-pressed',armed);
+    if(all.getAttribute('aria-pressed')!==running)all.setAttribute('aria-pressed',running);
+  }
+  function templateTrayAntibits(item,changes,covered){
+    const layer=window.mayLayers?.get('template:'+item.id),factor=RK/scale(),dx=(layer?.x||0)*factor,dy=(layer?.y||0)*factor;
+    const width=img.width,height=img.height,remapped=parityPlan().settings.rowFill!=='none';
+    for(const part of item.parts){
+      const rect=templateRect(part,false,item);rect.x+=dx;rect.y+=dy;
+      const left=Math.max(0,Math.floor(rect.x),item.compound?0:Math.floor(dx+part.ox*RK));
+      const right=Math.min(width,Math.ceil(rect.x+rect.width),item.compound?width:Math.ceil(dx+(part.ox+templatePartWidth(part))*RK));
+      const top=Math.max(0,Math.floor(rect.y),item.compound?0:Math.floor(dy));
+      const bottom=Math.min(height,Math.ceil(rect.y+rect.height),item.compound?height:Math.ceil(dy+dispH()*RK));
+      for(let y=top;y<bottom;y++)for(let x=left;x<right;x++){
+        if(!MayatnikTemplate.contains(part.mask,rect,x+.5,y+.5))continue;
+        const q=remapped?paritySourcePixel(x,y):y*width+x;
+        if(q<0||changes.has(q)||(covered?.[q>>>3]&(1<<(q&7))))continue;
+        const bit=rasterBit(x,y);
+        if(bit>=0)changes.set(q,1-bit);
+      }
+    }
+  }
+  function templateTrayMove(items,covered){
+    if(!templateTrayReady())return 0;
+    items=items.filter(item=>templateItems.includes(item)&&templateTrayCandidate(item));
+    if(!items.length)return 0;
+    if(!templateTrayRun)stopFrameTransports();
+    const before=sceneSnapshot(),changes=new Map(),ids=new Set(items.map(item=>item.id));
+    const axes=[...new Set(templateItems.map(item=>item.autoColumnAxis).filter(Boolean))];
+    for(const item of items)templateTrayAntibits(item,changes,covered);
+    const count=changes.size,indices=new Uint32Array(count),previous=new Uint32Array(count),next=new Uint32Array(count),
+      bitsPrevious=new Int8Array(count),bitsNext=new Int8Array(count),colours=[st.bitZeroColour,st.bitOneColour].map(hex=>rgba(hexRGB(hex)));
+    if(count){
+      const size=img.width*img.height,paint=fillMask||new Uint32Array(size),bits=paintBits||new Int8Array(size).fill(-1);
+      fillMask=paint;paintBits=bits;
+    }
+    let i=0;
+    for(const [q,bit] of changes){
+      indices[i]=q;previous[i]=fillMask?.[q]||0;next[i]=colours[bit];
+      bitsPrevious[i]=paintBits?.[q]??-1;bitsNext[i]=storedBit(bit);
+      templateBaselineWrite(q,next[i],bitsNext[i]);
+      if(covered)covered[q>>>3]|=1<<(q&7);
+      i++;
+    }
+    let order=templateItems.reduce((last,item)=>Math.max(last,item.view?.tray||0),0);
+    colourTemplate=null;
+    for(const item of items){
+      item.view={...item.view,visible:false,tray:++order,traySize:templateTraySize(item)};
+      delete item.autoColumnAxis;
+    }
+    const remaining=before.picked.filter(id=>!ids.has(id));
+    restoreFieldTemplateSelection(ids.has(before.active)?remaining.at(-1):before.active,remaining);
+    templateHover=null;fillBits=null;templateStatsKey='';
+    pushHistory({indices,previous,next,bitsPrevious,bitsNext,beforeScene:before,afterScene:sceneSnapshot(),
+      templateOwned:true,bytes:count*14+1024,inlineAutoColumns:axes});
+    columnTemplatesKeepEdits(axes);
+    draw();queueDigits();
+    if(!templateTrayRun)savePaint();
+    return items.length;
+  }
+  function templateTrayStop(){
+    const run=templateTrayRun;if(!run)return;
+    clearTimeout(run.timer);templateTrayRun=null;templateTraySync();
+    if(run.moved&&run.field===f&&run.frame===k&&run.key===fillKey)savePaint();
+  }
+  function templateTrayNext(run){
+    if(run!==templateTrayRun)return;
+    if(run.field!==f||run.frame!==k||run.key!==fillKey||!templateTrayReady()){templateTrayStop();return;}
+    try{
+      while(run.index<run.items.length){
+        const moved=templateTrayMove([run.items[run.index++]],run.covered);
+        if(moved){run.moved+=moved;break;}
+      }
+    }catch(error){
+      templateTrayStop();
+      $('fillInfo').textContent='Перенос остановился: '+(error?.message||String(error));
+      return;
+    }
+    if(run.index<run.items.length)run.timer=setTimeout(()=>templateTrayNext(run),run.delay);
+    else templateTrayStop();
+  }
+  $('bTemplateTrayPick').onclick=()=>{
+    st.templateTrayPick=!st.templateTrayPick;
+    if(st.templateTrayPick){fillMode=false;autoVertical=0;autoSync();fillSync();}
+    templateTraySync();save();
+  };
+  $('bTemplateTrayAll').onclick=()=>{
+    if(templateTrayRun){templateTrayStop();return;}
+    if(!templateTrayReady())return;
+    rememberTemplate();
+    const items=templateItems.filter(templateTrayCandidate).map(item=>({item,size:templateTraySize(item)}))
+      .sort((a,b)=>b.size-a.size).map(({item})=>item);
+    if(!items.length)return;
+    stopFrameTransports();target=k;
+    const covered=new Uint8Array(Math.ceil(img.width*img.height/8));
+    templateTrayRun={field:f,frame:k,key:fillKey,items,index:0,moved:0,covered,delay:Math.max(20,Math.min(100,4000/items.length))};
+    templateTrayNext(templateTrayRun);
+  };
   function templateBits(original){
     const counts={one:0,zero:0,empty:0},seen=new Set();
     for(let part of colourTemplate.parts){if(original&&part.sourceOrigin){if(seen.has(part.sourceOrigin.key))continue;seen.add(part.sourceOrigin.key);part=MayatnikTemplateAxisTurn.originalPart(part);}
@@ -6290,6 +6461,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     });
   }
   function drawTemplate(){
+    templateTraySync();
     drawTemplateVisibility();
     const underlay=templateItems.some(item=>item.templateAxes?.underlayOne);if(underlay||templateUnderlayShown)layerOriginalCompose();templateUnderlayShown=underlay;
     window.mayFlow?.invalidate();
@@ -7129,15 +7301,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       }return true;
     }));
   }
+  function templateLibraryInstances(id){return templateItems.filter(item=>!item.view?.tray&&item.libraryId===id);}
   function skipLibraryTemplateSelection(entry){
     rememberTemplate();entry.skipSelection=!entry.skipSelection;
-    const placed=templateItems.filter(t=>t.libraryId===entry.id),remaining=pickedTemplates().filter(t=>!placed.includes(t));
+    const placed=templateLibraryInstances(entry.id),remaining=pickedTemplates().filter(t=>!placed.includes(t));
     for(const item of placed){item.view={...item.view,skipSelection:entry.skipSelection};if(entry.skipSelection)templatePickedIds.delete(item.id);}
     if(entry.skipSelection&&placed.includes(colourTemplate))selectTemplate(remaining.at(-1)||null,false,false,true);
     templateHover=null;queueDigits();savePaint();return persistLibrary();
   }
   function toggleLibraryTemplate(item,create=true){
-    const placed=templateItems.filter(t=>t.libraryId===item.id);
+    const placed=templateLibraryInstances(item.id);
     $('templateList').value=item.id;librarySelection();
     if(!placed.length){if(create)useLibraryTemplate(item.shape,item.name,item.id);return;}
     rememberTemplate();const before=sceneSnapshot(),show=!placed.some(t=>t.view?.visible!==false),wasActive=placed.includes(colourTemplate),remaining=pickedTemplates().filter(t=>!placed.includes(t));
@@ -7175,7 +7348,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(key===libraryChoicesKey)return;libraryChoicesKey=key;host.replaceChildren();
     if(!templateLibrary.length){host.textContent='';return;}   // v0.075: пустой список — без подписи
     for(const item of templateLibrary){
-      const placed=templateItems.filter(t=>t.libraryId===item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=card;card.className='gz-hx template-entry';card.tabIndex=0;card.setAttribute('role','button');card.classList.toggle('gz-off-dis',!img);
+      const placed=templateLibraryInstances(item.id),visible=placed.some(t=>t.view?.visible!==false),card=document.createElement('div'),button=card;card.className='gz-hx template-entry';card.tabIndex=0;card.setAttribute('role','button');card.classList.toggle('gz-off-dis',!img);
       button.setAttribute('aria-pressed',String(visible));if(visible)button.classList.add('gz-on');
       button.title=visible?'Скрыть с поля; правой кнопкой — переименовать':'Показать на поле; правой кнопкой — переименовать';
       // v0.038: одна строка — номер, имя и кнопки; миниатюры нет, «на поле» показывает подсветка кнопки.
@@ -7605,7 +7778,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateMatchLayer={key:stamp.key,paint,bits,indices};
     const ids=new Set(selected.instances);rememberTemplate();
     if(kind==='colour')for(const t of templateItems){if(ids.has(t.id))recolourTemplate(t,hex);}
-    else{const active=ids.has(colourTemplate?.id);templateItems=templateItems.filter(t=>!ids.has(t.id));if(active){colourTemplate=null;selectTemplate(templateItems[0]||null,false);}}
+    else{const active=ids.has(colourTemplate?.id);templateItems=templateItems.filter(t=>!ids.has(t.id));if(active){colourTemplate=null;selectTemplate(templateItems.find(t=>!t.view?.tray)||null,false);}}
     templateSceneHistory(before,paint.byteLength+bits.byteLength+indices.byteLength+1024);templateStatsKey='';templateSync();draw();fillSync();savePaint();
   }
   function focusLibraryTemplate(request){
@@ -7834,10 +8007,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     entries:()=>templateLibrary,field:templateMatchField,current:templateMatchCurrent,focus:focusLibraryTemplate,
     scope:()=>[templateMatchKey(),templateMatchRows(),templateMatchRevision,bmGen,st.templateMaxArea].join('|'),
     filterActive:()=>!!f&&!playing&&!!(window.MayatnikTemplatePanel?.isOpen()||window.MayatnikTemplatePanel?.hasWindow()),
-    visibleInstances:id=>templateItems.some(t=>t.libraryId===id&&t.view?.visible!==false&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
-    listedInstances:id=>id.startsWith('xor-axes:')||id.startsWith('kraftwerk:')||window.MayatnikAxisArchive?.isId(id)||templateItems.some(t=>t.libraryId===id&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
-    visibility:id=>{const placed=templateItems.filter(t=>t.libraryId===id);return {placed:placed.length,visible:placed.some(t=>t.view?.visible!==false),skipSelection:!!templateLibrary.find(t=>t.id===id)?.skipSelection};},
-    instances:id=>templateItems.filter(t=>t.libraryId===id&&templateItemAllowed(t)).map(t=>t.id),shapeInstances:templateShapeInstances,
+    visibleInstances:id=>templateLibraryInstances(id).some(t=>t.view?.visible!==false&&t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
+    listedInstances:id=>id.startsWith('xor-axes:')||id.startsWith('kraftwerk:')||window.MayatnikAxisArchive?.isId(id)||templateLibraryInstances(id).some(t=>t.parts.some(p=>{const r=templateRect(p,false,t);return r.y<VH*RK&&r.y+r.height>0&&r.x<(p.ox+templatePartWidth(p))*RK&&r.x+r.width>p.ox*RK;})),
+    visibility:id=>{const placed=templateLibraryInstances(id);return {placed:placed.length,visible:placed.some(t=>t.view?.visible!==false),skipSelection:!!templateLibrary.find(t=>t.id===id)?.skipSelection};},
+    instances:id=>templateLibraryInstances(id).filter(templateItemAllowed).map(t=>t.id),shapeInstances:templateShapeInstances,
     choose(id){$('templateList').value=id;librarySelection();},stop(){stop();target=k;},
     insert:entry=>useLibraryTemplate(entry.shape,entry.name,entry.id),edit:templateMatchEdit,materializeMatches:materializeTemplateMatches,
     redrawSelection(){templateSelectionPicture=null;queueDigits();},
@@ -7858,7 +8031,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         });
         libraryColourTarget=id;recolourTarget=null;$('templateColour').value=entry.shape.hex;$('templateColour').click();return;
       }
-      if(action==='save'){const t=templateItems.find(t=>t.libraryId===id&&(!entry.shape.compound||t.compound));if(t){const before=sceneSnapshot();selectTemplate(t,false);entry.shape=templateSnapshot();entry.name=t.name;persistLibrary();templateSceneHistory(before);savePaint();}else if(entry.shape.compound)$('paintCacheInfo').textContent='Сначала откройте сборный шаблон щелчком по его картинке';}
+      if(action==='save'){const t=templateLibraryInstances(id).find(t=>!entry.shape.compound||t.compound);if(t){const before=sceneSnapshot();selectTemplate(t,false);entry.shape=templateSnapshot();entry.name=t.name;persistLibrary();templateSceneHistory(before);savePaint();}else if(entry.shape.compound)$('paintCacheInfo').textContent='Сначала откройте сборный шаблон щелчком по его картинке';}
     }
   });
   $('templateLibraryChoices').replaceChildren();$('templateLibraryChoices').hidden=true;
@@ -9887,14 +10060,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(ovlLinked())return;
     const top=$('fixTopPad')?.offsetHeight||0,tail=$('fixTopScrollTail')?.offsetHeight||0;
     const extra=(window.mayRomboPreview?.scrollSpace()||0)+(window.mayTriangleEditor?.scrollSpace()||0)+(window.mayGifScaleStackSpace?.()||0)
-      +top+tail+(fixPad.continuationHeight||0);
+      +top+tail+(fixPad.continuationHeight||0)+$('mayTemplateTray').offsetHeight;
     const over=wrap.scrollHeight-extra-wrap.clientHeight;
     if(over<=1)return;
     const target=top+Math.round(over/2);
     if(Math.abs(wrap.scrollTop-target)>1)wrap.scrollTop=target;
   }
-  function fitHold() { if (ovlLinked()) return; if (!geo) return; if (st.zMid&&!st.frameDrift) midScroll(); if(st.gifScaleStack)return;
-    if (st.zoom === 'fit' && !st.ztop && !st.zBot) fitCenterY();
+  function fitHold(scrolling=false) { if (ovlLinked()) return; if (!geo) return; if (st.zMid&&!st.frameDrift) midScroll(); if(st.gifScaleStack)return;
+    if (st.zoom === 'fit' && !st.ztop && !st.zBot && (!scrolling||$('mayTemplateTray').hidden)) fitCenterY();
   }
   function layout() { cssLayout(); present();if(st.edgeRhombOn&&!gpuBig?.large)drawEdgeRhomb(null,false); imageStats(); queueDigits(); }
   function cssLayout() {
@@ -12055,7 +12228,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let zPinRaf = 0;
   function zPinScroll() {
     if (zPinRaf || (!st.ztop && !st.zBot && !st.zMid)) return;
-    zPinRaf = requestAnimationFrame(() => { zPinRaf = 0; if (st.ztop) zTopScroll(); else if (st.zBot) zBotScroll(); if (st.zMid) midScroll(); });
+    zPinRaf = requestAnimationFrame(() => {
+      zPinRaf = 0;
+      if($('mayTemplateTray').hidden){if(st.ztop)zTopScroll();else if(st.zBot)zBotScroll();}
+      if(st.zMid)midScroll();
+    });
   }
   wrap.addEventListener('scroll', zPinScroll, { passive: true });
   var ztl = document.createElement('div');ztl.id='zTopLine';ztl.hidden=true;ztl.style.display='none';document.body.append(ztl); // Retained source; visible controls use the shared view.
@@ -12321,7 +12498,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   addEventListener('resize', () => zTopLine());
   addEventListener('resize', () => { if (geo) layout(); });
   for(const type of ['mayatnik-template-panel-change','mayatnik-template-panel-resize'])addEventListener(type,()=>{if(geo&&!ovlLinked())cssLayout();});
-  wrap.addEventListener('scroll', () => { if(window.mayPixelExact)requestAnimationFrame(pixelAlignSource); if(!st.edgeRhombOn||!window.mayRomboPreview)fitHold(); queueDigits(); queueAlign(); zTopLine(); }, {passive:true});   // v0.346: по ширине / высоте — положение держится
+  wrap.addEventListener('scroll', () => { if(window.mayPixelExact)requestAnimationFrame(pixelAlignSource); if(!st.edgeRhombOn||!window.mayRomboPreview)fitHold(true); queueDigits(); queueAlign(); zTopLine(); }, {passive:true});   // v0.346: по ширине / высоте — положение держится
   document.addEventListener('pointerdown',()=>{zoomTo.axisHold=false;},true);
   let wheelZoomCursorTimer=0;
   function clearWheelZoomCursor(){clearTimeout(wheelZoomCursorTimer);wheelZoomCursorTimer=0;wrap.classList.remove('may-wheel-zoom');}
@@ -12329,7 +12506,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   wrap.addEventListener('pointerleave',clearWheelZoomCursor);
   // Колесо — масштаб к курсору (плавно, тачпад тоже)
   wrap.addEventListener('wheel', e => {
-    if(e.target.closest?.('.may-scale-stack__controls'))return;
+    if(e.target.closest?.('.may-scale-stack__controls,#mayTemplateTray'))return;
     if (!geo || e.defaultPrevented || (!viewRotation.isFieldEvent(e)&&window.MayatnikMenuDock?.guardWheel?.(e))) return; e.preventDefault();
     const d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
     if (d && zTopPanFree) { resetTopPan(); zTopScroll(); }
@@ -12351,11 +12528,40 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const pts = new Map(); let pan = null, pinch = null,templatePickTap=null,templateContextSkip=false;
   // Capture touch points before selection/tools consume the first finger.
   const touchPts=new Map();let touchGesture=false,manualSnakeTouch=null;
-  function finishTemplateDrag(type='pointercancel'){
+  function templateTrayDropAt(event){
+    const box=wrap.getBoundingClientRect();
+    return event.clientY>=cv.getBoundingClientRect().bottom&&event.clientY<box.top+wrap.clientHeight&&
+      event.clientX>=box.left&&event.clientX<box.left+wrap.clientWidth;
+  }
+  function templateTrayDragScroll(drag,event){
+    if(!drag.toTray)return;
+    drag.scrollEvent=event;
+    if(templateTrayScrollFrame)return;
+    const step=()=>{
+      templateTrayScrollFrame=0;
+      if(templateDragging!==drag||!templateInlineDrag)return;
+      const pointer=drag.scrollEvent,bottom=wrap.getBoundingClientRect().top+wrap.clientHeight;
+      const distance=bottom-pointer.clientY;
+      if(distance>32||distance< -24||pointer.clientY>=cv.getBoundingClientRect().bottom)return;
+      const previous=wrap.scrollTop;
+      wrap.scrollTop+=Math.max(4,(32-distance)*Math.max(.5,scale()/3));
+      if(wrap.scrollTop===previous)return;
+      templateInlineTranslate(templateInlineDrag,templateDragDelta(templateInlineDrag.anchor,pointer,drag));
+      drag.moved=templateInlineDrag.started;
+      templateTrayScrollFrame=requestAnimationFrame(step);
+    };
+    templateTrayScrollFrame=requestAnimationFrame(step);
+  }
+  function finishTemplateDrag(type='pointercancel',event=null){
     const drag=templateDragging;if(!drag)return;templateDragging=null;
     if(drag.mode==='groupMove'){
+      if(templateTrayScrollFrame){cancelAnimationFrame(templateTrayScrollFrame);templateTrayScrollFrame=0;}
+      const drop=drag.toTray&&type==='pointerup'&&event&&drag.moved&&templateTrayDropAt(event);
+      const droppedIds=drop?new Set(templateInlineDrag?.items.map(item=>item.id)):null;
       wrap.classList.remove('drag');
-      templateInlineAxisEnd(type!=='pointerup');
+      templateInlineAxisEnd(type!=='pointerup'||drop);
+      if(drop){templateTrayMove(templateItems.filter(item=>droppedIds.has(item.id)));templateTraySync();return;}
+      if(drag.toTray)templateTraySync();
       if(!drag.moved&&type==='pointerup'){
         if(drag.unpickOnTap)unpickTemplate(templateItems.find(item=>item.id===drag.unpickOnTap));
         else if(drag.findAllOnTap)findAllSelectedTemplate(drag.findAllOnTap);
@@ -12446,13 +12652,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       wrap.tabIndex=-1;wrap.focus({preventScroll:true});wrap.setPointerCapture(e.pointerId);
       e.preventDefault();e.stopImmediatePropagation();return;
     }
-    const noTrace=e.ctrlKey||templateTransferSetting(hit.item.view);
-    if(!noTrace&&templatePickedIds.size<2)return;
+    const noTrace=e.ctrlKey||templateTransferSetting(hit.item.view),toTray=templateTrayAvailable();
+    if(!noTrace&&templatePickedIds.size<2&&!toTray)return;
     selectTemplate(hit.item,false,false,true);
     if(!templateInlineAxisBegin(null,null,e,noTrace))return;
     axisSelected=0;templateMove=true;window.mayTemplateLibrary?.clear();
-    templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,mode:'groupMove',editBefore:templateInlineDrag.before,
+    templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,mode:'groupMove',editBefore:templateInlineDrag.before,toTray,scrollTop:wrap.scrollTop,
       unpickOnTap:e.ctrlKey?hit.item.id:null,findAllOnTap:!e.ctrlKey&&!e.shiftKey&&templatePickedIds.size===1?hit.item.id:null};
+    if(toTray)templateTraySync();
     wrap.tabIndex=-1;wrap.focus({preventScroll:true});wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');
     clearFillPreview();e.preventDefault();e.stopImmediatePropagation();
   },true);
@@ -12470,6 +12677,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   for(const ev of ['keydown','keyup'])addEventListener(ev,e=>{if(['Alt','Control','Meta'].includes(e.key)){if(e.key==='Alt'&&templateHover)e.preventDefault();if(hoverAt)hoverTemplate(hoverAt[0],hoverAt[1],{alt:e.altKey,ctrl:e.ctrlKey||e.metaKey});}});
   // Правый щелчок снова выбирает область без отдельного режима; оси на пустом месте сохраняют ПКМ.
   wrap.addEventListener('contextmenu',e=>{
+    if(e.target.closest?.('#mayTemplateTray'))return;
     if(window.mayFillPalette?.handleContextMenu(e))return;
     e.preventDefault();if(templateContextSkip){templateContextSkip=false;return;}if(templateDragging)return;
     if(img){const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(hit){if(!e.altKey&&!e.ctrlKey&&!e.metaKey&&unpickTemplate(hit.item))return;if(takeColourAt(e.clientX,e.clientY,e.ctrlKey)){axisSelected=0;window.mayTemplateLibrary?.clear();}return;}}
@@ -12479,14 +12687,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   });
   // Double-click on the free field toggles the same normal transport as Play.
   function fieldDoubleClick(e){
-    if(e.button!==0||!f||e.defaultPrevented||e.target.closest?.('button,input,select,textarea,[role="button"],.zl-hd,#zTopLine,#mayAxisHandles'))return;
+    if(e.button!==0||!f||e.defaultPrevented||e.target.closest?.('button,input,select,textarea,[role="button"],.zl-hd,#zTopLine,#mayAxisHandles,#mayTemplateTray'))return;
     if(playing){e.preventDefault();e.stopImmediatePropagation();stop();return;}
     if(e.ctrlKey||e.metaKey||e.altKey||e.shiftKey||rulerMode||axisLineMode||axisPicking||templateDragging||templatePickEnabled||fillMode||autoVertical||foldBack||st.manualSnake||window.mayNAxes?.get().enabled||cellHidden()||cellSelectionView?.mode&&cellSelectionView.mode!=='off'||ovlDragReady())return;
     if((st.fixDx||st.fixDy)&&fixNear(e.clientX,e.clientY))return;
     e.preventDefault();e.stopImmediatePropagation();play();
   }
   wrap.addEventListener('dblclick',fieldDoubleClick,true);
-  wrap.addEventListener('dblclick',e=>{if(e.button!==0||!img||templateDragging||foldBack)return;e.preventDefault();eraseFillAt(e.clientX,e.clientY);});
+  wrap.addEventListener('dblclick',e=>{if(e.button!==0||!img||templateDragging||foldBack||e.target.closest?.('#mayTemplateTray'))return;e.preventDefault();eraseFillAt(e.clientX,e.clientY);});
   // v0.047: свои оси — линии по двум точкам; точки цепляются к сетке с шагом полбита (края и центры бит).
   let axisLineMode=false,axisLinePending=null,axisLineHover=null,axisDrag=null;
   // v0.052: выделенная ось — последняя поставленная или тронутая; Delete удаляет её. var — drawTemplate читает до этой строки.
@@ -13498,8 +13706,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   window.mayFixHor={get:()=>!!st.fixHor,set(v){st.fixHor=!!v;if(st.fixHor&&st.zoom==='fit'){st.zoom=fitScale();layout();}save();}};
   const nearLine=cy=>{if(!mirrorLine||!f||templateCanvas.hidden)return false;const r=cv.getBoundingClientRect();return Math.abs(cy-(r.top+mirrorLineY*scale()))<=5;};
   wrap.addEventListener('pointerdown', e => {
+    if(e.target.closest?.('#mayTemplateTray'))return;
     if(fillMode&&e.button===2){templateContextSkip=false;return;}
-    if(e.button===2){templateContextSkip=false;if(e.ctrlKey)return;}
+    if(e.button===2){templateContextSkip=false;if(e.ctrlKey||st.templateTrayPick&&templateTrayAvailable())return;}
     if(templateDragging||lineDrag||window.mayTemplateInline?.dragging?.())return;
     if(rulerMode&&e.button===0&&f){const p=rulerPx(e.clientX,e.clientY);if(!rulerA||rulerB){rulerA=p;rulerB=null;}else rulerB=p;rulerHover=null;queueDigits();e.preventDefault();return;}   // v0.161: линейка
     if(e.button===0&&f&&!axisLineMode&&e.shiftKey&&st.userLines.length&&!templateCanvas.hidden&&nearestUserLine(e.clientX,e.clientY)<0){axisBox={id:e.pointerId,x:e.clientX,y:e.clientY,x2:e.clientX,y2:e.clientY};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}   // v0.240: рамка
@@ -13548,6 +13757,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
         d.findAllOnTap=null;d.unpickOnTap=null;
         const drag=templateInlineDrag;
         if(drag)templateInlineTranslate(drag,templateDragDelta(drag.anchor,e,d));
+        templateTrayDragScroll(d,e);
         d.moved=!!drag?.started;e.preventDefault();return;
       }
       if(d.mode==='edgeCopy'||d.mode==='pickOnly'){d.moved=true;d.findAllOnTap=null;e.preventDefault();return;}
@@ -13583,7 +13793,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       for(let i=st.userLines.length-axisSelected-1;i>=0;i--)if(hit(st.userLines[i])){axisSelTo(i);axisSelected++;}axisLinesSync();queueDigits();return;}
     if(axisDrag?.id===e.pointerId){axisDrag=null;actSet('axis');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);save();if(mirrorLive){cancelAnimationFrame(mirrorFrame);mirrorFrame=0;mirrorApply(true);}return;}
     if(lineDrag?.id===e.pointerId){lineDrag=null;actSet('mirLine');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
-    if(templateDragging?.id===e.pointerId){if(Math.hypot(e.clientX-templateDragging.x,e.clientY-templateDragging.y)>=3){templateDragging.findAllOnTap=null;templateDragging.unpickOnTap=null;}finishTemplateDrag(e.type);if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
+    if(templateDragging?.id===e.pointerId){if(Math.hypot(e.clientX-templateDragging.x,e.clientY-templateDragging.y)>=3){templateDragging.findAllOnTap=null;templateDragging.unpickOnTap=null;}finishTemplateDrag(e.type,e);if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     const midTap = e.type === 'pointerup' && e.button === 1 && pan && !pan.moved && !pinch && pts.size === 1;   // v0.097: щелчок колёсиком без сдвига — дзен
     if (pan && pan.moved && !pinch && pts.size === 1) actSet('pan');   // v0.265
@@ -13601,7 +13811,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(templateDragging?.mode==='groupMove'&&templateDragging.id===e.pointerId)finishTemplateDrag();
   });
   function templateDragDelta(origin,event,start){
-    let dx=(event.clientX-start.x)/scale(),dy=(event.clientY-start.y)/scale();
+    const scroll=start.toTray?wrap.scrollTop-start.scrollTop:0;
+    let dx=(event.clientX-start.x)/scale(),dy=(event.clientY-start.y+scroll)/scale();
     if(event.shiftKey){if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0;}
     const x=origin.x+dx,y=origin.down+dy;
     let nextX=Math.round(x),nextY=Math.round(y);
@@ -14597,7 +14808,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   $('bCellCollapseRows').onclick=()=>cellSelectionView.hide('rows');$('bCellCollapseCols').onclick=()=>cellSelectionView.hide('cols');
   $('bCellReveal').onclick=()=>cellSelectionView.revealAll();
   $('bCellClear').onclick=()=>{cellSelectionModel.clear();cellSync();cellStore();cellSelectionView.render();};
-  wrap.addEventListener('contextmenu',e=>{if(window.mayFillPalette?.handleContextMenu(e))return;if(cellHidden()||cellSelectionView.mode!=='off')cellSwallow(e);},true);
+  wrap.addEventListener('contextmenu',e=>{
+    if(st.templateTrayPick&&e.button===2&&templateTrayReady()&&!e.target.closest?.('#mayTemplateTray')){
+      const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);
+      if(hit&&templateTrayCandidate(hit.item)){
+        cellSwallow(e);templateTrayStop();templateTrayMove([hit.item]);return;
+      }
+    }
+    if(window.mayFillPalette?.handleContextMenu(e))return;
+    if(cellHidden()||cellSelectionView.mode!=='off')cellSwallow(e);
+  },true);
   wrap.addEventListener('dblclick',e=>{if(cellHidden()||cellSelectionView.mode!=='off')cellSwallow(e);},true);
   document.addEventListener('keydown',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)||e.target.isContentEditable)return;
     if((cellHidden()||cellSelectionView.mode!=='off')&&e.key==='Delete')cellSwallow(e);
@@ -15301,7 +15521,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1098"></script>
+<script src="mayatnik-menu.js?v=1101"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">

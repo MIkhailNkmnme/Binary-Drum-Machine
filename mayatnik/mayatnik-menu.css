@@ -136,6 +136,20 @@ body.mayatnik-menu-closed{grid-template-columns:0 minmax(0,1fr)}
 #colourTemplate{position:fixed;pointer-events:none;z-index:4;margin:0;background:transparent;image-rendering:pixelated}
 #templateInfo{color:var(--muted,#8997ac);font:10px/1.4 var(--mono);white-space:normal;overflow-wrap:anywhere;display:block;flex:1 1 100%;min-width:0}
 #templateInfo:empty{display:none}
+#mayTemplateTray{
+  position:sticky;left:12px;box-sizing:border-box;width:min(440px,calc(100vw - 32px));margin-inline:auto;
+  padding:8px 10px;background:#0d1119;color:#dfe6f5;border:1px solid #313b4c;font:12px/1.4 var(--mono,monospace);cursor:default
+}
+#mayTemplateTrayDrop{margin:0;padding:8px 10px;border:1px dashed #ffe969;color:#ffe969;text-align:center}
+#mayTemplateTray table{width:100%;border-collapse:collapse;text-align:left}
+#mayTemplateTray caption{padding:4px 0;text-align:left;font-weight:600}
+#mayTemplateTray :is(th,td){padding:2px 6px;border-bottom:1px solid #313b4c;overflow-wrap:anywhere}
+#mayTemplateTray :is(th,td):last-child{white-space:nowrap;text-align:right}
+#mayTemplateTray canvas{display:block;width:64px;height:48px;image-rendering:pixelated}
+@media(prefers-reduced-motion:no-preference){
+  #mayTemplateTray tbody tr{animation:may-template-arrive .16s ease-out both}
+  @keyframes may-template-arrive{from{opacity:0;transform:translateY(-8px)}}
+}
 #templateActions{display:flex;gap:8px;align-items:center;position:relative}
 #templateActions[hidden]{display:none}
 #templateActions .gz-hx{--c:#ffd35b;--gz-h:26px;--gz-n:10px;--gz-bg:#121a30;font:12px 'Segoe UI',sans-serif;cursor:pointer}
