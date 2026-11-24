@@ -32,7 +32,7 @@
         if (window.ZerkBitoteka) return Promise.resolve(window.ZerkBitoteka);
         if (bitotekaLoading) return bitotekaLoading;
         bitotekaLoading = new Promise((resolve, reject) => {
-            const url = new URL('_js/bitoteka.js?v=6', root).href;
+            const url = new URL('_js/bitoteka.js?v=7', root).href;
             let script = [...document.scripts].find(item => item.src === url);
             const loaded = () => window.ZerkBitoteka ? resolve(window.ZerkBitoteka) : reject(Error('Битотека не загрузилась'));
             if (!script) { script = document.createElement('script'); script.src = url; script.async = true; }

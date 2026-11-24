@@ -5,7 +5,7 @@
   const DB_NAME='zerkalius-bitoteka',CHANNEL='zerkalius-bitoteka-change',KINDS=['audio','video','gif','image','template','frame','work'];
   const LABELS={audio:'Аудио',video:'Видео',gif:'GIF',image:'Изображения',template:'Шаблоны',frame:'Кадры',work:'Работы'};
   const script=document.currentScript,base=new URL('./',script?.src||location.href),listeners=new Set(),recent=new Set();
-  let database=null,opening=null,channel=null,view=null,viewSerial=0,filter='',folder='',sourceImport=null,observer=null,retryAction=null,lastError='',returnFocus=null;
+  let database=null,opening=null,channel=null,view=null,viewSerial=0,renderRequest=0,filter='',folder='',sourceImport=null,observer=null,retryAction=null,lastError='',returnFocus=null;
   const previewUrls=new Set();
   // НТЗ-004: remove only the 35 retired project imports, including stored audio blobs.
   // Keep this list independent of the network catalog so an offline browser can clean up.
@@ -100,8 +100,10 @@
     await retireProjectSources();
     const kind=options.kind;if(kind&&!KINDS.includes(kind))throw Error('Неизвестный раздел Битотеки');
     const entries=await transaction(['entries'],'readonly',tx=>{const store=tx.objectStore('entries'),request=kind?store.index('kind').getAll(kind):store.getAll();return ()=>request.result;});
-    return entries.filter(item=>inFolder(item,options.folder)).sort((a,b)=>b.createdAt-a.createdAt||String(a.id).localeCompare(String(b.id)));
+    return entries.filter(item=>!excludedSourceImage(item)&&inFolder(item,options.folder)).sort((a,b)=>b.createdAt-a.createdAt||String(a.id).localeCompare(String(b.id)));
   }
+  // Keep previously imported payloads available for recovery while removing them from the library view.
+  const excludedSourceImage=item=>item.kind==='image'&&String(item.id).startsWith('source:ninetozero:');
   // Collections are independent of media kinds. Source collections include their files.
   function inFolder(item,value){
     if(!value||value==='Все')return true;
@@ -111,6 +113,7 @@
   async function importProjectSources(){
     await retireProjectSources();
     if(sourceImport)return sourceImport;
+    let addedSources=false;
     sourceImport=(async()=>{
       const catalogUrl=new URL('../sources/catalog.json',base),response=await fetch(catalogUrl,{cache:'no-cache'});
       if(!response.ok)throw Error('Каталог источников: HTTP '+response.status);
@@ -121,7 +124,7 @@
         try{
           if(!entry||typeof entry.id!=='string'||!entry.id||entry.id.length>512||!KINDS.includes(entry.kind)||typeof entry.url!=='string')throw Error('Некорректная запись каталога');
           const id=entry.id;
-          if(RETIRED_SOURCE_IDS.has(id))continue;
+          if(RETIRED_SOURCE_IDS.has(id)||excludedSourceImage(entry))continue;
           const known=await transaction(['entries','sourceImports'],'readwrite',tx=>{
             const records=tx.objectStore('entries'),ledger=tx.objectStore('sourceImports'),seen=ledger.get(id),existing=records.get(id);
             let skip=false;
@@ -146,15 +149,15 @@
               ledger.put({id,version:catalog.version,at:now});
             };return ()=>written;
           });
-          if(added)changed('save',id);
+          if(added)addedSources=true;
         }catch(error){failures.push(String(entry?.name||entry?.id||'Источник')+': '+message(error));}
       }
       if(failures.length)throw Error('Не все источники добавлены. '+failures.join('\n'));
-    })().catch(error=>{sourceImport=null;throw error;});
+    })().catch(error=>{sourceImport=null;throw error;}).finally(()=>{if(addedSources)changed('import');});
     return sourceImport;
   }
   async function refreshSources(){
-    try{await importProjectSources();if(retryAction?.bitotekaSourceRetry){retryAction=null;lastError='';paintError();}await render();}
+    try{await importProjectSources();if(retryAction?.bitotekaSourceRetry){retryAction=null;lastError='';paintError();}}
     catch(error){lastError=message(error);retryAction=()=>refreshSources();retryAction.bitotekaSourceRetry=true;paintError();}
   }
   async function get(id){await retireProjectSources();return transaction(['entries','payloads'],'readonly',tx=>{
@@ -176,7 +179,7 @@
   }
   function releasePreviews(){observer?.disconnect();observer=null;if(view)for(const video of view.grid.querySelectorAll('video,audio')){video.pause();video.removeAttribute('src');video.load();}
     for(const url of previewUrls)URL.revokeObjectURL(url);previewUrls.clear();}
-  function close(){if(!view)return;if(view.embedded){root.MayatnikTemplatePanel?.setOpen(false);return;}viewSerial++;releasePreviews();view.dialog.close();if(returnFocus?.isConnected)returnFocus.focus?.();}
+  function close(){if(!view)return;if(view.embedded){root.MayatnikTemplatePanel?.setOpen(false);return;}renderRequest++;viewSerial++;view.renderKey=null;releasePreviews();view.dialog.close();if(returnFocus?.isConnected)returnFocus.focus?.();}
   function build(){
     if(view)return;const dialog=document.createElement('dialog');dialog.id='zerkBitoteka';dialog.className='zbt';dialog.setAttribute('aria-labelledby','zbt-title');
     const header=document.createElement('header'),title=document.createElement('h2');title.id='zbt-title';title.textContent='Битотека';header.appendChild(title);
@@ -208,13 +211,18 @@
     }catch(error){if(serial===viewSerial&&card.isConnected)card.querySelector('.zbt-preview').textContent=message(error);}
   }
   async function render(){
-    if(!view?.dialog.open)return;const serial=++viewSerial;releasePreviews();view.grid.replaceChildren();view.status.textContent='Открываем записи…';paintError();
-    for(const b of view.filters.children)b.setAttribute('aria-pressed',String(b.dataset.kind===filter));
-    for(const b of view.folders.children)b.setAttribute('aria-pressed',String(b.dataset.folder===folder));
-    try{const entries=await list({kind:filter||undefined,folder});if(serial!==viewSerial||!view.dialog.open)return;
+    if(!view?.dialog.open)return;
+    const request=++renderRequest,kind=filter,collection=folder;
+    if(!view.renderKey)view.status.textContent='Открываем записи…';
+    paintError();
+    for(const b of view.filters.children)b.setAttribute('aria-pressed',String(b.dataset.kind===kind));
+    for(const b of view.folders.children)b.setAttribute('aria-pressed',String(b.dataset.folder===collection));
+    try{const entries=await list({kind:kind||undefined,folder:collection});if(request!==renderRequest||!view.dialog.open)return;
       view.status.textContent=entries.length?'Записей: '+entries.length:'В этом разделе пока нет записей.';
       if(retryAction?.bitotekaReadRetry){retryAction=null;lastError='';paintError();}
-      if('IntersectionObserver' in root)observer=new IntersectionObserver(records=>{for(const record of records)if(record.isIntersecting){observer?.unobserve(record.target);const item=record.target._entry;if(item)preview(record.target,item,serial);}},{root:view.grid,rootMargin:'128px'});
+      const key=JSON.stringify([kind,collection,entries.map(item=>[item.id,item.updatedAt])]);
+      if(view.renderKey===key)return;
+      const cards=document.createDocumentFragment();
       for(const item of entries){
         const card=document.createElement('article');card.className='zbt-card';card._entry=item;
         const media=document.createElement('div');media.className='zbt-preview';media.textContent=LABELS[item.kind]||item.kind;
@@ -232,10 +240,13 @@
           let destination=null;try{const url=new URL(item.meta.openUrl,location.href);if(['http:','https:'].includes(url.protocol)&&url.origin===location.origin)destination=url.href;}catch(_){}
           if(destination){const label=String(item.id).startsWith('mayatnik:')?'Открыть в Маятнике':'Открыть в исходной странице';actions.appendChild(button(label,'⇗',()=>location.assign(destination),true));}
         }
-        card.append(media,name,file,details,collection,source,summary,actions);view.grid.appendChild(card);
-        if(observer)observer.observe(card);else preview(card,item,serial);
+        card.append(media,name,file,details,collection,source,summary,actions);cards.appendChild(card);
       }
-    }catch(error){if(serial!==viewSerial)return;view.status.textContent='Записи не удалось открыть.';lastError=message(error);retryAction=()=>render();retryAction.bitotekaReadRetry=true;paintError();}
+      const serial=++viewSerial;
+      releasePreviews();view.grid.replaceChildren(cards);view.renderKey=key;
+      if('IntersectionObserver' in root)observer=new IntersectionObserver(records=>{for(const record of records)if(record.isIntersecting){observer?.unobserve(record.target);const item=record.target._entry;if(item)preview(record.target,item,serial);}},{root:view.grid,rootMargin:'128px'});
+      for(const card of view.grid.children){if(observer)observer.observe(card);else preview(card,card._entry,serial);}
+    }catch(error){if(request!==renderRequest)return;view.status.textContent='Записи не удалось открыть.';lastError=message(error);retryAction=()=>render();retryAction.bitotekaReadRetry=true;paintError();}
   }
   async function mount(host,options={}){
     if(!host||host.ownerDocument!==document)throw Error('Не найден раздел Битотеки');
