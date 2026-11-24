@@ -112,7 +112,7 @@
       if(swatch)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path class="inline-face" d="M12 1 23 12 12 23 1 12Z"/><path class="inline-hover" d="m6 6-5 6 5 6m12-12 5 6-5 6"/></svg>';
       else{const icon=doc.createElement('span');icon.className='gz-ic';icon.setAttribute('aria-hidden','true');icon.textContent=glyph;const label=doc.createElement('span');label.className='gz-nm';labelText(label,captions[id]);node.append(icon,label);outline(node);}parent.append(node);return node;}
     for(const [id,title,glyph]of commands){if(id==='split'&&!options.split||!expanded&&(id==='shiftLeft'||id==='shiftRight'||id.startsWith('manualAxis:')||id==='capturePaint'||id==='transferPaint'||id==='underlayOne'))continue;
-      const hint=id==='move'&&options.antibit?title+'. Перетаскивание с Ctrl оставляет антибит на исходном месте.':title;
+      const hint=id==='move'&&options.ctrlMove?title+'. Перетаскивание с Ctrl перемещает шаблоны без следа.':title;
       const node=button(id,hint,glyph,sections.get(id));buttons.set(id,node);miniButton(node,'command:'+id);node.addEventListener('click',e=>{e.stopPropagation();if(id==='colour'){if(currentState?.axis512Palette){palette.hidden=true;geometryDirty=true;options.action('axis512Palette');return;}palette.hidden=!palette.hidden;geometryDirty=true;if(currentState)render(currentState);return;}if(!palette.hidden){palette.hidden=true;geometryDirty=true;}options.action(id);});}
     for(const colour of options.colours||['#ffffff','#000000','#ff4040','#ffb347','#ffd646','#74df76','#65d9ff','#5795ff','#b48cff','#5b6475']){const swatch=button('colour:'+colour,'Цвет '+colour,'',palette,true);swatch.style.setProperty('--sample',colour);swatch.addEventListener('click',()=>options.action('colour',colour));}
     const custom=doc.createElement('input');custom.type='color';custom.title='Собственный цвет выбранных шаблонов';custom.setAttribute('aria-label',custom.title);custom.addEventListener('input',()=>options.action('colour',custom.value));palette.append(custom);sections.get('colour').append(palette);
@@ -185,9 +185,9 @@
     doc.addEventListener?.('pointerdown',e=>{if(e.pointerType==='touch'&&drag&&e.pointerId!==drag.id&&options.secondTouch){options.secondTouch(e,{id:drag.id,x:drag.lastX??drag.x,y:drag.lastY??drag.y});e.preventDefault();e.stopImmediatePropagation();}},true);
     function grip(axis){if(grips.has(axis.id))return grips.get(axis.id);const line=doc.createElementNS(svg.namespaceURI,'line');line.classList.add('may-template-translate-grip');line.setAttribute('tabindex','0');line.setAttribute('role','slider');line.setAttribute('aria-label',axis.direction==='h'?'Двигать шаблоны вдоль горизонтальной оси':'Двигать шаблоны вдоль вертикальной оси');line.dataset.direction=axis.direction;
       line.addEventListener('pointerdown',e=>{
-        const antibit=options.antibit===true&&e.ctrlKey&&e.pointerType!=='touch';
-        if(e.button!==0||!state?.translateEnabled||e.altKey||e.ctrlKey&&!antibit||e.metaKey||e.shiftKey)return;
-        if(options.begin(axis.id,axis.direction,e,antibit)===false)return;
+        const noTrace=options.ctrlMove===true&&e.ctrlKey&&e.pointerType!=='touch';
+        if(e.button!==0||!state?.translateEnabled||e.altKey||e.ctrlKey&&!noTrace||e.metaKey||e.shiftKey)return;
+        if(options.begin(axis.id,axis.direction,e,noTrace)===false)return;
         drag={id:e.pointerId,node:line,x:e.clientX,y:e.clientY,direction:axis.direction,factor:state.factor,rk:state.rk,moved:false};
         line.setPointerCapture(e.pointerId);line.focus();e.preventDefault();e.stopPropagation();
       });
