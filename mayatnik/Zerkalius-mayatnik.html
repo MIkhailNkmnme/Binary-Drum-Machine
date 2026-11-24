@@ -1,3 +1,4 @@
+<!-- МАЯ-713 · v1.102 · Каталог шаблонов и поле композиций. -->
 <!-- МАЯ-712 · v1.101 · Перенос шаблонов под поле с антибитами и разшаблонка. -->
 <!-- МАЯ-711 · v1.100 · Выделение сохранённых шаблонов и контекстная панель. -->
 <!-- МАЯ-710 · v1.099 · Шаблон от четырёх клеток. -->
@@ -99,7 +100,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.101</title>
+<title>Zerkalius Маятнкъ — v1.102</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -253,7 +254,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.101</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.102</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -556,7 +557,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <div id="edgeBelowWrap" style="display:none;position:relative;margin:0 auto;overflow:hidden;background:#050505"><canvas id="edgeBelow" width="1" height="1" aria-label="Копии левого и правого края под полем" style="display:block;margin:0;image-rendering:pixelated;height:auto"></canvas></div>
 <section id="mayTemplateTray" aria-label="Шаблоны под полем" hidden>
   <p id="mayTemplateTrayDrop" hidden>Отпустите шаблон под полем</p>
-  <table hidden><caption>Шаблоны под полем</caption>
+  <table hidden><caption>Шаблоны под полем · <a href="Zerkalius-mayatnik-shablony.html" target="_blank" rel="noopener">Каталог ↗</a></caption>
     <thead><tr><th scope="col">№</th><th scope="col">Фигура</th><th scope="col">Шаблон</th><th scope="col">Клетки</th></tr></thead>
     <tbody></tbody>
   </table>
@@ -5605,7 +5606,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(entry.inlineLayers&&window.mayLayers)for(const layer of (redo?entry.inlineLayers.after:entry.inlineLayers.before))window.mayLayers.set('template:'+layer.id,{opacity:layer.opacity});
     transfer();
     columnTemplatesKeepEdits(entry.inlineAutoColumns);
-    fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';if(raster)cssLayout();draw();fillSync();savePaint();if(st.paintSame||st.paintSymmetric)manualPatternSchedule();return true;
+    fillBits=null;templateStatsKey='';$('fillInfo').textContent=redo?'Действие повторено.':'Действие отменено.';if(raster)cssLayout();draw();fillSync();if(entry.templateTray)templateTrayCatalogueSave();savePaint();if(st.paintSame||st.paintSymmetric)manualPatternSchedule();return true;
     }catch(error){return report(error);}finally{if(raster)gpuPaintRequests--;}
   }
   $('bFillUndo').onclick=()=>historyStep(false);$('bFillRedo').onclick=()=>historyStep(true);
@@ -6036,16 +6037,16 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     restoreFieldTemplateSelection(ids.has(before.active)?remaining.at(-1):before.active,remaining);
     templateHover=null;fillBits=null;templateStatsKey='';
     pushHistory({indices,previous,next,bitsPrevious,bitsNext,beforeScene:before,afterScene:sceneSnapshot(),
-      templateOwned:true,bytes:count*14+1024,inlineAutoColumns:axes});
+      templateOwned:true,templateTray:true,bytes:count*14+1024,inlineAutoColumns:axes});
     columnTemplatesKeepEdits(axes);
     draw();queueDigits();
-    if(!templateTrayRun)savePaint();
+    if(!templateTrayRun){templateTrayCatalogueSave();savePaint();}
     return items.length;
   }
   function templateTrayStop(){
     const run=templateTrayRun;if(!run)return;
     clearTimeout(run.timer);templateTrayRun=null;templateTraySync();
-    if(run.moved&&run.field===f&&run.frame===k&&run.key===fillKey)savePaint();
+    if(run.moved&&run.field===f&&run.frame===k&&run.key===fillKey){templateTrayCatalogueSave();savePaint();}
   }
   function templateTrayNext(run){
     if(run!==templateTrayRun)return;
@@ -6528,7 +6529,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     for(const {g,count}of groups.values()){const data=new Array(g.w*g.h).fill(0);for(const q of cells[g.i])data[(Math.floor(q/W)-g.y)*g.w+(q%W-g.x)]=g.col;
       const hex='#'+[g.col&255,g.col>>>8&255,g.col>>>16&255].map(v=>v.toString(16).padStart(2,'0')).join('');
       const proofParts=window.mayTemplateDedup?.captureParts([{mask:{x:g.x,y:g.y,width:g.w,height:g.h,data},bitsData:new Int8Array(data.length).fill(g.bit)}]);
-      const entry={id:'saved:auto:'+stamp+':'+(j++),name:'авто · '+g.n+' бит · '+g.bit+' · '+g.w+'×'+g.h+(count>1?' · ×'+count:''),stats:{n:g.n,bit:g.bit,count,w:g.w,h:g.h,b:g.b,v:g.v,d:g.d,frame:k},   // v0.284: числа — и полем stats (для страницы «Шаблоны»)
+      const entry={id:'saved:auto:'+stamp+':'+(j++),name:'авто · '+g.n+' бит · '+g.bit+' · '+g.w+'×'+g.h+(count>1?' · ×'+count:''),stats:{n:g.n,bit:g.bit,count,w:g.w,h:g.h,b:g.b,v:g.v,d:g.d,frame:k,rows:st.rows},   // v0.284: числа — и полем stats (для страницы «Шаблоны»)
 
         shape:{hex,rk:1,libraryProof:proofParts?window.mayTemplateDedup.proof(proofParts):null,parts:[{width:g.w,height:g.h,y:g.y,center:g.x+g.w/2-(geo.anchor-VX+.5),data}],height:100,down:0,x:0,proportional:false}};
       if(window.mayTemplateDedup)window.mayTemplateDedup.append([entry]);else templateLibrary.push(entry);}
@@ -6825,8 +6826,17 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
     templateStatsKey='';autoSync();fillSync();templateSync();draw();savePaint();
   };
-  function templateFieldSnapshot(){
-    return templateItems.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,axis512Palette:t.axis512Palette,compound:t.compound,autoColumnAxis:t.autoColumnAxis,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,sourceVacatedCells:t.sourceVacatedCells,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,compoundPath:p.compoundPath,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))}));
+  function templateFieldSnapshot(items=templateItems){
+    return items.map(t=>({id:t.id,name:t.name,hex:t.hex,libraryId:t.libraryId,axis512Palette:t.axis512Palette,compound:t.compound,autoColumnAxis:t.autoColumnAxis,matchOrientation:t.matchOrientation,sourcePreserving:t.sourcePreserving,sourceKind:t.sourceKind,sourceVacated:t.sourceVacated,sourceVacatedCells:t.sourceVacatedCells,paintSource:t.paintSource,lifted:t.lifted,pixels:t.pixels,bits:t.bits,view:t.view,templateAxes:t.templateAxes,parts:t.parts.map(p=>({mask:p.mask,compoundPath:p.compoundPath,sourceData:p.sourceData,bitsData:p.bitsData,librarySource:p.librarySource,p:p.p,ox:p.ox,axis:p.axis,symmetry:p.symmetry,sourceOrigin:p.sourceOrigin,sourceIndices:p.sourceIndices,axisClipWidth:p.axisClipWidth,axisOriginY:p.axisOriginY,compositionSources:p.compositionSources}))}));
+  }
+  function templateTrayCatalogueSave(){
+    const rows=st.rows;
+    if(![128,256,512,1024,2048,4096].includes(rows))return;
+    const data={rows,frame:k,rk:RK,templatePaint:templatePaintLayer,
+      bitZeroColour:st.bitZeroColour,bitOneColour:st.bitOneColour,
+      templates:templateFieldSnapshot(templateItems.filter(item=>item.view?.tray))};
+    cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data,'template-tray:'+rows))
+      .catch(()=>{$('paintCacheInfo').textContent='Не удалось сохранить шаблоны под полем в каталоге.';});
   }
   function restoreFieldTemplates(data){
     for(const item of templateItems)MayatnikTemplateCompound.validateField(item);
@@ -6837,7 +6847,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function paintSnapshot(){
     if(!f||!img||rowBuild)return null;
     rememberTemplate();
-    return {schema:2,templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibraryForStorage()),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
+    return {schema:2,rk:RK,templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibraryForStorage()),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
       templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateFieldSnapshot(),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }
@@ -7531,7 +7541,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!instance){$('paintCacheInfo').textContent='Сначала выберите фигуру на поле';return;}
     if(!instance.parts.some(p=>p.mask.data.some(Boolean))){$('paintCacheInfo').textContent='Пустой результат операции нельзя сохранить в библиотеку. Отмените действие или выберите другую фигуру.';return;}
     rememberTemplate();const items=composition?.items||(fresh||explicitUpdate?[instance]:pickedTemplates()),combined=!!composition||items.length>1;
-    let shape;try{shape=combined?compoundTemplateSnapshot(items):templateSnapshot();if(shape.compound)MayatnikTemplateCompound.validate(shape);}catch(error){$('paintCacheInfo').textContent=error.message;return;}
+    let shape;try{shape=combined?compoundTemplateSnapshot(items):templateSnapshot();shape.fieldRows=st.rows;if(shape.compound)MayatnikTemplateCompound.validate(shape);}catch(error){$('paintCacheInfo').textContent=error.message;return;}
     const name=composition?.name||(combined?'Сборный шаблон':$('templateName').value.trim()||'Мой шаблон'),selected=combined?null:instance.libraryId;
     await libraryReady;
     const before=sceneSnapshot(),old=!fresh&&templateLibrary.find(t=>t.id===selected&&!!t.shape.compound===!!shape.compound&&(explicitUpdate||t.name===name)),duplicate=!old&&window.mayTemplateDedup?.find(shape),id=old?.id||duplicate?.id||('saved:'+Date.now()+':'+Math.random().toString(36).slice(2,8));
