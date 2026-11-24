@@ -7,18 +7,15 @@
   const script=document.currentScript,base=new URL('./',script?.src||location.href),listeners=new Set(),recent=new Set();
   let database=null,opening=null,channel=null,view=null,viewSerial=0,renderRequest=0,filter='',folder='',sourceImport=null,observer=null,retryAction=null,lastError='',returnFocus=null;
   const previewUrls=new Set();
-  // НТЗ-004: remove only the 35 retired project imports, including stored audio blobs.
-  // Keep this list independent of the network catalog so an offline browser can clean up.
-  const RETIRED_SOURCE_IDS=new Set(["source:ninetozero:collection", "source:ninetozero:techno-code-text", "source:ninetozero:audio:9e2ddbe94a84", "source:ninetozero:audio:ac27afc4dad5", "source:ninetozero:audio:96f5434b61d3", "source:ninetozero:audio:76f7610b20a4", "source:ninetozero:audio:59a562a28ce6", "source:ninetozero:audio:4f56ebd21a63", "source:ninetozero:audio:efb854e38bb5", "source:ninetozero:audio:dfee9b6a0c51", "source:ninetozero:audio:244da910bc25", "source:ninetozero:audio:e8243dc533c7", "source:ninetozero:audio:f4b69c09f78a", "source:ninetozero:audio:148d1b7eb110", "source:ninetozero:audio:230291e392d9", "source:ninetozero:audio:e99053e9ddb7", "source:ninetozero:audio:5de780fad634", "source:ninetozero:audio:6e99bdd89418", "source:ninetozero:audio:0766595d4f1b", "source:ninetozero:audio:000e5c030b15", "source:ninetozero:audio:a43f314d9bb2", "source:ninetozero:audio:0bc640bf948a", "source:ninetozero:audio:38bbdad46c15", "source:ninetozero:audio:6146727f7f09", "source:ninetozero:audio:12f0619112a4", "source:ninetozero:audio:6630610fbe39", "source:ninetozero:audio:6129511f7189", "source:ninetozero:audio:2225eae87ea6", "source:ninetozero:audio:100aeb828a81", "source:ninetozero:audio:1bccc7fe878c", "source:ninetozero:audio:af32e4baae07", "source:ninetozero:audio:7f3ccbf88eaf", "source:ninetozero:audio:195902ef4b2b", "source:ninetozero:audio:ebde2416a9a9", "source:ninetozero:audio:c905a02de14e"]);
+  const retiredSourcePrefix='source:ninetozero:';
+  const isRetiredSource=id=>String(id).startsWith(retiredSourcePrefix);
   let retirement=null;
   function retireProjectSources(){
     if(retirement)return retirement;
     retirement=transaction(['entries','payloads','sourceImports'],'readwrite',tx=>{
-      for(const id of RETIRED_SOURCE_IDS){
-        tx.objectStore('entries').delete(id);
-        tx.objectStore('payloads').delete(id);
-        tx.objectStore('sourceImports').put({id,version:4,retired:true,at:Date.now()});
-      }
+      // A colon sorts immediately before a semicolon in IndexedDB string keys.
+      const keys=IDBKeyRange.bound(retiredSourcePrefix,'source:ninetozero;',false,true);
+      for(const name of tx.objectStoreNames)tx.objectStore(name).delete(keys);
     }).catch(error=>{retirement=null;throw error;});
     return retirement;
   }
@@ -87,7 +84,7 @@
       if(input.thumbnail!=null&&(!(input.thumbnail instanceof Blob)||!input.thumbnail.type.startsWith('image/')))throw Error('Миниатюра должна быть файлом изображения.');
       const now=Date.now(),id=input.id==null?uid():String(input.id);
       if(!id||id.length>512)throw Error('Некорректный идентификатор записи');
-      if(RETIRED_SOURCE_IDS.has(id))throw Error('Этот источник удалён из проекта. NINETOZERO — только изображения.');
+      if(isRetiredSource(id))throw Error('Этот источник удалён из проекта.');
       const item={id,kind:input.kind,name:String(input.name||'Без названия').slice(0,512),filename:filename(input),source:structuredClone(input.source??document.title??''),meta:structuredClone(input.meta??{}),createdAt:now,updatedAt:now,mime:input.blob.type,size:input.blob.size,hasThumbnail:!!input.thumbnail};
       await transaction(['entries','payloads'],'readwrite',tx=>{
         const entries=tx.objectStore('entries'),previous=entries.get(id);
@@ -100,14 +97,12 @@
     await retireProjectSources();
     const kind=options.kind;if(kind&&!KINDS.includes(kind))throw Error('Неизвестный раздел Битотеки');
     const entries=await transaction(['entries'],'readonly',tx=>{const store=tx.objectStore('entries'),request=kind?store.index('kind').getAll(kind):store.getAll();return ()=>request.result;});
-    return entries.filter(item=>!excludedSourceImage(item)&&inFolder(item,options.folder)).sort((a,b)=>b.createdAt-a.createdAt||String(a.id).localeCompare(String(b.id)));
+    return entries.filter(item=>!isRetiredSource(item.id)&&inFolder(item,options.folder)).sort((a,b)=>b.createdAt-a.createdAt||String(a.id).localeCompare(String(b.id)));
   }
-  // Keep previously imported payloads available for recovery while removing them from the library view.
-  const excludedSourceImage=item=>item.kind==='image'&&String(item.id).startsWith('source:ninetozero:');
   // Collections are independent of media kinds. Source collections include their files.
   function inFolder(item,value){
     if(!value||value==='Все')return true;
-    if(value==='Kraftwerk'||value==='NINETOZERO')return item.meta?.collection===value||item.meta?.folder===value;
+    if(value==='Kraftwerk')return item.meta?.collection===value||item.meta?.folder===value;
     const path=String(item.meta?.folder||'');return path===value||path.startsWith(value+'/');
   }
   async function importProjectSources(){
@@ -124,7 +119,7 @@
         try{
           if(!entry||typeof entry.id!=='string'||!entry.id||entry.id.length>512||!KINDS.includes(entry.kind)||typeof entry.url!=='string')throw Error('Некорректная запись каталога');
           const id=entry.id;
-          if(RETIRED_SOURCE_IDS.has(id)||excludedSourceImage(entry))continue;
+          if(isRetiredSource(id))continue;
           const known=await transaction(['entries','sourceImports'],'readwrite',tx=>{
             const records=tx.objectStore('entries'),ledger=tx.objectStore('sourceImports'),seen=ledger.get(id),existing=records.get(id);
             let skip=false;
@@ -160,7 +155,7 @@
     try{await importProjectSources();if(retryAction?.bitotekaSourceRetry){retryAction=null;lastError='';paintError();}}
     catch(error){lastError=message(error);retryAction=()=>refreshSources();retryAction.bitotekaSourceRetry=true;paintError();}
   }
-  async function get(id){await retireProjectSources();return transaction(['entries','payloads'],'readonly',tx=>{
+  async function get(id){await retireProjectSources();if(isRetiredSource(id))return null;return transaction(['entries','payloads'],'readonly',tx=>{
     const entry=tx.objectStore('entries').get(String(id)),payload=tx.objectStore('payloads').get(String(id));
     return ()=>entry.result?{...entry.result,blob:payload.result?.blob||null,thumbnail:payload.result?.thumbnail||null}:null;
   });}
@@ -188,7 +183,7 @@
     const captions={audio:'Аудио',video:'Видео',gif:'GIF',image:'Фото',template:'Шблоны',frame:'Кадры',work:'Работы'};
     for(const kind of ['',...KINDS]){const b=button(kind?LABELS[kind]:'Все записи',kind?captions[kind]:'Все',()=>{filter=kind;render();});b.dataset.kind=kind;filters.appendChild(b);}
     const folders=document.createElement('nav');folders.className='zbt-filters zbt-folders';folders.setAttribute('aria-label','Папки и коллекции Битотеки');
-    for(const value of ['','Источники','Kraftwerk','NINETOZERO']){const b=button(value||'Все папки и коллекции',value||'Все',()=>{folder=value;render();});b.dataset.folder=value;folders.appendChild(b);}
+    for(const value of ['','Источники','Kraftwerk']){const b=button(value||'Все папки и коллекции',value||'Все',()=>{folder=value;render();});b.dataset.folder=value;folders.appendChild(b);}
     const status=document.createElement('p');status.className='zbt-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     const error=document.createElement('p');error.className='zbt-error';error.setAttribute('role','alert');error.hidden=true;
     const retry=button('Повторить действие','↻',async()=>{const action=retryAction;if(!action)return;retry.disabled=true;try{await action();}catch(_){}finally{retry.disabled=false;}},true);retry.hidden=true;
