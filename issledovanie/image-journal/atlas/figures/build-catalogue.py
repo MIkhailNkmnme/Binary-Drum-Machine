@@ -38,7 +38,7 @@ def recorded_figures():
         image.putpalette(colours)
         png = BytesIO()
         image.save(png, format='PNG', transparency=0, optimize=True)
-        yield number, width, height, sum(counts), png.getvalue(), [row[:3] for row in occurrences]
+        yield number, width, height, sum(counts), png.getvalue(), occurrences
 
 
 def calculated_figures(source, index):
@@ -71,9 +71,10 @@ def build(size, source, destination):
     chunk = []
     for offset, (number, width, height, cells, png, occurrences) in enumerate(records):
         ids.append(number)
-        for frame, x, y in occurrences:
+        for frame, x, y, *_ in occurrences:
             by_frame[frame].append((offset, x, y))
-        chunk.append([number, width, height, cells, *occurrences[0], b64encode(png).decode('ascii')])
+        frame, x, y, *orientation = occurrences[0]
+        chunk.append([number, width, height, cells, frame, x, y, b64encode(png).decode('ascii'), *orientation])
         if len(chunk) == CHUNK_SIZE:
             write_json(destination / f'chunk-{offset // CHUNK_SIZE}.json', chunk)
             chunk = []

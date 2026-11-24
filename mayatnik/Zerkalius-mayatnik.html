@@ -1,3 +1,4 @@
+<!-- МАЯ-714 · v1.103 · Исходная ось для шаблонов под полем. -->
 <!-- МАЯ-713 · v1.102 · Каталог шаблонов и поле композиций. -->
 <!-- МАЯ-712 · v1.101 · Перенос шаблонов под поле с антибитами и разшаблонка. -->
 <!-- МАЯ-711 · v1.100 · Выделение сохранённых шаблонов и контекстная панель. -->
@@ -100,7 +101,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.102</title>
+<title>Zerkalius Маятнкъ — v1.103</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -254,7 +255,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.102</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.103</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -6832,7 +6833,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function templateTrayCatalogueSave(){
     const rows=st.rows;
     if(![128,256,512,1024,2048,4096].includes(rows))return;
-    const data={rows,frame:k,rk:RK,templatePaint:templatePaintLayer,
+    const data={rows,frame:k,rk:RK,originX:displayAnchorX(),templatePaint:templatePaintLayer,
       bitZeroColour:st.bitZeroColour,bitOneColour:st.bitOneColour,
       templates:templateFieldSnapshot(templateItems.filter(item=>item.view?.tray))};
     cacheWrites=cacheWrites.then(()=>MayatnikPaintCache.write(data,'template-tray:'+rows))
@@ -6847,7 +6848,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function paintSnapshot(){
     if(!f||!img||rowBuild)return null;
     rememberTemplate();
-    return {schema:2,rk:RK,templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibraryForStorage()),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
+    return {schema:2,rk:RK,originX:displayAnchorX(),templatePaint:templatePaintLayer,manualPattern:manualPaintSnapshot(),paintRepeat:paintRepeatSeed,columns:colReplaySnapshot(),colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),st:structuredClone(st),library:structuredClone(templateLibraryForStorage()),libraryHidden:[...removedTemplateIds],mirrors:{live:mirrorLive,xor:mirrorXor,base:mirrorLive&&mirrorBase?{paint:mirrorBase.paint?.slice()||null,bits:mirrorBase.bits?.slice()||null}:null},k,edgeJumps,edgeLaps,field:f.val.slice(),edgeFlowMark:edgeFlowOn()?edgeMark?.slice()||null:null,width:img.width,height:img.height,fill:fillMask?.slice()||null,paintBits:paintBits?.slice()||null,face:faceLayer,colour:$('fillColour').value,
       templateMatches:templateMatchLayer,activeTemplate:colourTemplate?.id,pickedTemplates:[...templatePickedIds],templates:templateFieldSnapshot(),
       offsetX:templateOffsetX,returnTo:templateReturn,paintBit:templatePaintBit,visible:templateVisible,mirror:$('fillMirror').checked,options:{height:$('templateHeight').value,down:$('templateDown').value,alpha:$('templateAlpha').value,proportional:$('templateProportional').checked,trail:$('templateTrail').checked}};
   }

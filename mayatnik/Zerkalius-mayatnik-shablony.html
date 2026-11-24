@@ -8,13 +8,13 @@
   <title>Шаблоны Маятника · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=3">
+  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=4">
   <script defer src="/_js/site-clarity.js?v=1"></script>
   <script defer src="mayatnik-paint-cache.js?v=1"></script>
   <script defer src="mayatnik-user-templates.js?v=1"></script>
   <script defer src="mayatnik-template.js"></script>
   <script defer src="../_js/hub-button-text.js?v=540"></script>
-  <script type="module" src="mayatnik-template-catalogue.js?v=3"></script>
+  <script type="module" src="mayatnik-template-catalogue.js?v=4"></script>
 </head>
 <body>
   <header class="site-bar">
@@ -43,7 +43,10 @@
       <section class="catalogue panel" aria-labelledby="catalogue-heading">
         <div class="panel-heading">
           <h2 id="catalogue-heading">Каталог</h2>
-          <output id="catalogue-count" aria-live="polite"></output>
+          <div class="tools">
+            <output id="catalogue-count" aria-live="polite"></output>
+            <button type="button" id="catalogue-add-all" class="gz-hx" title="Добавить все шаблоны текущего списка на исходные места" aria-label="Добавить все шаблоны текущего списка на поле" disabled><span>Все на поле</span></button>
+          </div>
         </div>
         <div class="catalogue-controls">
           <label>Поиск <input id="query" type="search" placeholder="Название или номер"></label>
@@ -95,27 +98,23 @@
         </details>
         <p id="catalogue-status" class="status" role="status"></p>
         <ul id="catalogue-cards" class="catalogue-cards" aria-label="Шаблоны"></ul>
-        <div id="pagination" class="tools pagination" aria-label="Страницы каталога" hidden>
-          <button type="button" id="previous-page" class="gz-hx compact" title="Предыдущая страница" aria-label="Предыдущая страница"><span>←</span></button>
-          <output id="page-number"></output>
-          <button type="button" id="next-page" class="gz-hx compact" title="Следующая страница" aria-label="Следующая страница"><span>→</span></button>
-        </div>
+        <p id="catalogue-more" class="catalogue-more" hidden></p>
       </section>
       <section id="composition" class="composition panel" aria-labelledby="composition-heading">
         <div class="panel-heading">
-          <h2 id="composition-heading">Поле композиции</h2>
+          <div><h2 id="composition-heading">Поле композиции</h2><p class="field-size">12 286 × 4096 клеток</p></div>
           <div class="tools zoom-tools" role="group" aria-label="Масштаб">
             <button type="button" id="zoom-out" class="gz-hx compact" title="Отдалить" aria-label="Отдалить"><span>−</span></button>
             <output id="zoom-level"></output>
             <button type="button" id="zoom-in" class="gz-hx compact" title="Приблизить" aria-label="Приблизить"><span>+</span></button>
-            <button type="button" id="fit-field" class="gz-hx" title="Показать композицию целиком"><span>Всё в поле</span></button>
+            <button type="button" id="fit-field" class="gz-hx" title="Показать всё поле"><span>Всё поле</span></button>
           </div>
         </div>
         <div class="viewport">
           <canvas id="field" tabindex="0" aria-label="Поле композиции. Стрелки двигают выделенный шаблон на одну клетку."></canvas>
           <p id="field-empty">Добавьте шаблон из каталога</p>
         </div>
-        <p class="field-help">Фигуру можно перетащить. Стрелки двигают её на одну клетку. Потяните фон, чтобы сдвинуть поле.</p>
+        <p class="field-help">1 клетка = 1 бит. Стрелки двигают фигуру на одну клетку. Потяните фон, чтобы сдвинуть поле.</p>
         <div class="field-controls">
           <div class="coordinates" role="group" aria-label="Координаты центра фигуры в клетках">
             <label>X <input id="layer-x" type="number" step="1" aria-label="Координата X в клетках" disabled></label>
@@ -131,7 +130,7 @@
             <button type="button" id="layer-remove" class="gz-hx compact" title="Убрать выбранную фигуру с поля" aria-label="Убрать выбранную фигуру с поля" disabled><span>×</span></button>
           </div>
         </div>
-        <ol id="field-layers" aria-label="Фигуры на поле"></ol>
+        <ol id="field-layers" aria-label="Фигуры на поле" tabindex="0" hidden></ol>
         <p id="field-status" class="status" role="status"></p>
       </section>
     </div>

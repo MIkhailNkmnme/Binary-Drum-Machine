@@ -4,6 +4,7 @@ function read(size, name) {
   const key = size + '/' + name;
   if (!requests.has(key)) {
     const url = new URL('data/' + key + '.json', import.meta.url);
+    if (size === 512 && name.startsWith('chunk-')) url.searchParams.set('v', '2');
     const request = fetch(url).then(response => {
       if (!response.ok) throw Error('Не удалось загрузить данные атласа.');
       return response.json();
@@ -22,9 +23,9 @@ export const pngSource = figure => 'data:image/png;base64,' + figure.png;
 
 export async function readFigure(size, offset, index) {
   const chunk = await read(size, 'chunk-' + Math.floor(offset / index.chunkSize));
-  const [number, width, height, cells, frame, x, y, png] = chunk[offset % index.chunkSize] ?? [];
+  const [number, width, height, cells, frame, x, y, png, mirrored = false] = chunk[offset % index.chunkSize] ?? [];
   if (number !== index.ids[offset]) throw Error('Фигура отсутствует в атласе.');
-  return { number, width, height, cells, frame, x, y, png };
+  return { number, width, height, cells, frame, x, y, png, mirrored };
 }
 
 export async function catalogueImage(id) {

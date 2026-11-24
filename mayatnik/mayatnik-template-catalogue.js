@@ -1,5 +1,5 @@
-import { catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=1';
-import { dragType, mountWorkbench } from './mayatnik-template-workbench.js?v=3';
+import { catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=2';
+import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=4';
 
 const SIZES = [128, 256, 512, 1024, 2048, 4096];
 const PAGE_SIZE = 24;
@@ -9,12 +9,13 @@ const caption = text => window.HubButtonText?.shortCaption(text) || text;
 const tabs = [...document.querySelectorAll('[data-size]')];
 const source = $('source'), origin = $('origin'), query = $('query');
 const catalogue = $('catalogue-cards'), catalogueStatus = $('catalogue-status');
+const addAll = $('catalogue-add-all'), sentinel = $('catalogue-more');
 const libraryControls = ['library-sort', 'library-bit', 'library-kind', 'library-min', 'library-max'];
 const requestedSize = () => Number(new URLSearchParams(location.search).get('size'));
 const selectedSize = () => SIZES.includes(requestedSize()) ? requestedSize() : 128;
-let size = selectedSize(), page = 0, exactCells = null, sequence = 0, localSequence = 0;
-let local = [], localError = false, currentEntries = new Map();
-const entriesByIndex = new WeakMap();
+let size = selectedSize(), exactCells = null, sequence = 0, localSequence = 0;
+let local = [], localError = false, localsReady = false, current = null, adding = false, localFingerprint = '';
+const entriesByIndex = new WeakMap(), offsetsByIndex = new WeakMap();
 
 function command(text, action, title = text) {
   const button = document.createElement('button'), label = document.createElement('span');
@@ -44,8 +45,10 @@ function atlasEntry(size, number, offset, index) {
 }
 
 async function resolveAtlas({ size, number }) {
-  const index = await catalogueIndex(size), offset = index.ids.indexOf(number);
-  if (offset < 0) throw Error('Фигура больше не найдена в Атласе.');
+  const index = await catalogueIndex(size);
+  if (!offsetsByIndex.has(index)) offsetsByIndex.set(index, new Map(index.ids.map((id, offset) => [id, offset])));
+  const offset = offsetsByIndex.get(index).get(number);
+  if (offset == null) throw Error('Фигура больше не найдена в Атласе.');
   return atlasEntry(size, number, offset, index);
 }
 
@@ -72,12 +75,16 @@ function sourceParts(entry) {
   if (entry.source === 'tray') {
     const { item, snapshot } = entry;
     const rk = snapshot.rk || 1, scale = (item.view.height ?? 100) / 100, ink = rgba(snapshot.templatePaint?.colours?.[item.id]);
+    const fallbackWidth = (snapshot.width ?? (3 * entry.size - 2) * rk) / rk;
+    const axis = snapshot.originX ?? Math.floor(fallbackWidth / 2) + .5;
+    const dx = FIELD_AXIS + .5 - axis + (item.view.x || 0), dy = (item.view.down || 0) * rk;
     const palette = [snapshot.bitZeroColour ?? snapshot.st?.bitZeroColour ?? '#000000', snapshot.bitOneColour ?? snapshot.st?.bitOneColour ?? '#ffffff'].map(rgba);
     return {
       rk, parts: item.parts.map(part => {
         const mask = part.mask;
-        const rect = MayatnikTemplate.rect(mask, part.axis ?? mask.x + mask.width / 2, scale, !!item.view.proportional, 0);
-        if (Number.isFinite(part.axisOriginY)) rect.y = part.axisOriginY + (mask.y - part.axisOriginY) * scale;
+        const rect = MayatnikTemplate.rect(mask, part.axis ?? mask.x + mask.width / 2, scale, !!item.view.proportional, dy);
+        rect.x += dx * rk;
+        if (Number.isFinite(part.axisOriginY)) rect.y = part.axisOriginY + (mask.y - part.axisOriginY) * scale + dy;
         const bits = !part.sourceOrigin && !item.axis512Palette ? part.bitsData : null;
         return { rect, mask, bits, ink, palette };
       })
@@ -85,12 +92,14 @@ function sourceParts(entry) {
   }
   const { shape } = entry.item, rk = shape.rk || 1;
   const scale = shape.compound ? 1 : (shape.height ?? 100) / 100;
+  const dx = (FIELD_AXIS + .5 + (shape.x || 0)) * rk, dy = (shape.down || 0) * rk;
   const parts = !shape.compound && shape.axisParts?.length ? shape.axisParts : shape.parts;
   return {
     rk, parts: parts.map(mask => {
       const x = mask.x ?? (mask.center ?? 0) * rk - mask.width / 2, y = mask.y ?? 0;
-      const rect = MayatnikTemplate.rect({ ...mask, x, y }, mask.axis ?? x + mask.width / 2, scale, !shape.compound && !!shape.proportional, 0);
-      if (Number.isFinite(mask.axisOriginY)) rect.y = mask.axisOriginY + (y - mask.axisOriginY) * scale;
+      const rect = MayatnikTemplate.rect({ ...mask, x, y }, mask.axis ?? x + mask.width / 2, scale, !shape.compound && !!shape.proportional, dy);
+      rect.x += dx;
+      if (Number.isFinite(mask.axisOriginY)) rect.y = mask.axisOriginY + (y - mask.axisOriginY) * scale + dy;
       return { rect, mask };
     })
   };
@@ -124,22 +133,24 @@ function localCanvas(entry, thumbnail = false) {
     const factor = Math.min(6, 144 / canvas.width, 86 / canvas.height);
     canvas.style.width = canvas.width * factor + 'px';
   }
-  return canvas;
+  return { canvas, x, y, width, height };
 }
 
-async function toCanvas(entry) {
+async function describe(entry) {
   if (!entry.atlas) return localCanvas(entry);
+  const figure = await figureAsset(entry);
+  const sourceAxis = entry.size === 512 ? 268 : Math.floor((3 * entry.size - 2) / 2);
+  return { ...figure, x: FIELD_AXIS + figure.x - sourceAxis };
+}
+
+async function atlasImage(entry) {
   const figure = await figureAsset(entry), picture = new Image();
   picture.src = pngSource(figure);
   await picture.decode();
-  const canvas = document.createElement('canvas');
-  canvas.width = figure.width;
-  canvas.height = figure.height;
-  canvas.getContext('2d').drawImage(picture, 0, 0);
-  return canvas;
+  return picture;
 }
 
-const workbench = mountWorkbench({ resolveAtlas, resolveEntry: key => currentEntries.get(key), toCanvas, caption });
+const workbench = mountWorkbench({ resolveAtlas, resolveEntry: key => current?.entriesByKey.get(key), describe, atlasImage, caption });
 
 function family(pixel) {
   const r = pixel & 255, g = pixel >>> 8 & 255, b = pixel >>> 16 & 255;
@@ -182,6 +193,7 @@ async function loadLocal() {
   const keys = ['templates', 'template-hidden', 'latest', ...SIZES.map(rows => 'template-tray:' + rows)];
   const results = await Promise.allSettled(keys.map(key => MayatnikPaintCache.read(key)));
   if (request !== localSequence) return;
+  localsReady = true;
   localError = results.some(result => result.status === 'rejected');
   const get = index => results[index].status === 'fulfilled' ? results[index].value : undefined;
   const removed = new Set(Array.isArray(get(1)) ? get(1) : []);
@@ -196,7 +208,10 @@ async function loadLocal() {
   });
   local = [...trays, ...[...library.values()].filter(item => !removed.has(item.id)).map(libraryEntry)];
   showStatistics();
-  render();
+  const fingerprint = JSON.stringify([localError, ...local.map(entry => [entry.key, entry.name, entry.n, entry.size, entry.frame])]);
+  if (localFingerprint !== fingerprint && (localFingerprint || local.length || localError)) render();
+  localFingerprint = fingerprint;
+  syncAddAll();
 }
 
 function inTab(entry) {
@@ -269,7 +284,8 @@ function card(entry) {
   item.className = 'catalogue-card';
   picture.className = 'card-preview';
   picture.draggable = true;
-  picture.title = 'Перетащить на поле';
+  picture.title = 'Двойной щелчок — на исходное место. Можно перетащить на поле.';
+  picture.ondblclick = () => workbench.add(entry);
   picture.ondragstart = event => {
     event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData(dragType, entry.key);
@@ -286,31 +302,40 @@ function card(entry) {
     image.alt = '';
     image.draggable = false;
     image.decoding = 'async';
+    image.loading = 'lazy';
+    if (figure.mirrored) image.style.transform = 'scaleX(-1)';
     image.style.width = figure.width * Math.min(6, 152 / figure.width, 92 / figure.height) + 'px';
     picture.append(image);
     meta.textContent = entry.size + ' · ' + figure.width + ' × ' + figure.height + ' · ' + format(figure.cells) + ' кл.';
   } else if (!entry.atlas) {
     const label = entry.source === 'tray' ? 'Из-под поля' : 'Битотека';
-    try { picture.append(localCanvas(entry, true)); }
+    try { picture.append(localCanvas(entry, true).canvas); }
     catch { picture.textContent = 'Превью недоступно'; }
     meta.textContent = [entry.size ?? 'Размер не записан', label, entry.n != null ? format(entry.n) + ' кл.' : '',
       entry.count > 1 ? '×' + format(entry.count) : ''].filter(Boolean).join(' · ');
   } else {
     picture.textContent = 'Фигура недоступна';
     picture.draggable = false;
+    picture.ondblclick = null;
     add.disabled = true;
     meta.textContent = String(entry.size);
   }
   return item;
 }
 
-function indexCount(count) {
-  $('catalogue-count').textContent = format(count) + ' шаблонов';
+function syncAddAll() {
+  addAll.disabled = adding || !current?.entries.length || (!localsReady && current.filter !== 'atlas');
 }
 
 async function render() {
   const request = ++sequence, filter = source.value;
+  current = null;
+  more.disconnect();
+  sentinel.hidden = true;
+  catalogue.replaceChildren();
   catalogue.setAttribute('aria-busy', 'true');
+  catalogueStatus.textContent = 'Загружаю шаблоны…';
+  syncAddAll();
   const options = size === 4096 ? [...SIZES].reverse().filter(value => !origin.value || value === Number(origin.value)) : [size];
   const indexes = filter && filter !== 'atlas' ? [] : await Promise.allSettled(options.map(async rows => [rows, await catalogueIndex(rows)]));
   if (sequence !== request) return;
@@ -324,30 +349,47 @@ async function render() {
   const libraries = !filter || filter === 'library' ? currentLibrary() : [];
   const trays = !filter || filter === 'tray' ? local.filter(entry => entry.source === 'tray' && inTab(entry) && searchMatch(entry)) : [];
   const entries = [...trays, ...libraries, ...atlas];
-  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
-  page = Math.max(0, Math.min(page, totalPages - 1));
-  const items = entries.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  let failed = atlasFailed;
-  await Promise.all(items.filter(entry => entry.atlas).map(async entry => {
-    try { await figureAsset(entry); }
-    catch { failed = true; }
-  }));
-  if (sequence !== request) return;
-  currentEntries = new Map(items.map(entry => [entry.key, entry]));
-  catalogue.replaceChildren(...items.map(card));
-  catalogue.setAttribute('aria-busy', 'false');
-  indexCount(entries.length);
-  $('pagination').hidden = totalPages === 1;
-  $('previous-page').disabled = page === 0;
-  $('next-page').disabled = page === totalPages - 1;
-  $('page-number').textContent = (page + 1) + ' / ' + format(totalPages);
-  catalogueStatus.textContent = [failed ? 'Часть Атласа пока недоступна.' : '',
-    localError && filter !== 'atlas' ? 'Не удалось прочитать часть шаблонов из памяти браузера.' : '',
-    entries.length ? '' : 'В этой вкладке нет шаблонов по выбранным условиям.'].filter(Boolean).join(' ');
+  current = { entries, entriesByKey: new Map(entries.map(entry => [entry.key, entry])), filter, shown: 0, failed: atlasFailed };
+  $('catalogue-count').textContent = format(entries.length) + ' шаблонов';
+  syncAddAll();
+  await appendMore(current);
 }
 
+async function appendMore(view) {
+  if (view !== current || view.loading) return;
+  more.disconnect();
+  view.loading = true;
+  const items = view.entries.slice(view.shown, view.shown + PAGE_SIZE);
+  await Promise.all(items.filter(entry => entry.atlas).map(async entry => {
+    try { await figureAsset(entry); }
+    catch { view.failed = true; }
+  }));
+  if (view !== current) return;
+  view.loading = false;
+  view.shown += items.length;
+  catalogue.append(...items.map(card));
+  catalogue.setAttribute('aria-busy', 'false');
+  sentinel.hidden = view.shown === view.entries.length;
+  sentinel.textContent = 'Показано ' + format(view.shown) + ' из ' + format(view.entries.length);
+  if (!sentinel.hidden) more.observe(sentinel);
+  catalogueStatus.textContent = [view.failed ? 'Часть Атласа пока недоступна.' : '',
+    localError && view.filter !== 'atlas' ? 'Не удалось прочитать часть шаблонов из памяти браузера.' : '',
+    view.entries.length ? '' : 'В этой вкладке нет шаблонов по выбранным условиям.'].filter(Boolean).join(' ');
+}
+
+const more = new IntersectionObserver(entries => {
+  if (entries.some(entry => entry.isIntersecting) && current && current.shown < current.entries.length) appendMore(current);
+}, { rootMargin: '0px 0px 320px 0px' });
+
+addAll.onclick = async () => {
+  if (adding || !current?.entries.length) return;
+  adding = true;
+  syncAddAll();
+  try { await workbench.addAll(current.entries); }
+  finally { adding = false; syncAddAll(); }
+};
+
 function refresh() {
-  page = 0;
   showStatistics();
   render();
 }
@@ -398,13 +440,6 @@ $('library-csv').onclick = async () => {
     catalogueStatus.textContent = 'Не удалось скопировать CSV.';
   }
 };
-for (const [id, shift] of [['previous-page', -1], ['next-page', 1]]) {
-  $(id).onclick = () => {
-    page += shift;
-    render();
-    $('catalogue-heading').scrollIntoView({ block: 'start' });
-  };
-}
 for (const button of document.querySelectorAll('.catalogue .gz-hx > span')) button.textContent = caption(button.textContent);
 switchSize(size, false);
 catalogueStatus.textContent = 'Загружаю шаблоны…';
