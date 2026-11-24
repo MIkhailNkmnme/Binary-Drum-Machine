@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11151c">
   <meta name="description" content="Шаблоны Маятника для шести размеров поля и редактор побитовых композиций.">
-  <title>Шаблоны Маятника · v0.006 · Зеркалиус</title>
+  <title>Шаблоны Маятника · v0.007 · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=6">
+  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=7">
   <script defer src="/_js/site-clarity.js?v=1"></script>
   <script defer src="mayatnik-paint-cache.js?v=1"></script>
   <script defer src="mayatnik-user-templates.js?v=1"></script>
   <script defer src="mayatnik-template.js"></script>
   <script defer src="../_js/hub-button-text.js?v=540"></script>
-  <script type="module" src="mayatnik-template-catalogue.js?v=6"></script>
+  <script type="module" src="mayatnik-template-catalogue.js?v=7"></script>
 </head>
 <body>
   <header class="site-bar">
@@ -30,7 +30,7 @@
     <header class="page-heading">
       <div class="catalogue-title">
         <h1>Шаблоны Маятника</h1>
-        <span class="catalogue-version" title="Версия каталога">v0.006</span>
+        <span class="catalogue-version" title="Версия каталога">v0.007</span>
       </div>
       <a href="#composition" class="jump-to-field">К полю ↓</a>
     </header>
@@ -106,6 +106,10 @@
       <section id="composition" class="composition panel" aria-labelledby="composition-heading">
         <div class="panel-heading">
           <div><h2 id="composition-heading">Поле композиции</h2><p class="field-size">12 286 × 4096 клеток</p></div>
+          <div class="tools history-tools" role="group" aria-label="История композиции">
+            <button type="button" id="composition-undo" class="gz-hx" title="Отменить последнее изменение фигур" aria-label="Отмена" disabled><span>↶ Отмена</span></button>
+            <button type="button" id="composition-redo" class="gz-hx" title="Повторить отменённое изменение фигур" aria-label="Повтор" disabled><span>↷ Повтор</span></button>
+          </div>
           <div class="tools zoom-tools" role="group" aria-label="Масштаб">
             <button type="button" id="zoom-out" class="gz-hx compact" title="Отдалить" aria-label="Отдалить"><span>−</span></button>
             <output id="zoom-level"></output>
