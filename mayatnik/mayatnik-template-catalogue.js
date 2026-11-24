@@ -2,12 +2,14 @@ import { catalogueIndex, pngSource, readFigure } from '../issledovanie/image-jou
 import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=8';
 
 const SIZES = [128, 256, 512, 1024, 2048, 4096];
+const CONNECTED_SIZE = 128;
 const PAGE_SIZE = 24;
 const $ = id => document.getElementById(id);
 const format = value => value.toLocaleString('ru-RU');
 const caption = text => window.HubButtonText?.shortCaption(text) || text;
 const tabs = [...document.querySelectorAll('[data-size]')];
 const source = $('source'), origin = $('origin'), query = $('query');
+const symmetry = $('symmetry'), connectedOption = source.querySelector('[value="connected"]');
 const catalogue = $('catalogue-cards'), catalogueStatus = $('catalogue-status');
 const addAll = $('catalogue-add-all'), sentinel = $('catalogue-more');
 const libraryControls = ['library-sort', 'library-bit', 'library-kind', 'library-min', 'library-max'];
@@ -16,6 +18,11 @@ const selectedSize = () => SIZES.includes(requestedSize()) ? requestedSize() : 1
 let size = selectedSize(), exactCells = null, sequence = 0, localSequence = 0;
 let local = [], localError = false, localsReady = false, current = null, adding = false, localFingerprint = '';
 const entriesByIndex = new WeakMap(), offsetsByIndex = new WeakMap();
+const symmetryNames = {
+  vertical: 'вертикальная ось', horizontal: 'горизонтальная ось', point: 'поворот на 180°',
+  diagonal: 'главная диагональ', antidiagonal: 'побочная диагональ'
+};
+let connectedRequest;
 
 function command(text, action, title = text) {
   const button = document.createElement('button'), label = document.createElement('span');
@@ -44,12 +51,37 @@ function atlasEntry(size, number, offset, index) {
     size, atlas: { size, number }, offset, index };
 }
 
-async function resolveAtlas({ size, number }) {
+async function resolveAtlas({ size, number, connected }) {
+  if (connected) {
+    const { entries } = await connectedData();
+    const entry = entries[number - 1];
+    if (entry?.atlas.number !== number) throw Error('Фигура из дополнения отсутствует в каталоге.');
+    return entry;
+  }
   const index = await catalogueIndex(size);
   if (!offsetsByIndex.has(index)) offsetsByIndex.set(index, new Map(index.ids.map((id, offset) => [id, offset])));
   const offset = offsetsByIndex.get(index).get(number);
   if (offset == null) throw Error('Фигура больше не найдена в Атласе.');
   return atlasEntry(size, number, offset, index);
+}
+
+function connectedData() {
+  return connectedRequest ??= fetch(new URL(
+    '../issledovanie/image-journal/atlas/figures/data/128/connected.json?v=1', import.meta.url
+  )).then(response => {
+    if (!response.ok) throw Error('Не удалось загрузить дополнение Атласа.');
+    return response.json();
+  }).then(({ axis, figures }) => ({
+    axis, entries: figures.map(figure => ({
+      key: 'atlas-connected:' + CONNECTED_SIZE + ':' + figure.number,
+      name: (figure.central ? 'У оси ' : 'Вне оси ') + String(figure.number).padStart(4, '0'),
+      size: CONNECTED_SIZE, source: 'atlas', atlas: { size: CONNECTED_SIZE, number: figure.number, connected: true },
+      figure, symmetry: figure
+    }))
+  })).catch(error => {
+    connectedRequest = null;
+    throw error;
+  });
 }
 
 async function figureAsset(entry) {
@@ -278,6 +310,28 @@ function showStatistics() {
   }));
 }
 
+function showFigureSymmetry(meta, entry) {
+  const details = entry.symmetry;
+  const frame = document.createElement('span');
+  frame.textContent = 'Кадр ' + entry.figure.frame;
+  meta.append(frame);
+  if (details.symmetry.length) {
+    const axes = document.createElement('span');
+    axes.textContent = details.symmetry.map(name => symmetryNames[name]).join(' · ');
+    meta.append(axes);
+  }
+  if (details.mirrorFrame !== null) {
+    const pair = document.createElement('a');
+    pair.textContent = 'Пара' + (details.mirrorNumber ? ' ' + String(details.mirrorNumber).padStart(4, '0') : '') +
+      ' · кадр ' + details.mirrorFrame;
+    pair.title = details.mirrorNumber === entry.atlas.number ?
+      'Два экземпляра этой фигуры в исходном кадре Маятника' : 'Зеркальная пара в исходном кадре Маятника';
+    const params = new URLSearchParams({ chisto: '', n: entry.size, s: entry.size, mode: 'pend', k: details.mirrorFrame });
+    pair.href = 'Zerkalius-mayatnik.html?' + params;
+    meta.append(pair);
+  }
+}
+
 function card(entry) {
   const item = document.createElement('li'), picture = document.createElement('div');
   const title = document.createElement('strong'), meta = document.createElement('p');
@@ -307,6 +361,7 @@ function card(entry) {
     image.style.width = figure.width * Math.min(6, 152 / figure.width, 92 / figure.height) + 'px';
     picture.append(image);
     meta.textContent = entry.size + ' · ' + figure.width + ' × ' + figure.height + ' · ' + format(figure.cells) + ' кл.';
+    if (entry.symmetry) showFigureSymmetry(meta, entry);
   } else if (!entry.atlas) {
     const label = entry.source === 'tray' ? 'Из-под поля' : 'Битотека';
     try { picture.append(localCanvas(entry, true).canvas); }
@@ -324,11 +379,21 @@ function card(entry) {
 }
 
 function syncAddAll() {
-  addAll.disabled = adding || !current?.entries.length || (!localsReady && current.filter !== 'atlas');
+  addAll.disabled = adding || !current?.entries.length || (!localsReady && current.useLocals);
 }
 
 async function render() {
-  const request = ++sequence, filter = source.value;
+  const request = ++sequence;
+  const options = size === 4096 ? [...SIZES].reverse().filter(value => !origin.value || value === Number(origin.value)) : [size];
+  const hasConnected = options.includes(CONNECTED_SIZE);
+  if (!hasConnected && source.value === 'connected') source.value = 'atlas';
+  connectedOption.hidden = connectedOption.disabled = !hasConnected;
+  const filter = source.value, atlasRequested = !filter || filter === 'atlas';
+  const showSymmetry = hasConnected && (atlasRequested || filter === 'connected');
+  $('symmetry-label').hidden = !showSymmetry;
+  const symmetryFilter = showSymmetry ? symmetry.value : '';
+  const atlasSizes = atlasRequested ? options.filter(rows => !symmetryFilter || rows === CONNECTED_SIZE) : [];
+  const useLocals = !symmetryFilter && filter !== 'atlas' && filter !== 'connected';
   current = null;
   more.disconnect();
   sentinel.hidden = true;
@@ -336,20 +401,28 @@ async function render() {
   catalogue.setAttribute('aria-busy', 'true');
   catalogueStatus.textContent = 'Загружаю шаблоны…';
   syncAddAll();
-  const options = size === 4096 ? [...SIZES].reverse().filter(value => !origin.value || value === Number(origin.value)) : [size];
-  const indexes = filter && filter !== 'atlas' ? [] : await Promise.allSettled(options.map(async rows => [rows, await catalogueIndex(rows)]));
+  const [indexes, connected] = await Promise.all([
+    Promise.allSettled(atlasSizes.map(async rows => [rows, await catalogueIndex(rows)])),
+    showSymmetry ? connectedData().catch(() => null) : null
+  ]);
   if (sequence !== request) return;
-  const atlasFailed = indexes.some(result => result.status === 'rejected');
+  const atlasFailed = indexes.some(result => result.status === 'rejected') || (showSymmetry && !connected);
   const atlas = indexes.flatMap(result => {
     if (result.status !== 'fulfilled') return [];
     const [rows, index] = result.value;
     if (!entriesByIndex.has(index)) entriesByIndex.set(index, index.ids.map((number, offset) => atlasEntry(rows, number, offset, index)));
-    return entriesByIndex.get(index);
-  }).filter(searchMatch);
-  const libraries = !filter || filter === 'library' ? currentLibrary() : [];
-  const trays = !filter || filter === 'tray' ? local.filter(entry => entry.source === 'tray' && inTab(entry) && searchMatch(entry)) : [];
-  const entries = [...trays, ...libraries, ...atlas];
-  current = { entries, entriesByKey: new Map(entries.map(entry => [entry.key, entry])), filter, shown: 0, failed: atlasFailed };
+    const entries = entriesByIndex.get(index);
+    if (rows !== CONNECTED_SIZE || !connected) return entries;
+    for (const entry of entries) entry.symmetry = connected.axis[entry.atlas.number];
+    return entries;
+  });
+  if (connected) atlas.push(...connected.entries);
+  const catalogueEntries = atlas.filter(entry => searchMatch(entry) &&
+    (!symmetryFilter || (symmetryFilter === 'shape' ? entry.symmetry?.symmetry.length : entry.symmetry?.mirrorFrame != null)));
+  const libraries = useLocals && (!filter || filter === 'library') ? currentLibrary() : [];
+  const trays = useLocals && (!filter || filter === 'tray') ? local.filter(entry => entry.source === 'tray' && inTab(entry) && searchMatch(entry)) : [];
+  const entries = [...trays, ...libraries, ...catalogueEntries];
+  current = { entries, entriesByKey: new Map(entries.map(entry => [entry.key, entry])), useLocals, shown: 0, failed: atlasFailed };
   $('catalogue-count').textContent = format(entries.length) + ' шаблонов';
   syncAddAll();
   await appendMore(current);
@@ -373,7 +446,7 @@ async function appendMore(view) {
   sentinel.textContent = 'Показано ' + format(view.shown) + ' из ' + format(view.entries.length);
   if (!sentinel.hidden) more.observe(sentinel);
   catalogueStatus.textContent = [view.failed ? 'Часть Атласа пока недоступна.' : '',
-    localError && view.filter !== 'atlas' ? 'Не удалось прочитать часть шаблонов из памяти браузера.' : '',
+    localError && view.useLocals ? 'Не удалось прочитать часть шаблонов из памяти браузера.' : '',
     view.entries.length ? '' : 'В этой вкладке нет шаблонов по выбранным условиям.'].filter(Boolean).join(' ');
 }
 
@@ -416,7 +489,7 @@ for (const tab of tabs) tab.addEventListener('click', event => {
   if (next !== size) switchSize(next, true);
 });
 addEventListener('popstate', () => switchSize(selectedSize(), false));
-for (const control of [query, source, origin]) control.addEventListener('input', refresh);
+for (const control of [query, source, origin, symmetry]) control.addEventListener('input', refresh);
 
 function filterLibrary() {
   source.value = 'library';

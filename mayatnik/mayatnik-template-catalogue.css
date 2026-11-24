@@ -66,6 +66,7 @@ input, select { min-width: 0; max-width: 100%; min-height: 28px; padding: 3px 7p
 .card-preview :is(img, canvas) { display: block; max-width: 100%; max-height: 100%; image-rendering: pixelated; }
 .card-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; }
 .card-meta { color: var(--secondary); font: 11px/1.4 var(--mono); overflow-wrap: anywhere; }
+.card-meta > :is(span, a) { display: block; margin-top: 2px; }
 .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
 .tools .gz-hx, .catalogue-card .gz-hx { justify-content: center; width: 120px; max-width: 100%; font-size: 12px; }
 .gz-hx > span { overflow: hidden; text-overflow: ellipsis; }
