@@ -1,0 +1,17 @@
+{
+  "figure": 35,
+  "frame": 16,
+  "date": "2026-11-24",
+  "model": "gpt-image-2.5-sunburst",
+  "operation": "edits",
+  "quality": "medium",
+  "source": "totem-035.png",
+  "prompt": "totem-035-prompt.txt",
+  "format": "webp",
+  "size": [
+    1024,
+    1536
+  ],
+  "url": "https://media.1001100.online/image-journal-2026-11-24/totem-035-silver.webp",
+  "sha256": "4aa3b89be29d6bf441168c1ff020c9b24e974e20479f3ebf1530f3d054984a60"
+}

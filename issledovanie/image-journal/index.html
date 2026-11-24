@@ -30,11 +30,12 @@
   <main class="shell" id="journal">
     <header class="intro">
       <div class="intro-copy">
-        <small class="journal-version">v0.028</small>
+        <small class="journal-version">v0.029</small>
         <h1>Журнал картинок</h1>
         <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
         <nav class="contents" aria-label="Записи журнала">
           <a href="#from-mayatnik">Из Маятника</a>
+          <a href="#totem-035-silver">Серебряный тотем</a>
           <a href="#totem-axis-512">Тотемы из атласа 512</a>
           <a href="#central-axis-templates">Шаблоны по центральной оси</a>
           <a href="#axes">Осевая раскраска</a>
@@ -59,6 +60,27 @@
       <button type="button" id="mayatnik-more" hidden>Ещё кадры</button>
     </article>
 
+    <article class="entry" id="totem-035-silver">
+      <header class="entry-heading">
+        <p class="entry-meta"><time datetime="2026-11-24">24 ноября 2026</time><span>Маятник · Image API</span></p>
+        <h2>Серебряный тотем 035</h2>
+        <p>Художественная обработка фигуры из кадра 16. Жёлтые клетки переданы матовым серебром, синие — тёмной эмалью. Модель сохранила вытянутый силуэт и округлила часть ступенчатых деталей.</p>
+      </header>
+      <figure class="axis-wall">
+        <a class="image-link" data-view-image href="https://media.1001100.online/image-journal-2026-11-24/totem-035-silver.webp"><img src="recipes/totem-axis-512/totem-035-silver-preview.webp" width="512" height="768" alt="Вертикальный серебряный тотем с тёмно-синей эмалью" decoding="async" loading="lazy"></a>
+        <figcaption>
+          <span class="figure-name">Фигура 035</span>
+          <p>Точный пиксельный исходник · 59 × 160.</p>
+          <a class="image-link" data-view-image href="recipes/totem-axis-512/totem-035.png" style="width:min(100%, 150px)"><img src="recipes/totem-axis-512/totem-035.png" width="59" height="160" alt="Жёлто-синий силуэт фигуры 035" style="image-rendering:pixelated" decoding="async" loading="lazy"></a>
+          <span class="figure-links">
+            <a href="#totem-axis-512">Атлас 512</a>
+            <a href="recipes/totem-axis-512/totem-035-prompt.txt">Промпт</a>
+            <a href="recipes/totem-axis-512/totem-035-generation.json">Параметры</a>
+          </span>
+        </figcaption>
+      </figure>
+    </article>
+
     <article class="entry" id="totem-axis-512">
       <header class="entry-heading">
         <p class="entry-meta"><time datetime="2026-11-24">24 ноября 2026</time><span>Маятник · 512 строк</span></p>
@@ -79,9 +101,10 @@
         <summary>Исходные кадры и оба атласа</summary>
         <div class="recipe">
           <p>Запись поля на 512 строк содержит 194 кадра GIF размером 537 × 413 пикселей. В 11 полосах покадрового индекса сохранено 1 119 разных вырезок. Атлас целых фигур содержит 269 фигур и 300 вхождений по всем кадрам.</p>
-          <p>В Маятнике откройте Битотеку → Шаблоны → 512 → Атлас. В отдельной папке 1024 → Атлас доступны 2 311 фигур из расчёта на поле 3 070 × 1 024 клетки. Полный расчёт дал 2 847 фигур.</p>
+          <p>В Маятнике откройте Битотеку → Шаблоны → 512 → Атлас. В папке 1024 → Атлас доступны 2 311 вставляемых фигур из расчёта на поле 3 070 × 1 024 клетки. Ещё 536 доступны в каталоге крупных фигур, весь набор содержит 2 847 фигур.</p>
           <p class="entry-links">
             <a href="../../mayatnik/instruction/#templates">Как открыть атласы</a>
+            <a href="../../mayatnik/axis-1024/">Крупные фигуры атласа 1024</a>
             <a href="#central-axis-templates">Исходная анимация</a>
             <a href="recipes/totem-axis-catalog/frame-index.json">Покадровый индекс</a>
             <a href="recipes/totem-axis-512/sources.json">Координаты четырёх фигур</a>

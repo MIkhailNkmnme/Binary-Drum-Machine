@@ -96,3 +96,7 @@ PowerShell и сохраняет ответ в локальный файл. [Н�
 Чтобы собрать лист, четыре PNG и JSON заново, запустите из корня репозитория `python3 issledovanie/image-journal/recipes/totem-axis-512/build-selection.py` с Pillow 12 или новее. Сборщик сверяет исходный GIF и цвета занятых клеток в каждом выбранном вхождении. [Копия обзорного листа в R2](https://media.1001100.online/image-journal-2026-11-24/totems-512.png)
 
 Для следующей художественной обработки подготовлены [точный PNG фигуры 035](recipes/totem-axis-512/totem-035.png) и [промпт для серебряного тотема](recipes/totem-axis-512/totem-035-prompt.txt). Рецепт использует `generate-image` с исходником по описанной выше схеме `images.edit`.
+
+## v0.029 · Серебряный тотем 035
+
+[Художественная версия фигуры 035](https://1001100.online/issledovanie/image-journal/#totem-035-silver) получена одним вызовом `images.edit` с исходным PNG. Модель `gpt-image-2.5-sunburst`, качество `medium`, WebP 1024 × 1536. При проверке сохранились вытянутый силуэт и ритм крупных выступов. Часть ступенчатых узоров модель округлила. [Параметры и SHA-256 оригинала](recipes/totem-axis-512/totem-035-generation.json)

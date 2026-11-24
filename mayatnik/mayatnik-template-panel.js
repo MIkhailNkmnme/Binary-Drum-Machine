@@ -121,6 +121,7 @@
   }
   root.MayatnikAxis512PaletteDialog={open(options){(axis512PaletteDialog||=makeAxis512PaletteDialog()).open(options);}};
   let address,sectionSave,renameButton,deleteButton,folderPaletteButton,compositionButton,searchInput,query='',folderSelection='';
+  let largeAxisLink;
   const sectionTitle=()=>activeTab==='shared'?'Общие файлы':activeTab==='templates'?'Шаблоны':activeTab==='layers'?'Слои':activeTab==='music'?'Музыка':activeTab==='gif'?'GIF':activeTab==='sequences'?'Послед-ти':captureLibraries.get(activeTab)?.title||'';
   const matches=name=>!query||String(name||'').toLocaleLowerCase().includes(query);
   function folderNodes(){return store?.snapshot().nodes.filter(n=>n.kind==='folder')||[];}
@@ -216,6 +217,7 @@
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
     const banks=axisArchive()?.banks||[];
     folderPaletteButton.hidden=activeTab!=='templates'||!path.some(node=>banks.some(bank=>node.id===bank.folderId));
+    if(largeAxisLink)largeAxisLink.hidden=!path.some(node=>node.id==='folder:axis-1024');
     folderPaletteButton.disabled=busy;
     compositionButton.hidden=activeTab!=='templates';
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
@@ -445,7 +447,10 @@
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const listHead=doc.createElement('div');listHead.className='mtp-list-head';for(const label of ['Название','Размер · 1/0','Кнопки']){const cell=doc.createElement('span');cell.textContent=label;listHead.append(cell);}
-    templatePane.append(templateLimitControl(),actions,status,listHead,grid);main.append(commands,...sections.map(s=>s[2]));workspace.append(main);panel.append(head,tabs,toolbar,workspace,viewbar);doc.body.append(panel);makeResizer(storage);
+    largeAxisLink=doc.createElement('a');largeAxisLink.href=new URL('axis-1024/',doc.baseURI).href;
+    largeAxisLink.target='_blank';largeAxisLink.rel='noopener';largeAxisLink.hidden=true;
+    largeAxisLink.textContent='Крупные фигуры · 536';
+    templatePane.append(templateLimitControl(),actions,status,largeAxisLink,listHead,grid);main.append(commands,...sections.map(s=>s[2]));workspace.append(main);panel.append(head,tabs,toolbar,workspace,viewbar);doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else workspace.addEventListener('scroll',queueVisibleMetrics,{passive:true});
     panel.addEventListener('dragend',()=>{dragged=null;panel.querySelectorAll('.mtp-drop').forEach(n=>n.classList.remove('mtp-drop'));});
