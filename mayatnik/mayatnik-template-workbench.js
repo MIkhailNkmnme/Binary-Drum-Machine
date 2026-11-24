@@ -74,6 +74,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   const layerColour = $('layer-colour'), allColour = $('all-colour');
   const undoButton = $('composition-undo'), redoButton = $('composition-redo');
   const up = $('layer-up'), down = $('layer-down'), remove = $('layer-remove');
+  const clearButton = $('composition-clear');
   const left = $('turn-left'), right = $('turn-right');
   const sampler = document.createElement('canvas');
   sampler.width = sampler.height = 1;
@@ -84,6 +85,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   let active = null, drag = null, serial = 0, drawFrame = 0, saveTimer = 0;
   let camera = null, fitted = true, writes = Promise.resolve();
   let queue = [], nextDecode = 0, decoding = 0;
+  let restoring = true, placement = { pending: 0 };
 
   const tell = message => { status.textContent = message; };
   const view = () => ({ width: field.clientWidth, height: field.clientHeight });
@@ -283,16 +285,17 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     saveTimer = setTimeout(() => { saveTimer = 0; save(); }, 220);
   }
 
-  function syncHistory() {
+  function syncActions() {
     if (undoButton) undoButton.disabled = !undoActions.length || !!drag?.layer;
     if (redoButton) redoButton.disabled = !redoActions.length || !!drag?.layer;
+    if (clearButton) clearButton.disabled = restoring || !!drag?.layer || (!layers.length && !placement.pending);
   }
 
   function rememberAction(undo, redo, before = active, after = active) {
     undoActions.push({ undo, redo, before, after });
     if (undoActions.length > HISTORY_LIMIT) undoActions.shift();
     redoActions.length = 0;
-    syncHistory();
+    syncActions();
     scheduleSave();
   }
 
@@ -375,12 +378,15 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     list.hidden = layers.length === 0;
     if (reveal && index >= 0) {
       const row = (layers.length - 1 - index) * ROW_HEIGHT;
-      if (row < list.scrollTop || row + ROW_HEIGHT > list.scrollTop + list.clientHeight) list.scrollTop = row;
+      if (row < list.scrollTop || row + ROW_HEIGHT > list.scrollTop + list.clientHeight) {
+        if (list.firstElementChild) list.firstElementChild.style.height = layers.length * ROW_HEIGHT + 'px';
+        list.scrollTop = row;
+      }
     }
     renderLayerList();
     updateCoordinates();
     updateColours();
-    syncHistory();
+    syncActions();
     redraw();
   }
 
@@ -469,6 +475,24 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     rememberAction(() => layers.splice(index, 0, layer), erase, layer, next);
   }
 
+  function clearField() {
+    if (restoring || drag?.layer || (!layers.length && !placement.pending)) return;
+    const previous = active, removed = layers.slice();
+    const erase = () => {
+      placement = { pending: 0 };
+      addQueue = Promise.resolve();
+      layers.length = 0;
+      list.scrollTop = 0;
+      tell('Поле очищено.');
+    };
+    erase();
+    select(null);
+    if (removed.length) rememberAction(() => {
+      for (const layer of removed) layers.push(layer);
+      tell('Фигуры возвращены на поле.');
+    }, erase, previous, null);
+  }
+
   async function makeLayer(entry, point) {
     const source = await describe(entry);
     let sprite = sprites.get(entry.key);
@@ -511,13 +535,24 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     } catch {
       tell('Не удалось загрузить сохранённое поле.');
     } finally {
+      restoring = false;
       select(active);
     }
   }
 
   let addQueue = restore();
   function enqueue(action) {
-    addQueue = addQueue.then(action).catch(error => tell(error?.message || 'Не удалось добавить фигуру.'));
+    const job = placement, current = () => placement === job;
+    job.pending++;
+    syncActions();
+    addQueue = addQueue.then(() => {
+      if (current()) return action(current);
+    }).catch(error => {
+      if (current()) tell(error?.message || 'Не удалось добавить фигуру.');
+    }).finally(() => {
+      job.pending--;
+      if (current()) syncActions();
+    });
     return addQueue;
   }
 
@@ -531,8 +566,9 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   }
 
   function add(entry, point = null) {
-    return enqueue(async () => {
+    return enqueue(async current => {
       const layer = await makeLayer(entry, point);
+      if (!current()) return;
       if (!point && !drag) showLayer(layer);
       placeLayers([layer], drag?.layer ?? layer);
       tell('На поле: ' + layer.name);
@@ -540,11 +576,12 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   }
 
   function addAll(entries) {
-    return enqueue(async () => {
+    return enqueue(async current => {
       const known = new Set(layers.map(layer => layer.key)), pending = entries.filter(entry => !known.has(entry.key));
       const prepared = [];
       let failed = 0;
       for (let start = 0; start < pending.length; start += 192) {
+        if (!current()) return;
         tell('Добавляю шаблоны: ' + start.toLocaleString('ru-RU') + ' / ' + pending.length.toLocaleString('ru-RU'));
         const group = await Promise.allSettled(pending.slice(start, start + 192).map(entry => makeLayer(entry)));
         for (const result of group) {
@@ -553,6 +590,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
         }
         await new Promise(resolve => requestAnimationFrame(resolve));
       }
+      if (!current()) return;
       // Editing can continue while the catalogue loads. Commit the prepared insertion as one action.
       const placed = new Set(layers.map(layer => layer.key));
       const added = prepared.filter(layer => !placed.has(layer.key));
@@ -567,6 +605,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   $('fit-field').onclick = fit;
   undoButton?.addEventListener('click', () => historyStep(true));
   redoButton?.addEventListener('click', () => historyStep(false));
+  clearButton?.addEventListener('click', clearField);
   layerColour?.addEventListener('change', () => {
     if (!active) return;
     const layer = active, before = layer.colour, after = layerColour.value;
@@ -631,7 +670,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     if (layer) select(layer);
     else if (event.button === 0) select(null);
     drag = { id: event.pointerId, layer, point, x: layer ? layer.x : camera.x, y: layer ? layer.y : camera.y };
-    syncHistory();
+    syncActions();
     field.focus({ preventScroll: true });
     field.setPointerCapture(event.pointerId);
     event.preventDefault();
@@ -652,7 +691,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     const { layer, x, y } = drag;
     drag = null;
     if (!layer || !rememberMove(layer, x, y)) scheduleSave();
-    syncHistory();
+    syncActions();
   });
   field.addEventListener('wheel', event => {
     event.preventDefault();
