@@ -9,6 +9,7 @@ body.may-template-panel-resizing,body.may-template-panel-resizing *{cursor:ew-re
 #mayatnikTemplatePanel[hidden]{display:none!important}
 /* Right field controls sit beneath the open library, whose layer is 7. */
 body.may-template-panel-open:not(.may-mobile-menu) #mayRhombs{z-index:6}
+body.may-template-panel-open .may-template-inline{z-index:6}
 /* Folds are applied once on opening and removed on closing; persistence stays with menu owners. */
 body.mayatnik-menu-ready :is(#paintTools,#mayatnikRail,#mayatnikRailR,#mayMobileBar) :is(.pt-g,.gz-group)[data-library-folded][data-library-folded] > :is(.pt-r,.may-rail-list,.gz-soty,.gz-wide){display:none!important}
 body>[data-library-folded-popup]{display:none!important}

@@ -7,10 +7,12 @@
     && recordedAtlas.palette?.join() === recorded.palette.join();
   const generated = root.MayatnikAxis1024Data;
   const generated2048 = root.MayatnikAxis2048Data;
+  const generated4096 = root.MayatnikAxis4096Data;
   const banks = [
     createBank(root, recorded, '512', match ? recordedAtlas : null),
     createBank(root, generated, '1024', generated),
-    createBank(root, generated2048, '2048', generated2048)
+    createBank(root, generated2048, '2048', generated2048),
+    createBank(root, generated4096, '4096', generated4096)
   ].filter(Boolean);
   const bankFor = id => banks.find(bank => bank.isId(id));
   root.MayatnikAxisArchive = {
@@ -86,13 +88,22 @@
 
   let atlasGroup = null;
   if (atlas?.version === 1){
-    atlasGroup = {id: folderId + ':atlas', name: 'Атлас', ids: []};
+    const grouped = folder === '4096';
+    const groupSize = 256;
+    const digits = grouped ? 5 : 3;
+    let group = null;
+    if (!grouped) group = atlasGroup = {id: folderId + ':atlas', name: 'Атлас', ids: []};
     for (let index = 0; index < atlas.records.length; index++){
+      if (grouped && index % groupSize === 0) {
+        const first = number(index + 1, digits);
+        const last = number(Math.min(index + groupSize, atlas.records.length), digits);
+        group = addGroup(folderId + ':atlas:' + first, 'Фигуры ' + first + '–' + last);
+      }
       const [width, height, counts, payload, occurrences] = atlas.records[index];
-      const label = number(index + 1, 3);
+      const label = number(index + 1, digits);
       const [frame, x, y] = occurrences[0];
       const patch = {x, y, width, height, counts, payload};
-      addRecord(atlasGroup, prefix + ':atlas:' + label, 'Фигура ' + label, [patch],
+      addRecord(group, prefix + ':atlas:' + label, 'Фигура ' + label, [patch],
         {frame, occurrences}, true);
     }
   }

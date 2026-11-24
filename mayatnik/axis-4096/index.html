@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Крупные фигуры атласа 4096 · Маятник</title>
+  <link rel="stylesheet" href="../../issledovanie/image-journal/style.css">
+  <style>
+    .atlas-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr)); gap: .75rem; }
+    .atlas-card { padding: .5rem; border: 1px solid var(--line); background: var(--panel); }
+    .atlas-card p { margin: .25rem 0; font-size: .85rem; color: var(--muted); }
+    .atlas-preview { display: block; margin-inline: auto; width: 160px; max-width: 100%; height: 96px; background: var(--bg) no-repeat; }
+    #archive-parts { padding-inline-start: 1.5rem; }
+  </style>
+  <script src="../axis-1024/catalog.js?v=4096" type="module"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav class="shell site-nav" aria-label="Зеркалиус">
+      <a class="brand" href="../Zerkalius-mayatnik.html?chisto&amp;n=4096&amp;s=4096&amp;k=4&amp;mode=pend">Маятник 4096</a>
+      <a href="../axis-2048/">Атлас 2048</a>
+      <a href="../scale-atlases/">Атласы масштабов</a>
+    </nav>
+  </header>
+  <main class="shell">
+    <section class="entry" aria-labelledby="atlas-heading">
+      <header class="entry-heading">
+        <h1 id="atlas-heading">Крупные фигуры атласа 4096</h1>
+        <p>Центральная ось поля 12 286 × 4 096, кадры 4–4096 с шагом 4. Номер карточки совпадает с номером PNG полного расчёта. Координаты отсчитываются от левого верхнего угла с нуля.</p>
+        <p>Полный расчёт дал 28 284 уникальные фигуры и 266 750 вхождений. В Битотеке доступны 26 143 фигуры. В каталоге крупных фигур 2 141 карточка.</p>
+      </header>
+      <p>Вставляемые фигуры находятся в Битотеке → Шаблоны → 4096, в папках по номерам. Ссылка под карточкой открывает исходный кадр.</p>
+      <p class="entry-links">
+        <a id="release" href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/tag/mayatnik-axis-4096">Полный атлас на GitHub</a>
+        <a href="archive-parts.json" download>Контрольные суммы частей</a>
+      </p>
+      <ul id="archive-parts" aria-label="ZIP-архивы"></ul>
+      <p id="status" role="status">Загружаются крупные фигуры…</p>
+      <noscript><p>Для просмотра превью включите JavaScript. Архивы можно скачать с GitHub.</p></noscript>
+      <div class="atlas-list" id="figures" data-rows="4096"></div>
+    </section>
+  </main>
+  <script type="module">
+    const parts = document.getElementById('archive-parts');
+    const downloadRoot = document.getElementById('release').href.replace('/tag/', '/download/');
+    try {
+      const response = await fetch('archive-parts.json');
+      if (!response.ok) throw Error('Не удалось открыть список ZIP.');
+      const manifest = await response.json();
+      const number = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 1});
+      for (const {file, bytes, frameRange, figureRange} of manifest) {
+        const item = document.createElement('li');
+        const link = document.createElement('a');
+        const ranges = [frameRange && 'кадры ' + frameRange.join('–'), figureRange && 'фигуры ' + figureRange.join('–')].filter(Boolean);
+        link.href = downloadRoot + '/' + file;
+        link.textContent = ranges.join(', ') + ' · ZIP ' + number.format(bytes / 1_000_000_000) + ' ГБ';
+        item.append(link);
+        parts.append(item);
+      }
+    } catch (error) {
+      const item = document.createElement('li');
+      item.textContent = error.message;
+      parts.append(item);
+    }
+  </script>
+</body>
+</html>

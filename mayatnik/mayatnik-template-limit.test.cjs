@@ -20,9 +20,9 @@ test('huge virtual field aborts after bounded frontier without full arrays',()=>
 });
 function selectionFixture(mode,p=-1){
  const W=9,H=9,data=new Uint32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++)data[y*W+x]=((x+y)%3===0||x===4)?11:22;
- const c={MayatnikCellArea:require('./mayatnik-cell-area.js'),MayatnikTemplateLimit:L,MayatnikFill:require('./mayatnik-fill.js'),st:{fillArea:mode,templateMaxArea:1000},img:{width:W,height:H,data:new Uint8ClampedArray(data.buffer)},pxBase:null,pxAnimPre:null,pxHide:new Set(),pxFam:()=>'',rgba:()=>0,EMPTY:[],RK:1,VX:0,VW:W,VH:H,autoVertical:0,pxView:()=>c.img,joinedOn:()=>false,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),
+ const c={MayatnikCellArea:require('./mayatnik-cell-area.js'),MayatnikTemplateLimit:L,MayatnikFill:require('./mayatnik-fill.js'),st:{fillArea:mode,templateMaxArea:1000},img:{width:W,height:H,data:new Uint8ClampedArray(data.buffer)},pxBase:null,pxAnimPre:null,pxHide:new Set(),pxFam:()=>'',rgba:()=>0,EMPTY:[],RK:1,VX:0,VW:W,VH:H,autoVertical:0,pxView:()=>c.img,joinedOn:()=>false,joinedSquare:()=>false,displayPoint:(c,r)=>({x:c+.5,y:r+.5}),
  fieldCellAt:(x,y)=>({c:x,r:y,p,ox:0}),fillBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,rasterBit:(x,y)=>x>=0&&x<W&&y>=0&&y<H?0:-1,cellPixels:(cell,visit)=>visit(cell.r*W+cell.c)};
- vm.createContext(c);for(const[a,b]of [['  function templatePickSelection(','  function paintSelection('],['  function paintSelection(','  // v0.202:']]){const start=html.indexOf(a);vm.runInContext(html.slice(start,html.indexOf(b,start)),c);}return c;
+ vm.createContext(c);for(const[a,b]of [['  function toolBitAt(','  window.mayRGBNeighbours='],['  function templatePickSelection(','  function paintSelection('],['  function paintSelection(','  // v0.202:']]){const start=html.indexOf(a);vm.runInContext(html.slice(start,html.indexOf(b,start)),c);}return c;
 }
 test('production bounded selection agrees with existing fill connectivity, square and diamond neighbours',()=>{
  for(const p of [-1,0,1])for(const mode of ['sides','corners','diagonal','chess0','bit'])for(const x of [2,4,6]){
@@ -44,6 +44,7 @@ test('limit setting persists in st and reloads without mutating saved shapes',()
  const controls={templateMaxArea:{}},saved=[],events=[],c={st:{templateMaxArea:17},MayatnikTemplateLimit:L,$:id=>controls[id],window:{},save(){saved.push(JSON.stringify(c.st));},dispatchEvent:e=>events.push(e.type),Event:class{constructor(type){this.type=type;}}};vm.createContext(c);
  const start=html.indexOf('  st.templateMaxArea=');vm.runInContext(html.slice(start,html.indexOf('  st.parity=',start)),c);assert.equal(c.window.mayTemplateLimit.get(),17);c.window.mayTemplateLimit.set(64);assert.equal(JSON.parse(saved.at(-1)).templateMaxArea,64);c.st=JSON.parse(saved.at(-1));assert.equal(c.window.mayTemplateLimit.get(),64);assert.equal(controls.templateMaxArea.value,64);assert.equal(events.at(-1),'may-template-limit-change');
  c.window.mayTemplateLimit.set(0);assert.equal(JSON.parse(saved.at(-1)).templateMaxArea,0);c.st=JSON.parse(saved.at(-1));assert.equal(c.window.mayTemplateLimit.get(),0);assert.equal(controls.templateMaxArea.value,0);c.window.mayTemplateLimit.set(16384);assert.equal(c.window.mayTemplateLimit.get(),16384);
+ c.st={};assert.equal(c.window.mayTemplateLimit.get(),0);
 });
 
 test('filter keeps oversize entries listed without compiling patterns or scanning the field',async()=>{

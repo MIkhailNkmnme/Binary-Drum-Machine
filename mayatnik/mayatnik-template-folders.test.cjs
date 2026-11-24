@@ -28,3 +28,18 @@ test('malformed or cyclic saved hierarchy is repaired safely',()=>{
 test('storage failures retain live organisation and report failure',()=>{
  const m=create({getItem(){throw Error('blocked');},setItem(){throw Error('full');}});m.reconcile(['a']);const p=m.addFolder('p');assert.equal(m.move('template','a',p),true);assert.equal(m.children(p)[0].id,'a');assert.equal(m.persistenceError,true);
 });
+test('a large atlas fits browser storage and preserves legacy folders and order',()=>{
+ const legacy={version:1,nodes:[{kind:'folder',id:'mine',name:'Моя папка',parent:''},
+   {kind:'template',id:'one',parent:'mine'},{kind:'template',id:'two',parent:'mine'}]};
+ const storage=memory(legacy),write=storage.setItem.bind(storage);
+ storage.setItem=(key,value)=>{assert.ok(value.length<2_500_000);write(key,value);};
+ const model=create(storage);
+ const ids=Array.from({length:30_000},(_,i)=>'axis-4096:atlas:'+String(i+1).padStart(5,'0'));
+ assert.equal(model.seedTree('atlas','4096',[{id:'figures',name:'Фигуры',ids}]),true);
+ assert.equal(model.move('template','two','mine','one','template'),true);
+ assert.equal(model.persistenceError,false);
+ const restored=create(storage);
+ assert.deepEqual(restored.children('mine').map(node=>node.id),['two','one']);
+ assert.equal(restored.children('figures').length,30_000);
+ assert.deepEqual(restored.snapshot(),model.snapshot());
+});

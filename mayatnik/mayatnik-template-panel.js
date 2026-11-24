@@ -218,7 +218,7 @@
     const banks=axisArchive()?.banks||[];
     folderPaletteButton.hidden=activeTab!=='templates'||!path.some(node=>banks.some(bank=>node.id===bank.folderId));
     if(largeAxisLink){
-      const collection=path.find(node=>node.id==='folder:axis-1024'||node.id==='folder:axis-2048');
+      const collection=path.find(node=>/^folder:axis-(1024|2048|4096)$/.test(node.id));
       largeAxisLink.hidden=!collection;
       if(collection){
         const size=collection.id.slice('folder:axis-'.length);
@@ -394,7 +394,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1092');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1094');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -617,14 +617,14 @@
   }
   function render(){
     if(!panel||!engine||!open||activeTab!=='templates')return;
-    reconcileFolders();const list=engine.list(),byId=new Map(list.map(t=>[t.id,t])),allIds=engine.allIds();
+    reconcileFolders();const list=engine.list(),byId=new Map(list.map(t=>[t.id,t])),allIds=new Set(engine.allIds());
     const snapshot=store.snapshot(),folders=new Map(snapshot.nodes.filter(n=>n.kind==='folder').map(n=>[n.id,n]));if(current&&!folders.has(current))current='';
     const nextKey=JSON.stringify([query,current,snapshot.nodes,list.map(t=>[t.id,t.name,t.hex,token(previewKey(t))])]);
     if(nextKey===renderKey){syncState();return;}renderKey=nextKey;
     syncExplorer();const children=store.children(current).filter(n=>matches(n.kind==='folder'?n.name:byId.get(n.id)?.name)),wanted=new Set();const fragment=doc.createDocumentFragment();
     for(const node of children){if(node.kind==='folder'){fragment.append(folderCard(node));continue;}const item=byId.get(node.id);if(!item)continue;wanted.add(item.id);let card=cards.get(item.id);if(!card){card=templateCard(item);cards.set(item.id,card);}const old=card._item;card._item=item;syncTemplateCard(card,item);if(!old||previewKey(old)!==previewKey(item)){card.querySelector('.mtp-image').removeAttribute('src');if(observer)observer.observe(card);else drawPreview(card);}fragment.append(card);}
     grid.replaceChildren(fragment);if(observer)for(const id of wanted){const card=cards.get(id);if(!card.querySelector('.mtp-image').getAttribute('src')||!metricsCache.has(previewKey(card._item)))observer.observe(card);}else{for(const id of wanted)drawPreview(cards.get(id));queueVisibleMetrics();}
-    for(const [id,card]of cards)if(!allIds.includes(id)){observer?.unobserve(card);cards.delete(id);previews.delete(id);}
+    for(const [id,card]of cards)if(!allIds.has(id)){observer?.unobserve(card);cards.delete(id);previews.delete(id);}
     if(!wanted.size&&!children.some(n=>n.kind==='folder')){const empty=doc.createElement('p');empty.className='mtp-empty';empty.textContent=query?'Поиск не дал результатов.':'В текущих строках нет шаблонов из этой папки.';grid.append(empty);}
     syncState();
   }

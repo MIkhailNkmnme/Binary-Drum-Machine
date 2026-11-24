@@ -1,0 +1,65 @@
+[
+  {
+    "file": "mayatnik-axis-4096-01.zip",
+    "bytes": 1483072990,
+    "sha256": "a9d5d188b51c5ddf16ebd69bd17e4562af2dab3da00f336f7a03d809556b5476",
+    "frames": 801,
+    "figures": 0,
+    "frameRange": [
+      4,
+      3204
+    ],
+    "figureRange": null
+  },
+  {
+    "file": "mayatnik-axis-4096-02.zip",
+    "bytes": 1482957065,
+    "sha256": "16ca7bab6adc9c81097264b75f3d0334ba6a80c0c318780e194b08621b66efca",
+    "frames": 223,
+    "figures": 8087,
+    "frameRange": [
+      3208,
+      4096
+    ],
+    "figureRange": [
+      1,
+      8087
+    ]
+  },
+  {
+    "file": "mayatnik-axis-4096-03.zip",
+    "bytes": 1482588676,
+    "sha256": "1d40101cd295d571f9a0e6ac04dbcf55c4d265b262ebf6de6ef95977ee18efe5",
+    "frames": 0,
+    "figures": 11213,
+    "frameRange": null,
+    "figureRange": [
+      8088,
+      19300
+    ]
+  },
+  {
+    "file": "mayatnik-axis-4096-04.zip",
+    "bytes": 1482181005,
+    "sha256": "f5398279d67641d7750f5b5a552f11140a26e08b178e3963d5afd6ae3c91c3f9",
+    "frames": 0,
+    "figures": 8378,
+    "frameRange": null,
+    "figureRange": [
+      19301,
+      27678
+    ]
+  },
+  {
+    "file": "mayatnik-axis-4096-05.zip",
+    "bytes": 130833570,
+    "sha256": "85e018a1d428923180a88ea3334392d7a5465f685c155e1ef636f516fd9a20a8",
+    "frames": 0,
+    "figures": 606,
+    "frameRange": null,
+    "figureRange": [
+      27679,
+      28284
+    ]
+  }
+]

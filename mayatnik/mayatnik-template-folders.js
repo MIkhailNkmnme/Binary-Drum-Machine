@@ -2,10 +2,18 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikTemplateFolders=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const KEY='mayatnik-template-folders-v1';
+  function storedNode(value,parents){
+    if(!parents||!Array.isArray(value))return value;
+    if(value.length!==2&&value.length!==3)return null;
+    const [id,parent,name]=value;
+    return {kind:value.length===3?'folder':'template',id,parent:parents[parent],name};
+  }
   function normalise(value){
     const result={version:1,nodes:[]},seen=new Set();
+    const parents=value?.version===2&&Array.isArray(value.parents)?value.parents:null;
     if(Array.isArray(value?.seededGroups))result.seededGroups=[...new Set(value.seededGroups.filter(id=>typeof id==='string'))];
-    for(const n of Array.isArray(value?.nodes)?value.nodes:[]){
+    for(const stored of Array.isArray(value?.nodes)?value.nodes:[]){
+      const n=storedNode(stored,parents);
       if(!n||!['folder','template'].includes(n.kind)||typeof n.id!=='string'||seen.has(n.kind+':'+n.id))continue;
       seen.add(n.kind+':'+n.id);result.nodes.push({kind:n.kind,id:n.id,parent:typeof n.parent==='string'?n.parent:'',...(n.kind==='folder'?{name:String(n.name||'Папка').slice(0,100)}:{})});
     }
@@ -16,10 +24,21 @@
     }
     return result;
   }
+  function serialize(state){
+    // Thousands of template references share the same few parent folders.
+    const parents=[''],indices=new Map([['',0]]);
+    const nodes=state.nodes.map(node=>{
+      if(!indices.has(node.parent))indices.set(node.parent,parents.push(node.parent)-1);
+      const row=[node.id,indices.get(node.parent)];
+      if(node.kind==='folder')row.push(node.name);
+      return row;
+    });
+    return JSON.stringify({version:2,parents,nodes,seededGroups:state.seededGroups});
+  }
   function create(storage){
     let value;try{value=JSON.parse(storage?.getItem(KEY)||'null');}catch(_){}
-    const listeners=new Set();let state=normalise(value),error=false,lastSaved=JSON.stringify(state);
-    function save(){const text=JSON.stringify(state);if(text===lastSaved)return !error;try{if(!storage)throw Error('storage');storage.setItem(KEY,text);lastSaved=text;error=false;}catch(_){error=true;}for(const fn of listeners)fn();return !error;}
+    const listeners=new Set();let state=normalise(value),error=false,lastSaved=serialize(state);
+    function save(){const text=serialize(state);if(text===lastSaved)return !error;try{if(!storage)throw Error('storage');storage.setItem(KEY,text);lastSaved=text;error=false;}catch(_){error=true;}for(const fn of listeners)fn();return !error;}
     const api={
       snapshot:()=>structuredClone(state),
       subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},

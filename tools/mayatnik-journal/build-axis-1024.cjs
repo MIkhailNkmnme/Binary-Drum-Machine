@@ -6,6 +6,7 @@ const path = require('node:path');
 const { crc32, deflateSync, inflateSync } = require('node:zlib');
 const Core = require('../../mayatnik/mayatnik-core.js');
 const Construction = require('../../mayatnik/mayatnik-construction.js');
+const ConeBits = require('../../mayatnik/mayatnik-axis-cone-bits.js');
 
 const SIZE_LIMIT = 4096;
 const RECTANGLE_LIMIT = 12_000_000;
@@ -56,14 +57,14 @@ function scanlineStride(width) {
   return 1 + Math.ceil(width / 4);
 }
 
-function framePixels({ W, H, val }) {
+function framePixels({ W, H, val }, left = 0, right = W - 1) {
   const stride = scanlineStride(W);
   const rows = Buffer.alloc(H * stride);
   const bits = [0, 0];
   for (let y = 0; y < H; y++) {
     const start = y * W;
     const row = y * stride + 1;
-    for (let x = 0; x < W; x++) {
+    for (let x = Math.max(0, left - y), end = Math.min(W - 1, right + y); x <= end; x++) {
       const bit = val[start + x];
       if (bit < 0) continue;
       bits[bit]++;
@@ -73,26 +74,39 @@ function framePixels({ W, H, val }) {
   return { rows, bits };
 }
 
-function compressRows(rows) {
-  const compressed = deflateSync(rows);
+function compressRows(rows, level) {
+  const compressed = deflateSync(rows, {level});
   if (!inflateSync(compressed).equals(rows)) throw new Error('Packed PNG rows differ from their input');
   return compressed;
 }
 
-function collect(field, center, frame, seen, queue, visit) {
+function readMask(file) {
+  const image = readFileSync(file);
+  for (let offset = PNG_SIGNATURE.length; offset < image.length;) {
+    const length = image.readUInt32BE(offset);
+    const start = offset + 8;
+    if (image.toString('ascii', offset + 4, start) === 'IDAT') {
+      return inflateSync(image.subarray(start, start + length));
+    }
+    offset = start + length + 4;
+  }
+  throw Error('Figure PNG has no image data: ' + file);
+}
+
+// Mark visited cells in the disposable frame, leaving the construction intact.
+function collect(field, center, frame, queue, visit) {
   const { W, H, val } = field;
   let hits = 0;
   let axisCells = 0;
   let assignedAxisCells = 0;
+  for (let y = 0; y < H; y++) if (val[y * W + center] >= 0) axisCells++;
 
   for (let seedY = 0; seedY < H; seedY++) {
     const seed = seedY * W + center;
     const bit = val[seed];
     if (bit < 0) continue;
-    axisCells++;
-    if (seen[seed] === frame) continue;
 
-    seen[seed] = frame;
+    val[seed] = -1;
     queue[0] = seed;
     let count = 1;
     let xMin = center;
@@ -115,8 +129,8 @@ function collect(field, center, frame, seen, queue, visit) {
       for (let ny = fromY; ny <= toY; ny++) {
         const row = ny * W;
         for (let neighbor = row + left; neighbor <= row + right; neighbor++) {
-          if (seen[neighbor] !== frame && val[neighbor] === bit) {
-            seen[neighbor] = frame;
+          if (val[neighbor] === bit) {
+            val[neighbor] = -1;
             queue[count++] = neighbor;
           }
         }
@@ -178,7 +192,9 @@ function build(folder, rows) {
   const palette = getPalette();
   const geometry = Construction.geometry(SETTINGS);
   const field = Core.field(geometry.W, SETTINGS.rows, SETTINGS.bg, geometry.anchor);
-  const seen = new Uint16Array(field.val.length);
+  const fast = rows === 4096 ? ConeBits.create(field.W, field.H) : null;
+  const disposable = fast ? field : { ...field, val: new Int8Array(field.val.length) };
+  const compressionLevel = fast ? 1 : 6;
   const queue = new Int32Array(field.val.length);
   const source = { ...SETTINGS, first: FRAME_INTERVAL, last: SETTINGS.steps, interval: FRAME_INTERVAL,
     connectivity: 8, bitRule: 'same', axis: 'center-column', link: EXACT_LINK };
@@ -195,39 +211,42 @@ function build(folder, rows) {
   mkdirSync(path.join(folder, 'figures'), { recursive: true });
 
   for (let frame = 1; frame <= SETTINGS.steps; frame++) {
-    Construction.step(field, geometry, SETTINGS, frame - 1);
+    if (fast) fast.step(geometry.anchor + Core.offset(SETTINGS.mode, frame - 1));
+    else Construction.step(field, geometry, SETTINGS, frame - 1);
     if (frame % FRAME_INTERVAL !== 0) continue;
     const file = 'frames/frame-' + String(frame).padStart(4, '0') + '.png';
-    const frameImage = framePixels(field);
-    const image = png(...size, compressRows(frameImage.rows), palette);
+    if (fast) fast.read(field.val);
+    const [left, right] = Core.span(SETTINGS.mode, frame);
+    const frameImage = framePixels(field, center + left, center + right);
+    const image = png(...size, compressRows(frameImage.rows, compressionLevel), palette);
     writeLocal(folder, file, image);
     const selected = [0, 0];
     let webHits = 0;
-    const { hits, axisCells } = collect(field, center, frame, seen, queue, (shape, occurrence) => {
+    if (!fast) disposable.val.set(field.val);
+    const { hits, axisCells } = collect(disposable, center, frame, queue, (shape, occurrence) => {
       const { width, height, bit, count, rows } = shape;
       selected[bit] += count;
       const signature = width + 'x' + height + ':' + digest(rows);
-      let entry = byMask.get(signature);
-      if (!entry) {
+      let item = byMask.get(signature);
+      if (!item) {
         const id = figures.length + 1;
         const name = 'figures/figure-' + String(id).padStart(4, '0') + '.png';
         const counts = bit === 0 ? [count, 0] : [0, count];
         const withinSiteLimits = count <= SIZE_LIMIT && width * height <= RECTANGLE_LIMIT;
-        const packed = compressRows(rows);
+        const packed = compressRows(rows, compressionLevel);
         const figureImage = png(width, height, packed, palette);
         writeLocal(folder, name, figureImage);
-        const item = { id, width, height, counts, file: name, sha256: digest(figureImage),
+        item = { id, width, height, counts, file: name, sha256: digest(figureImage),
           siteId: withinSiteLimits ? siteRecords.length + 1 : null, occurrences: [] };
         figures.push(item);
         if (withinSiteLimits) siteRecords.push([width, height, counts, packRle(shape), item.occurrences]);
-        entry = { item, packed };
-        byMask.set(signature, entry);
-      } else if (!inflateSync(entry.packed).equals(rows)) {
+        byMask.set(signature, item);
+      } else if (!readMask(path.join(folder, item.file)).equals(rows)) {
         throw new Error('Different normalized masks have the same digest in frame ' + frame);
       }
 
-      entry.item.occurrences.push(occurrence);
-      if (entry.item.siteId !== null) webHits++;
+      item.occurrences.push(occurrence);
+      if (item.siteId !== null) webHits++;
     });
     if (selected.some((count, bit) => count > frameImage.bits[bit])) {
       throw new Error('The selected components exceed the source pixels in frame ' + frame);
@@ -237,7 +256,7 @@ function build(folder, rows) {
     frames.push({ frame, file, sha256: digest(image), link: EXACT_LINK.replace('{frame}', frame),
       bits: frameImage.bits, selected, axisCells, occurrences: hits, webOccurrences: webHits });
 
-    if (frame % 128 === 0) console.log('Collected ' + frames.length + ' frames through ' + frame);
+    if (frame % (fast ? 64 : 128) === 0) console.log('Collected ' + frames.length + ' frames through ' + frame);
   }
 
   const localFigures = figures.length - siteRecords.length;
@@ -279,8 +298,8 @@ function build(folder, rows) {
 }
 
 const rows = Number(process.argv[3] ?? 1024);
-if (![3, 4].includes(process.argv.length) || ![1024, 2048].includes(rows) || typeof crc32 !== 'function') {
-  console.error('Usage with Node.js 22 or newer: node tools/mayatnik-journal/build-axis-1024.cjs <atlas-directory> [1024|2048]');
+if (![3, 4].includes(process.argv.length) || ![1024, 2048, 4096].includes(rows) || typeof crc32 !== 'function') {
+  console.error('Usage with Node.js 22 or newer: node tools/mayatnik-journal/build-axis-1024.cjs <atlas-directory> [1024|2048|4096]');
   process.exitCode = 1;
 } else {
   build(path.resolve(process.argv[2]), rows);
