@@ -1,4 +1,4 @@
-/* Packed templates and atlas figures from the two central-axis collections. */
+/* Packed templates and atlas figures from the central-axis collections. */
 (function(root, createBank){
   'use strict';
   const recorded = root.MayatnikAxis512Data;
@@ -6,9 +6,11 @@
   const match = recorded?.source?.sha256 && recordedAtlas?.sourceSha256 === recorded.source.sha256
     && recordedAtlas.palette?.join() === recorded.palette.join();
   const generated = root.MayatnikAxis1024Data;
+  const generated2048 = root.MayatnikAxis2048Data;
   const banks = [
     createBank(root, recorded, '512', match ? recordedAtlas : null),
-    createBank(root, generated, '1024', generated)
+    createBank(root, generated, '1024', generated),
+    createBank(root, generated2048, '2048', generated2048)
   ].filter(Boolean);
   const bankFor = id => banks.find(bank => bank.isId(id));
   root.MayatnikAxisArchive = {

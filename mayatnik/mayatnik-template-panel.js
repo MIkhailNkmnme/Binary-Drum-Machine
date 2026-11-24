@@ -55,17 +55,17 @@
     templateLimitNotice.textContent=event.detail?.message||'Шаблон превышает максимальную площадь';templateLimitNotice.hidden=false;
     root.clearTimeout(templateLimitTimer);templateLimitTimer=root.setTimeout(()=>{templateLimitNotice.hidden=true;},4000);
   }
-  function syncTemplateLimit(){const api=root.mayTemplateLimit,value=api?.get()??4096;for(const b of templateLimitButtons){b.disabled=!api;b.textContent=value===0?'▣ Без лимита':'▣ Лимит '+value.toLocaleString('ru-RU');b.title=value===0?'Максимальная площадь шаблона: без лимита':'Максимальная площадь шаблона: '+value.toLocaleString('ru-RU')+' бит. Изменить или выбрать «Без лимита»';b.setAttribute('aria-label',b.title);}}
+  function syncTemplateLimit(){const api=root.mayTemplateLimit,value=api?.get()??0;for(const b of templateLimitButtons){b.disabled=!api;b.textContent=value===0?'▣ Без лимита':'▣ Лимит '+value.toLocaleString('ru-RU');b.title=value===0?'Максимальная площадь шаблона: без лимита':'Максимальная площадь шаблона: '+value.toLocaleString('ru-RU')+' бит. Изменить или выбрать «Без лимита»';b.setAttribute('aria-label',b.title);}}
   function templateLimitControl(){const b=button('','Максимальная площадь шаблона',editTemplateLimit);b.dataset.templateLimit='';templateLimitButtons.add(b);syncTemplateLimit();return b;}
   function editTemplateLimit(){const api=root.mayTemplateLimit;if(!api)return;
     if(!templateLimitDialog){
       const dialog=doc.createElement('dialog');dialog.id='mayTemplateLimitDialog';dialog.setAttribute('aria-label','Максимальная площадь шаблона');
-      const label=doc.createElement('label');label.textContent='Максимальная площадь шаблона, бит';templateLimitInput=doc.createElement('input');templateLimitInput.type='number';templateLimitInput.min='1';templateLimitInput.max='1048576';templateLimitInput.step='1';templateLimitInput.setAttribute('aria-label',label.textContent);label.append(templateLimitInput);
+      const label=doc.createElement('label');label.textContent='Максимальная площадь шаблона, бит';templateLimitInput=doc.createElement('input');templateLimitInput.type='number';templateLimitInput.required=true;templateLimitInput.min='1';templateLimitInput.max='1048576';templateLimitInput.step='1';templateLimitInput.setAttribute('aria-label',label.textContent);label.append(templateLimitInput);
       const actions=doc.createElement('div');actions.className='mtp-limit-actions';const apply=value=>{root.mayTemplateLimit?.set(value);syncTemplateLimit();dialog.close();};
       actions.append(button('Применить','Применить максимальную площадь шаблона',()=>{const n=Number(templateLimitInput.value);if(!Number.isInteger(n)||n<1||n>1048576){templateLimitInput.reportValidity();return;}apply(n);}),button('Без лимита','Отключить ограничение площади шаблона',()=>apply(0)),button('Отмена','Закрыть без изменения лимита',()=>dialog.close()));
       dialog.append(label,actions);dialog.addEventListener('keydown',e=>e.stopPropagation());panel.append(dialog);templateLimitDialog=dialog;
     }
-    templateLimitInput.value=String(api.get()||4096);templateLimitDialog.showModal();templateLimitInput.focus();
+    templateLimitInput.value=api.get()||'';templateLimitDialog.showModal();templateLimitInput.focus();
   }
   let axis512PaletteDialog;
   function makeAxis512PaletteDialog(){
@@ -217,7 +217,15 @@
     const library=captureLibraries.get(activeTab),entry=selectedEntry(),busy=activeTab==='templates'?!!engine?.getState().busy:activeTab==='layers'?false:!!library?.pending||!!library?.api?.getState().busy;
     const banks=axisArchive()?.banks||[];
     folderPaletteButton.hidden=activeTab!=='templates'||!path.some(node=>banks.some(bank=>node.id===bank.folderId));
-    if(largeAxisLink)largeAxisLink.hidden=!path.some(node=>node.id==='folder:axis-1024');
+    if(largeAxisLink){
+      const collection=path.find(node=>node.id==='folder:axis-1024'||node.id==='folder:axis-2048');
+      largeAxisLink.hidden=!collection;
+      if(collection){
+        const size=collection.id.slice('folder:axis-'.length);
+        largeAxisLink.href=new URL(`axis-${size}/`,doc.baseURI).href;
+        largeAxisLink.textContent=size==='1024'?'Крупные фигуры · 536':'Крупные фигуры';
+      }
+    }
     folderPaletteButton.disabled=busy;
     compositionButton.hidden=activeTab!=='templates';
     sectionSave.disabled=busy||(activeTab==='templates'?!!saveButton?.disabled:activeTab==='layers'?!entry?.capturable:activeTab==='sequences'?!root.maySequences:!library?.api);
@@ -386,7 +394,7 @@
   async function act(id,action,value){try{await engine?.action(id,action,value);schedule();}catch(e){reportError(e);}}
   function openWindow(){
     if(libraryWindow&&!libraryWindow.closed){showDetached();setOpen(false);return;}
-    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1089');url.searchParams.set('tab',activeTab);
+    const url=new URL('mayatnik-library.html',doc.baseURI);url.searchParams.set('v','1092');url.searchParams.set('tab',activeTab);
     libraryWindow=root.open(url.href,'mayatnik-library-'+Date.now(),'popup=yes,width=760,height=820,resizable=yes,scrollbars=yes');
     if(!libraryWindow){const notice=panel.querySelector('[data-window-notice]');notice.hidden=false;notice.textContent='Разрешите всплывающие окна для этого сайта и нажмите «Окно» снова.';return;}panel.querySelector('[data-window-notice]').hidden=true;libraryWindow.focus();setOpen(false);
   }
@@ -447,9 +455,7 @@
     grid.addEventListener('dragover',e=>{if(dragged){e.preventDefault();e.dataTransfer.dropEffect='move';}});
     grid.addEventListener('drop',e=>{if(e.target===grid&&dragged){e.preventDefault();organise(()=>store.move(dragged.kind,dragged.id,current));dragged=null;}});
     const listHead=doc.createElement('div');listHead.className='mtp-list-head';for(const label of ['Название','Размер · 1/0','Кнопки']){const cell=doc.createElement('span');cell.textContent=label;listHead.append(cell);}
-    largeAxisLink=doc.createElement('a');largeAxisLink.href=new URL('axis-1024/',doc.baseURI).href;
-    largeAxisLink.target='_blank';largeAxisLink.rel='noopener';largeAxisLink.hidden=true;
-    largeAxisLink.textContent='Крупные фигуры · 536';
+    largeAxisLink=doc.createElement('a');largeAxisLink.target='_blank';largeAxisLink.rel='noopener';largeAxisLink.hidden=true;
     templatePane.append(templateLimitControl(),actions,status,largeAxisLink,listHead,grid);main.append(commands,...sections.map(s=>s[2]));workspace.append(main);panel.append(head,tabs,toolbar,workspace,viewbar);doc.body.append(panel);makeResizer(storage);
     if(root.IntersectionObserver)observer=new root.IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){const card=entry.target;observer.unobserve(card);drawPreview(card);queueMetrics(card);}}, {root:panel,rootMargin:'160px'});
     else workspace.addEventListener('scroll',queueVisibleMetrics,{passive:true});

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Крупные фигуры атласа 2048 · Маятник</title>
+  <link rel="stylesheet" href="../../issledovanie/image-journal/style.css">
+  <style>
+    .atlas-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr)); gap: .75rem; }
+    .atlas-card { padding: .5rem; border: 1px solid var(--line); background: var(--panel); }
+    .atlas-card p { margin: .25rem 0; font-size: .85rem; color: var(--muted); }
+    .atlas-preview { display: block; margin-inline: auto; width: 160px; max-width: 100%; height: 96px; background: var(--bg) no-repeat; }
+  </style>
+  <script src="../axis-1024/catalog.js?v=2048" type="module"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav class="shell site-nav" aria-label="Зеркалиус">
+      <a class="brand" href="../Zerkalius-mayatnik.html?chisto&amp;n=2048&amp;s=2048&amp;k=4&amp;mode=pend">Маятник 2048</a>
+      <a href="../axis-1024/">Атлас 1024</a>
+    </nav>
+  </header>
+  <main class="shell">
+    <section class="entry" aria-labelledby="atlas-heading">
+      <header class="entry-heading">
+        <h1 id="atlas-heading">Крупные фигуры атласа 2048</h1>
+        <p>1073 крупные фигуры центральной оси из кадров 4–2048 с шагом 4. Номер карточки совпадает с номером PNG в архиве. Координаты отсчитываются от левого верхнего угла кадра с нуля.</p>
+      </header>
+      <p class="entry-links">
+        <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/mayatnik-axis-2048/mayatnik-axis-2048.zip">Скачать полный атлас · 8 903 PNG фигур, 512 кадров, JSON и CSV</a>
+      </p>
+      <p>Вставляемые фигуры находятся в Битотеке → Шаблоны → 2048 → Атлас. Здесь собраны крупные фигуры для просмотра и скачивания. Ссылка под превью открывает соответствующий кадр в Маятнике.</p>
+      <p id="status" role="status">Загружаются крупные фигуры…</p>
+      <noscript><p>Для просмотра превью включите JavaScript или скачайте полный атлас.</p></noscript>
+      <div class="atlas-list" id="figures" data-rows="2048"></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,7 +1,7 @@
 (function(root){
   'use strict';
   const DEFAULT=4096,MAX=1048576;
-  function normalize(value){if(value===0||typeof value==='string'&&value.trim()==='0')return 0;const n=Number(value);return Number.isFinite(n)&&n>0?Math.max(1,Math.min(MAX,Math.floor(n))):DEFAULT;}
+  function normalize(value,fallback=DEFAULT){if(value===0||typeof value==='string'&&value.trim()==='0')return 0;const n=Number(value);return Number.isFinite(n)&&n>0?Math.max(1,Math.min(MAX,Math.floor(n))):fallback;}
   function area(width,height){return Math.max(1,Math.ceil(width-1e-9))*Math.max(1,Math.ceil(height-1e-9));}
   function error(limit){const n=normalize(limit),e=new Error(n===0?'Ограничение площади шаблона отключено.':`Шаблон не выделен: площадь больше ${n.toLocaleString('ru-RU')} бит. Лимит — кнопкой «Лимит» в разделе «Шаблоны» библиотеки.`);e.name='TemplateAreaLimitError';return e;}
   function allowed(width,height,limit){const n=normalize(limit);return n===0||area(width,height)<=n;}
