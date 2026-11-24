@@ -1,3 +1,4 @@
+<!-- МАЯ-707 · v1.096 · Выделение шаблонов через Ctrl и совместное перетаскивание. -->
 <!-- МАЯ-706 · v1.095 · Перенос шаблонов без следа по умолчанию. -->
 <!-- ПОМ-041 · v1.094 · Атлас центральной оси 4096 в Битотеке. -->
 <!-- МАЯ-706 · v1.093 · Перенос выделенных шаблонов мышью и пульт без дублей осей. -->
@@ -95,7 +96,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.095</title>
+<title>Zerkalius Маятнкъ — v1.096</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -249,7 +250,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.095</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.096</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -480,7 +481,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     <button id="bAutoTpl" data-mi-short="Автошаблоны: счёт" title="Автошаблоны, шаг 1 — подсчёт: все области кадра, как заливка «По сторонам» (соседи по стороне, один видимый цвет), от самых малых: сколько бит, 1 или 0, цвет, рамка, соседства бок / верт / шахматные">Автошаблоны: счёт</button>
     <button id="bTemplatePick" hidden style="display:none!important" aria-pressed="false" title="Шаблон-выбор: касанием или левой кнопкой выбрать шаблон или связную область битов. Правый щелчок выбирает и без этого режима; протяжка правой переносит выбранный шаблон. Для переноса левой включите Двигать. Два пальца сдвигают и масштабируют поле">Шаблон-выбор</button>
     <button id="bTemplateFindAll" disabled aria-pressed="false" title="Найти и выделить все такие же шаблоны" aria-label="Найти и выделить все такие же шаблоны">Найти все</button>
-    <select id="templatePickMode" title="Режим выбора шаблонов: Один заменяет выделение, Вместе добавляет к выделению"><option value="one">Один</option><option value="add">Вместе</option></select>
     <button id="bTemplateDrag" aria-pressed="false" data-mi-short="Двигать" title="Включить осевые ручки переноса. Выделенную фигуру можно тянуть за тело левой кнопкой. Перетаскивание с Ctrl перемещает шаблоны без следа">↔ Двигать</button>
     <button id="bTemplateTake" title="Взять все пиксели выбранного цвета из текущей картинки в отдельный полупрозрачный шаблон">Взять цвет</button>
     <button id="bTemplateShow" aria-pressed="false" disabled title="Показать или скрыть копию цветной фигуры">Шаблон</button>
@@ -1029,14 +1029,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   let fillPreview=null,previewFrame=0,previewPoint=null;
   const previewCanvas=$('fillPreview'),previewG=previewCanvas.getContext('2d');
   let colourTemplate=null,templateVisible=false,templateStatsKey='',templateLastDown=0,templateOffsetX=0,templatePaintBit=1,templateMove=false,templateDragging=null,templateReturn=null;
-  let templatePickEnabled=false,templatePickMode='one',templateDragEnabled=false;
+  let templatePickEnabled=false,templateDragEnabled=false;
   const templatePickedIds=new Set();
   let compositionPlayback=null,compositionCarryFrame=null;
   function pickedTemplates(){return templateItems.filter(t=>templatePickedIds.has(t.id)||t===colourTemplate);}
   function templatePickSync(){
     $('bTemplatePick').setAttribute('aria-pressed',String(templatePickEnabled));
     $('bTemplateDrag').setAttribute('aria-pressed',String(templateDragEnabled));
-    $('templatePickMode').value=templatePickMode;
   }
   $('bTemplatePick').onclick=()=>{
     templatePickEnabled=false;
@@ -1045,11 +1044,6 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templatePickSync();queueDigits();
   };
   $('bTemplateDrag').onclick=()=>{templateDragEnabled=!templateDragEnabled;templatePickSync();queueDigits();};
-  $('templatePickMode').onchange=()=>{
-    templatePickMode=$('templatePickMode').value==='add'?'add':'one';
-    if(templatePickMode==='one'){templatePickedIds.clear();if(colourTemplate)templatePickedIds.add(colourTemplate.id);}
-    templatePickSync();queueDigits();
-  };
   var templateFrameBatch=null,templateBatchLibraryRevision=0,templateBatchLibraryReady=false,templateBatchError='',templateBatchNotifying=null;
   var templateFollow=null,templateFollowReady=false,templateFollowQueue=Promise.resolve(),templateFollowTarget=null,templateNavigationSerial=0;
   let templateItems=[],templateSerial=0,templateTransfer=false,templateAxisUnlocked=false,templateHover=null;
@@ -6331,15 +6325,18 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;autoSync();fillSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';registerTemplate(hex);templateSync();queueDigits();savePaint();
     $('templateName').value=hex;   // Размер отображается отдельно от имени шаблона.
   };
-  // Выбор левой кнопкой берёт связную область любого цвета, включая исходные 0/1.
-  function takeColourAt(cx,cy){
+  // Выбор берёт связную область любого цвета, включая исходные 0/1.
+  function takeColourAt(cx,cy,extendSelection=false){
     if(!img)return false;const r=cv.getBoundingClientRect(),x=Math.floor((cx-r.left)/r.width*img.width),y=Math.floor((cy-r.top)/r.height*img.height);
     if(x<0||y<0||x>=img.width||y>=img.height)return false;
     if(window.mayTemplateTransient?.contains(x/RK,y/RK))return false;
     const hit=hitTemplate(x,y);
     if(hit?.skipSelection)return false;
     if(hit&&!templateItemAllowed(hit.item))return templateLimitRefusal();
-    if(hit){selectTemplate(hit.item,true,false,templatePickMode==='add');templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;autoSync();fillSync();axisLinesSync();templateSync();queueDigits();return true;}
+    if(hit){
+      if(extendSelection&&unpickTemplate(hit.item))return true;
+      selectTemplate(hit.item,true,false,extendSelection);templateVisible=true;templateMove=true;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;autoSync();fillSync();axisLinesSync();templateSync();queueDigits();return true;
+    }
     if(toolBitAt(x,y)<0)return false;
     stop();target=k;
     const pixels=new Uint32Array(img.data.buffer),q=y*img.width+x,c=pixels[q],half=joinedOn()?[0,(x+.5)/RK]:halfOf((x+.5)/RK);if(!half)return false;
@@ -6356,7 +6353,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     colourTemplate={parts:[{mask,canvas,p,ox,axis:x0+width/2,symmetry:MayatnikTemplate.symmetry(mask)}],hex,paintSource:true,pixels:ids.length};colourTemplate.bits=templateBits(true);
     templateVisible=true;templateMove=true;templateOffsetX=0;templateReturn=null;fillMode=false;autoVertical=0;axisLineMode=false;axisLinePending=null;
     autoSync();fillSync();axisLinesSync();$('templateTrail').checked=false;$('templateHeight').value=100;$('templateDown').value=0;templateLastDown=0;templateStatsKey='';
-    const name=hex;registerTemplate(name,templatePickMode==='add');$('templateName').value=name;templateSync();queueDigits();finishEdit(before);savePaint();return true;   // v0.112: в список — при выносе за треугольник
+    const name=hex;registerTemplate(name,extendSelection);$('templateName').value=name;templateSync();queueDigits();finishEdit(before);savePaint();return true;   // v0.112: в список — при выносе за треугольник
   }
   $('bTemplateShow').onclick=()=>{templateVisible=!templateVisible;templateSync();templateStatus();queueDigits();savePaint();};
   function returnTemplate(){
@@ -12285,10 +12282,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const touchPts=new Map();let touchGesture=false,manualSnakeTouch=null;
   function finishTemplateDrag(type='pointercancel'){
     const drag=templateDragging;if(!drag)return;templateDragging=null;
-    if(drag.mode==='noTrace'){
+    if(drag.mode==='groupMove'){
       wrap.classList.remove('drag');
       templateInlineAxisEnd(type!=='pointerup');
-      if(!drag.moved&&type==='pointerup'&&drag.findAllOnTap)findAllSelectedTemplate(drag.findAllOnTap);
+      if(!drag.moved&&type==='pointerup'){
+        if(drag.unpickOnTap)unpickTemplate(templateItems.find(item=>item.id===drag.unpickOnTap));
+        else if(drag.findAllOnTap)findAllSelectedTemplate(drag.findAllOnTap);
+      }
       return;
     }
     if(type!=='pointerup'&&drag.unpickOnTap)templateContextSkip=true;
@@ -12363,19 +12363,29 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     return null;
   }
   wrap.addEventListener('pointerdown',e=>{
-    if(e.altKey||e.metaKey||e.button!==0||e.pointerType==='touch'||e.defaultPrevented||!img||!templatePickedIds.size||playing||
+    if(e.altKey||e.metaKey||e.button!==0||e.pointerType==='touch'||e.defaultPrevented||!img||(!e.ctrlKey&&!templatePickedIds.size)||playing||
       rulerMode||axisLineMode||templateDragging||templateInlineDrag||templateInlineTransaction||
       e.target.closest?.('button,input,select,textarea,[role="button"],.zl-hd,#zTopLine,#mayAxisHandles'))return;
-    const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);
-    if(!hit||hit.skipSelection||!templatePickedIds.has(hit.item.id)||!templateItemAllowed(hit.item)||!e.ctrlKey&&!templateTransferSetting(hit.item.view))return;
+    const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*img.width,y=(e.clientY-r.top)/r.height*img.height,hit=hitTemplate(x,y);
+    if(hit?.skipSelection||hit&&!templateItemAllowed(hit.item))return;
+    if(!hit||!templatePickedIds.has(hit.item.id)){
+      if(!e.ctrlKey||!hit&&(axisPicking||nearLine(e.clientY)||fixNear(e.clientX,e.clientY)||
+        st.userLines.length&&nearestUserLine(e.clientX,e.clientY)>=0||toolBitAt(Math.floor(x),Math.floor(y))<0))return;
+      templatePickTap={id:e.pointerId,...navigationPoint(e),extendSelection:true};
+      wrap.tabIndex=-1;wrap.focus({preventScroll:true});wrap.setPointerCapture(e.pointerId);
+      e.preventDefault();e.stopImmediatePropagation();return;
+    }
+    const noTrace=e.ctrlKey||templateTransferSetting(hit.item.view);
+    if(!noTrace&&templatePickedIds.size<2)return;
     selectTemplate(hit.item,false,false,true);
-    if(!templateInlineAxisBegin(null,null,e,true))return;
+    if(!templateInlineAxisBegin(null,null,e,noTrace))return;
     axisSelected=0;templateMove=true;window.mayTemplateLibrary?.clear();
-    templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,mode:'noTrace',findAllOnTap:!e.ctrlKey&&!e.shiftKey?hit.item.id:null};
+    templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,mode:'groupMove',editBefore:templateInlineDrag.before,
+      unpickOnTap:e.ctrlKey?hit.item.id:null,findAllOnTap:!e.ctrlKey&&!e.shiftKey&&templatePickedIds.size===1?hit.item.id:null};
     wrap.tabIndex=-1;wrap.focus({preventScroll:true});wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');
     clearFillPreview();e.preventDefault();e.stopImmediatePropagation();
   },true);
-  // Подсказка жеста над фигурой: Ctrl — перенос без следа, Alt — край зеркала.
+  // Ctrl добавляет фигуры щелчком или переносит набор без следа.
   function hoverTemplate(cx,cy,mods){
     let next=null,cursor='';
     if((templatePickEnabled||templateDragEnabled||templatePickedIds.size||mods.ctrl)&&img&&cx!=null&&!templateDragging&&!playing&&((!fillMode&&!autoVertical)||mods.ctrl)){const r=cv.getBoundingClientRect(),x=(cx-r.left)/r.width*img.width,y=(cy-r.top)/r.height*img.height,hit=templateItems.length?hitTemplate(x,y):null;
@@ -12391,10 +12401,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   wrap.addEventListener('contextmenu',e=>{
     if(window.mayFillPalette?.handleContextMenu(e))return;
     e.preventDefault();if(templateContextSkip){templateContextSkip=false;return;}if(templateDragging)return;
-    if(img){const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(hit){if(!e.altKey&&!e.ctrlKey&&!e.metaKey&&unpickTemplate(hit.item))return;if(takeColourAt(e.clientX,e.clientY)){axisSelected=0;window.mayTemplateLibrary?.clear();}return;}}
+    if(img){const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(hit){if(!e.altKey&&!e.ctrlKey&&!e.metaKey&&unpickTemplate(hit.item))return;if(takeColourAt(e.clientX,e.clientY,e.ctrlKey)){axisSelected=0;window.mayTemplateLibrary?.clear();}return;}}
     if(f&&st.userLines.length){const i=nearestUserLine(e.clientX,e.clientY);
       if(i>=0){if(i>=st.userLines.length-axisSelected)axisSelOut(i);else{axisSelTo(i);axisSelected++;}axisLinesSync();queueDigits();return;}}
-    if(takeColourAt(e.clientX,e.clientY)){axisSelected=0;window.mayTemplateLibrary?.clear();}
+    if(takeColourAt(e.clientX,e.clientY,e.ctrlKey)){axisSelected=0;window.mayTemplateLibrary?.clear();}
   });
   // Double-click on the free field toggles the same normal transport as Play.
   function fieldDoubleClick(e){
@@ -13418,7 +13428,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   const nearLine=cy=>{if(!mirrorLine||!f||templateCanvas.hidden)return false;const r=cv.getBoundingClientRect();return Math.abs(cy-(r.top+mirrorLineY*scale()))<=5;};
   wrap.addEventListener('pointerdown', e => {
     if(fillMode&&e.button===2){templateContextSkip=false;return;}
-    if(e.button===2)templateContextSkip=false;
+    if(e.button===2){templateContextSkip=false;if(e.ctrlKey)return;}
     if(templateDragging||lineDrag||window.mayTemplateInline?.dragging?.())return;
     if(rulerMode&&e.button===0&&f){const p=rulerPx(e.clientX,e.clientY);if(!rulerA||rulerB){rulerA=p;rulerB=null;}else rulerB=p;rulerHover=null;queueDigits();e.preventDefault();return;}   // v0.161: линейка
     if(e.button===0&&f&&!axisLineMode&&e.shiftKey&&st.userLines.length&&!templateCanvas.hidden&&nearestUserLine(e.clientX,e.clientY)<0){axisBox={id:e.pointerId,x:e.clientX,y:e.clientY,x2:e.clientX,y2:e.clientY};wrap.setPointerCapture(e.pointerId);e.preventDefault();return;}   // v0.240: рамка
@@ -13439,7 +13449,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const found=hitTemplate(x,y),hit=found&&!found.skipSelection&&templateItemAllowed(found.item)&&templatePickedIds.has(found.item.id)?found:null,part=hit?.part,unpickOnTap=e.button===2&&!e.altKey&&!e.ctrlKey&&!e.metaKey;if(hit){axisSelected=0;window.mayTemplateLibrary?.clear();if(!unpickOnTap){selectTemplate(hit.item,false,false,true);templateMove=true;}wrap.tabIndex=-1;wrap.focus({preventScroll:true});}
       if(part){const box=templateRect(part),off=window.mayLayers?.get('template:'+hit.item.id),cx=r.left+(box.x+box.width/2)/RK*scale()+(off?.x||0),cy=r.top+(box.y+box.height/2)/RK*scale()+(off?.y||0);
         if(e.altKey){const edge=templateEdge(hit,x,y);templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),mirrorEdge:edge,pure:true,cx,cy,radius:Math.max(12,Math.hypot(e.clientX-cx,e.clientY-cy)),mode:'edgeCopy',editBefore:editSnapshot()};}
-        else templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),duplicate:e.ctrlKey||e.metaKey,pure:e.ctrlKey||e.metaKey||templateTransfer,unpickOnTap:unpickOnTap?hit.item.id:null,findAllOnTap:e.button===0&&e.pointerType!=='touch'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?hit.item.id:null,cx,cy,mode:e.button===0?'move':'pickOnly',itemId:hit.item.id,editBefore:editSnapshot()};
+        else templateDragging={id:e.pointerId,x:e.clientX,y:e.clientY,down:Number($('templateDown').value),offsetX:templateOffsetX,height:Number($('templateHeight').value),part,partIndex:hit.item.parts.indexOf(part),duplicate:e.metaKey,pure:e.metaKey||templateTransfer,unpickOnTap:unpickOnTap?hit.item.id:null,findAllOnTap:e.button===0&&e.pointerType!=='touch'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey?hit.item.id:null,cx,cy,mode:e.button===0?'move':'pickOnly',itemId:hit.item.id,editBefore:editSnapshot()};
         wrap.setPointerCapture(e.pointerId);wrap.classList.add('drag');clearFillPreview();e.preventDefault();return;}}
     if(e.button===0&&img){let findAllOnTap=null;
       if(e.pointerType!=='touch'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const r=cv.getBoundingClientRect(),hit=hitTemplate((e.clientX-r.left)/r.width*img.width,(e.clientY-r.top)/r.height*img.height);if(hit&&!hit.skipSelection&&templatePickedIds.has(hit.item.id)&&templateItemAllowed(hit.item))findAllOnTap=hit.item.id;}
@@ -13451,6 +13461,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if (pts.size === 2) { zWant = 0; const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale(), x:(a.x+b.x)/2, y:(a.y+b.y)/2 }; pan = null; }
   });
   wrap.addEventListener('pointermove', e => {
+    if(templatePickTap?.id===e.pointerId&&templatePickTap.extendSelection){
+      const point=navigationPoint(e);
+      if(Math.hypot(point.x-templatePickTap.x,point.y-templatePickTap.y)>=5)templatePickTap.moved=true;
+      return;
+    }
     if(axisDrag?.id===e.pointerId&&axisDrag.end>=0){const d=axisDrag,p=snapBit(e.clientX,e.clientY),n=d.line.slice();n[d.end]=p[0];n[d.end+1]=p[1];if(n[0]!==n[2]||n[1]!==n[3])st.userLines[st.userLines.length-1]=n;queueDigits();if(mirrorLive)mirrorQueue();e.preventDefault();return;}
     if(axisDrag?.id===e.pointerId){const d=axisDrag,p=snapBit(e.clientX,e.clientY),l=d.line;let dx=p[0]-d.from[0],dy=p[1]-d.from[1];
       if(l[1]===l[3])dx=0;else if(l[0]===l[2])dy=0;const n0=st.userLines.length-d.lines.length;d.lines.forEach((q,j)=>{st.userLines[n0+j]=[q[0]+dx,q[1]+dy,q[2]+dx,q[3]+dy];});queueDigits();if(mirrorLive)mirrorQueue();e.preventDefault();return;}   // v0.240: все выделенные разом
@@ -13458,7 +13473,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(lineDrag?.id===e.pointerId){const r=cv.getBoundingClientRect();mirrorLineY=Math.max(0,Math.min(VH,Math.round((e.clientY-r.top)/scale())));queueDigits();e.preventDefault();return;}
     if(templateDragging?.id===e.pointerId){const d=templateDragging;
       if(!d.moved&&Math.hypot(e.clientX-d.x,e.clientY-d.y)<3)return;
-      if(d.mode==='noTrace'){
+      if(d.mode==='groupMove'){
+        d.findAllOnTap=null;d.unpickOnTap=null;
         const drag=templateInlineDrag;
         if(drag)templateInlineTranslate(drag,templateDragDelta(drag.anchor,e,d));
         d.moved=!!drag?.started;e.preventDefault();return;
@@ -13489,14 +13505,14 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     }
   });
   const up = e => {
-    if(templatePickTap?.id===e.pointerId){const tap=templatePickTap;templatePickTap=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);if(e.type==='pointerup'&&Math.hypot(navigationPoint(e).x-tap.x,navigationPoint(e).y-tap.y)<5){if(tap.findAllOnTap)findAllSelectedTemplate(tap.findAllOnTap);else if(takeColourAt(e.clientX,e.clientY)){axisSelected=0;window.mayTemplateLibrary?.clear();}}return;}
+    if(templatePickTap?.id===e.pointerId){const tap=templatePickTap;templatePickTap=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);if(e.type==='pointerup'&&!tap.moved&&Math.hypot(navigationPoint(e).x-tap.x,navigationPoint(e).y-tap.y)<5){if(tap.findAllOnTap)findAllSelectedTemplate(tap.findAllOnTap);else if(takeColourAt(e.clientX,e.clientY,tap.extendSelection)){axisSelected=0;window.mayTemplateLibrary?.clear();}}return;}
     if(axisBox?.id===e.pointerId){const b=axisBox;axisBox=null;if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);   // v0.240: оси, задевшие рамку, — к выделенным
       const r=cv.getBoundingClientRect(),s=scale(),L=Math.min(b.x,b.x2),R=Math.max(b.x,b.x2),T=Math.min(b.y,b.y2),B=Math.max(b.y,b.y2);
       const hit=([x1,y1,x2,y2])=>{for(let t=0;t<=1;t+=1/64){const x=r.left+(x1+(x2-x1)*t)*s,y=r.top+(y1+(y2-y1)*t)*s;if(x>=L&&x<=R&&y>=T&&y<=B)return true;}return false;};
       for(let i=st.userLines.length-axisSelected-1;i>=0;i--)if(hit(st.userLines[i])){axisSelTo(i);axisSelected++;}axisLinesSync();queueDigits();return;}
     if(axisDrag?.id===e.pointerId){axisDrag=null;actSet('axis');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);save();if(mirrorLive){cancelAnimationFrame(mirrorFrame);mirrorFrame=0;mirrorApply(true);}return;}
     if(lineDrag?.id===e.pointerId){lineDrag=null;actSet('mirLine');if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
-    if(templateDragging?.id===e.pointerId){if(Math.hypot(e.clientX-templateDragging.x,e.clientY-templateDragging.y)>=3)templateDragging.findAllOnTap=null;finishTemplateDrag(e.type);if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
+    if(templateDragging?.id===e.pointerId){if(Math.hypot(e.clientX-templateDragging.x,e.clientY-templateDragging.y)>=3){templateDragging.findAllOnTap=null;templateDragging.unpickOnTap=null;}finishTemplateDrag(e.type);if(wrap.hasPointerCapture(e.pointerId))wrap.releasePointerCapture(e.pointerId);return;}
     const tap = e.type === 'pointerup' && e.button === 0 && pan && !pan.moved && !pinch && pts.size === 1;
     const midTap = e.type === 'pointerup' && e.button === 1 && pan && !pan.moved && !pinch && pts.size === 1;   // v0.097: щелчок колёсиком без сдвига — дзен
     if (pan && pan.moved && !pinch && pts.size === 1) actSet('pan');   // v0.265
@@ -13509,7 +13525,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     stop();target=k;konusPick(cell.c,cell.r,!e.shiftKey,cell.p);
   };
   wrap.addEventListener('pointerup', up); wrap.addEventListener('pointercancel', up);
-  wrap.addEventListener('lostpointercapture',e=>{if(templateDragging?.mode==='noTrace'&&templateDragging.id===e.pointerId)finishTemplateDrag();});
+  wrap.addEventListener('lostpointercapture',e=>{
+    if(templatePickTap?.id===e.pointerId)templatePickTap=null;
+    if(templateDragging?.mode==='groupMove'&&templateDragging.id===e.pointerId)finishTemplateDrag();
+  });
   function templateDragDelta(origin,event,start){
     let dx=(event.clientX-start.x)/scale(),dy=(event.clientY-start.y)/scale();
     if(event.shiftKey){if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0;}
@@ -13548,7 +13567,12 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const target=event.target;
     if(target.closest?.('dialog,[aria-modal="true"]')||[...document.querySelectorAll('dialog[open],[aria-modal="true"]')].some(node=>node.getClientRects().length))return;
     if(target.closest?.('input,select,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')&&!target.closest('.may-template-inline'))return;
-    if(templateDragging?.mode==='noTrace'){
+    if(templatePickTap?.extendSelection){
+      const {id}=templatePickTap;templatePickTap=null;
+      if(wrap.hasPointerCapture(id))wrap.releasePointerCapture(id);
+      event.preventDefault();event.stopImmediatePropagation();return;
+    }
+    if(templateDragging?.mode==='groupMove'){
       const {id}=templateDragging;
       finishTemplateDrag();
       if(wrap.hasPointerCapture(id))wrap.releasePointerCapture(id);
@@ -13921,26 +13945,37 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   function templateInlineAxisBegin(id,direction,event,noTrace=false){
     noTrace ||= templateTransfer;
-    if((!noTrace&&!templateDragEnabled)||templateInlineDrag||templateInlineTransaction||templateDragging||noTrace&&playing)return false;const state=templateAxisState();if(!state)return false;
-    const items=noTrace?templatePaintTargets().filter(item=>templateItemAllowed(item)&&!window.mayTemplateTransient?.hidden(item)):templateInlineTargets();
-    if(!items.length)return false;
+    if(id!=null&&!templateDragEnabled||templateInlineDrag||templateInlineTransaction||templateDragging||playing)return false;
+    if(!templateAxisState())return false;
+    const items=templatePaintTargets().filter(item=>!window.mayTemplateTransient?.hidden(item));
+    if(!items.includes(colourTemplate))return false;
     const active=colourTemplate.id,picked=[...templatePickedIds],before=editSnapshot(),owner=f,frame=k;
     const origins=items.map(item=>({item,x:item.view.x||0,down:item.view.down||0}));
     const anchor=origins.find(origin=>origin.item===colourTemplate);
-    before.templateOwned=true;templateInlineDrag={id,direction,items,active,picked,before,owner,frame,trackWrites:true,pointerId:event?.pointerId,origins,anchor,noTrace,removedPaint:noTrace?new Set():null,started:false};if(event?.pointerType==='touch')touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});return true;
+    const down=$('templateDown');
+    const minY=origins.reduce((bound,origin)=>Math.max(bound,Number(down.min)-origin.down),-Infinity);
+    const maxY=origins.reduce((bound,origin)=>Math.min(bound,Number(down.max)-origin.down),Infinity);
+    before.templateOwned=true;templateInlineDrag={id,direction,items,active,picked,before,owner,frame,trackWrites:true,pointerId:event?.pointerId,origins,anchor,minY,maxY,noTrace,removedPaint:noTrace?new Set():null,started:false};if(event?.pointerType==='touch')touchPts.set(event.pointerId,{x:event.clientX,y:event.clientY});return true;
   }
   function templateInlineAxisMove(direction,dx,dy,rk){
     const drag=templateInlineDrag;if(drag)templateInlineTranslate(drag,MayatnikTemplateInline.constrained(direction,dx,dy,rk,rombP()>=0));
   }
   function templateInlineTranslate(drag,delta){
-    if(drag.owner!==f||drag.frame!==k||(!drag.started&&!delta.x&&!delta.y)||(drag.delta?.x===delta.x&&drag.delta?.y===delta.y))return;
-    const down=$('templateDown'),min=Number(down.min),max=Number(down.max),first=!drag.started;
-    if(first&&drag.noTrace&&!delta.x&&!drag.origins.some(origin=>clampInt(origin.down+delta.y,min,max,0)!==origin.down))return;
+    if(drag.owner!==f||drag.frame!==k)return;
+    // Use a common shift even when one member reaches the vertical limit.
+    let x=delta.x,y=Math.max(drag.minY,Math.min(drag.maxY,delta.y));
+    if(rombP()>=0&&Math.round(y-delta.y)%2){
+      if(y)y-=Math.sign(y);
+      else x-=Math.sign(x);
+    }
+    const first=!drag.started;
+    if((first&&!x&&!y)||(drag.delta?.x===x&&drag.delta?.y===y))return;
+    delta={x,y};
     const previousPaintCount=drag.removedPaint?.size;
     templateInlineTransaction=drag;templateHistoryCapture=drag.before;
     try{
       for(const origin of drag.origins){if(!templateItems.includes(origin.item))continue;selectTemplate(origin.item,false,true,true);const raster=templateInlineRaster();
-        const nextDown=clampInt(origin.down+delta.y,min,max,0);
+        const nextDown=origin.down+delta.y;
         if(drag.noTrace){
           if(!origin.lifted&&(delta.x||nextDown!==origin.down)){
             liftTemplateSource(false,drag.removedPaint);origin.lifted=true;
@@ -13959,7 +13994,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     const drag=templateInlineDrag;if(!drag)return;templateInlineDrag=null;
     if(drag.owner!==f||drag.frame!==k)return;
     if(drag.pointerId!=null)touchPts.delete(drag.pointerId);
-    if(drag.noTrace&&!drag.started)return;
+    if(!drag.started)return;
     if(cancel||drag.noTrace&&!drag.delta.x&&!drag.delta.y){
       if(drag.removedPaint)for(const q of drag.removedPaint)templateBaselineWrite(q,drag.before.paint?.[q]||0,drag.before.bits?.[q]??-1);
       templateInlineRestoreScene(drag.before.scene,true);fillMask=drag.before.paint;paintBits=drag.before.bits;templateInlineRestoreSelection(drag.active,drag.picked,true);
@@ -14066,21 +14101,21 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(phoneOn())st.phoneK=k;
     if(!animatrixDeferredReady||!sessionReady||window.mayBackupRestoring||SHARE_ACTIVE)return;
     const controls={};for(const id of sessionControls){const el=$(id);controls[id]=el.type==='checkbox'?el.checked:el.value;}
-    const data={rows:st.rows,steps:st.steps,mode:st.mode,animatrixCopyRowsUnit:animatrixCopyRows()?'row':undefined,sequenceSourceKey:fieldSourceKey(),compareSource:st.compareSource||'',compareMirror:!!st.compareMirror,k:rowBuild?rowBuild.frame-1:k,playing:playing&&!fast,fillMode,autoVertical,chessLive,axisPicking,axisLineMode,rulerMode,rulerA,rulerB,mirrorLine,mirrorLineY,mirrorLive,mirrorXor,auto:!!autoRun,rowRun:!!rowRun,templatePickEnabled,templatePickMode,templateDragEnabled,templateMove,templateAxisUnlocked,templateTransfer,zen:document.body.classList.contains('may-zen'),controls};
+    const data={rows:st.rows,steps:st.steps,mode:st.mode,animatrixCopyRowsUnit:animatrixCopyRows()?'row':undefined,sequenceSourceKey:fieldSourceKey(),compareSource:st.compareSource||'',compareMirror:!!st.compareMirror,k:rowBuild?rowBuild.frame-1:k,playing:playing&&!fast,fillMode,autoVertical,chessLive,axisPicking,axisLineMode,rulerMode,rulerA,rulerB,mirrorLine,mirrorLineY,mirrorLive,mirrorXor,auto:!!autoRun,rowRun:!!rowRun,templatePickEnabled,templatePickMode:'one',templateDragEnabled,templateMove,templateAxisUnlocked,templateTransfer,zen:document.body.classList.contains('may-zen'),controls};
     try{localStorage.setItem(SESSION_KEY,JSON.stringify(data));}catch(_){}save();
   };
   const queueSession=()=>{if(sessionQueued||!sessionReady)return;sessionQueued=true;queueMicrotask(()=>{sessionQueued=false;saveSession();});};
   // Settings presets deliberately exclude field generation, raster geometry and placed content.
   function captureButtonSettings(){
     if(!sessionReady)throw Error('Дождитесь загрузки Маятника');
-    return MayatnikSettingsLibrary.pick(st,{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode,templateDragEnabled},{fillColour:$('fillColour').value,fillMirror:$('fillMirror').checked},Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])));
+    return MayatnikSettingsLibrary.pick(st,{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode:'one',templateDragEnabled},{fillColour:$('fillColour').value,fillMirror:$('fillMirror').checked},Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])));
   }
   function restoreButtonSettings(snapshot){
     if(!sessionReady||cacheRestoring||frameLibraryBusy||templateDragging)throw Error('Дождитесь завершения текущего действия');
     const data=MayatnikSettingsLibrary.normalized(snapshot),before=captureButtonSettings();
     const apply=data=>{
       MayatnikSettingsLibrary.applyState(st,data);st.invertFrame=st.invertAuto&&f?k:null;invertNotify();templateFollow.restore(st.templateFindAll);templateFrameSearchRestore();$('fillColour').value=data.controls.fillColour;syncPaintToolColours(true);
-      const q=data.tools;fillMode=q.fillMode;autoVertical=q.autoVertical;axisPicking=q.axisPicking;axisLineMode=q.axisLineMode;rulerMode=q.rulerMode;mirrorLine=q.mirrorLine;templatePickEnabled=false;templatePickMode=q.templatePickMode;templateDragEnabled=q.templateDragEnabled;
+      const q=data.tools;fillMode=q.fillMode;autoVertical=q.autoVertical;axisPicking=q.axisPicking;axisLineMode=q.axisLineMode;rulerMode=q.rulerMode;mirrorLine=q.mirrorLine;templatePickEnabled=false;templateDragEnabled=q.templateDragEnabled;
       axisLinePending=null;clearFillPreview();mirState().on=q.mirrorAxis;heatPrev=null;animPrev=null;
       writeUI();
       for(const key of MayatnikSettingsLibrary.STATE_KEYS){const el=$(key);if(!el||st[key]===undefined)continue;if(el.type==='checkbox')el.checked=!!st[key];else if(el.matches('input,select'))el.value=st[key];}
@@ -14154,7 +14189,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       state:{...structuredClone(st),lineMeasures:false},
       edgeSeed:base?MayatnikShareLink.encodeEdgeSeed({width:f.W,height:f.H,values:base.val,mark:base.edgeMark,jumps:base.edgeJumps,laps:base.edgeLaps}):null,
       display:{scrollLeft:wrap.scrollLeft,scrollTop:wrap.scrollTop},
-      tools:{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode,templateDragEnabled},
+      tools:{fillMode,autoVertical,axisPicking,axisLineMode,rulerMode,mirrorLine,mirrorAxis:!!st.mirAxis?.on,templatePickEnabled,templatePickMode:'one',templateDragEnabled},
       colours:{fillColour:$('fillColour').value,fillMirror:$('fillMirror').checked},
       colourAuto:Object.fromEntries(autoPaintIds.map(id=>[id,window.MayatnikColourAuto?.getState(id)])),
       templateScene:captureShareTemplates(),paintRepeat:MayatnikPaintRepeat.json(paintRepeatSeed),paint:captureSharePaint()};
@@ -14194,7 +14229,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   function applyShareControls(data){
     const q=data.tools||{};
     fillMode=!!q.fillMode;autoVertical=[0,1,2].includes(q.autoVertical)?q.autoVertical:0;axisPicking=!!q.axisPicking;axisLineMode=!!q.axisLineMode;rulerMode=!!q.rulerMode;mirrorLine=!!q.mirrorLine;
-    templatePickEnabled=!!q.templatePickEnabled;templatePickMode=q.templatePickMode==='add'?'add':'one';templateDragEnabled=!!q.templateDragEnabled;mirState().on=!!q.mirrorAxis;
+    templatePickEnabled=!!q.templatePickEnabled;templateDragEnabled=!!q.templateDragEnabled;mirState().on=!!q.mirrorAxis;
     axisLinePending=null;clearFillPreview();heatPrev=null;animPrev=null;
     const fill=/^#[0-9a-f]{6}$/i.test(data.colours?.fillColour||'')?data.colours.fillColour:'#ff7f27';
     $('fillColour').value=fill;$('fillMirror').checked=data.colours?.fillMirror!==false;syncPaintToolColours(true);
@@ -14521,7 +14556,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       await cacheWrites;
       templateMatchRevision++;templateMatchCache=null;templateMatchLayer=null;compareFreezeService?.cancel();
       manualPaintClear();manualPaintFrames.clear();fillMode=false;autoVertical=0;colReplay=[];faceLayer=null;fillMask=paintBits=fillBits=null;templatePaintLayer=null;fillHistory=[];fillRedo=[];fillHistoryBytes=0;paintStash.clear();lockWipe();
-      templateFollow.off();templateFrameBatch?.off();templateDragging=null;templateHistoryCapture=null;templateItems=[];colourTemplate=null;templateVisible=false;templateMove=false;templateHover=null;templateTransfer=false;templateAxisUnlocked=false;templatePickEnabled=false;templateDragEnabled=false;templatePickMode='one';templatePickedIds.clear();window.mayTemplateLibrary?.clear();
+      templateFollow.off();templateFrameBatch?.off();templateDragging=null;templateHistoryCapture=null;templateItems=[];colourTemplate=null;templateVisible=false;templateMove=false;templateHover=null;templateTransfer=false;templateAxisUnlocked=false;templatePickEnabled=false;templateDragEnabled=false;templatePickedIds.clear();window.mayTemplateLibrary?.clear();
       axisPicking=false;axisLineMode=false;axisLinePending=axisLineHover=axisDrag=axisBox=null;axisSelected=0;mirrorLine=false;mirrorLineY=0;mirrorXor=false;rulerMode=false;rulerA=rulerB=rulerHover=rulerDrag=null;
       animatrixNewWork();st=defaultScene();areaSel='';ochki=null;midAuto=null;heatPrev=null;zWant=0;foldPending=null;previousSession=null;
       for(const input of document.querySelectorAll('.bar input[type="checkbox"]'))input.checked=false;
@@ -15080,7 +15115,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       fillMode=!!s.fillMode;autoVertical=clampInt(s.autoVertical,0,2,0);axisPicking=!!s.axisPicking;axisLineMode=!!s.axisLineMode;rulerMode=!!s.rulerMode;
       rulerA=s.rulerA||null;rulerB=s.rulerB||null;mirrorLine=!!s.mirrorLine;mirrorLineY=Number(s.mirrorLineY)||0;
       templateMove=!!s.templateMove&&!!colourTemplate;templateAxisUnlocked=!!s.templateAxisUnlocked;templateTransfer=!!colourTemplate&&(s.templateTransfer??templateTransfer);
-      templatePickEnabled=false;templatePickMode=s.templatePickMode==='add'?'add':'one';templateDragEnabled=!!s.templateDragEnabled;templatePickSync();
+      templatePickEnabled=false;templateDragEnabled=!!s.templateDragEnabled;templatePickSync();
       mirrorXor=!!s.mirrorXor;mirrorLiveSet(!!s.mirrorLive);
       $('bAxisPick').setAttribute('aria-pressed',String(axisPicking));$('bMirrorLine').setAttribute('aria-pressed',String(mirrorLine));
       autoSync();fillSync();axisLinesSync();rulerSync();templateSync();if(s.chessLive&&!chessLive)chessLiveSet(true);
@@ -15196,7 +15231,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <script src="mayatnik-animatrix-controls.js?v=1036"></script>
 <script src="mayatnik-axes-panel.js?v=1055"></script>
 <script src="mayatnik-heat-period-control.js?v=984"></script>
-<script src="mayatnik-menu.js?v=1093"></script>
+<script src="mayatnik-menu.js?v=1096"></script>
 <link rel="stylesheet" href="mayatnik-button-standard.css?v=1044">
 <script src="mayatnik-button-standard.js?v=1044"></script>
 <link rel="stylesheet" href="../_js/group-header.css?v=2">
