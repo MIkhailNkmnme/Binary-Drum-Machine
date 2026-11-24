@@ -1,3 +1,5 @@
+import './indexed-png.js?v=2';
+
 const byId = id => document.getElementById(id);
 const rows = byId('rows');
 const frame = byId('frame');
@@ -18,13 +20,17 @@ const surface = byId('composition-surface');
 const board = byId('board');
 const preview = byId('preview');
 const previewCanvas = byId('preview-canvas');
-const worker = new Worker('worker.js?v=1');
+const worker = new Worker('worker.js?v=2');
 const titles = new Intl.NumberFormat('ru-RU');
+const canvasArea = 16_000_000;
+const streamedArea = 64_000_000;
+const maxSide = 16_384;
 const preferencesKey = 'mayatnik-scale-atlases-v1';
 const selection = new Map();
 const visibleButtons = new Map();
 const indexes = new Map();
 let collection, plan, previewItem, loadNumber = 0, requestNumber = 0;
+let busyRequest = false, queuedRequest, exportingComposition = false;
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -55,14 +61,40 @@ function filename(item) {
   return `mayatnik-${item.rows}-k${item.frame}-q${item.factor}-dx${item.dx}-dy${item.dy}.png`;
 }
 
-function bitmap(item, canvas = document.createElement('canvas')) {
-  canvas.width = item.width;
-  canvas.height = item.height;
+function fittedSize(width, height, maxWidth, maxHeight) {
+  const scale = Math.min(1, maxWidth / width, maxHeight / height);
+  return [Math.max(1, Math.floor(width * scale)), Math.max(1, Math.floor(height * scale))];
+}
+
+function bitmap(item, canvas = document.createElement('canvas'), maxWidth = Infinity, maxHeight = Infinity) {
+  const [width, height] = fittedSize(item.width, item.height, maxWidth, maxHeight);
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext('2d');
-  const image = context.createImageData(item.width, item.height);
-  new Uint32Array(image.data.buffer).set(item.raster);
+  const image = context.createImageData(width, height);
+  const pixels = new Uint32Array(image.data.buffer);
+  if (!item.palette && width === item.width && height === item.height) {
+    pixels.set(item.raster);
+  } else {
+    for (let y = 0; y < height; y++) {
+      const offset = Math.floor(y * item.height / height) * item.width;
+      for (let x = 0; x < width; x++) {
+        const value = item.raster[offset + Math.floor(x * item.width / width)];
+        pixels[y * width + x] = item.palette ? item.palette[value] : value;
+      }
+    }
+  }
   context.putImageData(image, 0, 0);
   return canvas;
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const link = element('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 function download(canvas, name, status) {
@@ -71,12 +103,7 @@ function download(canvas, name, status) {
       status.textContent = 'Не удалось создать PNG.';
       return;
     }
-    const url = URL.createObjectURL(blob);
-    const link = element('a');
-    link.href = url;
-    link.download = name;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    downloadBlob(blob, name);
   }, 'image/png');
 }
 
@@ -91,6 +118,15 @@ function setPageControls(loading) {
   pageCount.textContent = plan ? `из ${titles.format(plan.pages)}` : '';
 }
 
+function sendPageRequest(request) {
+  if (busyRequest) {
+    queuedRequest = request;
+    return;
+  }
+  busyRequest = true;
+  worker.postMessage(request);
+}
+
 function requestPage(number = 0) {
   if (!collection) return;
   visibleButtons.clear();
@@ -103,7 +139,7 @@ function requestPage(number = 0) {
   byId('source-note').textContent = `Поле ${collection.width} × ${collection.height} · фаза ${level.width} × ${level.height} · ${titles.format(level.phases)} фаз${sample}`;
   catalogStatus.textContent = 'Рассчитываются фазы…';
   setPageControls(true);
-  worker.postMessage({id: ++requestNumber, rows: collection.rows, frame: current.number, factor: level.factor, page: number});
+  sendPageRequest({id: ++requestNumber, rows: collection.rows, frame: current.number, factor: level.factor, page: number});
 }
 
 function selectLevels(value) {
@@ -116,6 +152,7 @@ function selectLevels(value) {
 async function loadCollection(number, level, pageNumber = 0) {
   const request = ++loadNumber;
   requestNumber++;
+  queuedRequest = null;
   plan = null;
   collection = null;
   frame.disabled = factor.disabled = order.disabled = true;
@@ -153,7 +190,8 @@ function syncSelectionButtons() {
 function showPreview(item) {
   previewItem = item;
   byId('preview-title').textContent = nameOf(item);
-  bitmap(item, previewCanvas);
+  if (item.palette) bitmap(item, previewCanvas, 1024, 640);
+  else bitmap(item, previewCanvas);
   preview.showModal();
 }
 
@@ -167,7 +205,7 @@ function renderTiles() {
     const inspect = button('', () => showPreview(item));
     inspect.className = 'tile-preview';
     inspect.setAttribute('aria-label', 'Рассмотреть ' + nameOf(item));
-    inspect.append(bitmap(item));
+    inspect.append(item.palette ? bitmap(item, undefined, 192, 112) : bitmap(item));
     const caption = element('figcaption', `Фаза ${item.index + 1} · dx ${item.dx}, dy ${item.dy}`);
     const toggle = button('В сборку', () => togglePhase(item));
     toggle.setAttribute('aria-label', 'Фаза в сборке · ' + nameOf(item));
@@ -255,10 +293,55 @@ function drawPhases(items, width, height) {
   context.putImageData(image, 0, 0);
 }
 
+function drawLargePreview(items, {width, height, left = 0, top = 0}, aligned) {
+  const [previewWidth, previewHeight] = fittedSize(width, height, 960, 640);
+  const context = setBoard(previewWidth, previewHeight);
+  const image = context.createImageData(previewWidth, previewHeight);
+  const pixels = new Uint32Array(image.data.buffer);
+  const factor = aligned ? items[0].factor : 1;
+  const yStep = Math.max(1, Math.floor(height / (previewHeight * factor)));
+  const xStep = Math.max(1, Math.floor(width / (previewWidth * factor)));
+  for (const item of items) {
+    const dx = aligned ? item.dx : item.x - left;
+    const dy = aligned ? item.dy : item.y - top;
+    const tileWidth = aligned ? item.validWidth : item.width;
+    const tileHeight = aligned ? item.validHeight : item.height;
+    for (let y = 0; y < tileHeight; y += yStep) {
+      const row = Math.floor((factor * y + dy) * previewHeight / height) * previewWidth;
+      for (let x = 0; x < tileWidth; x += xStep) {
+        const colour = item.palette[item.raster[y * item.width + x]];
+        if (colour) {
+          const column = Math.floor((factor * x + dx) * previewWidth / width);
+          pixels[row + column] = colour;
+        }
+      }
+    }
+  }
+  context.putImageData(image, 0, 0);
+}
+
+function freeLayout(items) {
+  let {x: left, y: top} = items[0];
+  for (const item of items) {
+    left = Math.min(left, item.x);
+    top = Math.min(top, item.y);
+  }
+  let width = 0, height = 0;
+  for (const item of items) {
+    width = Math.max(width, item.x - left + item.width);
+    height = Math.max(height, item.y - top + item.height);
+  }
+  const area = width * height;
+  const limit = items.every(item => item.palette) ? streamedArea : canvasArea;
+  const tooLarge = width > maxSide || height > maxSide || area > limit;
+  return {left, top, width, height, limit, tooLarge, streamed: area > canvasArea && !tooLarge};
+}
+
 function drawComposition() {
   const items = Array.from(selection.values());
   const first = items[0];
-  saveComposition.disabled = surface.hidden = !first;
+  surface.hidden = !first;
+  saveComposition.disabled = !first || exportingComposition;
   if (!first) {
     compositionStatus.textContent = 'Добавьте фазы из каталога.';
     return;
@@ -268,28 +351,56 @@ function drawComposition() {
   if (mode.value === 'phases') {
     width = first.sourceWidth;
     height = first.sourceHeight;
-    drawPhases(items, width, height);
+    if (first.palette) drawLargePreview(items, {width, height}, true);
+    else drawPhases(items, width, height);
   } else {
-    let left = first.x, top = first.y, right = first.x + first.width, bottom = first.y + first.height;
-    for (const item of items) {
-      left = Math.min(left, item.x); top = Math.min(top, item.y);
-      right = Math.max(right, item.x + item.width); bottom = Math.max(bottom, item.y + item.height);
-    }
-    width = right - left;
-    height = bottom - top;
-    if (width > 16_384 || height > 16_384 || width * height > 16_000_000) {
-      compositionStatus.textContent = 'Сборка превышает допустимый размер PNG. Сдвиньте фигуры ближе друг к другу.';
+    const layout = freeLayout(items);
+    ({width, height} = layout);
+    if (layout.tooLarge) {
+      compositionStatus.textContent = `Допустимо до ${titles.format(layout.limit)} пикселей и ${titles.format(maxSide)} по стороне. Сдвиньте фигуры ближе друг к другу.`;
       saveComposition.disabled = surface.hidden = true;
       return;
     }
-    const context = setBoard(width, height);
-    const tile = document.createElement('canvas');
-    for (const item of items) context.drawImage(bitmap(item, tile), item.x - left, item.y - top);
+    if (layout.streamed) {
+      drawLargePreview(items, layout, false);
+    } else {
+      const context = setBoard(width, height);
+      const tile = document.createElement('canvas');
+      for (const item of items) context.drawImage(bitmap(item, tile), item.x - layout.left, item.y - layout.top);
+    }
   }
   compositionStatus.textContent = `Фаз в сборке ${items.length} · ${width} × ${height} пикселей`;
 }
 
+async function downloadComposition() {
+  const items = Array.from(selection.values());
+  if (!items.length || exportingComposition) return;
+  const name = 'mayatnik-sborka-faz.png';
+  const aligned = mode.value === 'phases';
+  const layout = aligned ? null : freeLayout(items);
+  if (layout?.tooLarge) return;
+  if (!(aligned ? items[0].palette : layout.streamed)) {
+    download(board, name, compositionStatus);
+    return;
+  }
+  exportingComposition = saveComposition.disabled = true;
+  try {
+    const encoder = globalThis.MayatnikScaleAtlasPng;
+    const file = await (aligned ? encoder.compose(items) : encoder.composeFree(items, layout));
+    downloadBlob(file, name);
+  } catch (_) {
+    compositionStatus.textContent = 'Не удалось создать PNG исходного размера.';
+  } finally {
+    exportingComposition = false;
+    saveComposition.disabled = surface.hidden;
+  }
+}
+
 worker.onmessage = ({data}) => {
+  busyRequest = false;
+  const waiting = queuedRequest;
+  queuedRequest = null;
+  if (waiting?.id === requestNumber) sendPageRequest(waiting);
   if (data.id !== requestNumber || !collection) return;
   if (data.error) {
     catalogStatus.textContent = data.error;
@@ -303,7 +414,11 @@ worker.onmessage = ({data}) => {
   renderTiles();
   saveBrowse();
 };
-worker.onerror = () => { catalogStatus.textContent = 'Не удалось запустить расчёт фаз. Обновите страницу.'; };
+worker.onerror = () => {
+  busyRequest = false;
+  queuedRequest = null;
+  catalogStatus.textContent = 'Не удалось запустить расчёт фаз. Обновите страницу.';
+};
 rows.addEventListener('change', () => loadCollection(undefined, Number(factor.value)));
 frame.addEventListener('change', () => requestPage());
 factor.addEventListener('change', () => requestPage());
@@ -313,8 +428,16 @@ previous.addEventListener('click', () => requestPage(plan.page - 1));
 next.addEventListener('click', () => requestPage(plan.page + 1));
 hideEmpty.addEventListener('change', () => { renderTiles(); saveBrowse(); });
 mode.addEventListener('change', renderSelection);
-saveComposition.addEventListener('click', () => download(board, 'mayatnik-sborka-faz.png', compositionStatus));
-byId('save-phase').addEventListener('click', () => download(previewCanvas, filename(previewItem), byId('preview-title')));
+saveComposition.addEventListener('click', downloadComposition);
+byId('save-phase').addEventListener('click', () => {
+  if (!previewItem) return;
+  const canvas = previewItem.palette ? bitmap(previewItem) : previewCanvas;
+  download(canvas, filename(previewItem), byId('preview-title'));
+});
+preview.addEventListener('close', () => {
+  previewItem = null;
+  previewCanvas.width = previewCanvas.height = 0;
+});
 
 function saveBrowse() {
   if (!plan || !collection) return;

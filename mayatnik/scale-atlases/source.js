@@ -6,10 +6,11 @@
   'use strict';
 
   const nativeColours = [0, 0xff8b0000, 0xff69e9ff];
+  const LARGE_ROWS = 2048;
+  const PAGE_BYTES = 16 * 1024 * 1024;
 
-  function create(core, construction, recording) {
-    const histories = new Map();
-    let saved;
+  function create(core, construction, recording, coneBits) {
+    let current, saved;
 
     function read(rows, number) {
       if (rows === 512) {
@@ -29,41 +30,57 @@
         return saved;
       }
 
-      let current = histories.get(rows);
-      if (!current || current.number > number) {
+      if (current?.settings.rows !== rows) {
         const settings = {rows, steps: rows, mode: 'pend', bg: 'empty'};
         const geometry = construction.geometry(settings);
         current = {number: 0, settings, geometry, field: core.field(geometry.W, rows, settings.bg, geometry.anchor)};
-        histories.set(rows, current);
+        if (rows >= LARGE_ROWS) current.cones = coneBits.create(geometry.W, rows);
       }
-      while (current.number < number) {
-        construction.step(current.field, current.geometry, current.settings, current.number);
-        current.number++;
+      if (current.number > number) {
+        current.field.val.fill(-1);
+        if (current.cones) current.cones = coneBits.create(current.geometry.W, rows);
+        current.number = 0;
       }
-      return {width: current.field.W, height: current.field.H, pixels: current.field.val, palette: nativeColours};
+      const {field, cones, geometry, settings} = current;
+      if (cones && current.number < number) {
+        while (current.number < number) {
+          cones.step(geometry.anchor + core.offset(settings.mode, current.number++));
+        }
+        cones.read(field.val);
+      } else {
+        while (current.number < number) construction.step(field, geometry, settings, current.number++);
+      }
+      return {width: field.W, height: field.H, pixels: field.val, palette: nativeColours};
     }
 
     return {read};
   }
 
-  function sample(source, phase, sourceIndex) {
-    const {width, height} = phase;
+  function pageSize(source, factor, compact) {
+    const pixels = Math.ceil(source.width / factor) * Math.ceil(source.height / factor);
+    const bytes = pixels * (compact ? 1 : 4);
+    return Math.max(1, Math.min(32, Math.floor(PAGE_BYTES / bytes)));
+  }
+
+  function sample(source, phase, sourceIndex, compact = false) {
+    const {width, height, factor, validHeight, validWidth} = phase;
     const {pixels, palette} = source;
-    const raster = new Uint32Array(width * height);
+    const raster = compact ? new Uint8Array(width * height) : new Uint32Array(width * height);
     let occupied = 0;
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const index = sourceIndex(phase, x, y);
-        if (index < 0) continue;
-        const colour = palette ? palette[pixels[index] + 1] : pixels[index];
+    for (let y = 0; y < validHeight; y++) {
+      let index = sourceIndex(phase, 0, y);
+      const row = y * width;
+      for (let x = 0; x < validWidth; x++, index += factor) {
+        const pixel = pixels[index];
+        const colour = compact ? pixel + 1 : palette ? palette[pixel + 1] : pixel;
         if (colour) {
-          raster[y * width + x] = colour;
+          raster[row + x] = colour;
           occupied++;
         }
       }
     }
-    return {...phase, occupied, raster};
+    return {...phase, occupied, raster, ...(compact ? {palette} : {})};
   }
 
-  return {create, sample};
+  return {create, sample, pageSize, LARGE_ROWS};
 });
