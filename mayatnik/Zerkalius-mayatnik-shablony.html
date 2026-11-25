@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11151c">
   <meta name="description" content="Шаблоны Маятника для шести размеров поля и редактор побитовых композиций.">
-  <title>Шаблоны Маятника · v0.011 · Зеркалиус</title>
+  <title>Шаблоны Маятника · v0.012 · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=10">
@@ -30,7 +30,7 @@
     <header class="page-heading">
       <div class="catalogue-title">
         <h1>Шаблоны Маятника</h1>
-        <span class="catalogue-version" title="Версия каталога">v0.011</span>
+        <span class="catalogue-version" title="Версия каталога">v0.012</span>
       </div>
       <a href="#composition" class="jump-to-field">К полю ↓</a>
     </header>
@@ -128,8 +128,9 @@
             <button type="button" id="fit-field" class="gz-hx" title="Показать всё поле"><span>Всё поле</span></button>
           </div>
         </div>
-        <div class="tools playback-tools" role="group" aria-label="Анимация композиции">
+        <div class="tools playback-tools" role="group" aria-label="Управление композицией">
           <button type="button" id="composition-play" class="gz-hx" title="Запустить цикл чётных кадров" aria-label="Анимация размещённых шаблонов" aria-pressed="false" disabled><span>▶ Анимация</span></button>
+          <button type="button" id="composition-clear" class="gz-hx" title="Убрать все фигуры с поля. Очистку можно отменить одним шагом." aria-label="Очистить поле" disabled><span>Очистить поле</span></button>
           <span id="animation-frame" hidden></span>
         </div>
         <div class="viewport">
@@ -154,7 +155,6 @@
             <button type="button" id="layer-up" class="gz-hx compact" title="Поднять на один слой" aria-label="Поднять на один слой" disabled><span>↑</span></button>
             <button type="button" id="layer-down" class="gz-hx compact" title="Опустить на один слой" aria-label="Опустить на один слой" disabled><span>↓</span></button>
             <button type="button" id="layer-remove" class="gz-hx compact" title="Убрать выбранную фигуру с поля" aria-label="Убрать выбранную фигуру с поля" disabled><span>×</span></button>
-            <button type="button" id="composition-clear" class="gz-hx" title="Убрать все фигуры с поля. Очистку можно отменить одним шагом." aria-label="Очистить поле" disabled><span>Очистить поле</span></button>
           </div>
         </div>
         <ol id="field-layers" aria-label="Фигуры на поле" tabindex="0" hidden></ol>
