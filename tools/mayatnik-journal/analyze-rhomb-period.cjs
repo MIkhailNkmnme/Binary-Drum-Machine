@@ -27,16 +27,18 @@ function appSection(start, end) {
 }
 
 const createModel = runInNewContext(
-  '(function (rows, width) {\n' +
+  '(function (rows, width, wrap = true) {\n' +
   '  const field = MAYATNIK.field(width, rows, "empty");\n' +
   '  const depth = rows / 2;\n' +
-  '  const routeChanges = new Map([[0, true]]);\n' +
-  '  let column, branches, routeWrap, frame;\n' +
+  '  const routeChanges = new Map([[0, wrap]]);\n' +
+  '  const reversalChanges = new Map([[0, false]]);\n' +
+  '  let column, branches, routeWrap, routeReverse, frame;\n' +
   appSection('  function initializeMotion()', '  function changeRoute(') +
-  appSection('  function separation()', '    if (checkpointLimit &&') +
-  '  }\n' +
+  appSection('  function separation()', '    frame++;') +
+  '    frame++;\n  }\n' +
   '  initializeMotion();\n' +
-  '  return {advance, val: field.val, route: () => [frame % 2, column, ...branches.map(branch => branch.column)]};\n' +
+  '  return {advance, field, val: field.val, route: () => [frame % 2, column, ...branches.map(branch => branch.column)],\n' +
+  '    phase: () => [frame % 2, column, ...branches.flatMap(branch => [branch.column, branch.direction])].join(":")};\n' +
   '})',
   {MAYATNIK: core, MayatnikEdgeFlow: edgeFlow}
 );
@@ -55,6 +57,27 @@ function differentCells(first, second) {
 
 function fingerprint(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+function measureSize(height, factor, wrap) {
+  const columns = factor * height - 1;
+  const motion = wrap ? 2 * columns : 4 * (columns - 1);
+  const simulation = createModel(height, columns, wrap);
+  const bits = Buffer.from(simulation.val.buffer, simulation.val.byteOffset, simulation.val.byteLength);
+  for (let frame = 0; frame < columns; frame++) simulation.advance();
+  if (bits.includes(emptyByte)) throw new Error('Поле не заполнилось к первому опорному кадру.');
+  const reference = Buffer.from(bits);
+  const phase = simulation.phase();
+  let completed = 0;
+  for (let rounds = 1; rounds <= height; rounds *= 2) {
+    for (let frame = completed; frame < rounds * motion; frame++) simulation.advance();
+    if (bits.equals(reference) && simulation.phase() === phase) {
+      return {rows: height, factor, width: columns, edge: wrap ? 'wrap' : 'bounce',
+        firstFullFrame: columns, routePeriod: motion, rounds, period: rounds * motion};
+    }
+    completed = rounds * motion;
+  }
+  throw new Error('Не найден ожидаемый период поля ' + height + ' × ' + columns);
 }
 
 function analyze() {
@@ -117,7 +140,9 @@ function analyze() {
       ones: observed.reduce((sum, bit) => sum + Number(bit === 1), 0),
       matches: photographedMatches
     },
-    phases
+    phases,
+    sizes: [8, 16, 32, 64, 128].flatMap(height =>
+      [2, 4].flatMap(factor => [true, false].map(wrap => measureSize(height, factor, wrap))))
   };
   return {report, illustrations};
 }
@@ -171,4 +196,4 @@ if (require.main === module) {
   console.log(JSON.stringify(writeStudy(directory), null, 2));
 }
 
-module.exports = {writeStudy};
+module.exports = {createModel, writeStudy};

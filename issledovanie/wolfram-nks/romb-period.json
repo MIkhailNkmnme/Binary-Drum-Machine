@@ -90,5 +90,207 @@
       "differsFrom2096": 0,
       "sha256": "bbaaf5689d00f3f45b1d98e2bc8dc3c9a03a4cd88c4eb5ee29cd25a1e410482d"
     }
+  ],
+  "sizes": [
+    {
+      "rows": 8,
+      "factor": 2,
+      "width": 15,
+      "edge": "wrap",
+      "firstFullFrame": 15,
+      "routePeriod": 30,
+      "rounds": 4,
+      "period": 120
+    },
+    {
+      "rows": 8,
+      "factor": 2,
+      "width": 15,
+      "edge": "bounce",
+      "firstFullFrame": 15,
+      "routePeriod": 56,
+      "rounds": 4,
+      "period": 224
+    },
+    {
+      "rows": 8,
+      "factor": 4,
+      "width": 31,
+      "edge": "wrap",
+      "firstFullFrame": 31,
+      "routePeriod": 62,
+      "rounds": 4,
+      "period": 248
+    },
+    {
+      "rows": 8,
+      "factor": 4,
+      "width": 31,
+      "edge": "bounce",
+      "firstFullFrame": 31,
+      "routePeriod": 120,
+      "rounds": 4,
+      "period": 480
+    },
+    {
+      "rows": 16,
+      "factor": 2,
+      "width": 31,
+      "edge": "wrap",
+      "firstFullFrame": 31,
+      "routePeriod": 62,
+      "rounds": 8,
+      "period": 496
+    },
+    {
+      "rows": 16,
+      "factor": 2,
+      "width": 31,
+      "edge": "bounce",
+      "firstFullFrame": 31,
+      "routePeriod": 120,
+      "rounds": 8,
+      "period": 960
+    },
+    {
+      "rows": 16,
+      "factor": 4,
+      "width": 63,
+      "edge": "wrap",
+      "firstFullFrame": 63,
+      "routePeriod": 126,
+      "rounds": 8,
+      "period": 1008
+    },
+    {
+      "rows": 16,
+      "factor": 4,
+      "width": 63,
+      "edge": "bounce",
+      "firstFullFrame": 63,
+      "routePeriod": 248,
+      "rounds": 8,
+      "period": 1984
+    },
+    {
+      "rows": 32,
+      "factor": 2,
+      "width": 63,
+      "edge": "wrap",
+      "firstFullFrame": 63,
+      "routePeriod": 126,
+      "rounds": 16,
+      "period": 2016
+    },
+    {
+      "rows": 32,
+      "factor": 2,
+      "width": 63,
+      "edge": "bounce",
+      "firstFullFrame": 63,
+      "routePeriod": 248,
+      "rounds": 16,
+      "period": 3968
+    },
+    {
+      "rows": 32,
+      "factor": 4,
+      "width": 127,
+      "edge": "wrap",
+      "firstFullFrame": 127,
+      "routePeriod": 254,
+      "rounds": 16,
+      "period": 4064
+    },
+    {
+      "rows": 32,
+      "factor": 4,
+      "width": 127,
+      "edge": "bounce",
+      "firstFullFrame": 127,
+      "routePeriod": 504,
+      "rounds": 16,
+      "period": 8064
+    },
+    {
+      "rows": 64,
+      "factor": 2,
+      "width": 127,
+      "edge": "wrap",
+      "firstFullFrame": 127,
+      "routePeriod": 254,
+      "rounds": 32,
+      "period": 8128
+    },
+    {
+      "rows": 64,
+      "factor": 2,
+      "width": 127,
+      "edge": "bounce",
+      "firstFullFrame": 127,
+      "routePeriod": 504,
+      "rounds": 32,
+      "period": 16128
+    },
+    {
+      "rows": 64,
+      "factor": 4,
+      "width": 255,
+      "edge": "wrap",
+      "firstFullFrame": 255,
+      "routePeriod": 510,
+      "rounds": 32,
+      "period": 16320
+    },
+    {
+      "rows": 64,
+      "factor": 4,
+      "width": 255,
+      "edge": "bounce",
+      "firstFullFrame": 255,
+      "routePeriod": 1016,
+      "rounds": 32,
+      "period": 32512
+    },
+    {
+      "rows": 128,
+      "factor": 2,
+      "width": 255,
+      "edge": "wrap",
+      "firstFullFrame": 255,
+      "routePeriod": 510,
+      "rounds": 64,
+      "period": 32640
+    },
+    {
+      "rows": 128,
+      "factor": 2,
+      "width": 255,
+      "edge": "bounce",
+      "firstFullFrame": 255,
+      "routePeriod": 1016,
+      "rounds": 64,
+      "period": 65024
+    },
+    {
+      "rows": 128,
+      "factor": 4,
+      "width": 511,
+      "edge": "wrap",
+      "firstFullFrame": 511,
+      "routePeriod": 1022,
+      "rounds": 64,
+      "period": 65408
+    },
+    {
+      "rows": 128,
+      "factor": 4,
+      "width": 511,
+      "edge": "bounce",
+      "firstFullFrame": 511,
+      "routePeriod": 2040,
+      "rounds": 64,
+      "period": 130560
+    }
   ]
 }

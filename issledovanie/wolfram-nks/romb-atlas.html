@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Осесимметричные шаблоны ромбового Маятника, сравнение с обычным Маятником и GIF начала и цикла.">
+  <title>Атлас ромбовых шаблонов · Зеркалиус</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <script defer src="../../_js/hub-button-text.js"></script>
+  <script defer src="romb-atlas.js?v=1"></script>
+  <style>
+    main { max-width: 1100px; }
+    .atlas-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
+    .atlas-tools > label { display: grid; gap: 4px; }
+    .atlas-tools .check { display: flex; align-items: center; }
+    .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .template { min-width: 0; padding: 12px; border: 1px solid var(--line); background: #101a24; }
+    .template figure { margin: 0 0 10px; height: 108px; display: grid; place-items: center; }
+    .template h3 { margin: 0; font-size: 15px; }
+    .template p { margin: 4px 0; font-size: 12px; }
+    .templates canvas { image-rendering: pixelated; }
+    .template .match { color: var(--cyan); }
+    .animation-results { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: baseline; margin-bottom: 12px; }
+    .animation-results a { white-space: nowrap; }
+    #atlas-more { margin-top: 12px; }
+    #atlas-more[hidden] { display: none; }
+  </style>
+</head>
+<body><main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+    <a href="romb-period.html">Периоды</a>
+    <a href="../../mayatnik/Zerkalius-mayatnik-shablony.html">Шаблоны обычного Маятника</a>
+    <a href="../Zerkalius-issledovanie.html">Исследования</a>
+  </nav>
+  <header>
+    <h1>Атлас ромбовых шаблонов</h1>
+    <p class="lead">Фигуры с точной осевой симметрией из полей на 8, 16, 32, 64 и 128 строках. Сравнение учитывает расположение занятых клеток и ориентацию. Значение бита указано в карточке каждой фигуры.</p>
+  </header>
+  <div class="atlas-tools">
+    <label>Высота поля
+      <span class="gz-hx value-control">
+        <select id="atlas-size" aria-label="Высота ромбового поля">
+          <option>8</option><option>16</option><option>32</option><option selected>64</option><option>128</option>
+        </select>
+      </span>
+    </label>
+    <label class="check"><input id="atlas-match" type="checkbox"> Только совпадения с обычным Маятником</label>
+  </div>
+  <p id="atlas-status" role="status">Загружается атлас…</p>
+  <div id="atlas-gifs" class="animation-results" aria-label="GIF выбранного размера"></div>
+  <div id="atlas-cards" class="templates" aria-label="Шаблоны выбранного размера"></div>
+  <button id="atlas-more" class="gz-hx" type="button" title="Показать ещё фигуры" aria-label="Показать ещё фигуры" hidden>
+    <span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Ещё</span>
+  </button>
+
+  <section class="explanation" aria-labelledby="sampling">
+    <h2 id="sampling">Как собран атлас</h2>
+    <p>Ширина поля 2N−1, «Перескок» с первого хода. Выборка включает первый и чётные кадры до заполнения поля, затем по одному кадру в той же фазе каждого круга маршрута. На высоте 64 добавлен кадр 2096. Для каждой одноцветной 8-связной фигуры из четырёх клеток и более проверены вертикальная, горизонтальная и обе диагональные оси.</p>
+    <p>Ветви обозначены стрелками по их начальному направлению. Стрелка в карточке означает пересечение шаблона с контуром этой ветви хотя бы на одном выбранном кадре. Обе стрелки отмечают шаблон, встречавшийся в обеих ветвях. Точные формы сверены с опубликованными шаблонами обычного Маятника на 128, 256, 512, 1024, 2048 и 4096 строках и с дополнением 128.</p>
+    <p>GIF до цикла содержит каждый кадр от пустого поля до начала повтора. GIF цикла охватывает весь период, у длинных периодов сохранено до 240 равномерно распределённых кадров. <a href="romb-atlas.json">Данные атласа</a> · <a href="romb-gifs/index.json">Номера кадров GIF</a>.</p>
+  </section>
+</main></body>
+</html>

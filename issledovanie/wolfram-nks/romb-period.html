@@ -19,6 +19,7 @@
 <body><main>
   <nav class="site-nav" aria-label="Разделы Зеркалиуса">
     <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+    <a href="romb-atlas.html">Атлас шаблонов и GIF</a>
     <a href="../Zerkalius-issledovanie.html">Исследования</a>
   </nav>
   <header>
@@ -66,6 +67,22 @@
     <p>Выберите 64 строки, ширину 2N−1 и «Перескок». Выключите «Стоп · Касание», затем нажмите «Сброс». Из кадра 1 выполните шаг на 2095 проходов. Следующий шаг на 8128 проходов даст кадр 10224.</p>
     <p>Исходник расчёта использует штатные переходы v0.003 и запускается в Node.js 22 или новее. <a href="romb-period.json">Точные числа и SHA-256</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/tools/mayatnik-journal/analyze-rhomb-period.cjs">Исходник расчёта</a>.</p>
     <pre><code>node tools/mayatnik-journal/analyze-rhomb-period.cjs</code></pre>
+  </section>
+
+  <section aria-labelledby="sizes">
+    <h2 id="sizes">Периоды для разных размеров</h2>
+    <p>Таблица показывает число ходов между точными совпадениями поля и обеих ветвей. При постоянном режиме края во всех 20 сочетаниях возврат происходит через N/2 кругов маршрута. Цикл начинается на кадре W, где W — число столбцов. Например, при 8 строках и ширине 2N−1 кадр 135 возвращается к кадру 15.</p>
+    <table>
+      <thead><tr><th scope="col">Строк</th><th scope="col">2N−1<br>Перескок</th><th scope="col">2N−1<br>Отскок</th><th scope="col">4N−1<br>Перескок</th><th scope="col">4N−1<br>Отскок</th></tr></thead>
+      <tbody>
+        <tr><td>8</td><td>120</td><td>224</td><td>248</td><td>480</td></tr>
+        <tr><td>16</td><td>496</td><td>960</td><td>1008</td><td>1984</td></tr>
+        <tr><td>32</td><td>2016</td><td>3968</td><td>4064</td><td>8064</td></tr>
+        <tr><td>64</td><td>8128</td><td>16128</td><td>16320</td><td>32512</td></tr>
+        <tr><td>128</td><td>32640</td><td>65024</td><td>65408</td><td>130560</td></tr>
+      </tbody>
+    </table>
+    <p>На больших полях Маятник сверяет опорное состояние при совпадении фазы маршрута и устанавливает цикл при точном совпадении. Для разворота при касании действует другой маршрут.</p>
   </section>
 </main></body>
 </html>

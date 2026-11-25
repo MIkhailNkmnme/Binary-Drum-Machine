@@ -16,17 +16,28 @@
   const size = byId("romb-size");
   const width = byId("romb-width");
   const stepSize = byId("romb-step-size");
+  const speed = byId("romb-speed");
+  const speedValue = byId("romb-speed-value");
   const play = byId("romb-play");
   const playIcon = byId("romb-play-icon");
   const stepButton = byId("romb-step");
+  const backButton = byId("romb-step-back");
   const frameSlider = byId("romb-frame-slider");
+  const cycleNote = byId("romb-cycle-note");
+  const combineMode = byId("romb-combine");
+  const flipSecond = byId("romb-flip");
+  const combinedView = byId("romb-combined-view");
+  const combinedCanvas = byId("romb-combined");
+  const combinedContext = combinedCanvas.getContext("2d");
   const edgeButtons = {
     wrap: byId("romb-wrap"),
     joinLeft: byId("romb-join-left"),
     joinRight: byId("romb-join-right"),
-    stopAtContact: byId("romb-stop-contact")
+    stopAtContact: byId("romb-stop-contact"),
+    reverseAtContact: byId("romb-reverse-contact"),
+    markRepeats: byId("romb-mark-repeats")
   };
-  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false};
+  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false, markRepeats: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
@@ -35,17 +46,27 @@
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
   let field, depth, frame, column, branches, routeWrap, drag;
-  let routeChanges, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
+  let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
+  let cycle, normalSliderMax;
   let pixels, words, sampleColumn, samplePair, colorWords, colorKey;
+  let combinedPixels, combinedWords;
   let frameRequest = 0;
   let playing = false;
   let pending = 0;
   let nextBatchAt = 0;
   let nextPaintAt = 0;
   let dirty = false;
+  let delay = 115;
 
   function stepCount() {
     return clamp(Math.round(stepSize.valueAsNumber) || 1, 1, Number(stepSize.max));
+  }
+
+  function updateSpeed() {
+    const position = Number(speed.value) / 50 - 1;
+    delay = Math.round(115 * (position <= 0 ? 16 ** -position : (16 / 115) ** position));
+    speedValue.textContent = formatter.format(delay) + " мс";
+    speed.setAttribute("aria-valuetext", delay + " миллисекунд между шагами");
   }
 
   function restore(saved) {
@@ -53,11 +74,18 @@
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
     if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
+    if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
+    if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
+    if (typeof saved.flipSecond === "boolean") flipSecond.checked = saved.flipSecond;
+    updateSpeed();
     for (const key of Object.keys(options)) if (typeof saved[key] === "boolean") options[key] = saved[key];
   }
 
   function save() {
-    const settings = {rows: Number(size.value), factor: Number(width.value), step: stepCount(), ...options};
+    const settings = {
+      rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
+      combination: combineMode.value, flipSecond: flipSecond.checked, ...options
+    };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
       return;
@@ -73,13 +101,16 @@
     else field = MAYATNIK.field(columns, height, "empty");
     depth = height / 2;
     routeChanges = new Map([[0, options.wrap]]);
+    reversalChanges = new Map([[0, options.reverseAtContact]]);
     checkpoints = new Map();
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
-    frameSlider.max = Math.min(maxFrame, 2 * columns + 1);
+    normalSliderMax = Math.min(maxFrame, 2 * columns + 1);
+    cycle = null;
+    configureCycle();
     initializeMotion();
     fit();
-    advance();
+    advanceFrame(false);
     syncTransport();
     syncEdgeButtons();
     announcePosition();
@@ -91,6 +122,7 @@
     column = anchor;
     branches = [{column: anchor, direction: 1}, {column: anchor, direction: -1}];
     routeWrap = routeChanges.get(0);
+    routeReverse = reversalChanges.get(0);
     frame = 0;
   }
 
@@ -99,17 +131,76 @@
   }
 
   function changeRoute(wrap) {
+    changeMotion(routeChanges, wrap);
+  }
+
+  function currentReverse() {
+    return reversalChanges.get(frame) ?? routeReverse;
+  }
+
+  function changeMotion(changes, value) {
     // A new choice at a rewound frame replaces the route from that point on.
-    for (const at of routeChanges.keys()) if (at >= frame) routeChanges.delete(at);
-    routeChanges.set(frame, wrap);
+    for (const at of changes.keys()) if (at >= frame) changes.delete(at);
+    changes.set(frame, value);
     for (const at of checkpoints.keys()) if (at > frame) checkpoints.delete(at);
+    configureCycle();
+  }
+
+  function configureCycle() {
+    // The first, centered pass is identical in both edge modes.
+    const wrap = routeChanges.get(1) ?? routeChanges.get(0);
+    const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
+    if (reverse || [...reversalChanges].some(([at, value]) => at > 1 && value) ||
+      [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
+      cycle = null;
+      return;
+    }
+    if (cycle?.wrap === wrap) return;
+    const routePeriod = wrap ? 2 * field.W : 4 * (field.W - 1);
+    // Both widths and edge modes were measured for the offered sizes 8–128.
+    const period = field.H <= 128 ? routePeriod * field.H / 2 : 0;
+    cycle = {wrap, start: field.W, routePeriod, period, lap: 0, reference: null};
+  }
+
+  function observeCycle() {
+    if (!cycle || frame < cycle.start) return;
+    const elapsed = frame - cycle.start;
+    if (elapsed === 0 && !cycle.reference) {
+      const bits = new Uint8Array(Math.ceil(field.val.length / 8));
+      for (let i = 0; i < field.val.length; i++) {
+        if (field.val[i] === 1) bits[i >> 3] |= 1 << (i & 7);
+      }
+      cycle.reference = {bits, column, branches: branches.map(branch => ({...branch}))};
+      return;
+    }
+    const {reference, routePeriod} = cycle;
+    if (!elapsed || !reference || elapsed % (cycle.period || routePeriod)) return;
+    const geometryMatches = column === reference.column && branches.every((branch, i) =>
+      branch.column === reference.branches[i].column && branch.direction === reference.branches[i].direction);
+    const bitsMatch = geometryMatches && field.val.every((bit, i) => bit === ((reference.bits[i >> 3] >> (i & 7)) & 1));
+    if (!bitsMatch) {
+      cycle.period = 0;
+      return;
+    }
+    cycle.period = elapsed;
+    cycle.lap++;
+    checkpoints.delete(frame);
+    frame = cycle.start;
+    if (seekTarget !== null) seekTarget = cycle.start + (seekTarget - cycle.start) % elapsed;
+    announcePosition();
   }
 
   function syncEdgeButtons() {
     for (const [key, button] of Object.entries(edgeButtons)) {
-      const pressed = String(key === "wrap" ? currentWrap() : options[key]);
+      const pressed = String(optionEnabled(key));
       if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
     }
+  }
+
+  function optionEnabled(key) {
+    if (key === "wrap") return currentWrap();
+    if (key === "reverseAtContact") return currentReverse();
+    return options[key];
   }
 
   function separation() {
@@ -152,17 +243,27 @@
       }
     }
     frame++;
-    if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
-      if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
-      checkpoints.set(frame, {bits: val.slice(), branches: branches.map(item => ({...item})), column, routeWrap});
-    }
-    // The two visible contours touch when their centers are one full
-    // diamond width apart. A jump across the seam is not a contact.
+    // The contours touch when their centers are a diamond's width apart.
     return watchContact && before === H - 2 && separation() === H - 1 && Math.abs(column - previous) === 1;
   }
 
-  function seek(target) {
+  function advanceFrame(stopAtContact) {
+    routeReverse = currentReverse();
+    const contact = advance(stopAtContact || routeReverse);
+    if (contact && routeReverse) {
+      for (const branch of branches) branch.direction *= -1;
+    }
+    if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
+      if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
+      checkpoints.set(frame, {bits: field.val.slice(), branches: branches.map(item => ({...item})), column, routeWrap, routeReverse});
+    }
+    observeCycle();
+    return contact && stopAtContact;
+  }
+
+  function seek(target, lap = cycle && target >= cycle.start ? cycle.lap : 0) {
     stop();
+    if (cycle) cycle.lap = lap;
     let start = frame <= target ? frame : 0;
     let checkpoint;
     for (const [at, saved] of checkpoints) {
@@ -176,6 +277,7 @@
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
       routeWrap = checkpoint.routeWrap;
+      routeReverse = checkpoint.routeReverse;
       frame = start;
     } else if (frame > target) {
       field.val.fill(-1);
@@ -187,6 +289,14 @@
     syncEdgeButtons();
     if (!pending) announcePosition();
     redraw();
+  }
+
+  function stepBack() {
+    const position = seekTarget ?? frame;
+    const completed = cycle?.period ? cycle.lap * cycle.period : 0;
+    const target = Math.max(0, position + completed - stepCount());
+    const lap = cycle?.period ? Math.max(0, Math.floor((target - cycle.start) / cycle.period)) : 0;
+    seek(target - (cycle?.period || 0) * lap, lap);
   }
 
   function fitScale(rect) {
@@ -215,6 +325,33 @@
     return clamp(center, half, extent - half);
   }
 
+  function matchingBlock(row, col, firstCenter, secondCenter) {
+    const {W, H, val} = field;
+    const top = row - (row & 1);
+    const offset = col - firstCenter;
+    const left = offset - (offset & 1);
+    const radius = Math.min(top, H - 2 - top);
+    const a = firstCenter + left;
+    const b = secondCenter + left;
+    if (left < -radius || left + 1 > radius || a < 0 || b < 0 || a + 1 >= W || b + 1 >= W) return false;
+    const i = top * W + a;
+    const j = top * W + b;
+    return val[i] >= 0 && val[i] === val[j] &&
+      val[i + 1] >= 0 && val[i + 1] === val[j + 1] &&
+      val[i + W] >= 0 && val[i + W] === val[j + W] &&
+      val[i + W + 1] >= 0 && val[i + W + 1] === val[j + W + 1];
+  }
+
+  function repeatTone(row, col) {
+    const [first, second] = branches;
+    if (first.column !== second.column &&
+      (matchingBlock(row, col, first.column, second.column) || matchingBlock(row, col, second.column, first.column))) return 2;
+    const half = Math.floor(field.W / 2);
+    if (options.joinLeft && col >= field.W - half) return 4;
+    if (options.joinRight && col < half) return 6;
+    return 0;
+  }
+
   function paint() {
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -238,16 +375,16 @@
       samplePair = new Uint8Array(w);
     }
     const styles = getComputedStyle(root);
-    const zero = styles.getPropertyValue("--romb-zero").trim();
-    const one = styles.getPropertyValue("--romb-one").trim();
-    const key = zero + "|" + one;
+    const tones = ["zero", "one", "match-zero", "match-one", "left-zero", "left-one", "right-zero", "right-one"]
+      .map(name => styles.getPropertyValue("--romb-" + name).trim());
+    const key = tones.join("|");
     if (colorKey !== key) {
-      swatch.clearRect(0, 0, 2, 1);
-      swatch.fillStyle = zero;
-      swatch.fillRect(0, 0, 1, 1);
-      swatch.fillStyle = one;
-      swatch.fillRect(1, 0, 1, 1);
-      colorWords = new Uint32Array(swatch.getImageData(0, 0, 2, 1).data.buffer);
+      swatch.clearRect(0, 0, tones.length, 1);
+      tones.forEach((tone, i) => {
+        swatch.fillStyle = tone;
+        swatch.fillRect(i, 0, 1, 1);
+      });
+      colorWords = new Uint32Array(swatch.getImageData(0, 0, tones.length, 1).data.buffer);
       colorKey = key;
     }
 
@@ -271,13 +408,14 @@
     }
     words.fill(0);
     for (let py = firstY; py < lastY; py++) {
-      const sourceRow = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1) * W;
+      const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
+      const sourceRow = row * W;
       const out = py * w;
       for (let px = firstX; px < lastX; px++) {
-        const col = sampleColumn[px];
+        let col = sampleColumn[px];
         let bit = val[sourceRow + col];
-        if (bit < 0 && samplePair[px]) bit = val[sourceRow + col + 1];
-        if (bit >= 0) words[out + px] = colorWords[bit];
+        if (bit < 0 && samplePair[px]) bit = val[sourceRow + ++col];
+        if (bit >= 0) words[out + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
       }
     }
     context.putImageData(pixels, 0, 0);
@@ -295,26 +433,78 @@
     }
     context.stroke();
     if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
+    paintCombined();
 
     const position = frame ? " · столбец " + formatter.format(column + 1) + " из " + formatter.format(W) : "";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
-    const contact = options.stopAtContact && separation() === H - 1 ? " · касание" : "";
+    const contact = (options.stopAtContact || currentReverse()) && separation() === H - 1 ? " · касание" : "";
     const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
     const label = "Кадр " + formatter.format(frame) + target + position +
       " · " + formatter.format(H) + " строк · " + zoom + contact;
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
-    if (frame > Number(frameSlider.max)) {
+    const period = cycle?.period;
+    const end = period ? cycle.start + period - 1 : normalSliderMax;
+    if (frame > normalSliderMax) {
       const span = 2 * W + 1;
-      frameSlider.max = Math.min(maxFrame, Math.ceil(frame / span) * span);
+      normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
     }
+    const limit = String(period ? end : normalSliderMax);
+    if (frameSlider.max !== limit) frameSlider.max = limit;
     const sliderValue = String(seekTarget ?? frame);
     if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    const cycleText = period
+      ? "↻ Цикл " + formatter.format(cycle.lap + 1) + " · кадры " + formatter.format(cycle.start) + "–" +
+        formatter.format(end) + " · " + formatter.format(end + 1) + " = " + formatter.format(cycle.start)
+      : cycle ? "Проверка повтора от кадра " + formatter.format(cycle.start) : "";
+    if (cycleNote.textContent !== cycleText) cycleNote.textContent = cycleText;
+    cycleNote.hidden = !cycleText;
     syncEdgeButtons();
+  }
+
+  function paintCombined() {
+    const mode = combineMode.value;
+    combinedView.hidden = mode === "off" || !combinedContext;
+    flipSecond.disabled = mode === "off";
+    if (combinedView.hidden) return;
+    const {H, W, val} = field;
+    const height = Math.min(H, 384);
+    const width = Math.max(1, Math.round(height * (H - 1) / H));
+    if (!combinedPixels || combinedCanvas.width !== width || combinedCanvas.height !== height) {
+      combinedCanvas.width = width;
+      combinedCanvas.height = height;
+      combinedPixels = combinedContext.createImageData(width, height);
+      combinedWords = new Uint32Array(combinedPixels.data.buffer);
+    }
+    combinedWords.fill(0);
+    const [first, second] = branches;
+    const flip = flipSecond.checked ? -1 : 1;
+    for (let py = 0; py < height; py++) {
+      const row = Math.floor((py + 0.5) * H / height);
+      const radius = Math.min(row, H - 1 - row);
+      const source = row * W;
+      for (let px = 0; px < width; px++) {
+        const offset = Math.floor((px + 0.5) * (H - 1) / width) - (depth - 1);
+        if (Math.abs(offset) > radius) continue;
+        const a = first.column + offset;
+        const b = second.column + flip * offset;
+        const left = a >= 0 && a < W ? val[source + a] : -1;
+        const right = b >= 0 && b < W ? val[source + b] : -1;
+        if (left < 0 && right < 0) continue;
+        const firstOn = left === 1;
+        const secondOn = right === 1;
+        const color = mode === "xor" ? Number(firstOn !== secondOn)
+          : mode === "and" ? Number(firstOn && secondOn)
+            : firstOn && !secondOn ? 5 : secondOn && !firstOn ? 7 : Number(firstOn && secondOn);
+        combinedWords[py * width + px] = colorWords[color];
+      }
+    }
+    combinedContext.putImageData(combinedPixels, 0, 0);
   }
 
   function paintOutlines(x, y, scale, ratio, color) {
     const {W, H} = field;
-    const columns = options.stopAtContact && separation() ? branches.map(branch => branch.column) : [column];
+    const columns = (options.stopAtContact || options.markRepeats || currentReverse()) && separation()
+      ? branches.map(branch => branch.column) : [column];
     const radius = (depth - 0.5) * scale;
     const middle = y + depth * scale;
     for (const offset of [-W, 0, W]) {
@@ -353,7 +543,7 @@
   function announcePosition() {
     if (!announcement) return;
     const position = frame ? " · столбец " + formatter.format(column + 1) : "";
-    const contact = options.stopAtContact && separation() === field.H - 1 ? " · касание" : "";
+    const contact = (options.stopAtContact || currentReverse()) && separation() === field.H - 1 ? " · касание" : "";
     announcement.textContent = "Кадр " + formatter.format(frame) + position + contact;
   }
 
@@ -362,6 +552,7 @@
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
     stepButton.disabled = frame === maxFrame;
+    backButton.disabled = (seekTarget ?? frame) === 0;
     play.disabled = frame === maxFrame;
   }
 
@@ -380,12 +571,12 @@
       const watchContact = options.stopAtContact && seekTarget === null;
       let contact;
       do {
-        contact = advance(watchContact);
+        contact = advanceFrame(watchContact);
         pending--;
       } while (!contact && pending && frame < maxFrame && performance.now() < deadline);
       if (!pending) {
         seekTarget = null;
-        nextBatchAt = now + 115;
+        nextBatchAt = now + delay;
       }
       if (contact || frame === maxFrame) {
         stop();
@@ -486,16 +677,21 @@
     syncTransport();
     schedule();
   });
+  backButton.addEventListener("click", stepBack);
   byId("romb-reset").addEventListener("click", reset);
   byId("romb-fit").addEventListener("click", fitView);
   byId("romb-exact").addEventListener("click", () => zoomTo(1));
   frameSlider.addEventListener("input", () => seek(Number(frameSlider.value)));
   for (const [key, button] of Object.entries(edgeButtons)) {
     button.addEventListener("click", () => {
-      options[key] = !(key === "wrap" ? currentWrap() : options[key]);
+      options[key] = !optionEnabled(key);
       if (key === "wrap") {
         if (seekTarget !== null) stop();
         changeRoute(options.wrap);
+      }
+      if (key === "reverseAtContact") {
+        if (seekTarget !== null) stop();
+        changeMotion(reversalChanges, options.reverseAtContact);
       }
       if (key === "joinLeft" || key === "joinRight") updateViewBounds();
       syncEdgeButtons();
@@ -505,6 +701,12 @@
   }
   for (const select of [size, width]) select.addEventListener("change", () => { save(); reset(); });
   stepSize.addEventListener("change", () => { stepSize.value = stepCount(); save(); });
+  speed.addEventListener("input", () => {
+    updateSpeed();
+    if (playing && !pending) nextBatchAt = performance.now() + delay;
+  });
+  speed.addEventListener("change", save);
+  for (const control of [combineMode, flipSecond]) control.addEventListener("change", () => { save(); redraw(); });
 
   if (inline) {
     restore(window.openai?.widgetState?.modelContent);
@@ -518,6 +720,10 @@
           if (seekTarget !== null) stop();
           changeRoute(options.wrap);
         }
+        if (previous.reverseAtContact !== options.reverseAtContact) {
+          if (seekTarget !== null) stop();
+          changeMotion(reversalChanges, options.reverseAtContact);
+        }
         if (previous.joinLeft !== options.joinLeft || previous.joinRight !== options.joinRight) updateViewBounds();
         redraw();
       }
@@ -529,6 +735,7 @@
     } catch { /* Use default preferences. */ }
   }
 
+  updateSpeed();
   reset();
   new ResizeObserver(redraw).observe(canvas);
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);

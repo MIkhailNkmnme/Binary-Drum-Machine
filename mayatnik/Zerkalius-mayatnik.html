@@ -1,3 +1,4 @@
+<!-- МАЯ-729 · v1.105 · Вход в Ромбовый Маятник. -->
 <!-- МАЯ-720 · v1.104 · Кадр сохранения шаблона для каталога. -->
 <!-- МАЯ-714 · v1.103 · Исходная ось для шаблонов под полем. -->
 <!-- МАЯ-713 · v1.102 · Каталог шаблонов и поле композиций. -->
@@ -102,7 +103,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.104</title>
+<title>Zerkalius Маятнкъ — v1.105</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -243,6 +244,9 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 </style>
 <style>
   body.may-zen #mayTestStats{display:none!important}
+  #mayRhombLab{--c:#7cbcff;--gz-h:24px;--gz-n:12px;--gz-bg:#121a30;width:120px;flex:0 0 120px;color:#dfe6f5;text-decoration:none;font:12px 'Segoe UI',sans-serif}
+  #mayRhombLab:is(:focus-visible,:hover){background:var(--c)}
+  #mayRhombLab:is(:focus-visible,:hover)::before{background:var(--gz-bg)}
   /* v0.596: фон-режим для главной — только поле, без панелей. */
   body.may-embed{overflow:hidden;background:#000}
   body.may-embed > :not(#wrap):not(script){display:none!important}
@@ -256,7 +260,10 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.104</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.105</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <a id="mayRhombLab" class="gz-hx" href="romb.html" target="_blank" rel="noopener" title="Открыть Ромбовый Маятник в новой вкладке" aria-label="Открыть Ромбовый Маятник">
+    <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Ромбовый</span>
+  </a>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>

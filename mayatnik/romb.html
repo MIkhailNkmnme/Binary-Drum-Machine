@@ -4,26 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.003</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.004</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
   <script defer src="mayatnik-core.js"></script>
   <script defer src="mayatnik-edge-flow.js"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=003"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=004"></script>
   <style>
-    main { max-width: 1040px; --romb-zero: #21627e; --romb-one: #e1f2ec; --romb-border: #476773; --romb-outline: #e9bd74; }
+    main {
+      max-width: 1040px;
+      --romb-zero: #21627e; --romb-one: #e1f2ec; --romb-border: #476773; --romb-outline: #e9bd74;
+      --romb-match-zero: #805420; --romb-match-one: #ffe194;
+      --romb-left-zero: #43386c; --romb-left-one: #e9cef9;
+      --romb-right-zero: #245a4c; --romb-right-one: #c4efb8;
+    }
     header { margin-bottom: 18px; }
     .romb-controls { border: 0; margin: 0; padding: 0; align-items: end; row-gap: 8px; }
+    .romb-step-pair { --gz-r0: var(--line); --gz-r1: var(--line); cursor: default; }
+    .romb-step-pair .gz-half { border: 0; text-shadow: none; }
+    .romb-step-pair .gz-half:enabled:hover,
+    .romb-step-pair .gz-half:focus-visible,
+    .romb-step-pair .gz-half:active { background: var(--cyan); }
+    .romb-step-pair .gz-half:focus-visible::before { inset: 2px; }
+    .romb-step-pair .gz-half:disabled { color: var(--muted); cursor: default; }
     .romb-setting { display: grid; color: var(--muted); font-size: 12px; }
     .romb-setting .gz-hx { color: var(--text); }
     #romb-step-size, #romb-step-size::-webkit-inner-spin-button { appearance: auto; }
+    #romb-speed { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
     .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
     .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
     .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
     .romb-board .romb-zoomed:active { cursor: grabbing; }
+    .romb-combine-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
+    #romb-combined { width: min(100%, 380px); height: auto; }
     #romb-frame-slider { display: block; width: 100%; margin: 0 0 10px; accent-color: var(--cyan); }
+    #romb-cycle-note { margin: 0 0 10px; color: var(--cyan); }
     .romb-announcement { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; margin: 0; }
     .legend .empty { background: #0b1620; }
     .legend .zero { background: var(--romb-zero); }
@@ -36,20 +53,23 @@
   <main id="rhomb-pendulum">
     <nav class="site-nav" aria-label="Разделы Зеркалиуса">
       <a href="Zerkalius-mayatnik.html">Маятник</a>
+      <a href="../issledovanie/wolfram-nks/romb-atlas.html">Атлас и GIF</a>
       <a href="../wolfram/">Конусная лаборатория</a>
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.003</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.004</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
       <button type="button" class="gz-hx" id="romb-play" aria-pressed="false" title="Запустить анимацию или остановить расчёт" aria-label="Анимация">
         <span class="gz-ic" id="romb-play-icon" aria-hidden="true">▶</span><span class="gz-nm">Анимация</span>
       </button>
-      <button type="button" class="gz-hx" id="romb-step" title="Выполнить выбранное число проходов" aria-label="Сделать шаг">
-        <span class="gz-ic" aria-hidden="true">▸▏</span><span class="gz-nm">Шаг</span>
-      </button>
+      <div class="gz-hx gz-pair gz-split gz-mid romb-step-pair" role="group" aria-label="Шаг назад или вперёд">
+        <button type="button" class="gz-half gz-h0" id="romb-step-back" title="Перейти назад на выбранное число проходов" aria-label="Шаг назад">◂</button>
+        <span class="gz-pm" aria-hidden="true">Шаг</span>
+        <button type="button" class="gz-half gz-h1" id="romb-step" title="Выполнить выбранное число проходов вперёд" aria-label="Шаг вперёд">▸</button>
+      </div>
       <button type="button" class="gz-hx" id="romb-reset" title="Очистить поле и показать первый ромб" aria-label="Начать сначала">
         <span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span>
       </button>
@@ -65,10 +85,16 @@
       <button type="button" class="gz-hx" id="romb-stop-contact" aria-pressed="false" title="Остановить ход на последнем касании контуров расходящихся ромбов" aria-label="Стоп при касании ромбов">
         <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Стоп · Касание</span>
       </button>
+      <button type="button" class="gz-hx" id="romb-reverse-contact" aria-pressed="false" title="Развернуть обе ветви при последнем касании" aria-label="Разворот при касании">
+        <span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Разворот</span>
+      </button>
+      <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
+        <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
+      </button>
       <label class="romb-setting">Высота поля, N
         <span class="gz-hx value-control">
           <select id="romb-size" title="Выбрать число строк всего поля">
-            <option>64</option><option>128</option><option>256</option><option selected>512</option>
+            <option>8</option><option>16</option><option>32</option><option>64</option><option>128</option><option>256</option><option selected>512</option>
             <option>1024</option><option>2048</option><option>4096</option>
           </select>
         </span>
@@ -85,6 +111,11 @@
           <input id="romb-step-size" type="number" min="1" max="16384" step="1" value="1" title="Указать число проходов на одно нажатие или такт анимации">
         </span>
       </label>
+      <label class="romb-setting"><span>Скорость · <span id="romb-speed-value">115 мс</span></span>
+        <span class="gz-hx value-control">
+          <input id="romb-speed" type="range" min="0" max="100" value="50" aria-label="Скорость анимации">
+        </span>
+      </label>
     </fieldset>
     <p id="romb-frame" class="progress"></p>
     <p id="romb-announcement" class="romb-announcement" aria-live="polite"></p>
@@ -92,6 +123,7 @@
       <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
     </div>
     <input id="romb-frame-slider" type="range" min="0" max="2047" step="1" value="1" aria-label="Кадр Маятника">
+    <p id="romb-cycle-note" class="progress" hidden></p>
     <div class="commands" role="group" aria-label="Масштаб поля">
       <button type="button" class="gz-hx" id="romb-exact" title="Одна клетка на один физический пиксель" aria-label="Масштаб один к одному">
         <span class="gz-nm">1:1</span>
@@ -99,6 +131,20 @@
       <button type="button" class="gz-hx" id="romb-fit" title="Вписать всё поле в окно" aria-label="Вписать всё поле">
         <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span>
       </button>
+    </div>
+    <div class="romb-combine-controls" role="group" aria-label="Совмещение ромбов">
+      <label class="romb-setting">Совмещение ромбов
+        <span class="gz-hx value-control">
+          <select id="romb-combine">
+            <option value="off">Выключено</option><option value="overlay">Наложение</option>
+            <option value="xor">XOR</option><option value="and">AND</option>
+          </select>
+        </span>
+      </label>
+      <label><input id="romb-flip" type="checkbox"> Отразить вторую сторону</label>
+    </div>
+    <div id="romb-combined-view" hidden>
+      <canvas id="romb-combined" role="img" aria-label="Результат совмещения ромбов по центрам"></canvas>
     </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
     <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания.</p>
@@ -113,6 +159,10 @@
       <p>Верх считает обычное ядро Маятника. В середине самый широкий ряд занимает две строки. Ниже ширина уменьшается на один бит в каждой строке. Чтобы получить очередной бит сужения, складываем по XOR биты предыдущей строки от левого края до клетки над ним слева. На пустом поле этот шаг восстанавливает ряды верхнего треугольника в обратном порядке.</p>
       <p>Две ветви начинают с чередования 0, −1, +1, −2, +2… столбцов от центра. При отскоке ветвь разворачивается у края. При перескоке она выходит с противоположной стороны и продолжает идти в прежнем направлении. Склейка показывает рядом с краем живую копию противоположной половины поля.</p>
       <p>N — полная высота ромба. При 4096 строках доступны 8191 и 16383 столбца. Стоп при касании срабатывает в кадре, где контуры ещё соприкасаются в середине ромба перед расхождением. В этом опыте расстояние между центрами в такой момент равно N−1 столбцам.</p>
+      <p>«Разворот» меняет направление обеих ветвей на последнем касании. Если включён и «Стоп · Касание», пауза наступает уже после смены направления.</p>
+      <p>С начального кадра цикла нумерация повторяется после совпадения битов и обеих ветвей. Если сменить режим края в ходе опыта, расчёт продолжится по новому маршруту. <a href="../issledovanie/wolfram-nks/romb-period.html#sizes">Периоды для разных размеров</a>.</p>
+      <p>«Повторы» отмечают золотым одинаковые блоки 2 × 2 внутри двух ромбов. Фиолетовый связывает левую склейку с правой половиной поля, зелёный — правую склейку с левой. Оттенки сохраняют различие между 0 и 1.</p>
+      <p>Совмещение читает две вырезки по центрам и строит отдельный ромб. В наложении фиолетовый показывает единицу первой ветви, зелёный — второй, светлый — обеих. В XOR и AND пустая клетка даёт 0, а общей пустоте соответствует прозрачность.</p>
     </section>
   </main>
 </body>
