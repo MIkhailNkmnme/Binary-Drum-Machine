@@ -41,7 +41,7 @@
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
-  let hubRenderer, hubActive = false, hubAxes = false;
+  let hubRenderer, hubActive = false, hubAxes = false, hubVertical = false;
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
@@ -357,8 +357,8 @@
 
   function paint() {
     if (hubFour) {
-      hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0);
-      frameLabel.textContent = "2047 × 1024 · четыре треугольника · кадр " + formatter.format(frame);
+      hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0, hubVertical);
+      frameLabel.textContent = "2047 × 1024 · 2N−1 · " + (hubVertical ? "вверх-вниз · " : "") + "кадр " + formatter.format(frame);
       return;
     }
     const rect = canvas.getBoundingClientRect();
@@ -722,12 +722,13 @@
     width.value = "2";
     options.wrap = true;
     combinedView.hidden = false;
-    hubRenderer = window.MayatnikRhombFour.create(combinedCanvas, 2047, 1024);
+    hubRenderer = window.MayatnikRhombFour.create(combinedCanvas, byId("romb-vertical"), 2047, 1024);
     combinedCanvas.addEventListener("dblclick", togglePlay);
     window.addEventListener("message", event => {
       if (event.source !== window.parent || event.origin !== location.origin || event.data?.type !== "zerk-hub-four") return;
       const active = event.data.active === true;
       hubAxes = event.data.axes === true;
+      hubVertical = event.data.vertical === true;
       if (active !== hubActive) {
         hubActive = active;
         if (!active) stop();

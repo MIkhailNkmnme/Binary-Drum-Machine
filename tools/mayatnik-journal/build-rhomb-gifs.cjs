@@ -5,17 +5,25 @@ const { join } = require('node:path');
 const { encoder } = require('../../mayatnik/mayatnik-gif.js');
 const { createModel } = require('./analyze-rhomb-period.cjs');
 const { colourCentralAxes } = require('./build-rhomb-atlas.cjs');
+const { createPackedRhomb } = require('./rhomb-packed.cjs');
 
 const studyDirectory = join(__dirname, '../../issledovanie/wolfram-nks');
 const defaultDirectory = join(studyDirectory, 'romb-gifs/diamonds');
 const defaultAxesDirectory = join(studyDirectory, 'romb-gifs/axes');
+const sizeDirectory = join(studyDirectory, 'romb-gifs/sizes');
 const colours = {
   8: ['янтарная', '4e350f', 'ffcd72'],
   16: ['изумрудная', '144f42', '9af4c7'],
   32: ['сиреневая', '4b3477', 'ddc1ff'],
   64: ['голубая', '21627e', 'bdebf8'],
-  128: ['коралловая', '813c4b', 'ffb8b0']
+  128: ['коралловая', '813c4b', 'ffb8b0'],
+  256: ['бирюзовая', '14666c', 'b6ffef'],
+  512: ['пурпурная', '742c62', 'ffacdf'],
+  1024: ['синяя', '213d82', 'b9d1ff'],
+  2048: ['оливковая', '4a5a22', 'e2f6a3'],
+  4096: ['медная', '784018', 'ffd2a7']
 };
+const axisColours = ['8150ac', 'f0cfff', '31775d', 'acf2b7', '9b601e', 'ffda8a'];
 const loopExtension = Buffer.concat([Buffer.from([33, 255, 11]), Buffer.from('NETSCAPE2.0'), Buffer.from([3, 1, 0, 0, 0])]);
 const glyphs = {
   '0': '111101101101111', '1': '010110010010111', '2': '111001111100111',
@@ -24,6 +32,12 @@ const glyphs = {
   '9': '111101111001111', 'X': '101101010101101', 'F': '111100110100100',
   'C': '111100100100111', ' ': '000000000000000'
 };
+
+function scheme(rows) {
+  const [name, zero, one] = colours[rows];
+  return {name, zero: '#' + zero, one: '#' + one,
+    rgb: ['0b1620', zero, one, ...axisColours].map(hex => Buffer.from(hex, 'hex'))};
+}
 
 function paint(values, width, height, scale, pixels, palette, band, marks) {
   const outputWidth = width * scale;
@@ -218,10 +232,128 @@ async function writeGifs(directory = defaultDirectory, axisDirectory = defaultAx
     cycleFrames: diamonds.cycle.frames.length, bytes: diamonds.before.bytes + diamonds.cycle.bytes + axes.before.bytes + axes.cycle.bytes}));
 }
 
+function framesBetween(first, last, maxFrames) {
+  const count = Math.min(maxFrames, last - first + 1);
+  return Array.from({length: count}, (_, index) =>
+    count === 1 ? first : first + Math.round(index * (last - first) / (count - 1)));
+}
+
+function paintOverview(model, pixels, block, band, palette, density) {
+  const {width, height, centers} = model;
+  const outputWidth = Math.ceil(width / block);
+  const [right, left] = centers.map(center => Math.floor(center / block));
+  for (let row = 0; row < height; row += block) {
+    for (let column = 0; column < width; column += block) {
+      let filled = 0, ones = 0;
+      for (let y = row; y < row + block; y++) {
+        for (let x = column; x < Math.min(width, column + block); x++) {
+          const value = model.cell(y, x);
+          filled += Number(value >= 0);
+          ones += Number(value === 1);
+        }
+      }
+      const x = column / block;
+      const y = band + row / block;
+      const axis = Number(x === left) | (Number(x === right) << 1);
+      const colour = axis && model.frame ? palette[3 + (axis - 1) * 2 + Number(ones * 2 >= filled)]
+        : filled ? density[Math.round(6 * ones / filled)] : palette[0];
+      const pixel = (y * outputWidth + x) * 4;
+      pixels[pixel] = colour[0];
+      pixels[pixel + 1] = colour[1];
+      pixels[pixel + 2] = colour[2];
+      pixels[pixel + 3] = 255;
+    }
+  }
+}
+
+async function writeOneSize(directory, size) {
+  const {rows, width} = size;
+  const small = rows <= 128;
+  const first = size.firstFullFrame ?? size.referenceFrame;
+  const period = size.period ?? size.returnInterval;
+  const end = first + period;
+  const palette = scheme(rows);
+  const colours = palette.rgb;
+  const scale = Math.max(1, Math.floor(96 / rows));
+  const block = Math.max(1, rows / 512);
+  const gifWidth = small ? width * scale : Math.ceil(width / block);
+  const textScale = small ? gifWidth >= 192 ? 2 : 1 : 2;
+  const band = 5 * textScale + 4;
+  const gifHeight = band + (small ? rows * scale : rows / block);
+  const pixels = new Uint8Array(gifWidth * gifHeight * 4);
+  const animation = encoder(gifWidth, gifHeight, {mergeEqual: false});
+  const density = Array.from({length: 7}, (_, level) => colours[1].map((low, index) =>
+    Math.round(low + level * (colours[2][index] - low) / 6)));
+  const before = framesBetween(0, first - 1, small ? 256 : 25);
+  const cycle = framesBetween(first, small ? end - 1 : first + width, small ? 240 : 25);
+  const tail = small ? [end] : framesBetween(end - Math.floor(width / 6), end, 7);
+  const frames = [...before, ...cycle, ...tail];
+
+  function add(frame) {
+    const phase = frame < first ? 0 : frame === end ? 2 : 1;
+    paintLabel(pixels, gifWidth, band, textScale, rows + 'X' + width + ' F' + frame + ' C' + phase, colours[2]);
+    animation.add(pixels, frame === first || frame === end ? 75 : small ? 7 : 14);
+  }
+
+  if (small) {
+    const model = createModel(rows, width, true);
+    const marks = new Uint8Array(model.val.length);
+    const queue = new Int32Array(marks.length);
+    let at = 0, reference;
+    for (const frame of frames) {
+      while (at < frame) {model.advance(); at++;}
+      if (frame === first) reference = Buffer.from(model.val);
+      if (frame === end && !Buffer.from(model.val).equals(reference)) throw Error('Не подтверждён возврат ' + rows);
+      if (frame) colourCentralAxes(model, marks, queue);
+      paint(model.val, width, rows, scale, pixels, colours, band, marks);
+      add(frame);
+    }
+  } else {
+    const model = createPackedRhomb(rows);
+    let reference;
+    for (const frame of [...before, ...cycle]) {
+      while (model.frame < frame) model.advance();
+      if (frame === first) reference = model.snapshot();
+      paintOverview(model, pixels, block, band, colours, density);
+      add(frame);
+    }
+    // Encode the computed tail in chronological order.
+    model.skipToReturn(reference, period);
+    const lastFrames = [];
+    for (const frame of tail.slice().reverse()) {
+      while (model.frame > frame) model.retreat();
+      paintOverview(model, pixels, block, band, colours, density);
+      lastFrames.push({frame, pixels: pixels.slice()});
+    }
+    for (const item of lastFrames.reverse()) {
+      pixels.set(item.pixels);
+      add(item.frame);
+    }
+  }
+  const file = await writeGif(directory, rows + '.gif', animation, true);
+  const {rgb, ...paletteInfo} = palette;
+  return {...file, rows, width, gifWidth, gifHeight, first, period, end, frames, overview: !small, block, palette: paletteInfo};
+}
+
+async function writeSizeAnimations(directory = sizeDirectory) {
+  mkdirSync(directory, {recursive: true});
+  const {sizes, guaranteedSizes} = JSON.parse(readFileSync(join(studyDirectory, 'romb-period.json'), 'utf8'));
+  const result = [];
+  for (const size of [...sizes, ...guaranteedSizes].filter(item => item.factor === 2 && item.edge === 'wrap')) {
+    const entry = await writeOneSize(directory, size);
+    result.push(entry);
+    console.log(`${entry.rows} · ${entry.frames.length} кадров · ${entry.bytes} байт`);
+  }
+  writeFileSync(join(directory, 'index.json'), JSON.stringify(result, null, 2) + '\n');
+}
+
 if (require.main === module) {
-  writeGifs(process.argv[2], process.argv[3]).then(files => console.log(JSON.stringify(files, null, 2))).catch(error => {
+  const job = process.argv[2] === '--sizes'
+    ? writeSizeAnimations(process.argv[3])
+    : writeGifs(process.argv[2], process.argv[3]).then(files => console.log(JSON.stringify(files, null, 2)));
+  job.catch(error => {
     console.error(error.message);
     process.exitCode = 1;
   });
 }
-module.exports = {writeGifs};
+module.exports = {writeGifs, scheme, framesBetween, paint, paintLabel};

@@ -7,17 +7,107 @@
     49, 119, 93, 255, 172, 242, 183, 255,
     155, 96, 30, 255, 255, 218, 138, 255
   ]).buffer);
+  const verticalPalette = new Uint32Array(Uint8Array.from([17, 110, 114, 255, 198, 248, 206, 255]).buffer);
 
-  function create(canvas, W, H) {
+  function enableZoom(canvas, vertical, width, height) {
+    const viewport = canvas.parentElement;
+    let scale = 1, x = 0, y = 0;
+
+    function position() {
+      const {width: w, height: h} = viewport.getBoundingClientRect();
+      if (!w || !h) return;
+      const fit = Math.min(w / width, h / height);
+      const uprightFit = vertical.hidden ? 0 : Math.min(w / height, h / width);
+      const maxX = Math.max(0, (Math.max(width * fit, height * uprightFit) * scale - w) / 2);
+      const maxY = Math.max(0, (Math.max(height * fit, width * uprightFit) * scale - h) / 2);
+      x = Math.max(-maxX, Math.min(maxX, x));
+      y = Math.max(-maxY, Math.min(maxY, y));
+      canvas.style.transform = vertical.style.transform = scale === 1 ? '' : `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+
+    function zoom(next, pointX = x, pointY = y) {
+      next = Math.max(1, Math.min(24, next));
+      const ratio = next / scale;
+      x = pointX - (pointX - x) * ratio;
+      y = pointY - (pointY - y) * ratio;
+      scale = next;
+      position();
+    }
+
+    viewport.addEventListener('wheel', event => {
+      if (!event.deltaY) return;
+      event.preventDefault();
+      const bounds = viewport.getBoundingClientRect();
+      zoom(scale * (event.deltaY < 0 ? 1.25 : .8),
+        event.clientX - bounds.left - bounds.width / 2, event.clientY - bounds.top - bounds.height / 2);
+    }, {passive: false});
+    viewport.addEventListener('keydown', event => {
+      if (!['+', '=', '-', '−', '0', 'Home'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === '0' || event.key === 'Home') zoom(1);
+      else zoom(scale * (event.key === '+' || event.key === '=' ? 1.25 : .8));
+    });
+    canvas.addEventListener('pointerdown', () => viewport.focus({preventScroll: true}));
+    viewport.tabIndex = 0;
+    viewport.setAttribute('role', 'region');
+    viewport.setAttribute('aria-label', 'Четыре треугольника. Колесо меняет масштаб, клавиша 0 вписывает поле.');
+    canvas.title = 'Колесо — масштаб к курсору. 0 — вписать. Двойной щелчок — пауза или продолжение.';
+    new ResizeObserver(position).observe(viewport);
+    return position;
+  }
+
+  function createVertical(canvas, W, H) {
+    canvas.width = H;
+    canvas.height = W;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    const image = context.createImageData(H, W);
+    const pixels = new Uint32Array(image.data.buffer);
+
+    return function renderVertical(values, centers, marks) {
+      pixels.fill(0);
+      for (const center of centers) {
+        for (let row = 0; row < H; row++) {
+          const radius = Math.min(row, H - 1 - row);
+          const end = Math.min(W - 1, center + radius);
+          for (let column = Math.max(0, center - radius); column <= end; column++) {
+            const source = row * W + column;
+            const bit = values[source];
+            const colour = marks?.[source] || 0;
+            if (bit >= 0 || colour) pixels[column * H + H - 1 - row] = colour
+              ? palette[colour * 2 + Number(bit === 1)] : verticalPalette[bit];
+          }
+        }
+      }
+      context.putImageData(image, 0, 0);
+      context.lineWidth = 3;
+      for (let branch = 0; branch < centers.length; branch++) {
+        const center = centers[branch] + 0.5;
+        const radius = H / 2 - 0.5;
+        context.strokeStyle = branch ? '#8ae0ac' : '#c288ef';
+        context.beginPath();
+        context.moveTo(H - 0.5, center);
+        context.lineTo(H / 2, center - radius);
+        context.lineTo(0.5, center);
+        context.lineTo(H / 2, center + radius);
+        context.closePath();
+        context.stroke();
+      }
+    };
+  }
+
+  function create(canvas, vertical, W, H) {
     canvas.width = W;
     canvas.height = H;
     const context = canvas.getContext('2d');
     if (!context) return null;
+    const position = enableZoom(canvas, vertical, W, H);
     const image = context.createImageData(W, H);
     const pixels = new Uint32Array(image.data.buffer);
     const labels = new Uint16Array(W * H);
     const marks = new Uint8Array(labels.length);
     const queue = new Int32Array(labels.length);
+    let renderVertical;
 
     function hasAxis(count, label, left, top, right, bottom) {
       const width = right - left + 1;
@@ -83,7 +173,7 @@
       }
     }
 
-    function render(field, leftCenter, rightCenter, coloured) {
+    function render(field, leftCenter, rightCenter, coloured, upright) {
       if (coloured) colourAxes(field.val, leftCenter, rightCenter);
       pixels.fill(0);
       const middle = H / 2 - 1;
@@ -108,6 +198,27 @@
       context.moveTo(0, H / 2 + 0.5);
       context.lineTo(W, H / 2 + 0.5);
       context.stroke();
+      if (coloured) {
+        context.lineWidth = 2.5;
+        context.strokeStyle = '#c288ef';
+        context.beginPath();
+        context.moveTo(middle + 0.5, 0);
+        context.lineTo(middle + 0.5, H);
+        context.stroke();
+        context.strokeStyle = '#8ae0ac';
+        context.beginPath();
+        context.moveTo(H + middle + 0.5, 0);
+        context.lineTo(H + middle + 0.5, H);
+        context.stroke();
+      }
+      if (upright) {
+        renderVertical ||= createVertical(vertical, W, H);
+        renderVertical?.(field.val, [leftCenter, rightCenter], coloured ? marks : null);
+      }
+      if (vertical.hidden === upright) {
+        vertical.hidden = !upright;
+        position();
+      }
     }
 
     return {render};

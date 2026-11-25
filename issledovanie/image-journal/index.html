@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- МАЯ-731 · v0.033. GIF Ромбового Маятника. -->
+<!-- МАЯ-732 · v0.034. Отдельные GIF Ромбового Маятника до 4096 строк. -->
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -31,7 +31,7 @@
   <main class="shell" id="journal">
     <header class="intro">
       <div class="intro-copy">
-        <small class="journal-version">v0.033</small>
+        <small class="journal-version">v0.034</small>
         <h1>Журнал картинок</h1>
         <p>Как узоры «Зеркалиуса» становятся кадрами, обоями и иллюстрациями.</p>
         <nav class="contents" aria-label="Записи журнала">
@@ -54,35 +54,45 @@
 
     <article class="entry" id="rhomb-gifs">
       <header class="entry-heading">
-        <p class="entry-meta"><time datetime="2026-11-26">26 ноября 2026</time><span>Ромбовый Маятник · 8–128 строк</span></p>
-        <h2>Два ромба и центральные оси</h2>
-        <p>Для каждой высоты записаны разгон до первого кадра цикла и один оборот цикла. На полоске GIF показаны размер поля, номер кадра и фаза. Щелчок по GIF открывает просмотр с увеличением.</p>
+        <p class="entry-meta"><time datetime="2026-11-26">26 ноября 2026</time><span>Ромбовый Маятник · 8–4096 строк</span></p>
+        <h2>Ромбовый Маятник по высотам</h2>
+        <p>Десять GIF с кадрами разгона, цикла и возврата. Для 8–128 строк выборка охватывает весь цикл. Для 256–4096 показаны рассчитанные кадры в начале и перед доказанным возвратом.</p>
       </header>
-      <div class="figures">
-        <figure>
-          <a class="image-link" href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=cycle"><img src="../wolfram-nks/romb-gifs/diamonds/64-cycle.gif" alt="Две ромбические вырезки в цикле при высоте 64 строки" loading="lazy" decoding="async"></a>
-          <figcaption>
-            <span class="figure-name">Два разных ромба</span>
-            <p>Две вырезки из поля 2N−1. Совпадающие ромбы показываются одной фигурой.</p>
-            <span class="figure-links"><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=before">64 строки · до цикла</a><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=cycle">64 строки · цикл</a></span>
-          </figcaption>
-        </figure>
-        <figure>
-          <a class="image-link" href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=cycle"><img src="../wolfram-nks/romb-gifs/axes/64-cycle.gif" alt="Полное поле с цветными центральными осями и симметричными фигурами при высоте 64 строки" loading="lazy" decoding="async"></a>
-          <figcaption>
-            <span class="figure-name">Полное поле с окраской</span>
-            <p>Движущиеся центральные оси и симметричные фигуры, которые их пересекают, окрашены на каждом кадре.</p>
-            <span class="figure-links"><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=before">64 строки · до цикла</a><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=cycle">64 строки · цикл</a></span>
-          </figcaption>
-        </figure>
-      </div>
-      <ul>
-        <li>8 строк · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
-        <li>16 строк · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
-        <li>32 строки · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
-        <li>128 строк · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
-      </ul>
-      <p><a href="../wolfram-nks/romb-atlas.html">Атлас и черновики GIF</a> · <a href="../../rezultaty/Zerkalius-rezultaty.html#rhomb-axes">Видео с осевой раскраской</a>.</p>
+      <figure style="max-width:537px">
+        <a class="image-link" href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=64"><img src="../wolfram-nks/romb-gifs/sizes/64.gif" width="127" height="73" alt="Ромбовый Маятник на 64 строках с цветными осями" loading="lazy" decoding="async" style="image-rendering:pixelated"></a>
+        <figcaption><a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=64">Открыть 64 строки в покадровом Просмотре</a></figcaption>
+      </figure>
+      <p>Высота поля · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=8">8</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=16">16</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=32">32</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=64">64</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=128">128</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=256">256</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=512">512</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=1024">1024</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=2048">2048</a> · <a href="../../prosmotr/Zerkalius-prosmotr.html?rhomb=4096">4096</a></p>
+      <p><a href="../../bitoteka/?kind=gif&amp;folder=Источники%2FРомбовый%20Маятник">Все GIF в Битотеке</a> · <a href="../wolfram-nks/romb-atlas.html">Атлас фигур</a> · <a href="../../rezultaty/Zerkalius-rezultaty.html#rhomb-axes">Видео на 1024 строки</a>.</p>
+      <details id="rhomb-drafts">
+        <summary>Черновики GIF</summary>
+        <div class="recipe">
+          <div class="figures">
+            <figure>
+              <a class="image-link" href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=cycle"><img src="../wolfram-nks/romb-gifs/diamonds/64-cycle.gif" alt="Две ромбические вырезки в цикле при высоте 64 строки" loading="lazy" decoding="async"></a>
+              <figcaption>
+                <span class="figure-name">Два разных ромба</span>
+                <p>Две вырезки из поля 2N−1. Совпадающие ромбы показываются одной фигурой.</p>
+                <span class="figure-links"><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=before">64 строки · до цикла</a><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=diamonds&amp;phase=cycle">64 строки · цикл</a></span>
+              </figcaption>
+            </figure>
+            <figure>
+              <a class="image-link" href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=cycle"><img src="../wolfram-nks/romb-gifs/axes/64-cycle.gif" alt="Полное поле с цветными центральными осями и симметричными фигурами при высоте 64 строки" loading="lazy" decoding="async"></a>
+              <figcaption>
+                <span class="figure-name">Полное поле с окраской</span>
+                <p>Движущиеся центральные оси и симметричные фигуры, которые их пересекают, окрашены на каждом кадре.</p>
+                <span class="figure-links"><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=before">64 строки · до цикла</a><a href="../wolfram-nks/romb-gif-view.html?size=64&amp;series=axes&amp;phase=cycle">64 строки · цикл</a></span>
+              </figcaption>
+            </figure>
+          </div>
+          <ul>
+            <li>8 строк · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=8&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
+            <li>16 строк · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=16&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
+            <li>32 строки · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=32&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
+            <li>128 строк · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=diamonds&amp;phase=before">Два ромба до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=diamonds&amp;phase=cycle">Два ромба в цикле</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=axes&amp;phase=before">Оси до цикла</a> · <a href="../wolfram-nks/romb-gif-view.html?size=128&amp;series=axes&amp;phase=cycle">Оси в цикле</a></li>
+          </ul>
+        </div>
+      </details>
     </article>
 
     <article class="entry" id="from-mayatnik">

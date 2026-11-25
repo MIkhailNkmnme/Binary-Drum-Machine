@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "entries": [
     {
       "id": "source:kraftwerk:cover",
@@ -51,6 +51,176 @@
         "openUrl": "/sources/perception/collin-2006-spatial-frequency/",
         "reference": "https://pubmed.ncbi.nlm.nih.gov/16491707/",
         "description": "Участники узнавали объекты на изображениях с отфильтрованными крупными или мелкими деталями. Они меняли границу фильтра и выбирали название из шести категорий. Работа измеряет, какие пространственные частоты нужны для распознавания. Связь с проектом: узнаваемость битглифов при уменьшении и взгляде издалека."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:8",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 8 строк",
+      "filename": "romb-8.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/8.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=8"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "янтарная",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=8",
+        "description": "Поле 15 × 8. Разгон, выборка по всему циклу и первый возврат. Кадр возврата 135."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:16",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 16 строк",
+      "filename": "romb-16.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/16.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=16"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "изумрудная",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=16",
+        "description": "Поле 31 × 16. Разгон, выборка по всему циклу и первый возврат. Кадр возврата 527."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:32",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 32 строк",
+      "filename": "romb-32.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/32.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=32"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "сиреневая",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=32",
+        "description": "Поле 63 × 32. Разгон, выборка по всему циклу и первый возврат. Кадр возврата 2079."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:64",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 64 строк",
+      "filename": "romb-64.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/64.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=64"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "голубая",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=64",
+        "description": "Поле 127 × 64. Разгон, выборка по всему циклу и первый возврат. Кадр возврата 8255."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:128",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 128 строк",
+      "filename": "romb-128.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/128.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=128"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "коралловая",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=128",
+        "description": "Поле 255 × 128. Разгон, выборка по всему циклу и первый возврат. Кадр возврата 32895."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:256",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 256 строк",
+      "filename": "romb-256.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/256.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=256"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "бирюзовая",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=256",
+        "description": "Поле 511 × 256. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 131327."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:512",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 512 строк",
+      "filename": "romb-512.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/512.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=512"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "пурпурная",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=512",
+        "description": "Поле 1023 × 512. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 524799."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:1024",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 1024 строк",
+      "filename": "romb-1024.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/1024.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=1024"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "синяя",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=1024",
+        "description": "Поле 2047 × 1024. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 2098175."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:2048",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 2048 строк",
+      "filename": "romb-2048.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/2048.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=2048"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "оливковая",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=2048",
+        "description": "Поле 4095 × 2048. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 8390655."
+      }
+    },
+    {
+      "id": "source:rhomb-gif:4096",
+      "kind": "gif",
+      "name": "Ромбовый Маятник · 4096 строк",
+      "filename": "romb-4096.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/sizes/4096.gif",
+      "source": {
+        "name": "Ромбовый Маятник",
+        "page": "/issledovanie/wolfram-nks/romb-atlas.html?size=4096"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник",
+        "paletteName": "медная",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=4096",
+        "description": "Поле 8191 × 4096. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 33558527."
       }
     }
   ]

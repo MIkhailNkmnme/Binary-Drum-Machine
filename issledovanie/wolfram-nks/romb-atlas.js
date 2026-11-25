@@ -18,7 +18,7 @@
   const branch = ['За контурами ветвей', 'Ветвь ←', 'Ветвь →', 'Обе ветви ← →'];
   const format = new Intl.NumberFormat('ru');
   const pageSize = 24;
-  let catalogue, gifIndex, diamondGifIndex, axesGifIndex, filtered = [], displayed = 0;
+  let catalogue, gifIndex, diamondGifIndex, axesGifIndex, sizeGifIndex, filtered = [], displayed = 0;
 
   function node(tag, text, className) {
     const element = document.createElement(tag);
@@ -102,20 +102,22 @@
 
   function render() {
     if (!catalogue) return;
-    const atlas = catalogue.atlases.find(entry => entry.rows === Number(size.value));
-    if (!atlas) return;
-    const gifs = gifIndex.find(entry => entry.rows === atlas.rows);
-    const diamonds = diamondGifIndex.find(entry => entry.rows === atlas.rows);
-    const axisGifs = axesGifIndex.find(entry => entry.rows === atlas.rows);
+    const rows = Number(size.value);
+    const atlas = catalogue.atlases.find(entry => entry.rows === rows);
+    const gif = sizeGifIndex.find(entry => entry.rows === rows);
+    const gifs = gifIndex.find(entry => entry.rows === rows);
+    const diamonds = diamondGifIndex.find(entry => entry.rows === rows);
+    const axisGifs = axesGifIndex.find(entry => entry.rows === rows);
     const url = new URL(location.href);
-    url.searchParams.set('size', atlas.rows);
+    url.searchParams.set('size', rows);
     if (onlyMatches.checked) url.searchParams.set('matches', '1');
     else url.searchParams.delete('matches');
     if (axisFilter.value === '0') url.searchParams.delete('axis');
     else url.searchParams.set('axis', axisFilter.value);
     history.replaceState(null, '', url);
     const filter = Number(axisFilter.value);
-    filtered = atlas.figures.filter(record => {
+    axisFilter.disabled = onlyMatches.disabled = !atlas;
+    filtered = (atlas?.figures ?? []).filter(record => {
       if (onlyMatches.checked && !record.matchCount) return false;
       if (filter === 0) return true;
       if (filter === 1) return record.centralBranches > 0;
@@ -123,14 +125,26 @@
     });
     displayed = 0;
     gallery.replaceChildren();
-    status.textContent = atlas.rows + ' × ' + atlas.width + ' · фигур ' + format.format(atlas.figures.length) +
-      ' · на центральных осях ' + format.format(atlas.centralShapes) + ' · совпали ' +
-      format.format(atlas.matchingShapes) + ' · показано по фильтру ' + format.format(filtered.length);
+    status.textContent = atlas ? rows + ' × ' + atlas.width + ' · фигур ' + format.format(atlas.figures.length) +
+      ' · на центральных осях ' + format.format(atlas.centralShapes) +
+      ' · совпали ' + format.format(atlas.matchingShapes) + ' · показано по фильтру ' + format.format(filtered.length)
+      : rows + ' × ' + (2 * rows - 1) + ' · карточки фигур доступны на высотах 8–128';
     animations.replaceChildren();
-    if (gifs) animations.append(node('span', 'Палитра GIF · ' + gifs.palette.name, 'hint'),
-      gifLinks('Черновики · поле целиком', 'full', gifs));
-    if (diamonds) animations.append(gifLinks('Два ромба', 'diamonds', diamonds));
-    if (axisGifs) animations.append(gifLinks('Поле с центральными осями', 'axes', axisGifs));
+    if (gif) {
+      const group = node('div', null, 'animation-group');
+      const download = link('romb-gifs/sizes/' + gif.file, 'Скачать GIF');
+      download.download = '';
+      group.append(link('../../prosmotr/Zerkalius-prosmotr.html?rhomb=' + rows, rows + ' строк · открыть GIF'),
+        download, node('span', gif.palette.name + ' палитра · ' + gif.frames.length + ' кадров', 'hint'));
+      animations.append(group);
+    }
+    if (gifs) {
+      const archive = node('details');
+      archive.append(node('summary', 'Черновики'), gifLinks('Поле целиком', 'full', gifs));
+      if (diamonds) archive.append(gifLinks('Два ромба', 'diamonds', diamonds));
+      if (axisGifs) archive.append(gifLinks('Поле с центральными осями', 'axes', axisGifs));
+      animations.append(archive);
+    }
     renderMore();
   }
 
@@ -149,12 +163,13 @@
   axisFilter.addEventListener('change', render);
   more.addEventListener('click', renderMore);
   Promise.all([read('romb-atlas.json?v=2'), read('romb-gifs/index.json?v=1'),
-    read('romb-gifs/diamonds/index.json?v=3'), read('romb-gifs/axes/index.json?v=3')])
-    .then(([figures, gifs, diamonds, marked]) => {
+    read('romb-gifs/diamonds/index.json?v=3'), read('romb-gifs/axes/index.json?v=3'), read('romb-gifs/sizes/index.json?v=1')])
+    .then(([figures, gifs, diamonds, marked, perSize]) => {
       catalogue = figures;
       gifIndex = gifs;
       diamondGifIndex = diamonds;
       axesGifIndex = marked;
+      sizeGifIndex = perSize;
       render();
     }).catch(() => { status.textContent = 'Не удалось открыть атлас. Обновите страницу.'; });
 })();
