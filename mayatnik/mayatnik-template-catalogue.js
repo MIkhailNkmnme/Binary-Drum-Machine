@@ -1,5 +1,5 @@
 import { catalogueFrames, catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=2';
-import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=9';
+import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=10';
 
 const SIZES = [128, 256, 512, 1024, 2048, 4096];
 const CONNECTED_SIZE = 128;

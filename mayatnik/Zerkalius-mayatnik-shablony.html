@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11151c">
   <meta name="description" content="Шаблоны Маятника для шести размеров поля и редактор побитовых композиций.">
-  <title>Шаблоны Маятника · v0.010 · Зеркалиус</title>
+  <title>Шаблоны Маятника · v0.011 · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=9">
+  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=10">
   <script defer src="/_js/site-clarity.js?v=1"></script>
   <script defer src="mayatnik-paint-cache.js?v=1"></script>
   <script defer src="mayatnik-user-templates.js?v=1"></script>
   <script defer src="mayatnik-template.js"></script>
   <script defer src="../_js/hub-button-text.js?v=540"></script>
-  <script type="module" src="mayatnik-template-catalogue.js?v=10"></script>
+  <script type="module" src="mayatnik-template-catalogue.js?v=11"></script>
 </head>
 <body>
   <header class="site-bar">
@@ -30,7 +30,7 @@
     <header class="page-heading">
       <div class="catalogue-title">
         <h1>Шаблоны Маятника</h1>
-        <span class="catalogue-version" title="Версия каталога">v0.010</span>
+        <span class="catalogue-version" title="Версия каталога">v0.011</span>
       </div>
       <a href="#composition" class="jump-to-field">К полю ↓</a>
     </header>
@@ -48,7 +48,10 @@
           <h2 id="catalogue-heading">Каталог</h2>
           <div class="tools">
             <output id="catalogue-count" aria-live="polite"></output>
-            <button type="button" id="catalogue-add-all" class="gz-hx" title="Добавить все шаблоны текущего списка на исходные места" aria-label="Добавить все шаблоны текущего списка на поле" disabled><span>Все на поле</span></button>
+            <div class="catalogue-placement">
+              <button type="button" id="catalogue-add-all" class="gz-hx" title="Добавить все шаблоны текущего списка на исходные места" aria-label="Добавить все шаблоны текущего списка на поле" disabled><span>Все на поле</span></button>
+              <button type="button" id="composition-stack" class="gz-hx" title="Расположить выставленные шаблоны друг под другом" aria-label="Расположить выставленные шаблоны друг под другом" disabled><span>↓ Друг под другом</span></button>
+            </div>
           </div>
         </div>
         <div class="catalogue-controls">

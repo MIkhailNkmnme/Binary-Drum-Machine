@@ -75,6 +75,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   const layerColour = $('layer-colour'), allColour = $('all-colour');
   const undoButton = $('composition-undo'), redoButton = $('composition-redo');
   const playButton = $('composition-play'), frameReadout = $('animation-frame');
+  const stackButton = $('composition-stack');
   const up = $('layer-up'), down = $('layer-down'), remove = $('layer-remove');
   const clearButton = $('composition-clear');
   const left = $('turn-left'), right = $('turn-right');
@@ -92,10 +93,10 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   const tell = message => { status.textContent = message; };
   const view = () => ({ width: field.clientWidth, height: field.clientHeight });
 
-  function overview() {
-    const { width, height } = view();
-    const zoom = zoomLimit(Math.min(Math.max(1, width - 24) / FIELD_WIDTH, Math.max(1, height - 24) / FIELD_HEIGHT));
-    return { x: (width - FIELD_WIDTH * zoom) / 2, y: (height - FIELD_HEIGHT * zoom) / 2, zoom };
+  function overview({ x = 0, y = 0, width = FIELD_WIDTH, height = FIELD_HEIGHT } = {}) {
+    const viewport = view();
+    const zoom = zoomLimit(Math.min(Math.max(1, viewport.width - 24) / width, Math.max(1, viewport.height - 24) / height));
+    return { x: (viewport.width - width * zoom) / 2 - x * zoom, y: (viewport.height - height * zoom) / 2 - y * zoom, zoom };
   }
 
   function asWorld(x, y) {
@@ -296,6 +297,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     if (redoButton) redoButton.disabled = !redoActions.length || !!drag?.layer;
     if (clearButton) clearButton.disabled = restoring || !!drag?.layer || (!layers.length && !placement.pending);
     playButton.disabled = restoring || !!drag || !layers.length || !!placement.pending;
+    if (stackButton) stackButton.disabled = restoring || !!drag || layers.length < 2 || !!placement.pending;
   }
 
   function showPlayback() {
@@ -509,6 +511,62 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     rememberMove(layer, previousX, previousY);
   }
 
+  function stackLayers() {
+    if (stackButton.disabled) return;
+    const gap = 1, columns = [];
+    let column;
+    for (const layer of layers) {
+      const box = bounds(layer);
+      if (box.width > FIELD_WIDTH || box.height > FIELD_HEIGHT) {
+        tell('Фигура «' + layer.name + '» целиком не помещается в поле.');
+        return;
+      }
+      if (!column || column.height + gap + box.height > FIELD_HEIGHT) {
+        column = { rows: [], width: 0, height: 0 };
+        columns.push(column);
+      }
+      const top = column.rows.length ? column.height + gap : 0;
+      column.rows.push({ layer, box, top });
+      column.width = Math.max(column.width, box.width);
+      column.height = top + box.height;
+    }
+    const width = columns.reduce((total, item) => total + item.width, gap * (columns.length - 1));
+    if (width > FIELD_WIDTH) {
+      tell('Для всех столбцов не хватает ширины поля.');
+      return;
+    }
+    const height = columns.reduce((max, item) => Math.max(max, item.height), 0);
+    const area = { x: Math.floor((FIELD_WIDTH - width) / 2), y: 0, width, height };
+    const moves = [];
+    let x = area.x;
+    for (const item of columns) {
+      for (const { layer, box, top } of item.rows) {
+        const nextX = x + Math.floor((item.width - box.width) / 2) + layer.x - box.x;
+        const nextY = top + layer.y - box.y;
+        if (nextX !== layer.x || nextY !== layer.y) moves.push({ layer, x: layer.x, y: layer.y, nextX, nextY });
+      }
+      x += item.width + gap;
+    }
+    const previousCamera = camera && { ...camera }, previousFitted = fitted;
+    const arrange = () => {
+      for (const { layer, nextX, nextY } of moves) Object.assign(layer, { x: nextX, y: nextY });
+      camera = overview(area);
+      fitted = false;
+    };
+    stopPlayback();
+    arrange();
+    updateCoordinates();
+    redraw();
+    if (moves.length) rememberAction(() => {
+      for (const move of moves) Object.assign(move.layer, { x: move.x, y: move.y });
+      camera = previousCamera && { ...previousCamera };
+      fitted = previousFitted;
+    }, arrange);
+    else scheduleSave();
+    tell(columns.length === 1 ? 'Шаблоны расположены друг под другом.' :
+      'Шаблоны расположены в ' + columns.length.toLocaleString('ru-RU') + ' столбцах.');
+  }
+
   function reorder(offset) {
     const from = layers.indexOf(active), to = from + offset;
     if (from < 0 || to < 0 || to >= layers.length) return;
@@ -670,6 +728,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   undoButton?.addEventListener('click', () => historyStep(true));
   redoButton?.addEventListener('click', () => historyStep(false));
   clearButton?.addEventListener('click', clearField);
+  stackButton?.addEventListener('click', stackLayers);
   playButton.addEventListener('click', () => {
     if (playback) stopPlayback();
     else startPlayback();
