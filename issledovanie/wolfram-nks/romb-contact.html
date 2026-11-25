@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Период ромбового Маятника при развороте обеих ветвей на последнем касании, от 8 до 4096 строк.">
+  <title>Цикл Ромбового Маятника при развороте · Зеркалиус</title>
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+</head>
+<body><main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+    <a href="romb-contact-atlas.html">Атлас и GIF разворота</a>
+    <a href="romb-period.html">Периоды обычного хода</a>
+    <a href="../Zerkalius-issledovanie.html">Исследования</a>
+  </nav>
+  <header>
+    <h1>Цикл при последнем касании</h1>
+    <p class="lead">При включённом «Развороте» обе ветви меняют направление в кадре, где их расходящиеся ромбы касаются краями в последний раз. Первое касание наступает на кадре N. Для высот от 8 до 4096 точный первый возврат к этому состоянию происходит через <strong>2N(N−1)</strong> ходов.</p>
+  </header>
+  <section aria-labelledby="contact-sizes">
+    <h2 id="contact-sizes">Точные периоды</h2>
+    <p>Пустое поле на кадре 0. «Разворот» включён с начала. Таблица применима к ширинам 2N−1 и 4N−1, поскольку между касаниями вершины движутся внутри центральных N столбцов. GIF и атлас собраны на ширине 2N−1.</p>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th scope="col">Строк N</th><th scope="col">Первое касание</th><th scope="col">Ходов между касаниями</th><th scope="col">Круг маршрута</th><th scope="col">Период поля</th><th scope="col">Кадр первого возврата</th><th scope="col">Материалы</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">8</th><td>8</td><td>14</td><td>28</td><td>112</td><td>120</td><td><a href="romb-contact-atlas.html?size=8">GIF и атлас</a></td></tr>
+        <tr><th scope="row">16</th><td>16</td><td>30</td><td>60</td><td>480</td><td>496</td><td><a href="romb-contact-atlas.html?size=16">GIF и атлас</a></td></tr>
+        <tr><th scope="row">32</th><td>32</td><td>62</td><td>124</td><td>1 984</td><td>2 016</td><td><a href="romb-contact-atlas.html?size=32">GIF и атлас</a></td></tr>
+        <tr><th scope="row">64</th><td>64</td><td>126</td><td>252</td><td>8 064</td><td>8 128</td><td><a href="romb-contact-atlas.html?size=64">GIF и атлас</a></td></tr>
+        <tr><th scope="row">128</th><td>128</td><td>254</td><td>508</td><td>32 512</td><td>32 640</td><td><a href="romb-contact-atlas.html?size=128">GIF и атлас</a></td></tr>
+        <tr><th scope="row">256</th><td>256</td><td>510</td><td>1 020</td><td>130 560</td><td>130 816</td><td><a href="romb-contact-atlas.html?size=256">GIF и атлас</a></td></tr>
+        <tr><th scope="row">512</th><td>512</td><td>1 022</td><td>2 044</td><td>523 264</td><td>523 776</td><td><a href="romb-contact-atlas.html?size=512">GIF и атлас</a></td></tr>
+        <tr><th scope="row">1 024</th><td>1 024</td><td>2 046</td><td>4 092</td><td>2 095 104</td><td>2 096 128</td><td><a href="romb-contact-atlas.html?size=1024">GIF и атлас</a></td></tr>
+        <tr><th scope="row">2 048</th><td>2 048</td><td>4 094</td><td>8 188</td><td>8 384 512</td><td>8 386 560</td><td><a href="romb-contact-atlas.html?size=2048">GIF и атлас</a></td></tr>
+        <tr><th scope="row">4 096</th><td>4 096</td><td>8 190</td><td>16 380</td><td>33 546 240</td><td>33 550 336</td><td><a href="romb-contact-atlas.html?size=4096">GIF и атлас</a></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+  <section aria-labelledby="proof">
+    <h2 id="proof">Почему это самый ранний возврат</h2>
+    <ol>
+      <li>До кадра N каждый проход открывает новую вершину, поэтому ранние поля различаются заполненностью. Между двумя касаниями ветви проходят друг мимо друга и меняются местами за 2(N−1) ходов. Два таких прохода возвращают обе ветви и направления, давая круг из 4(N−1) ходов.</li>
+      <li>За круг крайние вершины посещаются дважды, внутренние четырежды. Линейная по XOR часть обновления соседней строки сокращается. Если преобразование круга записать как I + L, то каждый множитель L переносит отличие как минимум на две строки вниз. Для степеней двойки после N/2 кругов получается исходное состояние.</li>
+      <li>Чтобы исключить половину интервала, расчёт прослеживает вклад самой нижней степени по номеру строки. После первого круга разность впервые появляется в третьей строке. Затем для каждой чётной строки в нумерации с нуля применяется только двухстрочный вклад L. Через N/4 кругов обнаруживается отличие в первом столбце строки N/2 + 1 поля 2N−1. Любой более короткий период делил бы половину доказанного интервала, поэтому период равен всей величине.</li>
+    </ol>
+    <p>На 4096 строках кадр 4&#8239;096 возвращается на 33&#8239;550&#8239;336. В промежуточном кадре 16&#8239;777&#8239;216 ещё отличается первый бит строки 2049.</p>
+    <p><a href="romb-contact.json">Таблица и свидетельствующие координаты, JSON</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/tools/mayatnik-journal/analyze-rhomb-contact.cjs">Исходник расчёта</a>.</p>
+  </section>
+</main></body>
+</html>

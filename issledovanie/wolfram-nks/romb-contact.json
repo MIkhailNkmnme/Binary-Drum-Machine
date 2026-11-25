@@ -1,0 +1,145 @@
+{
+  "reverseAtContact": true,
+  "sizes": [
+    {
+      "rows": 8,
+      "width": 15,
+      "start": 8,
+      "contactEvery": 14,
+      "routePeriod": 28,
+      "period": 112,
+      "returned": 120,
+      "halfway": {
+        "frame": 64,
+        "row": 5,
+        "column": 1
+      }
+    },
+    {
+      "rows": 16,
+      "width": 31,
+      "start": 16,
+      "contactEvery": 30,
+      "routePeriod": 60,
+      "period": 480,
+      "returned": 496,
+      "halfway": {
+        "frame": 256,
+        "row": 9,
+        "column": 1
+      }
+    },
+    {
+      "rows": 32,
+      "width": 63,
+      "start": 32,
+      "contactEvery": 62,
+      "routePeriod": 124,
+      "period": 1984,
+      "returned": 2016,
+      "halfway": {
+        "frame": 1024,
+        "row": 17,
+        "column": 1
+      }
+    },
+    {
+      "rows": 64,
+      "width": 127,
+      "start": 64,
+      "contactEvery": 126,
+      "routePeriod": 252,
+      "period": 8064,
+      "returned": 8128,
+      "halfway": {
+        "frame": 4096,
+        "row": 33,
+        "column": 1
+      }
+    },
+    {
+      "rows": 128,
+      "width": 255,
+      "start": 128,
+      "contactEvery": 254,
+      "routePeriod": 508,
+      "period": 32512,
+      "returned": 32640,
+      "halfway": {
+        "frame": 16384,
+        "row": 65,
+        "column": 1
+      }
+    },
+    {
+      "rows": 256,
+      "width": 511,
+      "start": 256,
+      "contactEvery": 510,
+      "routePeriod": 1020,
+      "period": 130560,
+      "returned": 130816,
+      "halfway": {
+        "frame": 65536,
+        "row": 129,
+        "column": 1
+      }
+    },
+    {
+      "rows": 512,
+      "width": 1023,
+      "start": 512,
+      "contactEvery": 1022,
+      "routePeriod": 2044,
+      "period": 523264,
+      "returned": 523776,
+      "halfway": {
+        "frame": 262144,
+        "row": 257,
+        "column": 1
+      }
+    },
+    {
+      "rows": 1024,
+      "width": 2047,
+      "start": 1024,
+      "contactEvery": 2046,
+      "routePeriod": 4092,
+      "period": 2095104,
+      "returned": 2096128,
+      "halfway": {
+        "frame": 1048576,
+        "row": 513,
+        "column": 1
+      }
+    },
+    {
+      "rows": 2048,
+      "width": 4095,
+      "start": 2048,
+      "contactEvery": 4094,
+      "routePeriod": 8188,
+      "period": 8384512,
+      "returned": 8386560,
+      "halfway": {
+        "frame": 4194304,
+        "row": 1025,
+        "column": 1
+      }
+    },
+    {
+      "rows": 4096,
+      "width": 8191,
+      "start": 4096,
+      "contactEvery": 8190,
+      "routePeriod": 16380,
+      "period": 33546240,
+      "returned": 33550336,
+      "halfway": {
+        "frame": 16777216,
+        "row": 2049,
+        "column": 1
+      }
+    }
+  ]
+}

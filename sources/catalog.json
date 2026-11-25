@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "entries": [
     {
       "id": "source:kraftwerk:cover",
@@ -221,6 +221,166 @@
         "paletteName": "медная",
         "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=4096",
         "description": "Поле 8191 × 4096. Разгон, кадры в начале цикла и перед гарантированным возвратом. Кадр возврата 33558527."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:8",
+      "kind": "gif",
+      "name": "Разворот ромбов · 8 строк",
+      "filename": "romb-contact-8.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/8.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=8"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=8&contact=1",
+        "description": "Первый разворот на кадре 8. Точный период 112 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:16",
+      "kind": "gif",
+      "name": "Разворот ромбов · 16 строк",
+      "filename": "romb-contact-16.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/16.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=16"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=16&contact=1",
+        "description": "Первый разворот на кадре 16. Точный период 480 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:32",
+      "kind": "gif",
+      "name": "Разворот ромбов · 32 строк",
+      "filename": "romb-contact-32.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/32.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=32"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=32&contact=1",
+        "description": "Первый разворот на кадре 32. Точный период 1984 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:64",
+      "kind": "gif",
+      "name": "Разворот ромбов · 64 строк",
+      "filename": "romb-contact-64.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/64.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=64"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=64&contact=1",
+        "description": "Первый разворот на кадре 64. Точный период 8064 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:128",
+      "kind": "gif",
+      "name": "Разворот ромбов · 128 строк",
+      "filename": "romb-contact-128.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/128.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=128"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=128&contact=1",
+        "description": "Первый разворот на кадре 128. Точный период 32512 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:256",
+      "kind": "gif",
+      "name": "Разворот ромбов · 256 строк",
+      "filename": "romb-contact-256.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/256.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=256"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=256&contact=1",
+        "description": "Первый разворот на кадре 256. Точный период 130560 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:512",
+      "kind": "gif",
+      "name": "Разворот ромбов · 512 строк",
+      "filename": "romb-contact-512.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/512.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=512"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=512&contact=1",
+        "description": "Первый разворот на кадре 512. Точный период 523264 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:1024",
+      "kind": "gif",
+      "name": "Разворот ромбов · 1024 строк",
+      "filename": "romb-contact-1024.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/1024.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=1024"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=1024&contact=1",
+        "description": "Первый разворот на кадре 1024. Точный период 2095104 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:2048",
+      "kind": "gif",
+      "name": "Разворот ромбов · 2048 строк",
+      "filename": "romb-contact-2048.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/2048.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=2048"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=2048&contact=1",
+        "description": "Первый разворот на кадре 2048. Точный период 8384512 ходов."
+      }
+    },
+    {
+      "id": "source:rhomb-contact:4096",
+      "kind": "gif",
+      "name": "Разворот ромбов · 4096 строк",
+      "filename": "romb-contact-4096.gif",
+      "url": "/issledovanie/wolfram-nks/romb-gifs/contact/4096.gif",
+      "source": {
+        "name": "Ромбовый Маятник · Разворот",
+        "page": "/issledovanie/wolfram-nks/romb-contact-atlas.html?size=4096"
+      },
+      "meta": {
+        "folder": "Источники/Ромбовый Маятник/Разворот",
+        "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=4096&contact=1",
+        "description": "Первый разворот на кадре 4096. Точный период 33546240 ходов."
       }
     }
   ]

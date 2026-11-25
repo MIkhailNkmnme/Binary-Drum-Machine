@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.006</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.007</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
   <script defer src="mayatnik-core.js"></script>
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=006"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=007"></script>
   <style>
     main {
       max-width: 1040px;
@@ -63,11 +63,12 @@
     <nav class="site-nav" aria-label="Разделы Зеркалиуса">
       <a href="Zerkalius-mayatnik.html">Маятник</a>
       <a href="../issledovanie/wolfram-nks/romb-atlas.html">Атлас и GIF</a>
+      <a href="../issledovanie/wolfram-nks/romb-contact.html">Цикл с разворотом</a>
       <a href="../wolfram/">Конусная лаборатория</a>
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.006</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.007</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -139,6 +140,9 @@
       </button>
       <button type="button" class="gz-hx" id="romb-fit" title="Вписать всё поле в окно" aria-label="Вписать всё поле">
         <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span>
+      </button>
+      <button type="button" class="gz-hx" id="romb-square" aria-pressed="false" title="Повернуть поле на 45° влево. Вершина ромба станет верхним левым углом квадрата." aria-label="Повернуть ромб в квадрат">
+        <span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span>
       </button>
     </div>
     <div class="romb-combine-controls" role="group" aria-label="Совмещение ромбов">

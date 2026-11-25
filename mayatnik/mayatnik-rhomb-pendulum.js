@@ -26,6 +26,7 @@
   const cycleNote = byId("romb-cycle-note");
   const combineMode = byId("romb-combine");
   const flipSecond = byId("romb-flip");
+  const squareButton = byId("romb-square");
   const combinedView = byId("romb-combined-view");
   const combinedCanvas = byId("romb-combined");
   const combinedContext = combinedCanvas.getContext("2d");
@@ -37,7 +38,7 @@
     reverseAtContact: byId("romb-reverse-contact"),
     markRepeats: byId("romb-mark-repeats")
   };
-  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false, markRepeats: false};
+  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false, markRepeats: false, square: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
@@ -198,6 +199,7 @@
       const pressed = String(optionEnabled(key));
       if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
     }
+    squareButton?.setAttribute("aria-pressed", String(options.square));
   }
 
   function optionEnabled(key) {
@@ -302,8 +304,15 @@
     seek(target - (cycle?.period || 0) * lap, lap);
   }
 
+  function projectedBounds() {
+    if (!options.square) return {left: view.start, top: 0, right: view.end, bottom: field.H};
+    const s = Math.SQRT1_2;
+    return {left: view.start * s, top: -view.end * s, right: (view.end + field.H) * s, bottom: (field.H - view.start) * s};
+  }
+
   function fitScale(rect) {
-    return Math.min(rect.width / (view.end - view.start), rect.height / field.H);
+    const {left, top, right, bottom} = projectedBounds();
+    return Math.min(rect.width / (right - left), rect.height / (bottom - top));
   }
 
   function scaleFor(rect) {
@@ -314,13 +323,33 @@
     const half = Math.floor(field.W / 2);
     view.start = options.joinLeft ? -half : 0;
     view.end = field.W + (options.joinRight ? half : 0);
-    if (view.scale === null) view.x = (view.start + view.end) / 2;
+    if (view.scale === null) {
+      const {left, top, right, bottom} = projectedBounds();
+      view.x = (left + right) / 2;
+      view.y = (top + bottom) / 2;
+    }
   }
 
   function fit() {
     view.scale = null;
     updateViewBounds();
-    view.y = field.H / 2;
+  }
+
+  function toggleSquare() {
+    const {x, y} = view;
+    const s = Math.SQRT1_2;
+    options.square = !options.square;
+    if (options.square) {
+      view.x = (x + y) * s;
+      view.y = (y - x) * s;
+    } else {
+      view.x = (x - y) * s;
+      view.y = (x + y) * s;
+    }
+    updateViewBounds();
+    syncEdgeButtons();
+    save();
+    redraw();
   }
 
   function boundCenter(center, extent, visible) {
@@ -355,6 +384,27 @@
     return 0;
   }
 
+  function paintSquareBits(x, y, scale, w, h, bounds) {
+    const {W, H, val} = field;
+    const left = Math.max(0, Math.floor(x + bounds.left * scale));
+    const right = Math.min(w, Math.ceil(x + bounds.right * scale));
+    const top = Math.max(0, Math.floor(y + bounds.top * scale));
+    const bottom = Math.min(h, Math.ceil(y + bounds.bottom * scale));
+    const step = Math.SQRT1_2 / scale;
+    for (let py = top; py < bottom; py++) {
+      const v = (py + .5 - y) * step;
+      for (let px = left; px < right; px++) {
+        const u = (px + .5 - x) * step;
+        const row = Math.floor(u + v);
+        const displayed = Math.floor(u - v);
+        if (row < 0 || row >= H || displayed < view.start || displayed >= view.end) continue;
+        const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
+        const bit = val[row * W + col];
+        if (bit >= 0) words[py * w + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
+      }
+    }
+  }
+
   function paint() {
     if (hubFour) {
       hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0, hubVertical);
@@ -363,12 +413,15 @@
     }
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const {W, H, val} = field;
+    const {W, H} = field;
     const displayWidth = view.end - view.start;
+    const bounds = projectedBounds();
+    const viewWidth = bounds.right - bounds.left;
+    const viewHeight = bounds.bottom - bounds.top;
     const cssScale = scaleFor(rect);
-    view.x = view.start + boundCenter(view.x - view.start, displayWidth, rect.width / cssScale);
-    view.y = boundCenter(view.y, H, rect.height / cssScale);
-    canvas.classList.toggle("romb-zoomed", displayWidth * cssScale > rect.width + 0.5 || H * cssScale > rect.height + 0.5);
+    view.x = bounds.left + boundCenter(view.x - bounds.left, viewWidth, rect.width / cssScale);
+    view.y = bounds.top + boundCenter(view.y - bounds.top, viewHeight, rect.height / cssScale);
+    canvas.classList.toggle("romb-zoomed", viewWidth * cssScale > rect.width + 0.5 || viewHeight * cssScale > rect.height + 0.5);
 
     const dpr = devicePixelRatio || 1;
     const ratio = view.scale === null ? Math.min(dpr, 1.5) : dpr;
@@ -403,30 +456,16 @@
       x = Math.round(x);
       y = Math.round(y);
     }
-    const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
-    const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
-    const firstY = Math.max(0, Math.ceil(y - 0.5));
-    const lastY = Math.min(h, Math.ceil(y + H * scale - 0.5));
-    for (let px = firstX; px < lastX; px++) {
-      const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
-      const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
-      sampleColumn[px] = col;
-      // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
-      samplePair[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
-    }
     words.fill(0);
-    for (let py = firstY; py < lastY; py++) {
-      const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
-      const sourceRow = row * W;
-      const out = py * w;
-      for (let px = firstX; px < lastX; px++) {
-        let col = sampleColumn[px];
-        let bit = val[sourceRow + col];
-        if (bit < 0 && samplePair[px]) bit = val[sourceRow + ++col];
-        if (bit >= 0) words[out + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
-      }
-    }
+    if (options.square) paintSquareBits(x, y, scale, w, h, bounds);
+    else paintFlatBits(x, y, scale, w, h);
     context.putImageData(pixels, 0, 0);
+    context.save();
+    if (options.square) {
+      context.translate(x, y);
+      context.rotate(-Math.PI / 4);
+      context.translate(-x, -y);
+    }
     context.lineWidth = ratio;
     context.strokeStyle = styles.getPropertyValue("--romb-border").trim();
     context.strokeRect(x + view.start * scale, y, displayWidth * scale, H * scale);
@@ -441,14 +480,46 @@
     }
     context.stroke();
     if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
+    context.restore();
     paintCombined();
 
+    updateLabels(cssScale, dpr);
+  }
+
+  function paintFlatBits(x, y, scale, w, h) {
+    const {W, H, val} = field;
+    const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
+    const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
+    const firstY = Math.max(0, Math.ceil(y - 0.5));
+    const lastY = Math.min(h, Math.ceil(y + H * scale - 0.5));
+    for (let px = firstX; px < lastX; px++) {
+      const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
+      const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
+      sampleColumn[px] = col;
+      // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
+      samplePair[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
+    }
+    for (let py = firstY; py < lastY; py++) {
+      const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
+      const sourceRow = row * W;
+      const out = py * w;
+      for (let px = firstX; px < lastX; px++) {
+        let col = sampleColumn[px];
+        let bit = val[sourceRow + col];
+        if (bit < 0 && samplePair[px]) bit = val[sourceRow + ++col];
+        if (bit >= 0) words[out + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
+      }
+    }
+  }
+
+  function updateLabels(cssScale, dpr) {
+    const {W, H} = field;
     const position = frame ? " · столбец " + formatter.format(column + 1) + " из " + formatter.format(W) : "";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = (options.stopAtContact || currentReverse()) && separation() === H - 1 ? " · касание" : "";
     const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
     const label = "Кадр " + formatter.format(frame) + target + position +
-      " · " + formatter.format(H) + " строк · " + zoom + contact;
+      " · " + formatter.format(H) + " строк · " + zoom + contact + (options.square ? " · квадрат" : "");
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
     const period = cycle?.period;
     const end = period ? cycle.start + period - 1 : normalSliderMax;
@@ -689,6 +760,7 @@
   byId("romb-reset").addEventListener("click", reset);
   byId("romb-fit").addEventListener("click", fitView);
   byId("romb-exact").addEventListener("click", () => zoomTo(1));
+  squareButton?.addEventListener("click", toggleSquare);
   frameSlider.addEventListener("input", () => seek(Number(frameSlider.value)));
   for (const [key, button] of Object.entries(edgeButtons)) {
     button.addEventListener("click", () => {

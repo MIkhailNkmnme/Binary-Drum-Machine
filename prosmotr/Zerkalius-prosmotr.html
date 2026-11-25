@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.021. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.022. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -79,7 +79,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Просмотр GIF — v0.021</title>
+<title>Zerkalius Просмотр GIF — v0.022</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -137,7 +137,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.021</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.022</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -1267,17 +1267,21 @@ async function openFiles(files) {
 }
 
 async function openPublishedRhomb() {
-  const rows = Number(new URLSearchParams(location.search).get('rhomb'));
+  const query = new URLSearchParams(location.search);
+  const rows = Number(query.get('rhomb'));
   if (![8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096].includes(rows)) return;
-  const entry = await window.ZerkBitoteka?.get('source:rhomb-gif:' + rows).catch(() => null);
+  const contact = query.get('contact') === '1';
+  const sourceId = (contact ? 'source:rhomb-contact:' : 'source:rhomb-gif:') + rows;
+  const entry = await window.ZerkBitoteka?.get(sourceId).catch(() => null);
   if (entry?.blob) {
     await openFiles([new File([entry.blob], entry.filename, {type: 'image/gif'})]);
     return;
   }
   try {
-    const response = await fetch('../issledovanie/wolfram-nks/romb-gifs/sizes/' + rows + '.gif');
+    const folder = contact ? 'contact' : 'sizes';
+    const response = await fetch('../issledovanie/wolfram-nks/romb-gifs/' + folder + '/' + rows + '.gif');
     if (!response.ok) throw Error('HTTP ' + response.status);
-    await openFiles([new File([await response.blob()], 'romb-' + rows + '.gif', {type: 'image/gif'})]);
+    await openFiles([new File([await response.blob()], (contact ? 'romb-contact-' : 'romb-') + rows + '.gif', {type: 'image/gif'})]);
   } catch (error) {
     alert('GIF Ромбового Маятника не открылся · ' + error.message);
   }

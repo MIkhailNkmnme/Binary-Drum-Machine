@@ -6,11 +6,14 @@ const { encoder } = require('../../mayatnik/mayatnik-gif.js');
 const { createModel } = require('./analyze-rhomb-period.cjs');
 const { colourCentralAxes } = require('./build-rhomb-atlas.cjs');
 const { createPackedRhomb } = require('./rhomb-packed.cjs');
+const { createAtlasCollector, contactAtlasFrames } = require('./build-rhomb-contact-atlas.cjs');
 
 const studyDirectory = join(__dirname, '../../issledovanie/wolfram-nks');
 const defaultDirectory = join(studyDirectory, 'romb-gifs/diamonds');
 const defaultAxesDirectory = join(studyDirectory, 'romb-gifs/axes');
 const sizeDirectory = join(studyDirectory, 'romb-gifs/sizes');
+const contactDirectory = join(studyDirectory, 'romb-gifs/contact');
+const contactAtlasDirectory = join(studyDirectory, 'romb-contact-atlas');
 const colours = {
   8: ['янтарная', '4e350f', 'ffcd72'],
   16: ['изумрудная', '144f42', '9af4c7'],
@@ -30,7 +33,7 @@ const glyphs = {
   '3': '111001111001111', '4': '101101111001001', '5': '111100111001111',
   '6': '111100111101111', '7': '111001010010010', '8': '111101111101111',
   '9': '111101111001111', 'X': '101101010101101', 'F': '111100110100100',
-  'C': '111100100100111', ' ': '000000000000000'
+  'C': '111100100100111', 'R': '110101110101101', ' ': '000000000000000'
 };
 
 function scheme(rows) {
@@ -266,12 +269,8 @@ function paintOverview(model, pixels, block, band, palette, density) {
   }
 }
 
-async function writeOneSize(directory, size) {
-  const {rows, width} = size;
+function gifLayout(rows, width) {
   const small = rows <= 128;
-  const first = size.firstFullFrame ?? size.referenceFrame;
-  const period = size.period ?? size.returnInterval;
-  const end = first + period;
   const palette = scheme(rows);
   const colours = palette.rgb;
   const scale = Math.max(1, Math.floor(96 / rows));
@@ -284,6 +283,15 @@ async function writeOneSize(directory, size) {
   const animation = encoder(gifWidth, gifHeight, {mergeEqual: false});
   const density = Array.from({length: 7}, (_, level) => colours[1].map((low, index) =>
     Math.round(low + level * (colours[2][index] - low) / 6)));
+  return {small, palette, colours, scale, block, gifWidth, gifHeight, textScale, band, pixels, animation, density};
+}
+
+async function writeOneSize(directory, size) {
+  const {rows, width} = size;
+  const {small, palette, colours, scale, block, gifWidth, gifHeight, textScale, band, pixels, animation, density} = gifLayout(rows, width);
+  const first = size.firstFullFrame ?? size.referenceFrame;
+  const period = size.period ?? size.returnInterval;
+  const end = first + period;
   const before = framesBetween(0, first - 1, small ? 256 : 25);
   const cycle = framesBetween(first, small ? end - 1 : first + width, small ? 240 : 25);
   const tail = small ? [end] : framesBetween(end - Math.floor(width / 6), end, 7);
@@ -347,10 +355,100 @@ async function writeSizeAnimations(directory = sizeDirectory) {
   writeFileSync(join(directory, 'index.json'), JSON.stringify(result, null, 2) + '\n');
 }
 
+function paintContactContours(pixels, layout, model, contact) {
+  const {small, scale, block, band, gifWidth, gifHeight} = layout;
+  const cellScale = small ? scale : 1 / block;
+  for (let branch = 0; branch < model.centers.length; branch++) {
+    const center = model.centers[branch];
+    const color = contact ? [255, 218, 138, 255] : branch ? [194, 136, 239, 255] : [138, 224, 172, 255];
+    for (let y = band; y < gifHeight; y++) {
+      const row = Math.floor((y - band) / cellScale);
+      const radius = Math.min(row, model.height - 1 - row);
+      for (const coordinate of [center - radius, center + radius]) {
+        const x = Math.floor((coordinate + 0.5) * cellScale);
+        if (x >= 0 && x < gifWidth) pixels.set(color, (y * gifWidth + x) * 4);
+      }
+    }
+  }
+}
+
+async function writeContactSize(directory, atlasDirectory, size) {
+  const {rows, width, start, routePeriod, contactEvery, period, returned} = size;
+  const layout = gifLayout(rows, width);
+  const {small, palette, colours, scale, block, gifWidth, gifHeight, textScale, band, pixels, animation, density} = layout;
+  const model = createPackedRhomb(rows, {reverseAtContact: true});
+  const collector = createAtlasCollector(rows, width);
+  const touches = [start, start + contactEvery, start + routePeriod];
+  const atlasFrames = new Set(contactAtlasFrames(size));
+  const headEnd = small ? returned - 1 : touches.at(-1) + Math.floor(rows / 8);
+  const gifFrames = new Set([...framesBetween(0, start - 1, small ? 128 : 23),
+    ...framesBetween(start, headEnd, small ? 240 : 52), ...atlasFrames].filter(frame => small || frame !== 1));
+  const early = [...new Set([...gifFrames, ...atlasFrames])].sort((a, b) => a - b);
+  const tail = small ? [returned] : framesBetween(returned - Math.floor(rows / 12), returned, 9);
+  const field = small ? {W: width, H: rows, val: new Int8Array(width * rows)} : null;
+  const marks = field && new Uint8Array(field.val.length);
+  const queue = field && new Int32Array(field.val.length);
+  let reference;
+
+  function render(frame) {
+    if (small) {
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < width; col++) field.val[row * width + col] = model.cell(row, col);
+      }
+      if (frame) colourCentralAxes({field, route: () => [frame % 2, 0, ...model.centers]}, marks, queue);
+      paint(field.val, width, rows, scale, pixels, colours, band, marks);
+    } else paintOverview(model, pixels, block, band, colours, density);
+    const isContact = frame >= start && (frame - start) % contactEvery === 0;
+    if (frame) paintContactContours(pixels, layout, model, isContact);
+    const phase = isContact ? 'R' + (1 + (frame - start) / contactEvery) : frame < start ? 'C0' : 'C1';
+    paintLabel(pixels, gifWidth, band, textScale, rows + 'X' + width + ' F' + frame + ' ' + phase, colours[2]);
+    animation.add(pixels, isContact ? 90 : small ? 7 : 13);
+  }
+
+  for (const frame of early) {
+    while (model.frame < frame) model.advance();
+    if (frame === start) reference = model.snapshot();
+    if (atlasFrames.has(frame)) collector.add(model);
+    if (gifFrames.has(frame)) render(frame);
+  }
+  if (!small) {
+    model.skipToReturn(reference, period);
+    while (model.frame > tail[0]) model.retreat();
+  }
+  for (const frame of tail) {
+    while (model.frame < frame) model.advance();
+    render(frame);
+  }
+  const present = model.snapshot();
+  if (reference.bits.some((value, index) => value !== present.bits[index]) ||
+      String([...reference.centers, ...reference.directions]) !== String([...present.centers, ...present.directions])) {
+    throw Error('Поле разворота не вернулось у размера ' + rows);
+  }
+  const file = await writeGif(directory, rows + '.gif', animation, true);
+  const {rgb, ...paletteInfo} = palette;
+  const frames = [...early.filter(frame => gifFrames.has(frame)), ...tail];
+  return {gif: {...file, rows, width, gifWidth, gifHeight, start, period, returned, frames, touches,
+    overview: !small, block, palette: paletteInfo}, atlas: collector.write(atlasDirectory)};
+}
+
+async function writeContactAnimations(directory = contactDirectory, atlasDirectory = contactAtlasDirectory) {
+  mkdirSync(directory, {recursive: true});
+  const {sizes} = JSON.parse(readFileSync(join(studyDirectory, 'romb-contact.json'), 'utf8'));
+  const result = [];
+  for (const size of sizes) {
+    const entry = await writeContactSize(directory, atlasDirectory, size);
+    result.push(entry);
+    console.log(`${entry.gif.rows} · ${entry.gif.frames.length} кадров · ${entry.atlas.figures} фигур`);
+  }
+  writeFileSync(join(directory, 'index.json'), JSON.stringify(result.map(item => item.gif), null, 2) + '\n');
+  writeFileSync(join(atlasDirectory, 'index.json'), JSON.stringify(result.map(item => item.atlas), null, 2) + '\n');
+}
+
 if (require.main === module) {
-  const job = process.argv[2] === '--sizes'
-    ? writeSizeAnimations(process.argv[3])
-    : writeGifs(process.argv[2], process.argv[3]).then(files => console.log(JSON.stringify(files, null, 2)));
+  const mode = process.argv[2];
+  const job = mode === '--sizes' ? writeSizeAnimations(process.argv[3])
+    : mode === '--contact' ? writeContactAnimations(process.argv[3], process.argv[4])
+      : writeGifs(process.argv[2], process.argv[3]).then(files => console.log(JSON.stringify(files, null, 2)));
   job.catch(error => {
     console.error(error.message);
     process.exitCode = 1;

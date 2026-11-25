@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru" data-contact-atlas>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Осесимметричные фигуры вокруг последнего касания ромбов для полей от 8 до 4096 строк.">
+  <title>Атлас разворота ромбов · Зеркалиус</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <script defer src="../../_js/hub-button-text.js"></script>
+  <script defer src="romb-atlas.js?v=5"></script>
+  <style>
+    main { max-width: 1100px; }
+    .atlas-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
+    .atlas-tools > label { display: grid; gap: 4px; }
+    .atlas-tools .check { display: flex; align-items: center; }
+    .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .template { min-width: 0; padding: 12px; border: 1px solid var(--line); background: #101a24; }
+    .template figure { margin: 0 0 10px; height: 108px; display: grid; place-items: center; }
+    .template h3 { margin: 0; font-size: 15px; }
+    .template p { margin: 4px 0; font-size: 12px; }
+    .templates canvas { image-rendering: pixelated; }
+    .template .match { color: var(--cyan); }
+    .animation-results { display: grid; gap: 5px; margin-bottom: 12px; }
+    .animation-group { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+    .animation-results a { white-space: nowrap; }
+    #atlas-more { margin-top: 12px; }
+    #atlas-more[hidden] { display: none; }
+  </style>
+</head>
+<body><main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+    <a href="romb-contact.html">Расчёт циклов разворота</a>
+    <a href="romb-atlas.html">Обычный атлас ромбов</a>
+    <a href="../Zerkalius-issledovanie.html">Исследования</a>
+  </nav>
+  <header>
+    <h1>Атлас разворота ромбов</h1>
+    <p class="lead">Фигуры с точной осевой симметрией на высотах от 8 до 4096 строк. Для каждой высоты взят первый ромб, а у первых трёх разворотов — кадр до касания, само касание и следующий кадр.</p>
+  </header>
+  <div class="atlas-tools">
+    <label>Высота поля
+      <span class="gz-hx value-control">
+        <select id="atlas-size" aria-label="Высота ромбового поля">
+          <option>8</option><option>16</option><option>32</option><option selected>64</option><option>128</option>
+          <option>256</option><option>512</option><option>1024</option><option>2048</option><option>4096</option>
+        </select>
+      </span>
+    </label>
+    <label>Центральные оси
+      <span class="gz-hx value-control">
+        <select id="atlas-axis">
+          <option value="0">Все фигуры</option><option value="1">Любая ось</option>
+          <option value="2">Ось ветви ←</option><option value="3">Ось ветви →</option>
+          <option value="4">Обе оси</option>
+        </select>
+      </span>
+    </label>
+    <input id="atlas-match" type="checkbox" hidden>
+  </div>
+  <p id="atlas-status" role="status">Загружается атлас…</p>
+  <div id="atlas-gifs" class="animation-results" aria-label="GIF выбранного размера"></div>
+  <div id="atlas-cards" class="templates" aria-label="Шаблоны выбранного размера"></div>
+  <button id="atlas-more" class="gz-hx" type="button" title="Показать ещё фигуры" aria-label="Показать ещё фигуры" hidden>
+    <span class="gz-ic" aria-hidden="true">↓</span><span class="gz-nm">Ещё</span>
+  </button>
+
+  <section class="explanation" aria-labelledby="sampling">
+    <h2 id="sampling">Как отобраны фигуры</h2>
+    <p>Фигура состоит из четырёх и более клеток одного бита, связанных стороной или углом, и совпадает со своим отражением по вертикали, горизонтали или диагонали. Фильтр «Центральные оси» оставляет фигуры, пересекающие центральный столбец одной из ветвей. Одинаковые маски объединены в карточку с номером первого кадра.</p>
+    <p>Полные маски и размеры доступны по ссылке «Данные фигур» у каждой высоты. <a href="romb-contact-atlas/index.json">Кадры выборки по высотам</a> · <a href="../../bitoteka/?kind=gif&amp;folder=Источники%2FРомбовый%20Маятник%2FРазворот">Серия GIF в Битотеке</a>.</p>
+  </section>
+</main></body>
+</html>
