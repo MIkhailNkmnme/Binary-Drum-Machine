@@ -19,15 +19,24 @@
   const play = byId("romb-play");
   const playIcon = byId("romb-play-icon");
   const stepButton = byId("romb-step");
+  const frameSlider = byId("romb-frame-slider");
+  const edgeButtons = {
+    wrap: byId("romb-wrap"),
+    joinLeft: byId("romb-join-left"),
+    joinRight: byId("romb-join-right"),
+    stopAtContact: byId("romb-stop-contact")
+  };
+  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-  const view = {x: 0, y: 0, zoom: 1};
-  let field, depth, anchor, frame, column, drag;
-  let pixels, words, sampleColumn, colorWords, colorKey;
+  const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
+  let field, depth, frame, column, branches, routeWrap, drag;
+  let routeChanges, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
+  let pixels, words, sampleColumn, samplePair, colorWords, colorKey;
   let frameRequest = 0;
   let playing = false;
   let pending = 0;
@@ -44,10 +53,11 @@
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
     if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
+    for (const key of Object.keys(options)) if (typeof saved[key] === "boolean") options[key] = saved[key];
   }
 
   function save() {
-    const settings = {rows: Number(size.value), factor: Number(width.value), step: stepCount()};
+    const settings = {rows: Number(size.value), factor: Number(width.value), step: stepCount(), ...options};
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
       return;
@@ -62,18 +72,62 @@
     if (field?.W === columns && field.H === height) field.val.fill(-1);
     else field = MAYATNIK.field(columns, height, "empty");
     depth = height / 2;
-    anchor = (columns - 1) / 2;
-    frame = 0;
+    routeChanges = new Map([[0, options.wrap]]);
+    checkpoints = new Map();
+    checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
+    checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
+    frameSlider.max = Math.min(maxFrame, 2 * columns + 1);
+    initializeMotion();
     fit();
     advance();
     syncTransport();
+    syncEdgeButtons();
     announcePosition();
     redraw();
   }
 
-  function advance() {
+  function initializeMotion() {
+    const anchor = (field.W - 1) / 2;
+    column = anchor;
+    branches = [{column: anchor, direction: 1}, {column: anchor, direction: -1}];
+    routeWrap = routeChanges.get(0);
+    frame = 0;
+  }
+
+  function currentWrap() {
+    return routeChanges.get(frame) ?? routeWrap;
+  }
+
+  function changeRoute(wrap) {
+    // A new choice at a rewound frame replaces the route from that point on.
+    for (const at of routeChanges.keys()) if (at >= frame) routeChanges.delete(at);
+    routeChanges.set(frame, wrap);
+    for (const at of checkpoints.keys()) if (at > frame) checkpoints.delete(at);
+  }
+
+  function syncEdgeButtons() {
+    for (const [key, button] of Object.entries(edgeButtons)) {
+      const pressed = String(key === "wrap" ? currentWrap() : options[key]);
+      if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
+    }
+  }
+
+  function separation() {
+    return Math.abs(branches[0].column - branches[1].column);
+  }
+
+  function advance(watchContact = false) {
     const {W, H, val} = field;
-    column = MayatnikEdgeFlow.mapColumn(anchor + MAYATNIK.offset("pend", frame), W, true);
+    const before = watchContact ? separation() : 0;
+    routeWrap = currentWrap();
+    const branch = branches[frame % 2];
+    const previous = branch.column;
+    if (frame) {
+      const next = previous + branch.direction;
+      branch.column = MayatnikEdgeFlow.mapColumn(next, W, !routeWrap);
+      if (!routeWrap && branch.column !== next) branch.direction *= -1;
+    }
+    column = branch.column;
     MAYATNIK.cone(field, column, depth);
 
     // Duplicate the widest row in the same lattice, clipped at the field edges.
@@ -98,15 +152,61 @@
       }
     }
     frame++;
+    if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
+      if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
+      checkpoints.set(frame, {bits: val.slice(), branches: branches.map(item => ({...item})), column, routeWrap});
+    }
+    // The two visible contours touch when their centers are one full
+    // diamond width apart. A jump across the seam is not a contact.
+    return watchContact && before === H - 2 && separation() === H - 1 && Math.abs(column - previous) === 1;
+  }
+
+  function seek(target) {
+    stop();
+    let start = frame <= target ? frame : 0;
+    let checkpoint;
+    for (const [at, saved] of checkpoints) {
+      if (at > start && at <= target) {
+        start = at;
+        checkpoint = saved;
+      }
+    }
+    if (checkpoint) {
+      field.val.set(checkpoint.bits);
+      branches = checkpoint.branches.map(item => ({...item}));
+      column = checkpoint.column;
+      routeWrap = checkpoint.routeWrap;
+      frame = start;
+    } else if (frame > target) {
+      field.val.fill(-1);
+      initializeMotion();
+    }
+    pending = target - frame;
+    seekTarget = pending ? target : null;
+    syncTransport();
+    syncEdgeButtons();
+    if (!pending) announcePosition();
+    redraw();
   }
 
   function fitScale(rect) {
-    return Math.min(rect.width / field.W, rect.height / field.H);
+    return Math.min(rect.width / (view.end - view.start), rect.height / field.H);
+  }
+
+  function scaleFor(rect) {
+    return view.scale === null ? fitScale(rect) : view.scale / (devicePixelRatio || 1);
+  }
+
+  function updateViewBounds() {
+    const half = Math.floor(field.W / 2);
+    view.start = options.joinLeft ? -half : 0;
+    view.end = field.W + (options.joinRight ? half : 0);
+    if (view.scale === null) view.x = (view.start + view.end) / 2;
   }
 
   function fit() {
-    view.zoom = 1;
-    view.x = field.W / 2;
+    view.scale = null;
+    updateViewBounds();
     view.y = field.H / 2;
   }
 
@@ -119,12 +219,14 @@
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const {W, H, val} = field;
-    const cssScale = fitScale(rect) * view.zoom;
-    view.x = boundCenter(view.x, W, rect.width / cssScale);
+    const displayWidth = view.end - view.start;
+    const cssScale = scaleFor(rect);
+    view.x = view.start + boundCenter(view.x - view.start, displayWidth, rect.width / cssScale);
     view.y = boundCenter(view.y, H, rect.height / cssScale);
-    canvas.classList.toggle("romb-zoomed", view.zoom > 1);
+    canvas.classList.toggle("romb-zoomed", displayWidth * cssScale > rect.width + 0.5 || H * cssScale > rect.height + 0.5);
 
-    const ratio = Math.min(devicePixelRatio || 1, 1.5);
+    const dpr = devicePixelRatio || 1;
+    const ratio = view.scale === null ? Math.min(dpr, 1.5) : dpr;
     const w = Math.max(1, Math.round(rect.width * ratio));
     const h = Math.max(1, Math.round(rect.height * ratio));
     if (!pixels || canvas.width !== w || canvas.height !== h) {
@@ -133,6 +235,7 @@
       pixels = context.createImageData(w, h);
       words = new Uint32Array(pixels.data.buffer);
       sampleColumn = new Int32Array(w);
+      samplePair = new Uint8Array(w);
     }
     const styles = getComputedStyle(root);
     const zero = styles.getPropertyValue("--romb-zero").trim();
@@ -148,14 +251,24 @@
       colorKey = key;
     }
 
-    const scale = cssScale * ratio;
-    const x = w / 2 - view.x * scale;
-    const y = h / 2 - view.y * scale;
-    const firstX = Math.max(0, Math.ceil(x - 0.5));
-    const lastX = Math.min(w, Math.ceil(x + W * scale - 0.5));
+    const scale = view.scale ?? cssScale * ratio;
+    let x = w / 2 - view.x * scale;
+    let y = h / 2 - view.y * scale;
+    if (view.scale === 1) {
+      x = Math.round(x);
+      y = Math.round(y);
+    }
+    const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
+    const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
     const firstY = Math.max(0, Math.ceil(y - 0.5));
     const lastY = Math.min(h, Math.ceil(y + H * scale - 0.5));
-    for (let px = firstX; px < lastX; px++) sampleColumn[px] = clamp(Math.floor((px + 0.5 - x) / scale), 0, W - 1);
+    for (let px = firstX; px < lastX; px++) {
+      const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
+      const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
+      sampleColumn[px] = col;
+      // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
+      samplePair[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
+    }
     words.fill(0);
     for (let py = firstY; py < lastY; py++) {
       const sourceRow = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1) * W;
@@ -163,39 +276,69 @@
       for (let px = firstX; px < lastX; px++) {
         const col = sampleColumn[px];
         let bit = val[sourceRow + col];
-        // Below 1:1, preserve the staggered lattice when both columns
-        // land in the same display pixel.
-        if (bit < 0 && col + 1 < W && (col + 1.5) * scale + x < px + 1) bit = val[sourceRow + col + 1];
+        if (bit < 0 && samplePair[px]) bit = val[sourceRow + col + 1];
         if (bit >= 0) words[out + px] = colorWords[bit];
       }
     }
     context.putImageData(pixels, 0, 0);
     context.lineWidth = ratio;
     context.strokeStyle = styles.getPropertyValue("--romb-border").trim();
-    context.strokeRect(x, y, W * scale, H * scale);
-
-    context.save();
+    context.strokeRect(x + view.start * scale, y, displayWidth * scale, H * scale);
     context.beginPath();
-    context.rect(x, y, W * scale, H * scale);
-    context.clip();
-    const tip = x + (column + 0.5) * scale;
+    if (view.start < 0) {
+      context.moveTo(x, y);
+      context.lineTo(x, y + H * scale);
+    }
+    if (view.end > W) {
+      context.moveTo(x + W * scale, y);
+      context.lineTo(x + W * scale, y + H * scale);
+    }
+    context.stroke();
+    if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
+
+    const position = frame ? " · столбец " + formatter.format(column + 1) + " из " + formatter.format(W) : "";
+    const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
+    const contact = options.stopAtContact && separation() === H - 1 ? " · касание" : "";
+    const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
+    const label = "Кадр " + formatter.format(frame) + target + position +
+      " · " + formatter.format(H) + " строк · " + zoom + contact;
+    if (frameLabel.textContent !== label) frameLabel.textContent = label;
+    if (frame > Number(frameSlider.max)) {
+      const span = 2 * W + 1;
+      frameSlider.max = Math.min(maxFrame, Math.ceil(frame / span) * span);
+    }
+    const sliderValue = String(seekTarget ?? frame);
+    if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    syncEdgeButtons();
+  }
+
+  function paintOutlines(x, y, scale, ratio, color) {
+    const {W, H} = field;
+    const columns = options.stopAtContact && separation() ? branches.map(branch => branch.column) : [column];
     const radius = (depth - 0.5) * scale;
     const middle = y + depth * scale;
-    context.beginPath();
-    context.moveTo(tip, y);
-    context.lineTo(tip + radius, middle);
-    context.lineTo(tip, y + H * scale);
-    context.lineTo(tip - radius, middle);
-    context.closePath();
-    context.strokeStyle = styles.getPropertyValue("--romb-outline").trim();
-    context.lineWidth = 1.25 * ratio;
-    context.stroke();
-    context.restore();
-
-    const label = "Кадр " + formatter.format(frame) + " · столбец " + formatter.format(column + 1) +
-      " из " + formatter.format(W) + " · " + formatter.format(H) + " строк · " +
-      formatter.format(cssScale * 100) + " %";
-    if (frameLabel.textContent !== label) frameLabel.textContent = label;
+    for (const offset of [-W, 0, W]) {
+      const left = Math.max(view.start, offset);
+      const right = Math.min(view.end, offset + W);
+      if (right <= left) continue;
+      context.save();
+      context.beginPath();
+      context.rect(x + left * scale, y, (right - left) * scale, H * scale);
+      context.clip();
+      context.strokeStyle = color;
+      context.lineWidth = 1.25 * ratio;
+      for (const col of columns) {
+        const tip = x + (offset + col + 0.5) * scale;
+        context.beginPath();
+        context.moveTo(tip, y);
+        context.lineTo(tip + radius, middle);
+        context.lineTo(tip, y + H * scale);
+        context.lineTo(tip - radius, middle);
+        context.closePath();
+        context.stroke();
+      }
+      context.restore();
+    }
   }
 
   function schedule() {
@@ -208,7 +351,10 @@
   }
 
   function announcePosition() {
-    if (announcement) announcement.textContent = "Кадр " + formatter.format(frame) + " · столбец " + formatter.format(column + 1);
+    if (!announcement) return;
+    const position = frame ? " · столбец " + formatter.format(column + 1) : "";
+    const contact = options.stopAtContact && separation() === field.H - 1 ? " · касание" : "";
+    announcement.textContent = "Кадр " + formatter.format(frame) + position + contact;
   }
 
   function syncTransport() {
@@ -222,6 +368,7 @@
   function stop() {
     playing = false;
     pending = 0;
+    seekTarget = null;
     syncTransport();
   }
 
@@ -230,12 +377,17 @@
     if (playing && !pending && now >= nextBatchAt) pending = stepCount();
     if (pending) {
       const deadline = performance.now() + 10;
+      const watchContact = options.stopAtContact && seekTarget === null;
+      let contact;
       do {
-        advance();
+        contact = advance(watchContact);
         pending--;
-      } while (pending && frame < maxFrame && performance.now() < deadline);
-      if (!pending) nextBatchAt = now + 115;
-      if (frame === maxFrame) {
+      } while (!contact && pending && frame < maxFrame && performance.now() < deadline);
+      if (!pending) {
+        seekTarget = null;
+        nextBatchAt = now + 115;
+      }
+      if (contact || frame === maxFrame) {
         stop();
         announcePosition();
       } else if (!playing && !pending) {
@@ -254,15 +406,25 @@
     if (playing || pending) schedule();
   }
 
-  function zoomBy(factor, px = 0, py = 0) {
+  function zoomTo(physicalScale, px = 0, py = 0) {
     const rect = canvas.getBoundingClientRect();
-    const scale = fitScale(rect);
-    if (!scale) return;
-    const old = view.zoom;
-    view.zoom = clamp(old * factor, 1, Math.max(1, 16 / scale));
-    const shift = (1 / old - 1 / view.zoom) / scale;
+    if (!rect.width || !rect.height) return;
+    const old = scaleFor(rect);
+    view.scale = clamp(physicalScale, 1, 16);
+    const shift = 1 / old - 1 / scaleFor(rect);
     view.x += px * shift;
     view.y += py * shift;
+    redraw();
+  }
+
+  function zoomBy(factor, px = 0, py = 0) {
+    const current = scaleFor(canvas.getBoundingClientRect()) * (devicePixelRatio || 1);
+    if (view.scale === null && current < 1 && factor <= 1) return;
+    zoomTo(current * factor, px, py);
+  }
+
+  function fitView() {
+    fit();
     redraw();
   }
 
@@ -274,19 +436,20 @@
     zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2);
   }, {passive: false});
   canvas.addEventListener("keydown", event => {
-    if (!["+", "=", "-", "−", "0"].includes(event.key)) return;
+    if (!["+", "=", "-", "−", "0", "1"].includes(event.key)) return;
     event.preventDefault();
-    if (event.key === "0") { fit(); redraw(); }
+    if (event.key === "0") fitView();
+    else if (event.key === "1") zoomTo(1);
     else zoomBy(event.key === "+" || event.key === "=" ? 1.3 : 1 / 1.3);
   });
   canvas.addEventListener("pointerdown", event => {
-    if (view.zoom === 1 || event.button !== 0 || drag) return;
+    if (!canvas.classList.contains("romb-zoomed") || event.button !== 0 || drag) return;
     canvas.setPointerCapture(event.pointerId);
     drag = {id: event.pointerId, x: event.clientX, y: event.clientY};
   });
   canvas.addEventListener("pointermove", event => {
     if (drag?.id !== event.pointerId) return;
-    const scale = fitScale(canvas.getBoundingClientRect()) * view.zoom;
+    const scale = scaleFor(canvas.getBoundingClientRect());
     view.x -= (event.clientX - drag.x) / scale;
     view.y -= (event.clientY - drag.y) / scale;
     drag.x = event.clientX;
@@ -298,7 +461,8 @@
     button.addEventListener("click", () => zoomBy(Number(button.dataset.rombZoom)));
   });
 
-  play.addEventListener("click", () => {
+  function togglePlay() {
+    if (frame === maxFrame) return;
     if (playing || pending) {
       stop();
       announcePosition();
@@ -309,6 +473,12 @@
       syncTransport();
       schedule();
     }
+  }
+
+  play.addEventListener("click", togglePlay);
+  canvas.addEventListener("dblclick", event => {
+    event.preventDefault();
+    togglePlay();
   });
   stepButton.addEventListener("click", () => {
     stop();
@@ -317,6 +487,22 @@
     schedule();
   });
   byId("romb-reset").addEventListener("click", reset);
+  byId("romb-fit").addEventListener("click", fitView);
+  byId("romb-exact").addEventListener("click", () => zoomTo(1));
+  frameSlider.addEventListener("input", () => seek(Number(frameSlider.value)));
+  for (const [key, button] of Object.entries(edgeButtons)) {
+    button.addEventListener("click", () => {
+      options[key] = !(key === "wrap" ? currentWrap() : options[key]);
+      if (key === "wrap") {
+        if (seekTarget !== null) stop();
+        changeRoute(options.wrap);
+      }
+      if (key === "joinLeft" || key === "joinRight") updateViewBounds();
+      syncEdgeButtons();
+      save();
+      redraw();
+    });
+  }
   for (const select of [size, width]) select.addEventListener("change", () => { save(); reset(); });
   stepSize.addEventListener("change", () => { stepSize.value = stepCount(); save(); });
 
@@ -324,9 +510,17 @@
     restore(window.openai?.widgetState?.modelContent);
     window.addEventListener("openai:set_globals", event => {
       const before = size.value + "|" + width.value;
+      const previous = {...options};
       restore(event.detail?.globals?.widgetState?.modelContent);
       if (before !== size.value + "|" + width.value) reset();
-      else redraw();
+      else {
+        if (previous.wrap !== options.wrap) {
+          if (seekTarget !== null) stop();
+          changeRoute(options.wrap);
+        }
+        if (previous.joinLeft !== options.joinLeft || previous.joinRight !== options.joinRight) updateViewBounds();
+        redraw();
+      }
     });
   } else {
     try {
