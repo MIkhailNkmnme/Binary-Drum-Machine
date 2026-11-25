@@ -5,163 +5,169 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#11151c">
   <meta name="description" content="Шаблоны Маятника для шести размеров поля и редактор побитовых композиций.">
-  <title>Шаблоны Маятника · v0.012 · Зеркалиус</title>
+  <title>Шаблоны Маятника · v0.013 · Зеркалиус</title>
   <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
   <link rel="stylesheet" href="../_js/grozd.css">
-  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=10">
+  <link rel="stylesheet" href="mayatnik-template-catalogue.css?v=11">
   <script defer src="/_js/site-clarity.js?v=1"></script>
   <script defer src="mayatnik-paint-cache.js?v=1"></script>
   <script defer src="mayatnik-user-templates.js?v=1"></script>
   <script defer src="mayatnik-template.js"></script>
   <script defer src="../_js/hub-button-text.js?v=540"></script>
-  <script type="module" src="mayatnik-template-catalogue.js?v=11"></script>
+  <script type="module" src="mayatnik-template-catalogue.js?v=12"></script>
 </head>
 <body>
-  <header class="site-bar">
-    <nav class="shell site-nav" aria-label="Разделы сайта">
-      <a class="brand" href="../"><img src="logo-horrohorius-circle.svg?v=137" width="24" height="24" alt="">Зеркалиус</a>
-      <div class="site-links">
-        <a href="Zerkalius-mayatnik.html">Маятник</a>
-        <a href="../issledovanie/image-journal/atlas/">Атлас</a>
+  <main class="workspace">
+    <section id="composition" class="composition" aria-label="Поле композиции">
+      <div class="tools workspace-toggles" role="group" aria-label="Боковые панели">
+        <button type="button" id="catalogue-toggle" class="gz-hx" aria-controls="catalogue-panel" aria-pressed="true" aria-label="Каталог" title="Показать или скрыть каталог" hidden><span>Каталог</span></button>
+        <button type="button" id="controls-toggle" class="gz-hx" aria-controls="controls-panel" aria-pressed="true" aria-label="Управление" title="Показать или скрыть управление" hidden><span>Управление</span></button>
       </div>
-    </nav>
-  </header>
-  <main class="shell">
-    <header class="page-heading">
-      <div class="catalogue-title">
-        <h1>Шаблоны Маятника</h1>
-        <span class="catalogue-version" title="Версия каталога">v0.012</span>
+      <div class="viewport">
+        <canvas id="field" tabindex="0" aria-label="Поле композиции. Стрелки двигают выделенный шаблон на одну клетку."></canvas>
+        <p id="field-empty">Добавьте шаблон из каталога</p>
       </div>
-      <a href="#composition" class="jump-to-field">К полю ↓</a>
-    </header>
-    <nav class="size-tabs" aria-label="Число строк поля">
-      <a href="?size=128" data-size="128">128</a>
-      <a href="?size=256" data-size="256">256</a>
-      <a href="?size=512" data-size="512">512</a>
-      <a href="?size=1024" data-size="1024">1024</a>
-      <a href="?size=2048" data-size="2048">2048</a>
-      <a href="?size=4096" data-size="4096" title="4096 и все остальные размеры">4096 <small>все</small></a>
-    </nav>
-    <div class="workspace">
-      <section class="catalogue panel" aria-labelledby="catalogue-heading">
-        <div class="panel-heading">
-          <h2 id="catalogue-heading">Каталог</h2>
-          <div class="tools">
-            <output id="catalogue-count" aria-live="polite"></output>
-            <div class="catalogue-placement">
-              <button type="button" id="catalogue-add-all" class="gz-hx" title="Добавить все шаблоны текущего списка на исходные места" aria-label="Добавить все шаблоны текущего списка на поле" disabled><span>Все на поле</span></button>
-              <button type="button" id="composition-stack" class="gz-hx" title="Расположить выставленные шаблоны друг под другом" aria-label="Расположить выставленные шаблоны друг под другом" disabled><span>↓ Друг под другом</span></button>
-            </div>
+      <p id="field-status" class="status field-status" role="status"></p>
+      <noscript><p class="status field-status">Для работы каталога и поля нужен JavaScript.</p></noscript>
+    </section>
+    <aside id="catalogue-panel" class="catalogue panel" aria-labelledby="catalogue-heading">
+      <header class="site-bar">
+        <nav class="site-nav" aria-label="Разделы сайта">
+          <a class="brand" href="../"><img src="logo-horrohorius-circle.svg?v=137" width="24" height="24" alt="">Зеркалиус</a>
+          <div class="site-links">
+            <a href="Zerkalius-mayatnik.html">Маятник</a>
+            <a href="../issledovanie/image-journal/atlas/">Атлас</a>
+          </div>
+        </nav>
+      </header>
+      <header class="page-heading">
+        <div class="catalogue-title">
+          <h1>Шаблоны Маятника</h1>
+          <span class="catalogue-version" title="Версия каталога">v0.013</span>
+        </div>
+      </header>
+      <nav class="size-tabs" aria-label="Число строк поля">
+        <a href="?size=128" data-size="128">128</a>
+        <a href="?size=256" data-size="256">256</a>
+        <a href="?size=512" data-size="512">512</a>
+        <a href="?size=1024" data-size="1024">1024</a>
+        <a href="?size=2048" data-size="2048">2048</a>
+        <a href="?size=4096" data-size="4096" title="4096 и все остальные размеры">4096 <small>все</small></a>
+      </nav>
+      <div class="panel-heading">
+        <h2 id="catalogue-heading">Каталог</h2>
+        <div class="tools">
+          <output id="catalogue-count" aria-live="polite"></output>
+          <div class="catalogue-placement">
+            <button type="button" id="catalogue-add-all" class="gz-hx" title="Добавить все шаблоны текущего списка на исходные места" aria-label="Добавить все шаблоны текущего списка на поле" disabled><span>Все на поле</span></button>
+            <button type="button" id="composition-stack" class="gz-hx" title="Расположить выставленные шаблоны друг под другом" aria-label="Расположить выставленные шаблоны друг под другом" disabled><span>↓ Друг под другом</span></button>
           </div>
         </div>
+      </div>
+      <div class="catalogue-controls">
+        <label>Поиск <input id="query" type="search" placeholder="Название или номер"></label>
+        <label>Источник
+          <select id="source">
+            <option value="">Все источники</option>
+            <option value="atlas">Атлас</option>
+            <option value="connected" hidden disabled>Атлас · дополнение</option>
+            <option value="library">Битотека</option>
+            <option value="tray">Из-под поля</option>
+          </select>
+        </label>
+        <label id="origin-label" hidden>Размер
+          <select id="origin">
+            <option value="">Все размеры</option>
+            <option>128</option><option>256</option><option>512</option>
+            <option>1024</option><option>2048</option><option>4096</option>
+            <option value="unknown">Не записан</option>
+          </select>
+        </label>
+        <label id="symmetry-label" hidden>Симметрия · 128
+          <select id="symmetry">
+            <option value="">Все фигуры</option>
+            <option value="shape">Симметрия фигуры</option>
+            <option value="pair">Зеркальные пары</option>
+          </select>
+        </label>
+      </div>
+      <details class="library-details">
+        <summary>Фильтры и статистика Битотеки</summary>
         <div class="catalogue-controls">
-          <label>Поиск <input id="query" type="search" placeholder="Название или номер"></label>
-          <label>Источник
-            <select id="source">
-              <option value="">Все источники</option>
-              <option value="atlas">Атлас</option>
-              <option value="connected" hidden disabled>Атлас · дополнение</option>
-              <option value="library">Битотека</option>
-              <option value="tray">Из-под поля</option>
+          <label>Сортировка
+            <select id="library-sort">
+              <option value="n">Клетки ↑</option>
+              <option value="-n">Клетки ↓</option>
+              <option value="-count">Встречи ↓</option>
+              <option value="-bits">Бит всего ↓</option>
+              <option value="name">Название</option>
+              <option value="id">Как в Битотеке</option>
             </select>
           </label>
-          <label id="origin-label" hidden>Размер
-            <select id="origin">
-              <option value="">Все размеры</option>
-              <option>128</option><option>256</option><option>512</option>
-              <option>1024</option><option>2048</option><option>4096</option>
-              <option value="unknown">Не записан</option>
-            </select>
+          <label>Бит
+            <select id="library-bit"><option value="">Любой</option><option value="1">Из 1</option><option value="0">Из 0</option></select>
           </label>
-          <label id="symmetry-label" hidden>Симметрия · 128
-            <select id="symmetry">
-              <option value="">Все фигуры</option>
-              <option value="shape">Симметрия фигуры</option>
-              <option value="pair">Зеркальные пары</option>
-            </select>
+          <label>Вид
+            <select id="library-kind"><option value="">Любой</option><option value="auto">Автошаблон</option><option value="own">Свой</option></select>
           </label>
+          <label>От клеток <input id="library-min" type="number" min="0"></label>
+          <label>До клеток <input id="library-max" type="number" min="0"></label>
         </div>
-        <details class="library-details">
-          <summary>Фильтры и статистика Битотеки</summary>
-          <div class="catalogue-controls">
-            <label>Сортировка
-              <select id="library-sort">
-                <option value="n">Клетки ↑</option>
-                <option value="-n">Клетки ↓</option>
-                <option value="-count">Встречи ↓</option>
-                <option value="-bits">Бит всего ↓</option>
-                <option value="name">Название</option>
-                <option value="id">Как в Битотеке</option>
-              </select>
-            </label>
-            <label>Бит
-              <select id="library-bit"><option value="">Любой</option><option value="1">Из 1</option><option value="0">Из 0</option></select>
-            </label>
-            <label>Вид
-              <select id="library-kind"><option value="">Любой</option><option value="auto">Автошаблон</option><option value="own">Свой</option></select>
-            </label>
-            <label>От клеток <input id="library-min" type="number" min="0"></label>
-            <label>До клеток <input id="library-max" type="number" min="0"></label>
-          </div>
-          <p id="library-summary"></p>
-          <div id="library-histogram" aria-label="Фильтр по числу клеток"></div>
-          <div class="tools">
-            <button type="button" id="library-reset" class="gz-hx"><span>Сброс</span></button>
-            <button type="button" id="library-csv" class="gz-hx"><span>Копировать CSV</span></button>
-          </div>
-        </details>
-        <p id="catalogue-status" class="status" role="status"></p>
-        <ul id="catalogue-cards" class="catalogue-cards" aria-label="Шаблоны"></ul>
-        <p id="catalogue-more" class="catalogue-more" hidden></p>
-      </section>
-      <section id="composition" class="composition panel" aria-labelledby="composition-heading">
-        <div class="panel-heading">
-          <div><h2 id="composition-heading">Поле композиции</h2><p class="field-size">12 286 × 4096 клеток</p></div>
-          <div class="tools history-tools" role="group" aria-label="История композиции">
-            <button type="button" id="composition-undo" class="gz-hx" title="Отменить последнее изменение фигур" aria-label="Отмена" disabled><span>↶ Отмена</span></button>
-            <button type="button" id="composition-redo" class="gz-hx" title="Повторить отменённое изменение фигур" aria-label="Повтор" disabled><span>↷ Повтор</span></button>
-          </div>
-          <div class="tools zoom-tools" role="group" aria-label="Масштаб">
-            <button type="button" id="zoom-out" class="gz-hx compact" title="Отдалить" aria-label="Отдалить"><span>−</span></button>
-            <output id="zoom-level"></output>
-            <button type="button" id="zoom-in" class="gz-hx compact" title="Приблизить" aria-label="Приблизить"><span>+</span></button>
-            <button type="button" id="fit-field" class="gz-hx" title="Показать всё поле"><span>Всё поле</span></button>
-          </div>
+        <p id="library-summary"></p>
+        <div id="library-histogram" aria-label="Фильтр по числу клеток"></div>
+        <div class="tools">
+          <button type="button" id="library-reset" class="gz-hx"><span>Сброс</span></button>
+          <button type="button" id="library-csv" class="gz-hx"><span>Копировать CSV</span></button>
         </div>
-        <div class="tools playback-tools" role="group" aria-label="Управление композицией">
-          <button type="button" id="composition-play" class="gz-hx" title="Запустить цикл чётных кадров" aria-label="Анимация размещённых шаблонов" aria-pressed="false" disabled><span>▶ Анимация</span></button>
-          <button type="button" id="composition-clear" class="gz-hx" title="Убрать все фигуры с поля. Очистку можно отменить одним шагом." aria-label="Очистить поле" disabled><span>Очистить поле</span></button>
-          <span id="animation-frame" hidden></span>
+      </details>
+      <p id="catalogue-status" class="status" role="status"></p>
+      <ul id="catalogue-cards" class="catalogue-cards" aria-label="Шаблоны"></ul>
+      <p id="catalogue-more" class="catalogue-more" hidden></p>
+    </aside>
+    <aside id="controls-panel" class="field-panel panel" aria-labelledby="composition-heading">
+      <div class="panel-heading">
+        <div><h2 id="composition-heading">Поле композиции</h2><p class="field-size">12 286 × 4096 клеток</p></div>
+        <div class="tools history-tools" role="group" aria-label="История композиции">
+          <button type="button" id="composition-undo" class="gz-hx" title="Отменить последнее изменение фигур" aria-label="Отмена" disabled><span>↶ Отмена</span></button>
+          <button type="button" id="composition-redo" class="gz-hx" title="Повторить отменённое изменение фигур" aria-label="Повтор" disabled><span>↷ Повтор</span></button>
         </div>
-        <div class="viewport">
-          <canvas id="field" tabindex="0" aria-label="Поле композиции. Стрелки двигают выделенный шаблон на одну клетку."></canvas>
-          <p id="field-empty">Добавьте шаблон из каталога</p>
+        <div class="tools zoom-tools" role="group" aria-label="Масштаб">
+          <button type="button" id="zoom-out" class="gz-hx compact" title="Отдалить" aria-label="Отдалить"><span>−</span></button>
+          <output id="zoom-level"></output>
+          <button type="button" id="zoom-in" class="gz-hx compact" title="Приблизить" aria-label="Приблизить"><span>+</span></button>
+          <button type="button" id="fit-field" class="gz-hx" title="Показать всё поле"><span>Всё поле</span></button>
         </div>
-        <p class="field-help">1 клетка = 1 бит. Стрелки двигают фигуру на одну клетку. Delete убирает выделенную фигуру. Потяните фон, чтобы сдвинуть поле.</p>
-        <div class="field-controls">
-          <div class="coordinates" role="group" aria-label="Координаты центра фигуры в клетках">
-            <label>X <input id="layer-x" type="number" step="1" aria-label="Координата X в клетках" disabled></label>
-            <label>Y <input id="layer-y" type="number" step="1" aria-label="Координата Y в клетках" disabled></label>
-          </div>
-          <div class="field-colours" role="group" aria-label="Цвет шаблонов">
-            <label>Цвет фигуры <input id="layer-colour" type="color" value="#ffd778" title="Перекрасить выделенную фигуру" disabled></label>
-            <label>Цвет всех <input id="all-colour" type="color" value="#ffd778" title="Перекрасить все фигуры на поле" disabled></label>
-          </div>
-          <div class="tools" role="group" aria-label="Поворот фигуры">
-            <button type="button" id="turn-left" class="gz-hx compact" title="Повернуть на 90° влево" aria-label="Повернуть на 90° влево" disabled><span>↶ 90°</span></button>
-            <button type="button" id="turn-right" class="gz-hx compact" title="Повернуть на 90° вправо" aria-label="Повернуть на 90° вправо" disabled><span>↷ 90°</span></button>
-          </div>
-          <div class="tools" role="group" aria-label="Порядок и удаление фигур">
-            <button type="button" id="layer-up" class="gz-hx compact" title="Поднять на один слой" aria-label="Поднять на один слой" disabled><span>↑</span></button>
-            <button type="button" id="layer-down" class="gz-hx compact" title="Опустить на один слой" aria-label="Опустить на один слой" disabled><span>↓</span></button>
-            <button type="button" id="layer-remove" class="gz-hx compact" title="Убрать выбранную фигуру с поля" aria-label="Убрать выбранную фигуру с поля" disabled><span>×</span></button>
-          </div>
+      </div>
+      <div class="tools playback-tools" role="group" aria-label="Управление композицией">
+        <button type="button" id="composition-play" class="gz-hx" title="Запустить цикл чётных кадров" aria-label="Анимация размещённых шаблонов" aria-pressed="false" disabled><span>▶ Анимация</span></button>
+        <button type="button" id="composition-clear" class="gz-hx" title="Убрать все фигуры с поля. Очистку можно отменить одним шагом." aria-label="Очистить поле" disabled><span>Очистить поле</span></button>
+        <span id="animation-frame" hidden></span>
+      </div>
+      <p class="field-help">1 клетка = 1 бит. Стрелки двигают фигуру на одну клетку. Delete убирает выделенную фигуру. Потяните фон, чтобы сдвинуть поле.</p>
+      <div class="field-controls">
+        <div class="coordinates" role="group" aria-label="Координаты центра фигуры в клетках">
+          <label>X <input id="layer-x" type="number" step="1" aria-label="Координата X в клетках" disabled></label>
+          <label>Y <input id="layer-y" type="number" step="1" aria-label="Координата Y в клетках" disabled></label>
         </div>
-        <ol id="field-layers" aria-label="Фигуры на поле" tabindex="0" hidden></ol>
-        <p id="field-status" class="status" role="status"></p>
-      </section>
-    </div>
-    <noscript>Для работы каталога и поля нужен JavaScript.</noscript>
+        <div class="field-colours" role="group" aria-label="Цвет шаблонов">
+          <label>Цвет фигуры <input id="layer-colour" type="color" value="#ffd778" title="Перекрасить выделенную фигуру" disabled></label>
+          <label>Цвет всех <input id="all-colour" type="color" value="#ffd778" title="Перекрасить все фигуры на поле" disabled></label>
+        </div>
+        <div class="tools" role="group" aria-label="Поворот фигуры">
+          <button type="button" id="turn-left" class="gz-hx compact" title="Повернуть на 90° влево" aria-label="Повернуть на 90° влево" disabled><span>↶ 90°</span></button>
+          <button type="button" id="turn-right" class="gz-hx compact" title="Повернуть на 90° вправо" aria-label="Повернуть на 90° вправо" disabled><span>↷ 90°</span></button>
+        </div>
+        <div class="tools" role="group" aria-label="Порядок и удаление фигур">
+          <button type="button" id="layer-up" class="gz-hx compact" title="Поднять на один слой" aria-label="Поднять на один слой" disabled><span>↑</span></button>
+          <button type="button" id="layer-down" class="gz-hx compact" title="Опустить на один слой" aria-label="Опустить на один слой" disabled><span>↓</span></button>
+          <button type="button" id="layer-remove" class="gz-hx compact" title="Убрать выбранную фигуру с поля" aria-label="Убрать выбранную фигуру с поля" disabled><span>×</span></button>
+        </div>
+      </div>
+      <div class="tools export-tools">
+        <button type="button" id="layer-download" class="gz-hx" aria-label="Скачать выделенный шаблон в PNG" title="Скачать выделенный шаблон в PNG с прозрачным фоном" disabled><span>Скачать PNG</span></button>
+      </div>
+      <ol id="field-layers" aria-label="Фигуры на поле" tabindex="0" hidden></ol>
+    </aside>
   </main>
 </body>
 </html>

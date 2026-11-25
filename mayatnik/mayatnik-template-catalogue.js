@@ -1,5 +1,5 @@
 import { catalogueFrames, catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=2';
-import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=10';
+import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=11';
 
 const SIZES = [128, 256, 512, 1024, 2048, 4096];
 const CONNECTED_SIZE = 128;
@@ -217,6 +217,40 @@ async function atlasImage(entry) {
   return picture;
 }
 
+function setupPanels() {
+  const panels = [$('catalogue-panel'), $('controls-panel')];
+  const buttons = [$('catalogue-toggle'), $('controls-toggle')];
+  if (!panels.every(Boolean) || !buttons.every(Boolean)) return;
+  const narrow = matchMedia('(max-width: 920px)');
+  const storageKey = 'mayatnik-template-panels';
+  let desktop = [true, true], drawer = -1;
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if (saved?.desktop?.length === 2 && saved.desktop.every(value => typeof value === 'boolean')) desktop = saved.desktop;
+    if (saved?.drawer === 0 || saved?.drawer === 1) drawer = saved.drawer;
+  } catch {}
+  const update = () => {
+    panels.forEach((panel, index) => {
+      const open = narrow.matches ? drawer === index : desktop[index];
+      panel.hidden = !open;
+      buttons[index].setAttribute('aria-pressed', String(open));
+    });
+  };
+  buttons.forEach((button, index) => {
+    button.hidden = false;
+    button.onclick = () => {
+      if (narrow.matches) drawer = drawer === index ? -1 : index;
+      else desktop[index] = !desktop[index];
+      update();
+      try { localStorage.setItem(storageKey, JSON.stringify({ desktop, drawer })); }
+      catch {}
+    };
+  });
+  narrow.addEventListener('change', update);
+  update();
+}
+
+setupPanels();
 const workbench = mountWorkbench({ resolveAtlas, resolveEntry: key => current?.entriesByKey.get(key),
   describe, atlasImage, frameNumbers, caption });
 
@@ -504,7 +538,7 @@ async function appendMore(view) {
 
 const more = new IntersectionObserver(entries => {
   if (entries.some(entry => entry.isIntersecting) && current && current.shown < current.entries.length) appendMore(current);
-}, { rootMargin: '0px 0px 320px 0px' });
+}, { root: $('catalogue-panel'), rootMargin: '0px 0px 320px 0px' });
 
 addAll.onclick = async () => {
   if (adding || !current?.entries.length) return;

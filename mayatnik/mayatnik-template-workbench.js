@@ -77,7 +77,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   const playButton = $('composition-play'), frameReadout = $('animation-frame');
   const stackButton = $('composition-stack');
   const up = $('layer-up'), down = $('layer-down'), remove = $('layer-remove');
-  const clearButton = $('composition-clear');
+  const clearButton = $('composition-clear'), downloadButton = $('layer-download');
   const left = $('turn-left'), right = $('turn-right');
   const sampler = document.createElement('canvas');
   sampler.width = sampler.height = 1;
@@ -88,7 +88,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   let active = null, drag = null, serial = 0, drawFrame = 0, saveTimer = 0;
   let camera = null, fitted = true, writes = Promise.resolve();
   let queue = [], nextDecode = 0, decoding = 0;
-  let restoring = true, placement = { pending: 0 }, playback = null;
+  let restoring = true, placement = { pending: 0 }, playback = null, exporting = false;
 
   const tell = message => { status.textContent = message; };
   const view = () => ({ width: field.clientWidth, height: field.clientHeight });
@@ -298,6 +298,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     if (clearButton) clearButton.disabled = restoring || !!drag?.layer || (!layers.length && !placement.pending);
     playButton.disabled = restoring || !!drag || !layers.length || !!placement.pending;
     if (stackButton) stackButton.disabled = restoring || !!drag || layers.length < 2 || !!placement.pending;
+    if (downloadButton) downloadButton.disabled = restoring || !active || exporting;
   }
 
   function showPlayback() {
@@ -584,6 +585,48 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     rememberAction(() => { layer.turn = before; }, () => { layer.turn = after; });
   }
 
+  async function downloadLayer() {
+    if (!active || exporting) return;
+    const layer = { ...active }, box = bounds(layer);
+    exporting = true;
+    syncActions();
+    try {
+      const { sprite } = layer;
+      if (!sprite.region) {
+        const image = await atlasImage(sprite.entry ?? await resolveAtlas(sprite.atlas));
+        layer.sprite = { ...sprite, region: { image, x: 0, y: 0 } };
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = box.width;
+      canvas.height = box.height;
+      const target = canvas.getContext('2d');
+      target.imageSmoothingEnabled = false;
+      target.translate(-box.x, -box.y);
+      drawRaster(target, layer, box);
+      if (layer.colour) {
+        target.setTransform(1, 0, 0, 1, 0, 0);
+        target.globalCompositeOperation = 'source-in';
+        target.fillStyle = layer.colour;
+        target.fillRect(0, 0, box.width, box.height);
+      }
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw Error('Браузер не смог создать PNG.');
+      const name = String(layer.name ?? '').replace(/[^\p{L}\p{N} ._-]+/gu, '-').trim().slice(0, 120) || 'Шаблон';
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = name + '.png';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      tell('PNG готов · ' + box.width + ' × ' + box.height + ' пикселей.');
+    } catch {
+      tell('Не удалось скачать PNG выбранного шаблона.');
+    } finally {
+      exporting = false;
+      syncActions();
+    }
+  }
+
   function deleteLayer() {
     const index = layers.indexOf(active);
     if (index < 0 || drag?.layer) return;
@@ -729,6 +772,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   redoButton?.addEventListener('click', () => historyStep(false));
   clearButton?.addEventListener('click', clearField);
   stackButton?.addEventListener('click', stackLayers);
+  downloadButton?.addEventListener('click', downloadLayer);
   playButton.addEventListener('click', () => {
     if (playback) stopPlayback();
     else startPlayback();
@@ -838,8 +882,19 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     add(entry, asWorld(point.x, point.y));
   });
 
-  for (const button of document.querySelectorAll('.composition .gz-hx > span')) button.textContent = caption(button.textContent);
-  new ResizeObserver(redraw).observe(field);
+  for (const button of document.querySelectorAll(':is(.composition, .field-panel) .gz-hx > span')) button.textContent = caption(button.textContent);
+  let viewport = view();
+  new ResizeObserver(() => {
+    const next = view();
+    const dx = next.width - viewport.width, dy = next.height - viewport.height;
+    if (camera && !fitted && viewport.width && viewport.height && (dx || dy)) {
+      camera.x += dx / 2;
+      camera.y += dy / 2;
+      if (!restoring) scheduleSave();
+    }
+    viewport = next;
+    redraw();
+  }).observe(field);
   redraw();
   return { add, addAll };
 }
