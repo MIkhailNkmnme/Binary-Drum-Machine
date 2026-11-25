@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.007</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.008</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
-  <script defer src="mayatnik-core.js"></script>
+  <script defer src="mayatnik-core.js?v=1106"></script>
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=007"></script>
+  <script defer src="mayatnik-gif.js"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=008"></script>
   <style>
     main {
       max-width: 1040px;
@@ -31,25 +32,27 @@
     .romb-step-pair .gz-half:disabled { color: var(--muted); cursor: default; }
     .romb-setting { display: grid; color: var(--muted); font-size: 12px; }
     .romb-setting .gz-hx { color: var(--text); }
-    #romb-step-size, #romb-step-size::-webkit-inner-spin-button { appearance: auto; }
-    #romb-speed { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
+    :is(#romb-step-size, #romb-step-size-coin), :is(#romb-step-size, #romb-step-size-coin)::-webkit-inner-spin-button { appearance: auto; }
+    .romb-setting input[type=range] { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
     .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
     .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
     .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
     .romb-board .romb-zoomed:active { cursor: grabbing; }
     .romb-combine-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
-    #romb-combined { width: min(100%, 380px); height: auto; }
+    #romb-combined-view h2 { margin-bottom: 10px; }
     .romb-hub-four body { overflow: hidden; background: #07131e; }
     .romb-hub-four main { width: 100%; max-width: none; height: 100dvh; padding: 0; }
     .romb-hub-four main > :not(#romb-combined-view, #romb-frame) { display: none !important; }
     .romb-hub-four #romb-combined-view { position: relative; height: 100%; overflow: hidden; }
+    .romb-hub-four #romb-combined-view > :not(#romb-coin-board) { display: none; }
+    .romb-hub-four #romb-coin-board { position: relative; height: 100%; margin: 0; background: none; }
     .romb-hub-four :is(#romb-combined, #romb-vertical) { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
     #romb-vertical:not([hidden]) { position: absolute; inset: 0; pointer-events: none; opacity: .78; }
     #romb-vertical[hidden] { display: none; }
     .romb-hub-four #romb-frame { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 4px 8px; background: #07131e; white-space: nowrap; }
-    #romb-frame-slider { display: block; width: 100%; margin: 0 0 10px; accent-color: var(--cyan); }
-    #romb-cycle-note { margin: 0 0 10px; color: var(--cyan); }
+    .romb-frame-slider { display: block; width: 100%; margin: 0 0 10px; accent-color: var(--cyan); }
+    :is(#romb-cycle-note, #romb-cycle-note-coin) { margin: 0 0 10px; color: var(--cyan); }
     .romb-announcement { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; margin: 0; }
     .legend .empty { background: #0b1620; }
     .legend .zero { background: var(--romb-zero); }
@@ -68,7 +71,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.007</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.008</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -101,6 +104,12 @@
       <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
         <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
       </button>
+      <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
+        <span class="gz-nm">AND</span>
+      </button>
+      <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" title="Начать запись видимого поля в GIF. Второе нажатие сохраняет файл." aria-label="Собрать GIF">
+        <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
+      </button>
       <label class="romb-setting">Высота поля, N
         <span class="gz-hx value-control">
           <select id="romb-size" title="Выбрать число строк всего поля">
@@ -132,7 +141,7 @@
     <div class="romb-board">
       <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
     </div>
-    <input id="romb-frame-slider" type="range" min="0" max="2047" step="1" value="1" aria-label="Кадр Маятника">
+    <input id="romb-frame-slider" class="romb-frame-slider" type="range" min="0" max="2047" step="1" value="1" aria-label="Кадр Маятника">
     <p id="romb-cycle-note" class="progress" hidden></p>
     <div class="commands" role="group" aria-label="Масштаб поля">
       <button type="button" class="gz-hx" id="romb-exact" title="Одна клетка на один физический пиксель" aria-label="Масштаб один к одному">
@@ -145,6 +154,7 @@
         <span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span>
       </button>
     </div>
+    <p id="romb-record-status" class="progress" role="status" hidden></p>
     <div class="romb-combine-controls" role="group" aria-label="Совмещение ромбов">
       <label class="romb-setting">Совмещение ромбов
         <span class="gz-hx value-control">
@@ -156,10 +166,21 @@
       </label>
       <label><input id="romb-flip" type="checkbox"> Отразить вторую сторону</label>
     </div>
-    <div id="romb-combined-view" hidden>
-      <canvas id="romb-combined" role="img" aria-label="Результат совмещения ромбов по центрам"></canvas>
-      <canvas id="romb-vertical" role="img" aria-label="Ветви, движущиеся вверх и вниз" hidden></canvas>
-    </div>
+    <section id="romb-combined-view" aria-labelledby="romb-coin-name" hidden>
+      <h2 id="romb-coin-name">Ромб-монета</h2>
+      <div id="romb-coin-controls"></div>
+      <div class="romb-board" id="romb-coin-board">
+        <canvas id="romb-combined" tabindex="0" role="img" aria-label="Результат совмещения ромбов по центрам" aria-describedby="romb-zoom-help"></canvas>
+        <canvas id="romb-vertical" role="img" aria-label="Ветви, движущиеся вверх и вниз" hidden></canvas>
+      </div>
+      <div id="romb-coin-frames"></div>
+      <div class="commands" role="group" aria-label="Масштаб Ромба-монеты">
+        <button type="button" class="gz-hx" id="romb-coin-exact" title="Одна клетка на один физический пиксель"><span class="gz-nm">1:1</span></button>
+        <button type="button" class="gz-hx" id="romb-coin-fit" title="Вписать Ромб-монету в окно"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span></button>
+        <button type="button" class="gz-hx" id="romb-coin-square" aria-pressed="false" title="Повернуть Ромб-монету в квадрат"><span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span></button>
+      </div>
+      <p id="romb-coin-record-status" class="progress" role="status" hidden></p>
+    </section>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
     <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания.</p>
     <div class="legend" aria-label="Цвета поля">

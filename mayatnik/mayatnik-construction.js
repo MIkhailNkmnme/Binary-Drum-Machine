@@ -2,14 +2,16 @@
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./mayatnik-core.js'):MAYATNIK);if(typeof module==='object'&&module.exports)module.exports=api;else root.MayatnikConstruction=api;})(globalThis,function(Core){
   'use strict';
   const walk=s=>!!s&&s.sequenceApexWalk===true&&!s.sequenceSourceOn&&!s.compareSource&&!s.edgeWrap&&!s.pair&&s.mode==='pend';
+  const andAvailable=s=>!!s&&s.rows<=4096&&!s.phoneScene&&!s.animatrixOn&&!s.sequenceSourceOn&&!s.compareSource&&!walk(s);
+  const andMode=s=>s?.buildAnd===true&&andAvailable(s);
   const staggered=s=>!!s?.staggeredGrid&&!s.animatrixOn&&!s.sequenceSourceOn&&!s.compareSource&&!s.edgeWrap;
   const inverseAbove=s=>!!s.sequenceInverseAbove&&!staggered(s);
   const walkSeed=s=>walk(s)&&!['empty','skip'].includes(s.sequenceApexStart);
   const hasSeed=s=>walkSeed(s)||s.pair&&s.mode==='pend';
   const seedFill=s=>hasSeed(s)&&!staggered(s)&&s.bg==='empty'?Core.seedGapDirection(s.frameZeroFill):'off';
-  const active=s=>!!s&&!s.sequenceSourceOn&&!s.compareSource&&(staggered(s)||s.sequenceOwnGrid===true||s.sequenceInverseAbove===true||walk(s));
+  const active=s=>!!s&&!s.sequenceSourceOn&&!s.compareSource&&(staggered(s)||s.sequenceOwnGrid===true||s.sequenceInverseAbove===true||walk(s)||andMode(s));
   const stride=s=>active(s)&&(s.sequenceOwnGrid||staggered(s))?2:1;
-  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(inverseAbove(s))+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v2-'+(s.sequenceApexStart||'seed')+':'+(s.sequenceApexSides||'one')+':'+Number(!!s.sequenceApexZeroTwice):''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
+  const key=s=>active(s)?'ordinary-v1:'+stride(s)+':'+Number(inverseAbove(s))+':'+Number(!!s.edgeWrap)+(walk(s)?':apex-walk-xor-v2-'+(s.sequenceApexStart||'seed')+':'+(s.sequenceApexSides||'one')+':'+Number(!!s.sequenceApexZeroTwice):'')+(andMode(s)?':and':''):s&&!s.sequenceSourceOn&&!s.compareSource&&s.edgeWrap?'ordinary-edge-v1':'';
   const LEGACY_MESSAGE='Работа Маятника сохранена другой версией построения. Перестройте поле; исходные файлы сохранены.';
   const legacy=s=>active(s)&&(s.constructionEvolution!==1||walk(s)&&s.apexWalkEvolution!==2);
   function assertCompatible(s){if(legacy(s))throw Error(LEGACY_MESSAGE);}
@@ -88,24 +90,24 @@
       }yield r;
     }
   }
-  function* rows(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){
+  function* rows(field,apices,depth,invert=false,lastAt,stamp,xorApex=false,and=false){
     const visits=apices;apices=[...new Set(apices)];
-    const walk=xorApex?xorApexRows(field,visits,depth,lastAt,stamp):apices.length===2?Core.conePairRows(field,apices[0],apices[1],depth,lastAt,stamp):Core.coneRows(field,apices[0],depth,lastAt,stamp);
+    const walk=xorApex?xorApexRows(field,visits,depth,lastAt,stamp):apices.length===2?Core.conePairRows(field,apices[0],apices[1],depth,lastAt,stamp,null,undefined,and):Core.coneRows(field,apices[0],depth,lastAt,stamp,null,undefined,and);
     for(const r of walk){
       if(invert&&r>0)for(const a of apices){let c=a-r+1;if(c<0)c+=Math.ceil(-c/2)*2;
         for(;c<a+r&&c<field.W;c+=2){const q=r*field.W+c,above=field.val[q-field.W];if(field.val[q]===-1&&above>=0){field.val[q]=1-above;if(lastAt)lastAt[q]=stamp;}}}
       yield r;
     }
   }
-  function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex)){/* shared full and manual pass */}return field;}
-  function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&inverseAbove(s),lastAt,stamp,walk(s));}
+  function run(field,apices,depth,invert=false,lastAt,stamp,xorApex=false,and=false){for(const r of rows(field,apices,depth,invert,lastAt,stamp,xorApex,and)){/* shared full and manual pass */}return field;}
+  function step(field,geo,s,index,lastAt,stamp=index+1){return run(field,offsets(s,index).map(n=>geo.anchor+n),s.rows,active(s)&&inverseAbove(s),lastAt,stamp,walk(s),andMode(s));}
   function initial(field,geo,s,lastAt){
     if(!hasSeed(s))return field;
     const fill=seedFill(s),a=geo.anchor;
     if(walkSeed(s)){const old=field.val[a];field.val[a]=1;if(lastAt&&old!==1)lastAt[a]=0;}
-    run(field,[a],s.rows,fill==='off'&&active(s)&&inverseAbove(s),lastAt,0);
+    run(field,[a],s.rows,fill==='off'&&active(s)&&inverseAbove(s),lastAt,0,false,andMode(s));
     Core.fillSeedGaps(field,a,s.rows,r=>r,fill,lastAt);
     return field;
   }
-  return {active,staggered,inverseAbove,hasSeed,seedFill,walk,walkOffset,rangeKey,baseFrames,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
+  return {active,andAvailable,andMode,staggered,inverseAbove,hasSeed,seedFill,walk,walkOffset,rangeKey,baseFrames,frames,apexSpan,stride,key,legacy,assertCompatible,LEGACY_MESSAGE,wrap,offset,offsets,span,geometry,rows,run,step,initial};
 });

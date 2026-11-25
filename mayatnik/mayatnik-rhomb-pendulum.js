@@ -27,6 +27,10 @@
   const combineMode = byId("romb-combine");
   const flipSecond = byId("romb-flip");
   const squareButton = byId("romb-square");
+  const andButton = byId("romb-build-and");
+  const coinSquareButton = byId("romb-coin-square");
+  const recordButton = byId("romb-record");
+  const recordLabel = byId("romb-record-label");
   const combinedView = byId("romb-combined-view");
   const combinedCanvas = byId("romb-combined");
   const combinedContext = combinedCanvas.getContext("2d");
@@ -38,7 +42,8 @@
     reverseAtContact: byId("romb-reverse-contact"),
     markRepeats: byId("romb-mark-repeats")
   };
-  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false, markRepeats: false, square: false};
+  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
+    markRepeats: false, square: false, coinSquare: false, buildAnd: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
@@ -48,7 +53,10 @@
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
-  let field, depth, frame, column, branches, routeWrap, drag;
+  const coinView = {x: 0, y: 0, scale: null};
+  const mirrors = [];
+  let coinFrameInfo, recording;
+  let field, depth, frame, column, branches, routeWrap;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, normalSliderMax;
   let pixels, words, sampleColumn, samplePair, colorWords, colorKey;
@@ -114,6 +122,7 @@
     configureCycle();
     initializeMotion();
     fit();
+    fitCoin();
     advanceFrame(false);
     syncTransport();
     syncEdgeButtons();
@@ -151,6 +160,10 @@
   }
 
   function configureCycle() {
+    if (options.buildAnd) {
+      cycle = null;
+      return;
+    }
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
@@ -200,6 +213,8 @@
       if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
     }
     squareButton?.setAttribute("aria-pressed", String(options.square));
+    andButton?.setAttribute("aria-pressed", String(options.buildAnd));
+    coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
   }
 
   function optionEnabled(key) {
@@ -212,7 +227,7 @@
     return Math.abs(branches[0].column - branches[1].column);
   }
 
-  function advance(watchContact = false) {
+  function advance(watchContact = false, and = false) {
     const {W, H, val} = field;
     const before = watchContact ? separation() : 0;
     routeWrap = currentWrap();
@@ -224,14 +239,14 @@
       if (!routeWrap && branch.column !== next) branch.direction *= -1;
     }
     column = branch.column;
-    MAYATNIK.cone(field, column, depth);
+    MAYATNIK.cone(field, column, depth, null, undefined, null, undefined, and);
 
     // Duplicate the widest row in the same lattice, clipped at the field edges.
     let left = column - depth + 1;
     let right = Math.min(column + depth - 1, W - 1);
     for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
       const i = depth * W + c;
-      val[i] = (val[i] === 1) ^ (val[i - W] === 1);
+      val[i] = MAYATNIK.accumulateBit(val[i], Number(val[i - W] === 1), and);
     }
 
     // XOR prefixes reverse the growing rule. Missing cells to the left
@@ -244,7 +259,7 @@
       for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
         const i = row + c;
         prefix ^= c > 0 && val[i - W - 1] === 1;
-        val[i] = (val[i] === 1) ^ prefix;
+        val[i] = MAYATNIK.accumulateBit(val[i], prefix, and);
       }
     }
     frame++;
@@ -254,7 +269,7 @@
 
   function advanceFrame(stopAtContact) {
     routeReverse = currentReverse();
-    const contact = advance(stopAtContact || routeReverse);
+    const contact = advance(stopAtContact || routeReverse, options.buildAnd);
     if (contact && routeReverse) {
       for (const branch of branches) branch.direction *= -1;
     }
@@ -304,19 +319,34 @@
     seek(target - (cycle?.period || 0) * lap, lap);
   }
 
-  function projectedBounds() {
-    if (!options.square) return {left: view.start, top: 0, right: view.end, bottom: field.H};
+  function toggleBuildAnd() {
+    const target = seekTarget ?? frame;
+    options.buildAnd = !options.buildAnd;
+    field.val.fill(-1);
+    checkpoints.clear();
+    initializeMotion();
+    configureCycle();
+    save();
+    seek(target, 0);
+  }
+
+  function projectBox(start, end, height, square) {
+    if (!square) return {left: start, top: 0, right: end, bottom: height};
     const s = Math.SQRT1_2;
-    return {left: view.start * s, top: -view.end * s, right: (view.end + field.H) * s, bottom: (field.H - view.start) * s};
+    return {left: start * s, top: -end * s, right: (end + height) * s, bottom: (height - start) * s};
   }
 
-  function fitScale(rect) {
-    const {left, top, right, bottom} = projectedBounds();
-    return Math.min(rect.width / (right - left), rect.height / (bottom - top));
+  function projectedBounds() {
+    return projectBox(view.start, view.end, field.H, options.square);
   }
 
-  function scaleFor(rect) {
-    return view.scale === null ? fitScale(rect) : view.scale / (devicePixelRatio || 1);
+  function coinBounds() {
+    return projectBox(0, field.H - 1, field.H, options.coinSquare);
+  }
+
+  function scaleFor(rect, camera = view, bounds = projectedBounds()) {
+    if (camera.scale !== null) return camera.scale / (devicePixelRatio || 1);
+    return Math.min(rect.width / (bounds.right - bounds.left), rect.height / (bounds.bottom - bounds.top));
   }
 
   function updateViewBounds() {
@@ -335,18 +365,29 @@
     updateViewBounds();
   }
 
-  function toggleSquare() {
-    const {x, y} = view;
+  function fitCoin() {
+    const {left, top, right, bottom} = coinBounds();
+    coinView.scale = null;
+    coinView.x = (left + right) / 2;
+    coinView.y = (top + bottom) / 2;
+  }
+
+  function toggleSquare(coin = false) {
+    const camera = coin ? coinView : view;
+    const key = coin ? "coinSquare" : "square";
+    const {x, y} = camera;
     const s = Math.SQRT1_2;
-    options.square = !options.square;
-    if (options.square) {
-      view.x = (x + y) * s;
-      view.y = (y - x) * s;
+    options[key] = !options[key];
+    if (options[key]) {
+      camera.x = (x + y) * s;
+      camera.y = (y - x) * s;
     } else {
-      view.x = (x - y) * s;
-      view.y = (x + y) * s;
+      camera.x = (x - y) * s;
+      camera.y = (x + y) * s;
     }
-    updateViewBounds();
+    if (coin) {
+      if (camera.scale === null) fitCoin();
+    } else updateViewBounds();
     syncEdgeButtons();
     save();
     redraw();
@@ -519,7 +560,8 @@
     const contact = (options.stopAtContact || currentReverse()) && separation() === H - 1 ? " · касание" : "";
     const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
     const label = "Кадр " + formatter.format(frame) + target + position +
-      " · " + formatter.format(H) + " строк · " + zoom + contact + (options.square ? " · квадрат" : "");
+      " · " + formatter.format(H) + " строк · " + zoom + contact + (options.square ? " · квадрат" : "") +
+      (options.buildAnd ? " · AND" : "");
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
     const period = cycle?.period;
     const end = period ? cycle.start + period - 1 : normalSliderMax;
@@ -538,6 +580,7 @@
     if (cycleNote.textContent !== cycleText) cycleNote.textContent = cycleText;
     cycleNote.hidden = !cycleText;
     syncEdgeButtons();
+    syncMirrors();
   }
 
   function paintCombined() {
@@ -546,8 +589,17 @@
     flipSecond.disabled = mode === "off";
     if (combinedView.hidden) return;
     const {H, W, val} = field;
-    const height = Math.min(H, 384);
-    const width = Math.max(1, Math.round(height * (H - 1) / H));
+    const {left, top, right, bottom} = coinBounds();
+    const rect = combinedCanvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const cssScale = scaleFor(rect, coinView, {left, top, right, bottom});
+    coinView.x = left + boundCenter(coinView.x - left, right - left, rect.width / cssScale);
+    coinView.y = top + boundCenter(coinView.y - top, bottom - top, rect.height / cssScale);
+    combinedCanvas.classList.toggle("romb-zoomed",
+      (right - left) * cssScale > rect.width + .5 || (bottom - top) * cssScale > rect.height + .5);
+    const dpr = devicePixelRatio || 1;
+    const ratio = coinView.scale === null ? Math.min(dpr, 1.5) : dpr;
+    const width = Math.max(1, Math.round(rect.width * ratio)), height = Math.max(1, Math.round(rect.height * ratio));
     if (!combinedPixels || combinedCanvas.width !== width || combinedCanvas.height !== height) {
       combinedCanvas.width = width;
       combinedCanvas.height = height;
@@ -555,15 +607,25 @@
       combinedWords = new Uint32Array(combinedPixels.data.buffer);
     }
     combinedWords.fill(0);
+    const scale = coinView.scale ?? cssScale * ratio;
+    const originX = width / 2 - coinView.x * scale, originY = height / 2 - coinView.y * scale;
+    const x0 = Math.max(0, Math.floor(originX + left * scale));
+    const x1 = Math.min(width, Math.ceil(originX + right * scale));
+    const y0 = Math.max(0, Math.floor(originY + top * scale));
+    const y1 = Math.min(height, Math.ceil(originY + bottom * scale));
     const [first, second] = branches;
     const flip = flipSecond.checked ? -1 : 1;
-    for (let py = 0; py < height; py++) {
-      const row = Math.floor((py + 0.5) * H / height);
-      const radius = Math.min(row, H - 1 - row);
-      const source = row * W;
-      for (let px = 0; px < width; px++) {
-        const offset = Math.floor((px + 0.5) * (H - 1) / width) - (depth - 1);
-        if (Math.abs(offset) > radius) continue;
+    const s = Math.SQRT1_2;
+    for (let py = y0; py < y1; py++) {
+      const v = (py + .5 - originY) / scale;
+      for (let px = x0; px < x1; px++) {
+        const u = (px + .5 - originX) / scale;
+        const row = Math.floor(options.coinSquare ? (u + v) * s : v);
+        const col = Math.floor(options.coinSquare ? (u - v) * s : u);
+        if (row < 0 || row >= H || col < 0 || col >= H - 1) continue;
+        const offset = col - (depth - 1);
+        if (Math.abs(offset) > Math.min(row, H - 1 - row)) continue;
+        const source = row * W;
         const a = first.column + offset;
         const b = second.column + flip * offset;
         const left = a >= 0 && a < W ? val[source + a] : -1;
@@ -578,6 +640,135 @@
       }
     }
     combinedContext.putImageData(combinedPixels, 0, 0);
+    if (coinFrameInfo) {
+      const zoom = coinView.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
+      coinFrameInfo.textContent = "Кадр " + formatter.format(frame) + " · " + zoom + (options.coinSquare ? " · квадрат" : "");
+    }
+  }
+
+  function syncMirrors() {
+    for (const [source, copy] of mirrors) {
+      if (source.matches("button, input, select")) {
+        copy.disabled = source.disabled;
+        const pressed = source.getAttribute("aria-pressed");
+        if (pressed !== null && copy.getAttribute("aria-pressed") !== pressed) copy.setAttribute("aria-pressed", pressed);
+        if (copy.title !== source.title) copy.title = source.title;
+        const label = source.getAttribute("aria-label");
+        if (label !== null && copy.getAttribute("aria-label") !== label) copy.setAttribute("aria-label", label);
+        if (source.matches("input[type=range]")) copy.max = source.max;
+        if (source.matches("input, select") && copy.value !== source.value) copy.value = source.value;
+      } else {
+        copy.hidden = source.hidden;
+        if (copy.textContent !== source.textContent) copy.textContent = source.textContent;
+      }
+    }
+  }
+
+  function mountCoinControls() {
+    const holder = byId("romb-coin-controls");
+    if (!holder) return;
+    const controls = byId("romb-controls").cloneNode(true);
+    controls.id = "romb-coin-toolbar";
+    controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
+    const range = frameSlider.cloneNode(true);
+    const repeat = cycleNote.cloneNode(true);
+    for (const copy of [...controls.querySelectorAll("[id]"), range, repeat]) {
+      const source = byId(copy.id);
+      copy.id += "-coin";
+      if (source.matches("button")) copy.addEventListener("click", () => {
+        if (source === recordButton) toggleRecording(true);
+        else source.click();
+      });
+      if (source.matches("input, select")) for (const type of ["input", "change"]) {
+        copy.addEventListener(type, () => {
+          source.value = copy.value;
+          source.dispatchEvent(new Event(type, {bubbles: true}));
+        });
+      }
+      mirrors.push([source, copy]);
+    }
+    holder.append(controls);
+    coinFrameInfo = document.createElement("p");
+    coinFrameInfo.className = "progress";
+    byId("romb-coin-frames").append(coinFrameInfo, range, repeat);
+    const viewport = bindViewport(combinedCanvas, coinView, coinBounds, fitCoin);
+    byId("romb-coin-exact").addEventListener("click", () => viewport.zoomTo(1));
+    byId("romb-coin-fit").addEventListener("click", viewport.fitView);
+    coinSquareButton.addEventListener("click", () => toggleSquare(true));
+    combinedCanvas.addEventListener("dblclick", togglePlay);
+  }
+
+  function syncRecording() {
+    recordButton.setAttribute("aria-pressed", String(!!recording));
+    recordButton.disabled = recording?.finishing === true;
+    const action = recording ? "Сохранить GIF" : "Собрать GIF";
+    recordButton.setAttribute("aria-label", action);
+    recordButton.title = recording ? "Завершить запись и скачать GIF" : "Начать запись видимого поля в GIF. Второе нажатие сохраняет файл.";
+    recordLabel.textContent = action;
+    syncMirrors();
+  }
+
+  function stopRecording() {
+    if (!recording || recording.finishing) return;
+    recording.finishing = true;
+    recording.status.textContent = "Сборка GIF…";
+    recording.recorder.stop();
+    if (recording.startedPlayback && playing) stop();
+    syncRecording();
+  }
+
+  function toggleRecording(coin = false) {
+    if (recording) return stopRecording();
+    const status = byId(coin ? "romb-coin-record-status" : "romb-record-status");
+    status.hidden = false;
+    const snapshot = () => coin ? combinedPixels : pixels;
+    if (!snapshot()) paint();
+    if (!snapshot()) {
+      status.textContent = "Откройте битовое полотно перед записью.";
+      return;
+    }
+    const copy = document.createElement("canvas");
+    const drawing = copy.getContext("2d");
+    const session = {coin, status, startedPlayback: !playing && !pending, start: frame};
+    function finish(message) {
+      if (recording !== session) return;
+      if (session.startedPlayback && playing) stop();
+      recording = null;
+      status.textContent = message;
+      syncRecording();
+    }
+    try {
+      recording = session;
+      const {width, height} = snapshot();
+      session.recorder = window.MayatnikGif.record({width, height,
+        capture: () => {
+          const image = snapshot();
+          if (copy.width !== image.width || copy.height !== image.height) {
+            copy.width = image.width;
+            copy.height = image.height;
+          }
+          drawing.putImageData(image, 0, 0);
+          return copy;
+        },
+        onDone(blob, info) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + session.start + ".gif";
+          document.body.append(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          finish("GIF сохранён · " + formatter.format(info.frames) + " кадров.");
+        },
+        onError(error) { finish("GIF не собран · " + (error.message || String(error))); }
+      });
+      status.textContent = "Запись GIF · кадр " + formatter.format(frame);
+      if (session.startedPlayback) togglePlay();
+      syncRecording();
+    } catch (error) {
+      finish("GIF не собран · " + (error.message || String(error)));
+    }
   }
 
   function paintOutlines(x, y, scale, ratio, color) {
@@ -633,6 +824,7 @@
     stepButton.disabled = frame === maxFrame;
     backButton.disabled = (seekTarget ?? frame) === 0;
     play.disabled = frame === maxFrame;
+    syncMirrors();
   }
 
   function stop() {
@@ -676,57 +868,65 @@
     if (playing || pending) schedule();
   }
 
-  function zoomTo(physicalScale, px = 0, py = 0) {
-    const rect = canvas.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    const old = scaleFor(rect);
-    view.scale = clamp(physicalScale, 1, 16);
-    const shift = 1 / old - 1 / scaleFor(rect);
-    view.x += px * shift;
-    view.y += py * shift;
-    redraw();
+  function bindViewport(element, camera, bounds, fitCamera) {
+    let drag;
+    function zoomTo(physicalScale, px = 0, py = 0) {
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const box = bounds();
+      const old = scaleFor(rect, camera, box);
+      camera.scale = clamp(physicalScale, 1, 16);
+      const shift = 1 / old - 1 / scaleFor(rect, camera, box);
+      camera.x += px * shift;
+      camera.y += py * shift;
+      redraw();
+    }
+
+    function zoomBy(factor, px = 0, py = 0) {
+      const current = scaleFor(element.getBoundingClientRect(), camera, bounds()) * (devicePixelRatio || 1);
+      if (camera.scale === null && current < 1 && factor <= 1) return;
+      zoomTo(current * factor, px, py);
+    }
+
+    function fitView() {
+      fitCamera();
+      redraw();
+    }
+
+    element.addEventListener("wheel", event => {
+      event.preventDefault();
+      const rect = element.getBoundingClientRect();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
+      const factor = Math.exp(-clamp(event.deltaY * unit, -240, 240) * 0.003);
+      zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2);
+    }, {passive: false});
+    element.addEventListener("keydown", event => {
+      if (!["+", "=", "-", "−", "0", "1"].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === "0") fitView();
+      else if (event.key === "1") zoomTo(1);
+      else zoomBy(event.key === "+" || event.key === "=" ? 1.3 : 1 / 1.3);
+    });
+    element.addEventListener("pointerdown", event => {
+      if (!element.classList.contains("romb-zoomed") || event.button !== 0 || drag) return;
+      element.setPointerCapture(event.pointerId);
+      drag = {id: event.pointerId, x: event.clientX, y: event.clientY};
+    });
+    element.addEventListener("pointermove", event => {
+      if (drag?.id !== event.pointerId) return;
+      const scale = scaleFor(element.getBoundingClientRect(), camera, bounds());
+      camera.x -= (event.clientX - drag.x) / scale;
+      camera.y -= (event.clientY - drag.y) / scale;
+      drag.x = event.clientX;
+      drag.y = event.clientY;
+      redraw();
+    });
+    element.addEventListener("lostpointercapture", () => { drag = null; });
+    return {zoomTo, zoomBy, fitView};
   }
 
-  function zoomBy(factor, px = 0, py = 0) {
-    const current = scaleFor(canvas.getBoundingClientRect()) * (devicePixelRatio || 1);
-    if (view.scale === null && current < 1 && factor <= 1) return;
-    zoomTo(current * factor, px, py);
-  }
+  const {zoomTo, zoomBy, fitView} = bindViewport(canvas, view, projectedBounds, fit);
 
-  function fitView() {
-    fit();
-    redraw();
-  }
-
-  canvas.addEventListener("wheel", event => {
-    event.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
-    const factor = Math.exp(-clamp(event.deltaY * unit, -240, 240) * 0.003);
-    zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2);
-  }, {passive: false});
-  canvas.addEventListener("keydown", event => {
-    if (!["+", "=", "-", "−", "0", "1"].includes(event.key)) return;
-    event.preventDefault();
-    if (event.key === "0") fitView();
-    else if (event.key === "1") zoomTo(1);
-    else zoomBy(event.key === "+" || event.key === "=" ? 1.3 : 1 / 1.3);
-  });
-  canvas.addEventListener("pointerdown", event => {
-    if (!canvas.classList.contains("romb-zoomed") || event.button !== 0 || drag) return;
-    canvas.setPointerCapture(event.pointerId);
-    drag = {id: event.pointerId, x: event.clientX, y: event.clientY};
-  });
-  canvas.addEventListener("pointermove", event => {
-    if (drag?.id !== event.pointerId) return;
-    const scale = scaleFor(canvas.getBoundingClientRect());
-    view.x -= (event.clientX - drag.x) / scale;
-    view.y -= (event.clientY - drag.y) / scale;
-    drag.x = event.clientX;
-    drag.y = event.clientY;
-    redraw();
-  });
-  canvas.addEventListener("lostpointercapture", () => { drag = null; });
   root.querySelectorAll("[data-romb-zoom]").forEach(button => {
     button.addEventListener("click", () => zoomBy(Number(button.dataset.rombZoom)));
   });
@@ -760,7 +960,9 @@
   byId("romb-reset").addEventListener("click", reset);
   byId("romb-fit").addEventListener("click", fitView);
   byId("romb-exact").addEventListener("click", () => zoomTo(1));
-  squareButton?.addEventListener("click", toggleSquare);
+  squareButton?.addEventListener("click", () => toggleSquare());
+  andButton?.addEventListener("click", toggleBuildAnd);
+  recordButton?.addEventListener("click", () => toggleRecording());
   frameSlider.addEventListener("input", () => seek(Number(frameSlider.value)));
   for (const [key, button] of Object.entries(edgeButtons)) {
     button.addEventListener("click", () => {
@@ -786,7 +988,11 @@
     if (playing && !pending) nextBatchAt = performance.now() + delay;
   });
   speed.addEventListener("change", save);
-  for (const control of [combineMode, flipSecond]) control.addEventListener("change", () => { save(); redraw(); });
+  for (const control of [combineMode, flipSecond]) control.addEventListener("change", () => {
+    if (combineMode.value === "off" && recording?.coin) stopRecording();
+    save();
+    redraw();
+  });
 
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
@@ -838,9 +1044,12 @@
     } catch { /* Use default preferences. */ }
   }
 
+  if (!hubFour) mountCoinControls();
   updateSpeed();
   reset();
   if (hubFour && window.parent === window) togglePlay();
-  new ResizeObserver(redraw).observe(canvas);
+  const observer = new ResizeObserver(redraw);
+  observer.observe(canvas);
+  if (!hubFour && coinSquareButton) observer.observe(combinedCanvas);
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
 })();

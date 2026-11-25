@@ -1,4 +1,4 @@
-<!-- МАЯ-729 · v1.105 · Вход в Ромбовый Маятник. -->
+<!-- МАЯ-735 · v1.106 · Переключатель накопления AND. -->
 <!-- МАЯ-720 · v1.104 · Кадр сохранения шаблона для каталога. -->
 <!-- МАЯ-714 · v1.103 · Исходная ось для шаблонов под полем. -->
 <!-- МАЯ-713 · v1.102 · Каталог шаблонов и поле композиций. -->
@@ -103,7 +103,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.105</title>
+<title>Zerkalius Маятнкъ — v1.106</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -260,10 +260,13 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.105</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.106</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <a id="mayRhombLab" class="gz-hx" href="romb.html" target="_blank" rel="noopener" title="Открыть Ромбовый Маятник в новой вкладке" aria-label="Открыть Ромбовый Маятник">
     <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Ромбовый</span>
   </a>
+  <button id="mayBuildAnd" type="button" class="gz-hx" aria-pressed="false" aria-label="Накопление AND" title="AND совмещает прежний бит с новым вкладом. Повторное нажатие возвращает XOR.">
+    <span class="gz-nm">AND</span>
+  </button>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -610,11 +613,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <link rel="stylesheet" href="mayatnik-xorrom-faders.css?v=873">
 <link rel="stylesheet" href="mayatnik-wolfram.css?v=1035">
 <script src="mayatnik-wolfram.js?v=1035"></script>
-<script src="mayatnik-core.js?v=1001"></script>
+<script src="mayatnik-core.js?v=1106"></script>
 <script src="mayatnik-invert.js?v=888"></script>
 <script src="mayatnik-heat.js?v=885"></script>
 <script src="mayatnik-edge-copy.js?v=719"></script>
-<script src="mayatnik-construction.js?v=997"></script>
+<script src="mayatnik-construction.js?v=1106"></script>
 <script src="mayatnik-staggered-grid.js?v=1023"></script>
 <script src="mayatnik-sequence-field.js?v=1015"></script>
 <script src="mayatnik-edge-flow.js?v=825"></script>
@@ -832,7 +835,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   // перерисовку — круг перерисовок вешал страницу. Шаблоны и меню работают; сохранённые замки не стираются — вернуть: false
   const LOCK_OFF = true;
   if (CHISTO) { Storage.prototype.setItem = Storage.prototype.removeItem = function () {}; if (window.MayatnikPaintCache) MayatnikPaintCache.write = async () => {}; }   // ничего не записывать: сохранённое остаётся как было
-  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', zMid: true, speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
+  let st = { ...MayatnikAnimatrixSource.defaults(),...MayatnikPitCopies.DEFAULTS,buildAnd:false,kraftShadows:false,staggeredGrid:false,staggeredBlocks:false,paintEmptyNeighbours:false,invertKind:'bits',inverted:false,invertAuto:false,invertFrame:null, sequenceSourceOn:false,sequenceSource:null,sequenceSourceLimit:0,frameZeroFill:'off',sequenceApexWalk:false,sequenceApexStart:'seed',sequenceApexSides:'one',sequenceApexZeroTwice:false,apexWalkEvolution:2,sequenceOwnGrid:false,sequenceInverseAbove:false,rowStepOutline:true,rows: 512, steps: 512, mode: 'pend', bg: 'empty', view: 'bits', viewContours:false, viewDigits:false, zoom: 'fit', zMid: true, speed: 4, turbo: false, speedBefore: 4, outline: false, third: false, sym: false, symBits: false, symRowsMin: 2, symRowsMax: 0, symBitsMin: 2, symBitsMax: 0, pair: false, edgeContinuous:true,edgeFlowMax:0,edgeFlowKey:'',edgeWrap: false, edgeBounce: false, edgeWidth: 4, edgeMarkOn: true, edgeEndsOn: true, edgeEndsScale: 1, edgeRhombOn: false, romboMode:"fixed",romboLayout:null, romboAssembly:16, romboSeam:"between", edgeClose: true, zsnap: true, vrows: 0, noband: false, ochki: false, ochkiMode: 'diag', ochkiThrough:false, ochkiSkipSpaces:false, ochkiEveryFrame:false, ochkiInv: false, ochkiRev: false, ochkiHalf: false, ochkiOverlay: false, frozen: false, zLimit:false,zOverview:true,lineMeasures:false, ...MayatnikResetState.pointDefaults, joined180Whole:false };
   st.autoAxesPaint=false;
   if (!CHISTO) try {
     const {templateAreaDefaultsVersion,...saved} = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
@@ -1179,7 +1182,8 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       const rawEdge=!own&&st.edgeWrap?edgeRawApices(k):null,apices = rawEdge?rawEdge.map(edgeCol):own ? MayatnikSequenceField.offsets(st.mode,frame,pairOn(),MayatnikSequenceField.stride(st)).map(offset=>geo.anchor+offset)
         : MayatnikConstruction.offsets(st,k).map(offset=>geo.anchor+offset);
       const wrapped=rawEdge?.some((a,i)=>a!==apices[i]),beforeMark=rawEdge?edgeMark?.slice():null,beforeJumps=rawEdge?edgeJumps:null;
-      const mk = () => rawEdge?(pairOn()?MAYATNIK.conePairRows(f,apices[0],apices[1],f.H,null,undefined,edgeMark,wrapped?1:0):MAYATNIK.coneRows(f,apices[0],f.H,null,undefined,edgeMark,wrapped?1:0)):!own ? MayatnikConstruction.rows(f,apices,f.H,constructionActive()&&MayatnikConstruction.inverseAbove(st),null,undefined,MayatnikConstruction.walk(st)) : pairOn()
+      const and = MayatnikConstruction.andMode(st);
+      const mk = () => rawEdge?(pairOn()?MAYATNIK.conePairRows(f,apices[0],apices[1],f.H,null,undefined,edgeMark,wrapped?1:0,and):MAYATNIK.coneRows(f,apices[0],f.H,null,undefined,edgeMark,wrapped?1:0,and)):!own ? MayatnikConstruction.rows(f,apices,f.H,constructionActive()&&MayatnikConstruction.inverseAbove(st),null,undefined,MayatnikConstruction.walk(st),and) : pairOn()
         ? MAYATNIK.conePairRows(f, apices[0], apices[1], f.H)
         : MAYATNIK.coneRows(f, apices[0], f.H);
       const rows = mk();
@@ -2141,7 +2145,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(largeHeight){
       try{
         if(!gpuApi)throw Error(gpuUnavailableReason());
-        if(animatrixOn()||compareOn()||st.sequenceSourceOn||st.edgeWrap||MayatnikConstruction.active(st)||MayatnikConstruction.seedFill(st)!=='off')
+        if(animatrixOn()||compareOn()||st.sequenceSourceOn||st.edgeWrap||MayatnikConstruction.active({...st,rows:largeHeight})||MayatnikConstruction.seedFill(st)!=='off')
           throw Error('Для '+largeHeight+' строк выберите обычное построение.');
         if($('view').value!=='bits'||st.joined180||st.joined180Whole||parityPlan().active)
           throw Error('Для '+largeHeight+' строк выберите вид «Бит».');
@@ -2200,7 +2204,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     target = k; const fr = $('frame'); fr.max = total(); fr.value = k;
     const hasSeed=phoneOn()||animatrixOn()||compareOn()?f.val.some(v=>v>=0):st.sequenceSourceOn||st.bg!=='empty'||MayatnikConstruction.hasSeed(st);
     fr.dataset.playerFirstFrame=hasSeed||total()<1?'0':'1';
-    canvasSize(); pairSync(); ochkiSnakeSync(); layout(); centerAnchor(); if(paintNow)draw();
+    canvasSize(); pairSync(); buildAndSync(); ochkiSnakeSync(); layout(); centerAnchor(); if(paintNow)draw();
   }
   // v0.014: «при построении автоскролл на середину, а то чёрный экран»: ось якоря — посередине окна, сверху — вершина
   function centerAnchor(force=false) {
@@ -3554,11 +3558,11 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
       if(pairOn()){
         const r1=geo.anchor-k-1,r2=geo.anchor+k+1,a1=edgeCol(r1),a2=edgeCol(r2),w1=a1!==r1,w2=a2!==r2;
         if(w1||w2)edgeJumps += (w1?1:0)+(w2?1:0);
-        MAYATNIK.conePair(f,a1,a2,st.rows,null,undefined,edgeMark,w1||w2?1:0);
+        MAYATNIK.conePair(f,a1,a2,st.rows,null,undefined,edgeMark,w1||w2?1:0,MayatnikConstruction.andMode(st));
       }else{
         const raw=geo.anchor+MAYATNIK.offset(st.mode,k),a=edgeCol(raw),wrapped=a!==raw;
         if(wrapped)edgeJumps++;
-        MAYATNIK.cone(f,a,st.rows,null,undefined,edgeMark,wrapped?1:0);
+        MAYATNIK.cone(f,a,st.rows,null,undefined,edgeMark,wrapped?1:0,MayatnikConstruction.andMode(st));
       }
     }
     else MayatnikConstruction.step(f,geo,st,k);
@@ -11103,6 +11107,20 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
   }
   $('bSeq').onclick = () => pairSet(false);
   $('bPair').onclick = () => pairSet(true);
+  function buildAndSync() {
+    const button=$('mayBuildAnd'),available=MayatnikConstruction.andAvailable(st);
+    button.disabled=!available;
+    button.setAttribute('aria-pressed',String(MayatnikConstruction.andMode(st)));
+    button.title=available?'AND совмещает прежний бит с новым вкладом. Повторное нажатие возвращает XOR.':'AND доступен при обычном построении до 4096 строк.';
+  }
+  $('mayBuildAnd').onclick = () => {
+    if(!MayatnikConstruction.andAvailable(st))return;
+    const previous=st.buildAnd, frame=k;
+    st.buildAnd=!previous;
+    if(reset()===false){st.buildAnd=previous;buildAndSync();return;}
+    goTo(Math.min(frame,total()));
+    save();queueSession();
+  };
   const edgeSync = () => {
     const wrap = !!st.edgeWrap&&!animatrixOn()&&!compareOn()&&!st.sequenceSourceOn&&!testPattern, mark = !!st.edgeMarkOn, ends = !!st.edgeEndsOn;
     for(const id of ['edgeBounceTop','edgeContinuous','edgeMarkTop','edgeEndsTop']){const b=$(id);if(b)b.disabled=!wrap;}

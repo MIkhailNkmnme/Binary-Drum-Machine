@@ -32,13 +32,17 @@ const MAYATNIK = (() => {
   }
   // В конусе одной вершины XOR даёт нечётность коэффициента C(row, column).
   const seedConeBit = (row, column) => Number((row & column) === column);
+  function accumulateBit(old, contribution, and = false) {
+    if (and) return (old < 0 ? 1 : old) & contribution;
+    return Number(old === 1) ^ contribution;
+  }
   // CoreBuilder(startCell, buildDown=True, buildUp=False) — вершина в строке 0, глубина D строк
-  function cone(f, a, D, lastAt, stamp, mark, markValue) {
-    for (const row of coneRows(f, a, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
+  function cone(f, a, D, lastAt, stamp, mark, markValue, and = false) {
+    for (const row of coneRows(f, a, D, lastAt, stamp, mark, markValue, and)) { /* полный проход */ }
   }
   // Тот же проход можно остановить после каждой строки. Между шагами
   // временная единица родительской вершины не остаётся в видимом поле.
-  function* coneRows(f, a, D, lastAt, stamp, mark, markValue) {
+  function* coneRows(f, a, D, lastAt, stamp, mark, markValue, and = false) {
     const { W, H, val } = f;
     if (a < 0 || a >= W) return;
     if (val[a] === -1) { val[a] = 1; if (lastAt) lastAt[a] = stamp; }
@@ -55,7 +59,7 @@ const MAYATNIK = (() => {
       for (; c <= end && c < W; c += 2) {
         const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0;
         const i = row + c, old = val[i];
-        const nv = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        const nv = accumulateBit(old, (L === 1) ^ (R === 1), and);
         if (lastAt && nv !== old) lastAt[i] = stamp;
         if (mark) mark[i] = markValue;
         val[i] = nv;
@@ -67,12 +71,12 @@ const MAYATNIK = (() => {
   // v2 (2026-10-13, Маятник v0.012): пара вершин a1, a2 (одной чётности) ОДНИМ проходом — «шаг влево и вправо сразу».
   // Строка за строкой пересчитываются клетки обоих конусов; клетка, попавшая в оба, — один раз: старое ⊕ левый ⊕ правый.
   // По очереди (cone, затем cone) выходит другое: левый конус пишет середину, пока правой вершины ещё нет.
-  function conePair(f, a1, a2, D, lastAt, stamp, mark, markValue) {
-    for (const row of conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue)) { /* полный проход */ }
+  function conePair(f, a1, a2, D, lastAt, stamp, mark, markValue, and = false) {
+    for (const row of conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue, and)) { /* полный проход */ }
   }
-  function* conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue) {
+  function* conePairRows(f, a1, a2, D, lastAt, stamp, mark, markValue, and = false) {
     if (a1 === a2) {
-      yield* coneRows(f, a1, D, lastAt, stamp, mark, markValue);
+      yield* coneRows(f, a1, D, lastAt, stamp, mark, markValue, and);
       return;
     }
     const { W, H, val } = f;
@@ -84,7 +88,7 @@ const MAYATNIK = (() => {
       if (c < 0) c += ((-c + 1) >> 1) << 1;
       for (; c <= to && c < W; c += 2) {
         const L = c > 0 ? val[up + c - 1] : 0, R = c + 1 < W ? val[up + c + 1] : 0, i = row + c, old = val[i];
-        val[i] = ((old === 1) ^ (L === 1) ^ (R === 1)) ? 1 : 0;
+        val[i] = accumulateBit(old, (L === 1) ^ (R === 1), and);
         if (lastAt && val[i] !== old) lastAt[i] = stamp;
         if (mark) mark[i] = markValue;
       }
@@ -148,6 +152,6 @@ const MAYATNIK = (() => {
     for (let j = 0; j < k; j++) { const o = offset(mode, j); if (o < lo) lo = o; if (o > hi) hi = o; }
     return [lo, hi];
   }
-  return { field, seedGapDirection, fillSeedGaps, seedConeBit, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
+  return { field, seedGapDirection, fillSeedGaps, seedConeBit, accumulateBit, cone, conePair, coneRows, conePairRows, offset, geometry, tint, tintPair, span };
 })();
 if (typeof module !== 'undefined') module.exports = MAYATNIK;
