@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
+  <title>Зеркалиус · Ромбовый Маятник v0.001</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="../wolfram/style.css?v=001">
+  <script defer src="../_js/hub-button-text.js"></script>
+  <script defer src="mayatnik-core.js"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=001"></script>
+  <style>
+    main { max-width: 1040px; }
+    header { margin-bottom: 18px; }
+    .romb-controls { border: 0; margin: 0; padding: 0; align-items: center; }
+    .romb-controls > label { color: var(--muted); font-size: 12px; }
+    .romb-board { border: 1px solid var(--line); background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
+    .romb-board canvas { width: min(100%, 820px); height: auto; }
+    .legend .empty { background: #0b1620; }
+    .legend .zero { background: #164e65; }
+    .legend .one { background: #e1f2ec; }
+    .legend .active { background: linear-gradient(90deg, #e9bd74 50%, #bfa7f3 50%); }
+    .explanation { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+      <a href="Zerkalius-mayatnik.html">Маятник</a>
+      <a href="../wolfram/">Конусная лаборатория</a>
+      <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
+    </nav>
+    <header>
+      <h1>Ромбовый Маятник <small>черновик v0.001</small></h1>
+      <p class="lead">При размере 256 XOR-треугольник раскрывается до 256 бит в 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок на общем поле.</p>
+    </header>
+    <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
+      <button type="button" class="gz-hx" id="romb-play" aria-pressed="false" title="Включить или остановить анимацию ромба" aria-label="Анимация">
+        <span class="gz-ic" id="romb-play-icon" aria-hidden="true">▶</span><span class="gz-nm">Анимация</span>
+      </button>
+      <button type="button" class="gz-hx" id="romb-step" title="Передвинуть ромб на следующую позицию" aria-label="Следующий проход">
+        <span class="gz-ic" aria-hidden="true">▸▏</span><span class="gz-nm">Шаг</span>
+      </button>
+      <button type="button" class="gz-hx" id="romb-reset" title="Очистить поле и показать первый ромб" aria-label="Начать сначала">
+        <span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span>
+      </button>
+      <label for="romb-depth">Строк до середины</label>
+      <span class="gz-hx value-control">
+        <select id="romb-depth" title="Выбрать высоту растущей половины ромба">
+          <option>32</option><option>64</option><option>128</option><option selected>256</option>
+        </select>
+      </span>
+    </fieldset>
+    <p id="romb-frame" class="progress"></p>
+    <div class="romb-board">
+      <canvas id="romb-field" width="774" height="520" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame"></canvas>
+    </div>
+    <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
+    <div class="legend" aria-label="Цвета поля">
+      <span><i class="one" aria-hidden="true"></i>1</span>
+      <span><i class="zero" aria-hidden="true"></i>0</span>
+      <span><i class="empty" aria-hidden="true"></i>Пусто</span>
+      <span><i class="active" aria-hidden="true"></i>Текущий ромб</span>
+    </div>
+    <section class="explanation" aria-labelledby="romb-rule">
+      <h2 id="romb-rule">Как строится ромб</h2>
+      <p>Верх считает обычное ядро Маятника. В середине самый широкий ряд занимает две строки. Ниже ширина уменьшается на один бит в каждой строке. Чтобы получить очередной бит сужения, складываем по XOR биты предыдущей строки от левого края до клетки над ним слева. На пустом поле этот шаг восстанавливает ряды верхнего треугольника в обратном порядке.</p>
+      <p>Обе вершины вместе сдвигаются по столбцам 0, −1, +1, −2, +2… Каждый проход добавляет результат через XOR к старым битам внутри ромба. После последнего прохода анимация снова начинает с первого ромба на пустом поле.</p>
+    </section>
+  </main>
+</body>
+</html>
