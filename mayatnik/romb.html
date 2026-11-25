@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.009</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.010</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -12,7 +12,7 @@
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=009"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=010"></script>
   <style>
     main {
       max-width: 1040px;
@@ -54,16 +54,15 @@
     .romb-hub-four #romb-hub-transport:not([hidden]) {
       position: fixed; inset-inline: 12px; bottom: max(12px, env(safe-area-inset-bottom));
       width: min(440px, calc(100% - 280px)); margin-inline: auto;
-      display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 8px;
+      display: grid; gap: 4px;
     }
+    #romb-hub-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 4px 6px; }
+    #romb-hub-actions .gz-half[aria-pressed="true"] { background: var(--cyan); }
+    #romb-hub-actions .gz-half[aria-pressed="true"]::before { inset: 2px; }
     #romb-hub-transport .romb-frame-slider { min-width: 0; margin: 0; }
-    #romb-hub-transport #romb-frame { grid-column: 1 / -1; justify-self: center; margin: 0; padding: 4px 8px; background: #07131e; text-align: center; }
+    #romb-hub-transport #romb-frame { justify-self: center; margin: 0; padding: 4px 8px; background: #07131e; text-align: center; }
     @media (max-width: 680px) {
       .romb-hub-four #romb-hub-transport:not([hidden]) { right: 140px; width: auto; }
-    }
-    @media (max-width: 420px) {
-      .romb-hub-four #romb-hub-transport:not([hidden]) { grid-template-columns: minmax(0, 1fr); }
-      #romb-hub-transport .romb-step-pair { justify-self: center; }
     }
     :is(#romb-cycle-note, #romb-cycle-note-coin) { margin: 0 0 10px; color: var(--cyan); }
     .romb-announcement { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; margin: 0; }
@@ -84,7 +83,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.009</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.010</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -138,7 +137,7 @@
           </select>
         </span>
       </label>
-      <label class="romb-setting">Проходов за шаг
+      <label class="romb-setting"><span id="romb-step-label">Проходов за шаг</span>
         <span class="gz-hx value-control">
           <input id="romb-step-size" type="number" min="1" max="16384" step="1" value="1" title="Указать число проходов на одно нажатие или такт анимации">
         </span>
@@ -194,7 +193,15 @@
       </div>
       <p id="romb-coin-record-status" class="progress" role="status" hidden></p>
     </section>
-    <div id="romb-hub-transport" role="group" aria-label="Управление кадрами в Хабе" hidden></div>
+    <div id="romb-hub-transport" role="group" aria-label="Управление кадрами в Хабе" hidden>
+      <div id="romb-hub-actions">
+        <div class="gz-hx gz-pair gz-split gz-mid romb-step-pair" role="group" aria-label="Направление воспроизведения">
+          <button type="button" class="gz-half gz-h0" id="romb-hub-play-back" aria-pressed="false" title="Воспроизводить кадры назад" aria-label="Воспроизводить кадры назад">◀</button>
+          <span class="gz-pm" aria-hidden="true">Плей</span>
+          <button type="button" class="gz-half gz-h1" id="romb-hub-play-forward" aria-pressed="false" title="Воспроизводить кадры вперёд" aria-label="Воспроизводить кадры вперёд">▶</button>
+        </div>
+      </div>
+    </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
     <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания.</p>
     <div class="legend" aria-label="Цвета поля">

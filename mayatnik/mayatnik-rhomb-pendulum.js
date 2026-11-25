@@ -47,6 +47,8 @@
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
+  const hubStepKey = "zerk_hub_four_step";
+  const hubPlayButtons = hubFour ? [[-1, byId("romb-hub-play-back")], [1, byId("romb-hub-play-forward")]] : [];
   let hubRenderer, hubActive = false, hubAxes = false, hubVertical = false;
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
@@ -63,6 +65,7 @@
   let combinedPixels, combinedWords;
   let frameRequest = 0;
   let playing = false;
+  let playDirection = 1;
   let pending = 0;
   let nextBatchAt = 0;
   let nextPaintAt = 0;
@@ -93,7 +96,10 @@
   }
 
   function save() {
-    if (hubFour) return;
+    if (hubFour) {
+      try { localStorage.setItem(hubStepKey, String(stepCount())); } catch { /* Optional preferences. */ }
+      return;
+    }
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
       combination: combineMode.value, flipSecond: flipSecond.checked, ...options
@@ -281,6 +287,50 @@
     return contact && stopAtContact;
   }
 
+  function retreatHubFrame() {
+    const {W, H, val} = field;
+    const target = frame - 1;
+    if (target === 0) {
+      val.fill(-1);
+      initializeMotion();
+      return;
+    }
+
+    // The Hub keeps the XOR wrap route fixed. Its first W apices fill a
+    // contiguous interval, so the earlier unfilled cells can be recovered.
+    const apex = column;
+    const anchor = (W - 1) / 2;
+    const full = target >= W;
+    const leftmost = anchor - Math.floor(target / 2);
+    const rightmost = anchor + Math.floor((target - 1) / 2);
+    const firstOfParity = leftmost + ((apex - leftmost) & 1);
+    const lastOfParity = rightmost - ((rightmost - apex) & 1);
+
+    // Undo bottom-up to read the same updated parents as the forward pass.
+    for (let r = H - 1; r >= 1; r--) {
+      const radius = Math.min(r, H - 1 - r);
+      const left = apex - radius;
+      const right = Math.min(apex + radius, W - 1);
+      const row = r * W;
+      let prefix = 0;
+      for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
+        const upper = row - W + c;
+        const upperLeft = c > 0 && val[upper - 1] === 1;
+        let contribution;
+        if (r < depth) contribution = upperLeft ^ (c + 1 < W && val[upper + 1] === 1);
+        else if (r === depth) contribution = Number(val[upper] === 1);
+        else contribution = prefix ^= upperLeft;
+        const wasFilled = full || (firstOfParity <= lastOfParity && c >= firstOfParity - radius && c <= lastOfParity + radius);
+        val[row + c] = wasFilled ? val[row + c] ^ contribution : -1;
+      }
+    }
+    if (!full) val[apex] = -1;
+    const branch = branches[target % 2];
+    branch.column = MayatnikEdgeFlow.mapColumn(apex - branch.direction, W, false);
+    frame = target;
+    column = branches[(target - 1) % 2].column;
+  }
+
   function seek(target, lap = cycle && target >= cycle.start ? cycle.lap : 0) {
     stop();
     if (cycle) cycle.lap = lap;
@@ -292,14 +342,15 @@
         checkpoint = saved;
       }
     }
-    if (checkpoint) {
+    const retreat = hubFour && target < frame && frame - target < target - start;
+    if (!retreat && checkpoint) {
       field.val.set(checkpoint.bits);
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
       routeWrap = checkpoint.routeWrap;
       routeReverse = checkpoint.routeReverse;
       frame = start;
-    } else if (frame > target) {
+    } else if (!retreat && frame > target) {
       field.val.fill(-1);
       initializeMotion();
     }
@@ -452,6 +503,7 @@
       const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
       frameLabel.textContent = "2047 × 1024 · 2N−1 · " + (hubVertical ? "вверх-вниз · " : "") + "кадр " + formatter.format(frame) + target;
       syncFrameSlider();
+      syncTransport();
       return;
     }
     const rect = canvas.getBoundingClientRect();
@@ -825,12 +877,24 @@
   }
 
   function syncTransport() {
-    const moving = playing || pending > 0;
+    const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
     stepButton.disabled = (hubFour ? seekTarget ?? frame : frame) === maxFrame;
     backButton.disabled = (seekTarget ?? frame) === 0;
     play.disabled = frame === maxFrame;
+    for (const [direction, button] of hubPlayButtons) {
+      const active = playing && playDirection === direction;
+      const glyph = active ? "Ⅱ" : direction < 0 ? "◀" : "▶";
+      const label = active ? "Пауза" : direction < 0 ? "Воспроизводить кадры назад" : "Воспроизводить кадры вперёд";
+      button.disabled = !active && frame === (direction < 0 ? 0 : maxFrame);
+      if (button.textContent !== glyph) button.textContent = glyph;
+      if (button.getAttribute("aria-label") !== label) {
+        button.title = label;
+        button.setAttribute("aria-label", label);
+        button.setAttribute("aria-pressed", String(active));
+      }
+    }
     syncMirrors();
   }
 
@@ -843,20 +907,27 @@
 
   function tick(now) {
     frameRequest = 0;
-    if (playing && !pending && now >= nextBatchAt) pending = stepCount();
+    if (playing && !pending && now >= nextBatchAt) pending = playDirection < 0 ? -Math.min(frame, stepCount()) : stepCount();
     if (pending) {
       const deadline = performance.now() + 10;
       const watchContact = options.stopAtContact && seekTarget === null;
-      let contact;
+      const reversing = pending < 0;
+      const boundary = reversing ? 0 : maxFrame;
+      let contact = false;
       do {
-        contact = advanceFrame(watchContact);
-        pending--;
-      } while (!contact && pending && frame < maxFrame && performance.now() < deadline);
+        if (reversing) {
+          retreatHubFrame();
+          pending++;
+        } else {
+          contact = advanceFrame(watchContact);
+          pending--;
+        }
+      } while (!contact && pending && frame !== boundary && performance.now() < deadline);
       if (!pending) {
         seekTarget = null;
         nextBatchAt = now + delay;
       }
-      if (contact || frame === maxFrame) {
+      if (contact || frame === boundary) {
         stop();
         announcePosition();
       } else if (!playing && !pending) {
@@ -868,7 +939,7 @@
         nextPaintAt = now + 80;
       }
     }
-    if (dirty) {
+    if (dirty && !(hubFour && playing && pending)) {
       dirty = false;
       paint();
     }
@@ -938,17 +1009,34 @@
     button.addEventListener("click", () => zoomBy(Number(button.dataset.rombZoom)));
   });
 
+  function beginPlayback(direction) {
+    playDirection = direction;
+    playing = true;
+    nextBatchAt = 0;
+    syncTransport();
+    schedule();
+  }
+
+  function toggleHubPlayback(direction) {
+    if (playing && playDirection === direction) {
+      stop();
+      announcePosition();
+      redraw();
+    } else if (frame !== (direction < 0 ? 0 : maxFrame)) {
+      stop();
+      beginPlayback(direction);
+    }
+  }
+
   function togglePlay() {
+    if (hubFour) return toggleHubPlayback(playDirection);
     if (frame === maxFrame) return;
     if (playing || pending) {
       stop();
       announcePosition();
       redraw();
     } else {
-      playing = true;
-      nextBatchAt = 0;
-      syncTransport();
-      schedule();
+      beginPlayback(1);
     }
   }
 
@@ -959,7 +1047,7 @@
   });
   stepButton.addEventListener("click", () => {
     if (hubFour) {
-      seek(Math.min(maxFrame, (seekTarget ?? frame) + 1));
+      seek(Math.min(maxFrame, (seekTarget ?? frame) + stepCount()));
       return;
     }
     stop();
@@ -1008,14 +1096,20 @@
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
     const transport = byId("romb-hub-transport");
-    transport.append(backButton.parentElement, frameSlider, frameLabel);
+    const actions = byId("romb-hub-actions");
+    actions.prepend(backButton.parentElement);
+    actions.append(stepSize.closest("label"));
+    transport.append(frameSlider, frameLabel);
     transport.hidden = false;
-    backButton.title = "На один кадр назад";
-    stepButton.title = "На один кадр вперёд";
+    byId("romb-step-label").textContent = "Кадров за шаг";
+    for (const [direction, button] of hubPlayButtons) {
+      button.addEventListener("click", () => toggleHubPlayback(direction));
+    }
     frameSlider.setAttribute("aria-describedby", "romb-frame");
     size.value = "1024";
     width.value = "2";
-    stepSize.value = "1";
+    try { stepSize.value = localStorage.getItem(hubStepKey) ?? "1"; } catch { /* Optional preferences. */ }
+    stepSize.value = stepCount();
     options.wrap = true;
     combinedView.hidden = false;
     hubRenderer = window.MayatnikRhombFour.create(combinedCanvas, byId("romb-vertical"), 2047, 1024);
