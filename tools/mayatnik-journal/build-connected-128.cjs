@@ -65,7 +65,7 @@ function symmetric({ width, height, raster }) {
 }
 
 function metadata(record) {
-  return { symmetry: record.symmetry, mirrorFrame: record.mirrorFrame, mirrorNumber: record.mirrorPartner?.number };
+  return { frames: record.frames, symmetry: record.symmetry, mirrorFrame: record.mirrorFrame, mirrorNumber: record.mirrorPartner?.number };
 }
 
 async function build() {
@@ -73,26 +73,30 @@ async function build() {
   const { anchor, W } = geometry;
   const field = Core.field(W, settings.rows, settings.bg, anchor);
   const queue = new Int32Array(field.val.length);
-  const { frames, ids } = JSON.parse(readFileSync(path.join(directory, 'index.json')));
+  const { ids } = JSON.parse(readFileSync(path.join(directory, 'index.json')));
   const original = JSON.parse(readFileSync(path.join(directory, 'chunk-0.json')));
   const publishedAt = new Map(original.map(([id, w, h, cells, frame, x, y]) =>
     [[frame, x, y, w, h, cells].join(':'), id]));
   const axisRecords = new Map();
   const central = new Map(), outside = new Map();
+  const legacyCentral = new Set(), legacyOutside = new Set();
   let occurrences = 0, pairs = 0;
 
-  for (let frame = 1; frame <= settings.steps; frame++) {
+  for (let frame = 2; frame <= settings.steps; frame += 2) {
+    Construction.step(field, geometry, settings, frame - 2);
     Construction.step(field, geometry, settings, frame - 1);
-    if (!frames.includes(frame)) continue;
     const { labels, shapes } = components(field, anchor, queue);
     const records = shapes.map(shape => {
       const { width, height, x, y, cells, raster } = shape;
       const group = shape.central ? central : outside;
       const key = width + 'x' + height + ':' + raster.toString('base64');
       if (!group.has(key)) group.set(key, {
-        ...shape, frame, symmetry: symmetric(shape), mirrorFrame: null
+        ...shape, frame: null, frames: [], symmetry: symmetric(shape), mirrorFrame: null
       });
       const record = group.get(key);
+      if (record.frames.at(-1) !== frame) record.frames.push(frame);
+      if (frame >= 4 && record.frame === null) Object.assign(record, { frame, x, y });
+      if (frame % 4 === 0) (shape.central ? legacyCentral : legacyOutside).add(record);
       if (shape.central) {
         const id = publishedAt.get([frame, x, y, width, height, cells].join(':'));
         if (id != null) axisRecords.set(id, record);
@@ -100,6 +104,7 @@ async function build() {
       return record;
     });
 
+    if (frame === 2) continue;
     const [left, right] = Core.span(settings.mode, frame);
     const axisTwice = 2 * anchor + left + right;
     for (const [index, shape] of shapes.entries()) {
@@ -128,8 +133,12 @@ async function build() {
 
   if (ids.some(id => !axisRecords.has(id))) throw Error('Не найдены исходные позиции всех фигур Атласа 128.');
   const published = new Set(axisRecords.values());
-  const missingCentral = [...central.values()].filter(record => !published.has(record));
-  const additions = [...outside.values(), ...missingCentral];
+  // Preserve the identifiers of saved compositions from the catalogue sampled every fourth frame.
+  const legacy = [...legacyOutside, ...[...legacyCentral].filter(record => !published.has(record))];
+  const numbered = new Set(legacy);
+  const newRecords = [...outside.values(), ...central.values()].filter(record =>
+    record.frame !== null && !numbered.has(record) && !published.has(record));
+  const additions = [...legacy, ...newRecords];
   for (const [index, record] of additions.entries()) record.number = index + 1;
   const figures = [];
   for (const record of additions) {
@@ -139,11 +148,17 @@ async function build() {
     const png = Buffer.from(await blob.arrayBuffer()).toString('base64');
     figures.push({ number, x, y, width, height, cells, frame, bit, central, ...metadata(record), png });
   }
-  const axis = Object.fromEntries(ids.map(id => [id, metadata(axisRecords.get(id))]));
+  const axis = Object.fromEntries(ids.map(id => {
+    const record = axisRecords.get(id);
+    return [id, { ...metadata(record), x: record.x, y: record.y }];
+  }));
   writeFileSync(path.join(directory, 'connected.json'),
     '{"axis":' + JSON.stringify(axis) + ',"figures":[\n' + figures.map(item => JSON.stringify(item)).join(',\n') + '\n]}\n');
   console.log(JSON.stringify({
-    frames: frames.length, outsideOccurrences: occurrences, outside: outside.size, missingCentral: missingCentral.length,
+    catalogueFrames: settings.steps / 2 - 1, added: newRecords.length, retained: legacy.length,
+    frameTwo: [...additions, ...published].filter(record => record.frames[0] === 2).length,
+    outsideOccurrences: occurrences, outside: figures.filter(figure => !figure.central).length,
+    missingCentral: figures.filter(figure => figure.central).length,
     small: figures.filter(figure => figure.cells < 4).length,
     symmetric: figures.filter(figure => figure.symmetry.length).length,
     paired: figures.filter(figure => figure.mirrorFrame !== null).length, pairs,

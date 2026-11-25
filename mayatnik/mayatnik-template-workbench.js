@@ -7,6 +7,7 @@ export const FIELD_AXIS = 6143;
 const PAGE = 2048;
 const ROW_HEIGHT = 26;
 const HISTORY_LIMIT = 60;
+const FRAME_DELAY = 180;
 const rotations = [[1, 0, 0, 1], [0, 1, -1, 0], [-1, 0, 0, -1], [0, -1, 1, 0]];
 const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 const cell = (value, max) => Math.max(0, Math.min(max, Math.round(value)));
@@ -66,13 +67,14 @@ function packedAtlases() {
   };
 }
 
-export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImage, caption }) {
+export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImage, frameNumbers, caption }) {
   const $ = id => document.getElementById(id);
   const field = $('field'), context = field.getContext('2d');
   const list = $('field-layers'), status = $('field-status'), empty = $('field-empty');
   const xInput = $('layer-x'), yInput = $('layer-y');
   const layerColour = $('layer-colour'), allColour = $('all-colour');
   const undoButton = $('composition-undo'), redoButton = $('composition-redo');
+  const playButton = $('composition-play'), frameReadout = $('animation-frame');
   const up = $('layer-up'), down = $('layer-down'), remove = $('layer-remove');
   const clearButton = $('composition-clear');
   const left = $('turn-left'), right = $('turn-right');
@@ -85,7 +87,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   let active = null, drag = null, serial = 0, drawFrame = 0, saveTimer = 0;
   let camera = null, fitted = true, writes = Promise.resolve();
   let queue = [], nextDecode = 0, decoding = 0;
-  let restoring = true, placement = { pending: 0 };
+  let restoring = true, placement = { pending: 0 }, playback = null;
 
   const tell = message => { status.textContent = message; };
   const view = () => ({ width: field.clientWidth, height: field.clientHeight });
@@ -185,6 +187,8 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
       colour = null;
     }
     for (const layer of layers) {
+      const frames = playback?.frames.get(layer);
+      if (playback?.frame && frames && !frames.has(playback.frame)) continue;
       const sprite = layer.sprite, box = bounds(layer);
       if (box.x + box.width <= start.x || box.x >= end.x || box.y + box.height <= start.y || box.y >= end.y) continue;
       if (!sprite.region) {
@@ -223,7 +227,8 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     context.clearRect(0, 0, width, height);
     drawGrid(width, height, ratio);
     const start = asWorld(0, 0), end = asWorld(width, height);
-    const priority = new Set(active?.sprite.atlas && !active.sprite.region ? [active.sprite] : []);
+    const showSelection = active && !playback?.frame;
+    const priority = new Set(showSelection && active.sprite.atlas && !active.sprite.region ? [active.sprite] : []);
     context.save();
     context.translate(camera.x, camera.y);
     context.scale(camera.zoom, camera.zoom);
@@ -232,7 +237,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     context.clip();
     context.imageSmoothingEnabled = false;
     drawLayers(start, end, ratio, priority);
-    if (active) {
+    if (showSelection) {
       const box = bounds(active);
       context.strokeStyle = '#ffd778';
       context.lineWidth = 1.5 / camera.zoom;
@@ -270,7 +275,8 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
       fieldWidth: FIELD_WIDTH, fitted, camera: { ...camera }, active: active?.id,
       sprites: assets.map(([key, sprite]) => ({ key, width: sprite.width, height: sprite.height,
         ...(sprite.atlas ? { atlas: sprite.atlas } : { rgba: sprite.rgba }) })),
-      layers: layers.map(({ id, key, name, x, y, turn, mirrored, colour }) => ({ id, key, name, x, y, turn, mirrored, colour }))
+      layers: layers.map(({ id, key, name, x, y, turn, mirrored, colour, frames }) =>
+        ({ id, key, name, x, y, turn, mirrored, colour, frames }))
     };
   }
 
@@ -289,9 +295,63 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     if (undoButton) undoButton.disabled = !undoActions.length || !!drag?.layer;
     if (redoButton) redoButton.disabled = !redoActions.length || !!drag?.layer;
     if (clearButton) clearButton.disabled = restoring || !!drag?.layer || (!layers.length && !placement.pending);
+    playButton.disabled = restoring || !!drag || !layers.length || !!placement.pending;
+  }
+
+  function showPlayback() {
+    playButton.setAttribute('aria-pressed', String(!!playback));
+    playButton.title = playback ? 'Остановить анимацию и показать всю композицию' : 'Запустить цикл чётных кадров';
+    playButton.firstElementChild.textContent = caption(playback ? '■ Стоп' : '▶ Анимация');
+    frameReadout.hidden = !playback;
+    frameReadout.textContent = playback?.frame ? 'Кадр ' + playback.frame + ' / ' + playback.last : 'Загружаю кадры…';
+  }
+
+  function stopPlayback() {
+    if (!playback) return;
+    clearInterval(playback.timer);
+    playback = null;
+    showPlayback();
+    redraw();
+  }
+
+  async function startPlayback() {
+    if (playback || playButton.disabled) return;
+    const session = { frame: 0, last: 0, frames: new Map(), timer: 0 };
+    playback = session;
+    showPlayback();
+    const sources = [...new Set(layers.map(layer => layer.sprite).filter(sprite => sprite.atlas))];
+    const results = await Promise.allSettled(sources.map(async sprite =>
+      frameNumbers(sprite.entry ?? await resolveAtlas(sprite.atlas))));
+    if (playback !== session) return;
+
+    const timelines = new Map();
+    for (const [index, result] of results.entries()) {
+      if (result.status === 'fulfilled') timelines.set(sources[index], result.value);
+    }
+    for (const layer of layers) {
+      const dates = layer.sprite.atlas ? timelines.get(layer.sprite) : layer.frames;
+      if (!Array.isArray(dates) || !dates.length) continue;
+      const frames = new Set(dates.filter(frame => Number.isSafeInteger(frame) && frame >= 2 && frame % 2 === 0));
+      session.frames.set(layer, frames);
+      for (const frame of frames) session.last = Math.max(session.last, frame);
+    }
+    if (!session.last) {
+      stopPlayback();
+      tell('На поле нет шаблонов с доступными чётными кадрами.');
+      return;
+    }
+    tell(results.some(result => result.status === 'rejected') ? 'Часть номеров кадров недоступна.' : '');
+    function advance() {
+      session.frame = session.frame >= session.last ? 2 : session.frame + 2;
+      frameReadout.textContent = 'Кадр ' + session.frame + ' / ' + session.last;
+      redraw();
+    }
+    advance();
+    session.timer = setInterval(advance, FRAME_DELAY);
   }
 
   function rememberAction(undo, redo, before = active, after = active) {
+    stopPlayback();
     undoActions.push({ undo, redo, before, after });
     if (undoActions.length > HISTORY_LIMIT) undoActions.shift();
     redoActions.length = 0;
@@ -304,6 +364,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     const from = backward ? undoActions : redoActions, to = backward ? redoActions : undoActions;
     const action = from.pop();
     if (!action) return;
+    stopPlayback();
     if (backward) action.undo();
     else action.redo();
     to.push(action);
@@ -312,6 +373,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   }
 
   addEventListener('pagehide', () => {
+    stopPlayback();
     if (!saveTimer) return;
     clearTimeout(saveTimer);
     saveTimer = 0;
@@ -359,7 +421,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
       button.setAttribute('aria-pressed', String(layer === active));
       name.textContent = layer.name;
       button.append(name);
-      button.onclick = () => { select(layer, false); scheduleSave(); };
+      button.onclick = () => { stopPlayback(); select(layer, false); scheduleSave(); };
       item.append(button);
       nodes.push(item);
       if (layer.id === focusId) focus = button;
@@ -477,6 +539,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
 
   function clearField() {
     if (restoring || drag?.layer || (!layers.length && !placement.pending)) return;
+    stopPlayback();
     const previous = active, removed = layers.slice();
     const erase = () => {
       placement = { pending: 0 };
@@ -503,7 +566,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
     const x = point?.x ?? (source.x + Math.floor(sprite.width / 2));
     const y = point?.y ?? (source.y + Math.floor(sprite.height / 2));
     return { key: entry.key, name: entry.name, id: ++serial, x: cell(x, FIELD_WIDTH), y: cell(y, FIELD_HEIGHT),
-      turn: 0, mirrored: !!source.mirrored, sprite };
+      turn: 0, mirrored: !!source.mirrored, frames: entry.atlas ? undefined : entry.frames, sprite };
   }
 
   async function restore() {
@@ -542,6 +605,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
 
   let addQueue = restore();
   function enqueue(action) {
+    stopPlayback();
     const job = placement, current = () => placement === job;
     job.pending++;
     syncActions();
@@ -606,6 +670,10 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
   undoButton?.addEventListener('click', () => historyStep(true));
   redoButton?.addEventListener('click', () => historyStep(false));
   clearButton?.addEventListener('click', clearField);
+  playButton.addEventListener('click', () => {
+    if (playback) stopPlayback();
+    else startPlayback();
+  });
   layerColour?.addEventListener('change', () => {
     if (!active) return;
     const layer = active, before = layer.colour, after = layerColour.value;
@@ -664,6 +732,7 @@ export function mountWorkbench({ resolveAtlas, resolveEntry, describe, atlasImag
 
   field.addEventListener('pointerdown', event => {
     if (drag || (event.button !== 0 && event.button !== 1)) return;
+    if (event.button === 0) stopPlayback();
     camera ??= overview();
     const point = position(event), world = asWorld(point.x, point.y);
     const layer = event.button === 0 ? layers.findLast(item => contains(item, world.x, world.y)) : null;

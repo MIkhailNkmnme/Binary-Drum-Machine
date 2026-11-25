@@ -1,3 +1,4 @@
+<!-- МАЯ-720 · v1.104 · Кадр сохранения шаблона для каталога. -->
 <!-- МАЯ-714 · v1.103 · Исходная ось для шаблонов под полем. -->
 <!-- МАЯ-713 · v1.102 · Каталог шаблонов и поле композиций. -->
 <!-- МАЯ-712 · v1.101 · Перенос шаблонов под поле с антибитами и разшаблонка. -->
@@ -101,7 +102,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="logo-horrohorius-circle.svg?v=137">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Маятнкъ — v1.103</title>
+<title>Zerkalius Маятнкъ — v1.104</title>
 <!--
   ═══ МАЯТНИК (заведён 2026-10-11) ═════════════════════════════════════
   Перенос макросов ТРЕУГСЖАТИЯ из _pzl.xlsm (кнопки «Вниз», «вправо», «лево», «лево-право», «Анимация»
@@ -255,7 +256,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
 <body data-mi-scope="mayatnik" data-may-number-standard="229" data-may-template-axis-actions data-may-frame-zoom>
 <header>
   <button id="mayMenu" class="gz-hx" aria-expanded="true" aria-controls="mayatnikRail"><span>☰ Меню</span></button>
-  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.103</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
+  <div class="may-brand"><div id="mayBrandHubSlot"></div><div class="may-brand-title"><h1 id="appTitle">Маятнкъ</h1><span class="ver">1.104</span></div><canvas class="may-logo" width="78" height="78" role="img" aria-label="Хоррохориус: бипирамида со сквозными вырезами" title="Хоррохориус · бипирамида со сквозными вырезами" data-no-rec></canvas></div>
   <button id="mayAbout" class="gz-hx" title="Инструкция по Маятнику" aria-label="Инструкция по Маятнику"><span>Инструкция</span></button>
   <button id="mayHideAxes" class="gz-hx" hidden><span>Скрыть оси</span></button>
   <button id="mayZen" class="gz-hx" aria-pressed="false" title="Дзен: на экране только поле. Туда и обратно — эта кнопка или щелчок колёсиком по полю; Esc — выйти"><span>◎ Дзен</span></button>
@@ -7542,7 +7543,7 @@ body.may-cells-collapsed :is(#zTopLine,.zl-hd,#mayAxisHandles,#mayGeomCenter,#fi
     if(!instance){$('paintCacheInfo').textContent='Сначала выберите фигуру на поле';return;}
     if(!instance.parts.some(p=>p.mask.data.some(Boolean))){$('paintCacheInfo').textContent='Пустой результат операции нельзя сохранить в библиотеку. Отмените действие или выберите другую фигуру.';return;}
     rememberTemplate();const items=composition?.items||(fresh||explicitUpdate?[instance]:pickedTemplates()),combined=!!composition||items.length>1;
-    let shape;try{shape=combined?compoundTemplateSnapshot(items):templateSnapshot();shape.fieldRows=st.rows;if(shape.compound)MayatnikTemplateCompound.validate(shape);}catch(error){$('paintCacheInfo').textContent=error.message;return;}
+    let shape;try{shape=combined?compoundTemplateSnapshot(items):templateSnapshot();shape.fieldRows=st.rows;shape.fieldFrame=k;if(shape.compound)MayatnikTemplateCompound.validate(shape);}catch(error){$('paintCacheInfo').textContent=error.message;return;}
     const name=composition?.name||(combined?'Сборный шаблон':$('templateName').value.trim()||'Мой шаблон'),selected=combined?null:instance.libraryId;
     await libraryReady;
     const before=sceneSnapshot(),old=!fresh&&templateLibrary.find(t=>t.id===selected&&!!t.shape.compound===!!shape.compound&&(explicitUpdate||t.name===name)),duplicate=!old&&window.mayTemplateDedup?.find(shape),id=old?.id||duplicate?.id||('saved:'+Date.now()+':'+Math.random().toString(36).slice(2,8));

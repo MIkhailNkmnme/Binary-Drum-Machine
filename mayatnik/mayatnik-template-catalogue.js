@@ -1,5 +1,5 @@
-import { catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=2';
-import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=8';
+import { catalogueFrames, catalogueIndex, pngSource, readFigure } from '../issledovanie/image-journal/atlas/figures/figure-data.js?v=2';
+import { dragType, FIELD_AXIS, mountWorkbench } from './mayatnik-template-workbench.js?v=9';
 
 const SIZES = [128, 256, 512, 1024, 2048, 4096];
 const CONNECTED_SIZE = 128;
@@ -18,6 +18,7 @@ const selectedSize = () => SIZES.includes(requestedSize()) ? requestedSize() : 1
 let size = selectedSize(), exactCells = null, sequence = 0, localSequence = 0;
 let local = [], localError = false, localsReady = false, current = null, adding = false, localFingerprint = '';
 const entriesByIndex = new WeakMap(), offsetsByIndex = new WeakMap();
+const framesBySize = new Map();
 const symmetryNames = {
   vertical: 'вертикальная ось', horizontal: 'горизонтальная ось', point: 'поворот на 180°',
   diagonal: 'главная диагональ', antidiagonal: 'побочная диагональ'
@@ -67,7 +68,7 @@ async function resolveAtlas({ size, number, connected }) {
 
 function connectedData() {
   return connectedRequest ??= fetch(new URL(
-    '../issledovanie/image-journal/atlas/figures/data/128/connected.json?v=1', import.meta.url
+    '../issledovanie/image-journal/atlas/figures/data/128/connected.json?v=2', import.meta.url
   )).then(response => {
     if (!response.ok) throw Error('Не удалось загрузить дополнение Атласа.');
     return response.json();
@@ -86,6 +87,40 @@ function connectedData() {
 
 async function figureAsset(entry) {
   return entry.figure ??= await readFigure(entry.size, entry.offset, entry.index);
+}
+
+function frameIndex(rows) {
+  if (!framesBySize.has(rows)) framesBySize.set(rows, catalogueFrames(rows).then(frames => {
+    const appearances = [];
+    for (const [number, figures] of Object.entries(frames)) {
+      const frame = Number(number);
+      for (const [offset] of figures) {
+        const timeline = appearances[offset] ??= [];
+        if (timeline.at(-1) !== frame) timeline.push(frame);
+      }
+    }
+    return appearances;
+  }).catch(error => {
+    framesBySize.delete(rows);
+    throw error;
+  }));
+  return framesBySize.get(rows);
+}
+
+function singleFrame(frame) {
+  return Number.isSafeInteger(frame) && frame >= 0 ? [frame] : [];
+}
+
+async function frameNumbers(entry) {
+  if (entry.atlas.connected) return entry.figure.frames;
+  if (entry.size === CONNECTED_SIZE) {
+    const connected = await connectedData().catch(() => null);
+    const frames = connected?.axis[entry.atlas.number]?.frames;
+    if (frames) return frames;
+  }
+  if (entry.frames) return entry.frames;
+  const appearances = await frameIndex(entry.size);
+  return appearances[entry.offset] ?? singleFrame((await figureAsset(entry)).frame);
 }
 
 function partCanvas(part) {
@@ -172,7 +207,7 @@ async function describe(entry) {
   if (!entry.atlas) return localCanvas(entry);
   const figure = await figureAsset(entry);
   const sourceAxis = entry.size === 512 ? 268 : Math.floor((3 * entry.size - 2) / 2);
-  return { ...figure, x: FIELD_AXIS + figure.x - sourceAxis };
+  return { ...figure, x: FIELD_AXIS + (entry.symmetry?.x ?? figure.x) - sourceAxis, y: entry.symmetry?.y ?? figure.y };
 }
 
 async function atlasImage(entry) {
@@ -182,7 +217,8 @@ async function atlasImage(entry) {
   return picture;
 }
 
-const workbench = mountWorkbench({ resolveAtlas, resolveEntry: key => current?.entriesByKey.get(key), describe, atlasImage, caption });
+const workbench = mountWorkbench({ resolveAtlas, resolveEntry: key => current?.entriesByKey.get(key),
+  describe, atlasImage, frameNumbers, caption });
 
 function family(pixel) {
   const r = pixel & 255, g = pixel >>> 8 & 255, b = pixel >>> 16 & 255;
@@ -210,6 +246,7 @@ function libraryEntry(item, index) {
   const n = item.stats?.n ?? (automaticName ? Number(automaticName[1]) : Math.round(occupied / (rk * rk)));
   const rows = Number(item.shape.fieldRows ?? item.stats?.rows ?? item.source?.rows);
   return { item, index, key: 'library:' + item.id, source: 'library', size: SIZES.includes(rows) ? rows : null,
+    frames: singleFrame(item.shape.fieldFrame ?? item.stats?.frame ?? item.source?.frame),
     name, n, bit, count, bits: n * count, fam, auto: String(item.id).startsWith('saved:auto:') || !!automaticName,
     width: Math.round((mask?.width || 0) / rk), height: Math.round((mask?.height || 0) / rk) };
 }
@@ -217,7 +254,7 @@ function libraryEntry(item, index) {
 function trayEntries(snapshot, rows) {
   return (snapshot?.templates ?? []).filter(item => item.view?.tray && item.parts?.length).sort((a, b) => a.view.tray - b.view.tray)
     .map(item => ({ item, snapshot, key: 'tray:' + rows + ':' + item.id, name: item.name || item.hex,
-      source: 'tray', size: rows, n: item.view.traySize, frame: snapshot.frame ?? snapshot.k }));
+      source: 'tray', size: rows, n: item.view.traySize, frames: singleFrame(snapshot.frame ?? snapshot.k) }));
 }
 
 async function loadLocal() {
@@ -240,7 +277,7 @@ async function loadLocal() {
   });
   local = [...trays, ...[...library.values()].filter(item => !removed.has(item.id)).map(libraryEntry)];
   showStatistics();
-  const fingerprint = JSON.stringify([localError, ...local.map(entry => [entry.key, entry.name, entry.n, entry.size, entry.frame])]);
+  const fingerprint = JSON.stringify([localError, ...local.map(entry => [entry.key, entry.name, entry.n, entry.size, entry.frames])]);
   if (localFingerprint !== fingerprint && (localFingerprint || local.length || localError)) render();
   localFingerprint = fingerprint;
   syncAddAll();
@@ -312,9 +349,6 @@ function showStatistics() {
 
 function showFigureSymmetry(meta, entry) {
   const details = entry.symmetry;
-  const frame = document.createElement('span');
-  frame.textContent = 'Кадр ' + entry.figure.frame;
-  meta.append(frame);
   if (details.symmetry.length) {
     const axes = document.createElement('span');
     axes.textContent = details.symmetry.map(name => symmetryNames[name]).join(' · ');
@@ -332,9 +366,26 @@ function showFigureSymmetry(meta, entry) {
   }
 }
 
+function showCardFrames(meta, entry) {
+  const known = entry.frames ?? singleFrame(entry.figure?.frame);
+  const frames = entry.atlas && entry.size === CONNECTED_SIZE ? known.filter(frame => frame >= 4) : known;
+  if (frames.length <= 6) {
+    const line = document.createElement('span');
+    line.textContent = frames.length > 1 ? 'Кадры ' + frames.join(', ') :
+      frames.length ? 'Кадр ' + frames[0] : 'Кадр не записан';
+    meta.append(line);
+    return;
+  }
+  const details = document.createElement('details'), label = document.createElement('summary');
+  details.className = 'card-frames';
+  label.textContent = 'Кадры ' + frames.slice(0, 4).join(', ') + '…';
+  details.append(label, frames.join(', '));
+  meta.append(details);
+}
+
 function card(entry) {
   const item = document.createElement('li'), picture = document.createElement('div');
-  const title = document.createElement('strong'), meta = document.createElement('p');
+  const title = document.createElement('strong'), meta = document.createElement('div');
   item.className = 'catalogue-card';
   picture.className = 'card-preview';
   picture.draggable = true;
@@ -361,7 +412,6 @@ function card(entry) {
     image.style.width = figure.width * Math.min(6, 152 / figure.width, 92 / figure.height) + 'px';
     picture.append(image);
     meta.textContent = entry.size + ' · ' + figure.width + ' × ' + figure.height + ' · ' + format(figure.cells) + ' кл.';
-    if (entry.symmetry) showFigureSymmetry(meta, entry);
   } else if (!entry.atlas) {
     const label = entry.source === 'tray' ? 'Из-под поля' : 'Битотека';
     try { picture.append(localCanvas(entry, true).canvas); }
@@ -375,6 +425,8 @@ function card(entry) {
     add.disabled = true;
     meta.textContent = String(entry.size);
   }
+  showCardFrames(meta, entry);
+  if (entry.figure && entry.symmetry) showFigureSymmetry(meta, entry);
   return item;
 }
 
@@ -433,11 +485,11 @@ async function appendMore(view) {
   more.disconnect();
   view.loading = true;
   const items = view.entries.slice(view.shown, view.shown + PAGE_SIZE);
-  await Promise.all(items.filter(entry => entry.atlas).map(async entry => {
-    try { await figureAsset(entry); }
-    catch { view.failed = true; }
-  }));
+  const assets = await Promise.allSettled(items.filter(entry => entry.atlas).flatMap(entry => [
+    figureAsset(entry), frameNumbers(entry).then(frames => { entry.frames = frames; })
+  ]));
   if (view !== current) return;
+  view.failed ||= assets.some(result => result.status === 'rejected');
   view.loading = false;
   view.shown += items.length;
   catalogue.append(...items.map(card));
