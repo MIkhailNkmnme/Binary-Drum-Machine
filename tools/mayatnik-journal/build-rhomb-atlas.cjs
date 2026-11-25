@@ -48,6 +48,43 @@ function branchMask(shape, centers, rows) {
   return hit;
 }
 
+function centralMembership(shape, centers) {
+  let result = 0;
+  for (let branch = 0; branch < centers.length; branch++) {
+    const column = centers[branch] - shape.x;
+    if (column < 0 || column >= shape.width) continue;
+    for (let offset = column; offset < shape.raster.length; offset += shape.width) {
+      if (!shape.raster[offset]) continue;
+      result |= branch === 0 ? 2 : 1;
+      break;
+    }
+  }
+  return result;
+}
+
+function reflectionAxes(shape) {
+  return symmetric(shape).filter(axis => axis !== 'point');
+}
+
+function colourCentralAxes(model, marks, queue) {
+  const {W, H} = model.field;
+  const centers = model.route().slice(2);
+  const {shapes} = components(model.field, (W - 1) / 2, queue);
+  marks.fill(0);
+  for (const shape of shapes) {
+    if (shape.cells < 4) continue;
+    const onAxis = centralMembership(shape, centers);
+    if (!onAxis || !reflectionAxes(shape).length) continue;
+    for (let i = 0; i < shape.raster.length; i++) {
+      if (shape.raster[i]) marks[(shape.y + Math.floor(i / shape.width)) * W + shape.x + i % shape.width] |= onAxis;
+    }
+  }
+  for (let row = 0; row < H; row++) {
+    marks[row * W + centers[1]] |= 1;
+    marks[row * W + centers[0]] |= 2;
+  }
+}
+
 function collect(size) {
   const simulation = createModel(size.rows, size.width, true);
   const queue = new Int32Array(simulation.val.length);
@@ -62,7 +99,7 @@ function collect(size) {
     const centers = simulation.route().slice(2);
     for (const shape of shapes) {
       if (shape.cells < 4) continue;
-      const axes = symmetric(shape).filter(axis => axis !== 'point');
+      const axes = reflectionAxes(shape);
       if (!axes.length) continue;
       const {width, height, cells, bit} = shape;
       const mask = shapeMask(shape.raster);
@@ -71,7 +108,7 @@ function collect(size) {
       if (!figures.has(identifier)) {
         figures.set(identifier, {
           width, height, cells, bit, axes, mask: mask.toString('base64'),
-          firstFrame: at, frames: 0, occurrences: 0, branches: 0, key
+          firstFrame: at, frames: 0, occurrences: 0, branches: 0, centralBranches: 0, key
         });
       }
       const record = figures.get(identifier);
@@ -79,6 +116,7 @@ function collect(size) {
       if (record.lastFrame !== at) record.frames++;
       record.lastFrame = at;
       record.branches |= branchMask(shape, centers, size.rows);
+      record.centralBranches |= centralMembership(shape, centers);
     }
   }
   return {rows: size.rows, width: size.width, frames, figures: [...figures.values()]};
@@ -186,6 +224,7 @@ function compare(atlases) {
       b.occurrences - a.occurrences || a.firstFrame - b.firstFrame);
     atlas.figures.forEach((record, index) => {record.id = index + 1;});
     atlas.matchingShapes = atlas.figures.filter(record => record.matchCount).length;
+    atlas.centralShapes = atlas.figures.filter(record => record.centralBranches).length;
   }
   return referenceFigures;
 }
@@ -197,9 +236,10 @@ function writeAtlas(directory = studyDirectory) {
   const report = {referenceFigures, referenceSizes, atlases};
   writeFileSync(join(directory, 'romb-atlas.json'), JSON.stringify(report) + '\n');
   return atlases.map(atlas => ({
-    rows: atlas.rows, frames: atlas.frames.length, figures: atlas.figures.length, matches: atlas.matchingShapes, referenceFigures
+    rows: atlas.rows, frames: atlas.frames.length, figures: atlas.figures.length, matches: atlas.matchingShapes,
+    central: atlas.centralShapes, referenceFigures
   }));
 }
 
 if (require.main === module) console.log(JSON.stringify(writeAtlas(process.argv[2]), null, 2));
-module.exports = {writeAtlas};
+module.exports = {colourCentralAxes, writeAtlas};

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Просмотр GIF ромбового Маятника</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <script defer src="../../_js/hub-button-text.js"></script>
+  <style>
+    main { padding-bottom: 24px; }
+    .gif-tools { margin-bottom: 8px; }
+    #gif-viewport { overflow: auto; height: clamp(220px, 65dvh, 760px); background: #0b1620; border: 1px solid var(--line); }
+    .gif-surface { display: grid; place-items: center; min-width: 100%; min-height: 100%; width: max-content; height: max-content; }
+    #gif-image { display: block; max-width: none; height: auto; image-rendering: pixelated; }
+  </style>
+</head>
+<body><main>
+  <nav class="site-nav" aria-label="Навигация">
+    <a id="gif-back" href="romb-atlas.html">Атлас и GIF</a>
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+  </nav>
+  <h1 id="gif-heading">Просмотр GIF</h1>
+  <div class="commands gif-tools" role="group" aria-label="Масштаб GIF">
+    <button class="gz-hx" id="gif-less" type="button" title="Уменьшить GIF" aria-label="Уменьшить GIF"><span class="gz-nm">−</span></button>
+    <button class="gz-hx" id="gif-more" type="button" title="Увеличить GIF" aria-label="Увеличить GIF"><span class="gz-nm">+</span></button>
+    <button class="gz-hx" id="gif-fit" type="button" title="Вписать GIF в окно" aria-label="Вписать GIF в окно"><span class="gz-nm">Вписать</span></button>
+    <button class="gz-hx" id="gif-one" type="button" title="Исходный размер GIF" aria-label="Исходный размер GIF"><span class="gz-nm">1:1</span></button>
+    <a class="gz-hx" id="gif-download" download title="Скачать исходный GIF" aria-label="Скачать исходный GIF"><span class="gz-nm">Скачать GIF</span></a>
+  </div>
+  <p class="progress" id="gif-status">Загрузка…</p>
+  <div id="gif-viewport" tabindex="0" aria-label="Просмотр GIF. Масштаб можно изменить колёсиком.">
+    <div class="gif-surface"><img id="gif-image" alt="Анимация ромбового Маятника"></div>
+  </div>
+  <p class="hint">Колесо меняет масштаб. Клавиши + и − увеличивают и уменьшают GIF, 0 вписывает его в окно.</p>
+</main><script>
+(() => {
+  'use strict';
+  const byId = id => document.getElementById(id);
+  const viewport = byId('gif-viewport');
+  const image = byId('gif-image');
+  const status = byId('gif-status');
+  const url = new URL(location.href);
+  const requestedSize = Number(url.searchParams.get('size'));
+  const size = [8, 16, 32, 64, 128].includes(requestedSize) ? requestedSize : 64;
+  const series = ['diamonds', 'axes'].includes(url.searchParams.get('series')) ? url.searchParams.get('series') : 'full';
+  const phase = url.searchParams.get('phase') === 'before' ? 'before' : 'cycle';
+  const folder = series === 'full' ? 'romb-gifs/' : 'romb-gifs/' + series + '/';
+  const source = folder + size + '-' + phase + '.gif';
+  const names = {full: 'Черновик · поле целиком', diamonds: 'Два ромба', axes: 'Поле с центральными осями'};
+  byId('gif-heading').textContent = names[series] + ' · ' + size + ' строк';
+  byId('gif-back').href = 'romb-atlas.html?size=' + size;
+  byId('gif-download').href = source;
+  let scale = 1;
+  let fitted = true;
+
+  function applyScale(value, x, y) {
+    if (!image.naturalWidth) return;
+    const old = image.getBoundingClientRect();
+    const xRatio = old.width ? Math.max(0, Math.min(1, (x - old.left) / old.width)) : 0.5;
+    const yRatio = old.height ? Math.max(0, Math.min(1, (y - old.top) / old.height)) : 0.5;
+    scale = Math.max(0.25, Math.min(24, value));
+    image.style.width = Math.round(image.naturalWidth * scale) + 'px';
+    if (!fitted && Number.isFinite(x)) {
+      const next = image.getBoundingClientRect();
+      viewport.scrollLeft += next.left + xRatio * next.width - x;
+      viewport.scrollTop += next.top + yRatio * next.height - y;
+    }
+    status.textContent = (phase === 'before' ? 'До цикла' : 'Цикл') + ' · ' +
+      image.naturalWidth + ' × ' + image.naturalHeight + ' px · ×' + new Intl.NumberFormat('ru', {maximumFractionDigits: 2}).format(scale);
+  }
+
+  function fit() {
+    if (!image.naturalWidth) return;
+    fitted = true;
+    applyScale(Math.min(viewport.clientWidth / image.naturalWidth, viewport.clientHeight / image.naturalHeight));
+    viewport.scrollTo(0, 0);
+  }
+
+  function zoom(factor, x, y) {
+    fitted = false;
+    applyScale(scale * factor, x, y);
+  }
+
+  image.addEventListener('load', fit);
+  image.addEventListener('error', () => {status.textContent = 'GIF не загрузился.';});
+  viewport.addEventListener('wheel', event => {
+    if (!event.deltaY) return;
+    event.preventDefault();
+    zoom(event.deltaY < 0 ? 1.25 : 0.8, event.clientX, event.clientY);
+  }, {passive: false});
+  viewport.addEventListener('keydown', event => {
+    if (!['+', '=', '-', '−', '0'].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === '0') fit();
+    else zoom(event.key === '+' || event.key === '=' ? 1.25 : 0.8);
+  });
+  byId('gif-less').addEventListener('click', () => zoom(0.8));
+  byId('gif-more').addEventListener('click', () => zoom(1.25));
+  byId('gif-fit').addEventListener('click', fit);
+  byId('gif-one').addEventListener('click', () => {fitted = false; applyScale(1);});
+  new ResizeObserver(() => {if (fitted) fit();}).observe(viewport);
+  image.src = source;
+})();
+</script></body>
+</html>

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="../../_js/grozd.css">
   <link rel="stylesheet" href="../../wolfram/style.css?v=001">
   <script defer src="../../_js/hub-button-text.js"></script>
-  <script defer src="romb-atlas.js?v=1"></script>
+  <script defer src="romb-atlas.js?v=3"></script>
   <style>
     main { max-width: 1100px; }
     .atlas-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
@@ -21,7 +21,8 @@
     .template p { margin: 4px 0; font-size: 12px; }
     .templates canvas { image-rendering: pixelated; }
     .template .match { color: var(--cyan); }
-    .animation-results { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: baseline; margin-bottom: 12px; }
+    .animation-results { display: grid; gap: 5px; margin-bottom: 12px; }
+    .animation-group { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
     .animation-results a { white-space: nowrap; }
     #atlas-more { margin-top: 12px; }
     #atlas-more[hidden] { display: none; }
@@ -46,6 +47,15 @@
         </select>
       </span>
     </label>
+    <label>Центральные оси
+      <span class="gz-hx value-control">
+        <select id="atlas-axis">
+          <option value="0">Все фигуры</option><option value="1">Любая ось</option>
+          <option value="2">Ось ветви ←</option><option value="3">Ось ветви →</option>
+          <option value="4">Обе оси</option>
+        </select>
+      </span>
+    </label>
     <label class="check"><input id="atlas-match" type="checkbox"> Только совпадения с обычным Маятником</label>
   </div>
   <p id="atlas-status" role="status">Загружается атлас…</p>
@@ -58,8 +68,8 @@
   <section class="explanation" aria-labelledby="sampling">
     <h2 id="sampling">Как собран атлас</h2>
     <p>Ширина поля 2N−1, «Перескок» с первого хода. Выборка включает первый и чётные кадры до заполнения поля, затем по одному кадру в той же фазе каждого круга маршрута. На высоте 64 добавлен кадр 2096. Для каждой одноцветной 8-связной фигуры из четырёх клеток и более проверены вертикальная, горизонтальная и обе диагональные оси.</p>
-    <p>Ветви обозначены стрелками по их начальному направлению. Стрелка в карточке означает пересечение шаблона с контуром этой ветви хотя бы на одном выбранном кадре. Обе стрелки отмечают шаблон, встречавшийся в обеих ветвях. Точные формы сверены с опубликованными шаблонами обычного Маятника на 128, 256, 512, 1024, 2048 и 4096 строках и с дополнением 128.</p>
-    <p>GIF до цикла содержит каждый кадр от пустого поля до начала повтора. GIF цикла охватывает весь период, у длинных периодов сохранено до 240 равномерно распределённых кадров. <a href="romb-atlas.json">Данные атласа</a> · <a href="romb-gifs/index.json">Номера кадров GIF</a>.</p>
+    <p>Стрелки обозначают начальные направления ветвей. Фильтр «Центральные оси» выделяет шаблоны, пересекавшие движущийся центральный столбец выбранной ветви. «Обе оси» включает совпадения, найденные в разных кадрах. Точные формы сверены с опубликованными шаблонами обычного Маятника на 128, 256, 512, 1024, 2048 и 4096 строках и с дополнением 128.</p>
+    <p>«Черновики» показывают исходное полное поле. «Два ромба» ставят вырезки рядом, а совпавшую вторую скрывают. «Поле с осями» выделяет центральные столбцы и осесимметричные фигуры, которые их пересекают. Фиолетовый отмечает ветвь ←, зелёный — ветвь →, золотой — обе. В верхней строке новых GIF F обозначает кадр, C0 — разгон, C1 — записанный круг. <a href="romb-atlas.json?v=2">Данные атласа</a>.</p>
   </section>
 </main></body>
 </html>
