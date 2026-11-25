@@ -4,59 +4,82 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.001</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.002</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
   <script defer src="mayatnik-core.js"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=001"></script>
+  <script defer src="mayatnik-edge-flow.js"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=002"></script>
   <style>
-    main { max-width: 1040px; }
+    main { max-width: 1040px; --romb-zero: #21627e; --romb-one: #e1f2ec; --romb-border: #476773; --romb-outline: #e9bd74; }
     header { margin-bottom: 18px; }
-    .romb-controls { border: 0; margin: 0; padding: 0; align-items: center; }
-    .romb-controls > label { color: var(--muted); font-size: 12px; }
-    .romb-board { border: 1px solid var(--line); background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
-    .romb-board canvas { width: min(100%, 820px); height: auto; }
+    .romb-controls { border: 0; margin: 0; padding: 0; align-items: end; row-gap: 8px; }
+    .romb-setting { display: grid; color: var(--muted); font-size: 12px; }
+    .romb-setting .gz-hx { color: var(--text); }
+    #romb-step-size, #romb-step-size::-webkit-inner-spin-button { appearance: auto; }
+    .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
+    .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
+    .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
+    .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
+    .romb-board .romb-zoomed:active { cursor: grabbing; }
+    .romb-announcement { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; margin: 0; }
     .legend .empty { background: #0b1620; }
-    .legend .zero { background: #164e65; }
-    .legend .one { background: #e1f2ec; }
-    .legend .active { background: linear-gradient(90deg, #e9bd74 50%, #bfa7f3 50%); }
+    .legend .zero { background: var(--romb-zero); }
+    .legend .one { background: var(--romb-one); }
+    .legend .active { background: var(--romb-outline); }
     .explanation { margin-bottom: 0; }
   </style>
 </head>
 <body>
-  <main>
+  <main id="rhomb-pendulum">
     <nav class="site-nav" aria-label="Разделы Зеркалиуса">
       <a href="Zerkalius-mayatnik.html">Маятник</a>
       <a href="../wolfram/">Конусная лаборатория</a>
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.001</small></h1>
-      <p class="lead">При размере 256 XOR-треугольник раскрывается до 256 бит в 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок на общем поле.</p>
+      <h1>Ромбовый Маятник <small>черновик v0.002</small></h1>
+      <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
-      <button type="button" class="gz-hx" id="romb-play" aria-pressed="false" title="Включить или остановить анимацию ромба" aria-label="Анимация">
+      <button type="button" class="gz-hx" id="romb-play" aria-pressed="false" title="Запустить анимацию или остановить расчёт" aria-label="Анимация">
         <span class="gz-ic" id="romb-play-icon" aria-hidden="true">▶</span><span class="gz-nm">Анимация</span>
       </button>
-      <button type="button" class="gz-hx" id="romb-step" title="Передвинуть ромб на следующую позицию" aria-label="Следующий проход">
+      <button type="button" class="gz-hx" id="romb-step" title="Выполнить выбранное число проходов" aria-label="Сделать шаг">
         <span class="gz-ic" aria-hidden="true">▸▏</span><span class="gz-nm">Шаг</span>
       </button>
       <button type="button" class="gz-hx" id="romb-reset" title="Очистить поле и показать первый ромб" aria-label="Начать сначала">
         <span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span>
       </button>
-      <label for="romb-depth">Строк до середины</label>
-      <span class="gz-hx value-control">
-        <select id="romb-depth" title="Выбрать высоту растущей половины ромба">
-          <option>32</option><option>64</option><option>128</option><option selected>256</option>
-        </select>
-      </span>
+      <label class="romb-setting">Высота поля, N
+        <span class="gz-hx value-control">
+          <select id="romb-size" title="Выбрать число строк всего поля">
+            <option>64</option><option>128</option><option>256</option><option selected>512</option>
+            <option>1024</option><option>2048</option><option>4096</option>
+          </select>
+        </span>
+      </label>
+      <label class="romb-setting">Ширина поля
+        <span class="gz-hx value-control">
+          <select id="romb-width" title="Выбрать ширину поля в столбцах">
+            <option value="2">2N−1</option><option value="4">4N−1</option>
+          </select>
+        </span>
+      </label>
+      <label class="romb-setting">Проходов за шаг
+        <span class="gz-hx value-control">
+          <input id="romb-step-size" type="number" min="1" max="16384" step="1" value="1" title="Указать число проходов на одно нажатие или такт анимации">
+        </span>
+      </label>
     </fieldset>
     <p id="romb-frame" class="progress"></p>
+    <p id="romb-announcement" class="romb-announcement" aria-live="polite"></p>
     <div class="romb-board">
-      <canvas id="romb-field" width="774" height="520" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame"></canvas>
+      <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
     </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
+    <p id="romb-zoom-help" class="hint">Колесо меняет масштаб под указателем. Увеличенное поле можно перетаскивать. С клавиатуры работают +, − и 0 для вписывания.</p>
     <div class="legend" aria-label="Цвета поля">
       <span><i class="one" aria-hidden="true"></i>1</span>
       <span><i class="zero" aria-hidden="true"></i>0</span>
@@ -66,7 +89,8 @@
     <section class="explanation" aria-labelledby="romb-rule">
       <h2 id="romb-rule">Как строится ромб</h2>
       <p>Верх считает обычное ядро Маятника. В середине самый широкий ряд занимает две строки. Ниже ширина уменьшается на один бит в каждой строке. Чтобы получить очередной бит сужения, складываем по XOR биты предыдущей строки от левого края до клетки над ним слева. На пустом поле этот шаг восстанавливает ряды верхнего треугольника в обратном порядке.</p>
-      <p>Обе вершины вместе сдвигаются по столбцам 0, −1, +1, −2, +2… Каждый проход добавляет результат через XOR к старым битам внутри ромба. После последнего прохода анимация снова начинает с первого ромба на пустом поле.</p>
+      <p>Обе вершины вместе сдвигаются на 0, −1, +1, −2, +2… столбцов относительно центра. На границах срабатывает штатный отскок Маятника. Положения возвращаются к центру, затем продолжаются к краям. Части ромба за границей поля обрезаются, внутри сохраняется накопление через XOR.</p>
+      <p>N — полная высота ромба. При 4096 строках доступны 8191 и 16383 столбца. Каждый шаг строит все выбранные проходы по порядку, а номер кадра продолжает расти при развороте.</p>
     </section>
   </main>
 </body>
