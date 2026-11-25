@@ -35,7 +35,7 @@
     colours.classList.toggle('gz-on', open && axes);
     direction.setAttribute('aria-pressed', String(open && vertical));
     direction.classList.toggle('gz-on', open && vertical);
-    if (open && !frame.hasAttribute('src')) frame.src = 'mayatnik/romb.html?hub=four&v=008';
+    if (open && !frame.hasAttribute('src')) frame.src = 'mayatnik/romb.html?hub=four&v=009';
     if (open && !pausedOriginal && !pause.disabled && original.dataset.paused === 'false') {
       pause.click();
       pausedOriginal = true;

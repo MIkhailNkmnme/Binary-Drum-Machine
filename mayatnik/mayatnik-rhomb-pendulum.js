@@ -449,7 +449,9 @@
   function paint() {
     if (hubFour) {
       hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0, hubVertical);
-      frameLabel.textContent = "2047 × 1024 · 2N−1 · " + (hubVertical ? "вверх-вниз · " : "") + "кадр " + formatter.format(frame);
+      const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
+      frameLabel.textContent = "2047 × 1024 · 2N−1 · " + (hubVertical ? "вверх-вниз · " : "") + "кадр " + formatter.format(frame) + target;
+      syncFrameSlider();
       return;
     }
     const rect = canvas.getBoundingClientRect();
@@ -553,6 +555,19 @@
     }
   }
 
+  function syncFrameSlider() {
+    if (frame > normalSliderMax) {
+      const span = 2 * field.W + 1;
+      normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
+    }
+    const end = cycle?.period ? cycle.start + cycle.period - 1 : normalSliderMax;
+    const limit = String(end);
+    if (frameSlider.max !== limit) frameSlider.max = limit;
+    const sliderValue = String(seekTarget ?? frame);
+    if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    return end;
+  }
+
   function updateLabels(cssScale, dpr) {
     const {W, H} = field;
     const position = frame ? " · столбец " + formatter.format(column + 1) + " из " + formatter.format(W) : "";
@@ -564,15 +579,7 @@
       (options.buildAnd ? " · AND" : "");
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
     const period = cycle?.period;
-    const end = period ? cycle.start + period - 1 : normalSliderMax;
-    if (frame > normalSliderMax) {
-      const span = 2 * W + 1;
-      normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
-    }
-    const limit = String(period ? end : normalSliderMax);
-    if (frameSlider.max !== limit) frameSlider.max = limit;
-    const sliderValue = String(seekTarget ?? frame);
-    if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    const end = syncFrameSlider();
     const cycleText = period
       ? "↻ Цикл " + formatter.format(cycle.lap + 1) + " · кадры " + formatter.format(cycle.start) + "–" +
         formatter.format(end) + " · " + formatter.format(end + 1) + " = " + formatter.format(cycle.start)
@@ -821,7 +828,7 @@
     const moving = playing || pending > 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
-    stepButton.disabled = frame === maxFrame;
+    stepButton.disabled = (hubFour ? seekTarget ?? frame : frame) === maxFrame;
     backButton.disabled = (seekTarget ?? frame) === 0;
     play.disabled = frame === maxFrame;
     syncMirrors();
@@ -951,6 +958,10 @@
     togglePlay();
   });
   stepButton.addEventListener("click", () => {
+    if (hubFour) {
+      seek(Math.min(maxFrame, (seekTarget ?? frame) + 1));
+      return;
+    }
     stop();
     pending = stepCount();
     syncTransport();
@@ -996,8 +1007,15 @@
 
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
+    const transport = byId("romb-hub-transport");
+    transport.append(backButton.parentElement, frameSlider, frameLabel);
+    transport.hidden = false;
+    backButton.title = "На один кадр назад";
+    stepButton.title = "На один кадр вперёд";
+    frameSlider.setAttribute("aria-describedby", "romb-frame");
     size.value = "1024";
     width.value = "2";
+    stepSize.value = "1";
     options.wrap = true;
     combinedView.hidden = false;
     hubRenderer = window.MayatnikRhombFour.create(combinedCanvas, byId("romb-vertical"), 2047, 1024);
