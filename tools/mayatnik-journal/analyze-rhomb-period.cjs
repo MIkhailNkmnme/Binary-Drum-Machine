@@ -80,6 +80,14 @@ function measureSize(height, factor, wrap) {
   throw new Error('Не найден ожидаемый период поля ' + height + ' × ' + columns);
 }
 
+function guaranteedSize(height, factor, wrap) {
+  const columns = factor * height - 1;
+  const route = wrap ? 2 * columns : 4 * (columns - 1);
+  const returnInterval = height / 2 * route;
+  return {rows: height, factor, width: columns, edge: wrap ? 'wrap' : 'bounce',
+    referenceFrame: columns, routePeriod: route, returnInterval, returnFrame: columns + returnInterval};
+}
+
 function analyze() {
   const simulation = createModel(rows, width);
   const current = Buffer.from(simulation.val.buffer, simulation.val.byteOffset, simulation.val.byteLength);
@@ -142,7 +150,9 @@ function analyze() {
     },
     phases,
     sizes: [8, 16, 32, 64, 128].flatMap(height =>
-      [2, 4].flatMap(factor => [true, false].map(wrap => measureSize(height, factor, wrap))))
+      [2, 4].flatMap(factor => [true, false].map(wrap => measureSize(height, factor, wrap)))),
+    guaranteedSizes: [256, 512, 1024, 2048, 4096].flatMap(height =>
+      [2, 4].flatMap(factor => [true, false].map(wrap => guaranteedSize(height, factor, wrap))))
   };
   return {report, illustrations};
 }

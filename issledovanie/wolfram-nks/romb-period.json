@@ -292,5 +292,207 @@
       "rounds": 64,
       "period": 130560
     }
+  ],
+  "guaranteedSizes": [
+    {
+      "rows": 256,
+      "factor": 2,
+      "width": 511,
+      "edge": "wrap",
+      "referenceFrame": 511,
+      "routePeriod": 1022,
+      "returnInterval": 130816,
+      "returnFrame": 131327
+    },
+    {
+      "rows": 256,
+      "factor": 2,
+      "width": 511,
+      "edge": "bounce",
+      "referenceFrame": 511,
+      "routePeriod": 2040,
+      "returnInterval": 261120,
+      "returnFrame": 261631
+    },
+    {
+      "rows": 256,
+      "factor": 4,
+      "width": 1023,
+      "edge": "wrap",
+      "referenceFrame": 1023,
+      "routePeriod": 2046,
+      "returnInterval": 261888,
+      "returnFrame": 262911
+    },
+    {
+      "rows": 256,
+      "factor": 4,
+      "width": 1023,
+      "edge": "bounce",
+      "referenceFrame": 1023,
+      "routePeriod": 4088,
+      "returnInterval": 523264,
+      "returnFrame": 524287
+    },
+    {
+      "rows": 512,
+      "factor": 2,
+      "width": 1023,
+      "edge": "wrap",
+      "referenceFrame": 1023,
+      "routePeriod": 2046,
+      "returnInterval": 523776,
+      "returnFrame": 524799
+    },
+    {
+      "rows": 512,
+      "factor": 2,
+      "width": 1023,
+      "edge": "bounce",
+      "referenceFrame": 1023,
+      "routePeriod": 4088,
+      "returnInterval": 1046528,
+      "returnFrame": 1047551
+    },
+    {
+      "rows": 512,
+      "factor": 4,
+      "width": 2047,
+      "edge": "wrap",
+      "referenceFrame": 2047,
+      "routePeriod": 4094,
+      "returnInterval": 1048064,
+      "returnFrame": 1050111
+    },
+    {
+      "rows": 512,
+      "factor": 4,
+      "width": 2047,
+      "edge": "bounce",
+      "referenceFrame": 2047,
+      "routePeriod": 8184,
+      "returnInterval": 2095104,
+      "returnFrame": 2097151
+    },
+    {
+      "rows": 1024,
+      "factor": 2,
+      "width": 2047,
+      "edge": "wrap",
+      "referenceFrame": 2047,
+      "routePeriod": 4094,
+      "returnInterval": 2096128,
+      "returnFrame": 2098175
+    },
+    {
+      "rows": 1024,
+      "factor": 2,
+      "width": 2047,
+      "edge": "bounce",
+      "referenceFrame": 2047,
+      "routePeriod": 8184,
+      "returnInterval": 4190208,
+      "returnFrame": 4192255
+    },
+    {
+      "rows": 1024,
+      "factor": 4,
+      "width": 4095,
+      "edge": "wrap",
+      "referenceFrame": 4095,
+      "routePeriod": 8190,
+      "returnInterval": 4193280,
+      "returnFrame": 4197375
+    },
+    {
+      "rows": 1024,
+      "factor": 4,
+      "width": 4095,
+      "edge": "bounce",
+      "referenceFrame": 4095,
+      "routePeriod": 16376,
+      "returnInterval": 8384512,
+      "returnFrame": 8388607
+    },
+    {
+      "rows": 2048,
+      "factor": 2,
+      "width": 4095,
+      "edge": "wrap",
+      "referenceFrame": 4095,
+      "routePeriod": 8190,
+      "returnInterval": 8386560,
+      "returnFrame": 8390655
+    },
+    {
+      "rows": 2048,
+      "factor": 2,
+      "width": 4095,
+      "edge": "bounce",
+      "referenceFrame": 4095,
+      "routePeriod": 16376,
+      "returnInterval": 16769024,
+      "returnFrame": 16773119
+    },
+    {
+      "rows": 2048,
+      "factor": 4,
+      "width": 8191,
+      "edge": "wrap",
+      "referenceFrame": 8191,
+      "routePeriod": 16382,
+      "returnInterval": 16775168,
+      "returnFrame": 16783359
+    },
+    {
+      "rows": 2048,
+      "factor": 4,
+      "width": 8191,
+      "edge": "bounce",
+      "referenceFrame": 8191,
+      "routePeriod": 32760,
+      "returnInterval": 33546240,
+      "returnFrame": 33554431
+    },
+    {
+      "rows": 4096,
+      "factor": 2,
+      "width": 8191,
+      "edge": "wrap",
+      "referenceFrame": 8191,
+      "routePeriod": 16382,
+      "returnInterval": 33550336,
+      "returnFrame": 33558527
+    },
+    {
+      "rows": 4096,
+      "factor": 2,
+      "width": 8191,
+      "edge": "bounce",
+      "referenceFrame": 8191,
+      "routePeriod": 32760,
+      "returnInterval": 67092480,
+      "returnFrame": 67100671
+    },
+    {
+      "rows": 4096,
+      "factor": 4,
+      "width": 16383,
+      "edge": "wrap",
+      "referenceFrame": 16383,
+      "routePeriod": 32766,
+      "returnInterval": 67104768,
+      "returnFrame": 67121151
+    },
+    {
+      "rows": 4096,
+      "factor": 4,
+      "width": 16383,
+      "edge": "bounce",
+      "referenceFrame": 16383,
+      "routePeriod": 65528,
+      "returnInterval": 134201344,
+      "returnFrame": 134217727
+    }
   ]
 }

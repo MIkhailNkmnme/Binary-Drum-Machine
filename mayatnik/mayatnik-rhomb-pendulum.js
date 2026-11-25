@@ -40,6 +40,8 @@
   const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false, markRepeats: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
+  const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
+  let hubRenderer, hubActive = false, hubAxes = false;
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
@@ -82,6 +84,7 @@
   }
 
   function save() {
+    if (hubFour) return;
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
       combination: combineMode.value, flipSecond: flipSecond.checked, ...options
@@ -353,6 +356,11 @@
   }
 
   function paint() {
+    if (hubFour) {
+      hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0);
+      frameLabel.textContent = "2047 × 1024 · четыре треугольника · кадр " + formatter.format(frame);
+      return;
+    }
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const {W, H, val} = field;
@@ -708,7 +716,29 @@
   speed.addEventListener("change", save);
   for (const control of [combineMode, flipSecond]) control.addEventListener("change", () => { save(); redraw(); });
 
-  if (inline) {
+  if (hubFour) {
+    document.documentElement.classList.add("romb-hub-four");
+    size.value = "1024";
+    width.value = "2";
+    options.wrap = true;
+    combinedView.hidden = false;
+    hubRenderer = window.MayatnikRhombFour.create(combinedCanvas, 2047, 1024);
+    combinedCanvas.addEventListener("dblclick", togglePlay);
+    window.addEventListener("message", event => {
+      if (event.source !== window.parent || event.origin !== location.origin || event.data?.type !== "zerk-hub-four") return;
+      const active = event.data.active === true;
+      hubAxes = event.data.axes === true;
+      if (active !== hubActive) {
+        hubActive = active;
+        if (!active) stop();
+        else if (!playing) togglePlay();
+      }
+      redraw();
+    });
+    window.addEventListener("keydown", event => {
+      if (event.key === "Escape") window.parent.postMessage({type: "zerk-hub-four-close"}, location.origin === "null" ? "*" : location.origin);
+    });
+  } else if (inline) {
     restore(window.openai?.widgetState?.modelContent);
     window.addEventListener("openai:set_globals", event => {
       const before = size.value + "|" + width.value;
@@ -737,6 +767,7 @@
 
   updateSpeed();
   reset();
+  if (hubFour && window.parent === window) togglePlay();
   new ResizeObserver(redraw).observe(canvas);
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
 })();

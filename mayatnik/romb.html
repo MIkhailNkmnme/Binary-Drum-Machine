@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.004</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.005</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
   <script defer src="mayatnik-core.js"></script>
   <script defer src="mayatnik-edge-flow.js"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=004"></script>
+  <script defer src="mayatnik-rhomb-four.js?v=1"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=005"></script>
   <style>
     main {
       max-width: 1040px;
@@ -39,6 +40,12 @@
     .romb-board .romb-zoomed:active { cursor: grabbing; }
     .romb-combine-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
     #romb-combined { width: min(100%, 380px); height: auto; }
+    .romb-hub-four body { overflow: hidden; background: #07131e; }
+    .romb-hub-four main { width: 100%; max-width: none; height: 100dvh; padding: 0; }
+    .romb-hub-four main > :not(#romb-combined-view, #romb-frame) { display: none !important; }
+    .romb-hub-four #romb-combined-view { height: 100%; }
+    .romb-hub-four #romb-combined { width: 100%; height: 100%; object-fit: contain; }
+    .romb-hub-four #romb-frame { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); margin: 0; padding: 4px 8px; background: #07131e; white-space: nowrap; }
     #romb-frame-slider { display: block; width: 100%; margin: 0 0 10px; accent-color: var(--cyan); }
     #romb-cycle-note { margin: 0 0 10px; color: var(--cyan); }
     .romb-announcement { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; margin: 0; }
@@ -58,7 +65,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.004</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.005</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">

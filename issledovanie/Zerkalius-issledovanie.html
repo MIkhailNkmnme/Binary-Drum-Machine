@@ -1,4 +1,4 @@
-<!-- МАЯ-730 · v0.155. Атлас ромбовых шаблонов и GIF. -->
+<!-- МАЯ-731 · v0.156. Ромбовый Маятник, периоды до 4096 и выпуск. -->
 <!-- МАЯ-728 · v0.154. Точный период ромбового Маятника. -->
 <!-- МАЯ-725 · v0.153. Опыт с ромбовым Маятником. -->
 <!-- ПОМ-041 · v0.152. Атласы центральной оси Маятника. -->
@@ -97,7 +97,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Исследования · v0.155</title>
+<title>Zerkalius Исследования · v0.156</title>
 <style>
   :root{ --bg:#12141a; --panel:#1a1d26; --line:#2b3040; --fg:#d8dce6; --dim:#7d8598;
     --up:#7cd4ff; --dn:#ffcf6b; --mem:#ff5d5d; --pink:#ff8a8a; --gold:#ffcc00; }
@@ -257,7 +257,12 @@
 <aside class="key"><b><a href="image-journal/">Журнал картинок</a></b>. Кадры и иллюстрации с источниками и способами построения.<br><b><a href="image-journal/#central-axis-templates">Построение выделением шаблонов по центральной оси</a></b> · GIF из Маятника, 512 строк.</aside>
 <aside class="key"><b><a href="../mayatnik/scale-atlases/">Атласы масштабов Маятника</a></b>. Точные фазы уменьшения, выбор кадра и размера, сборка из разных кадров.</aside>
 <aside class="key"><b>Фигуры центральной оси</b> · <a href="../mayatnik/axis-1024/">1024</a> · <a href="../mayatnik/axis-2048/">2048</a> · <a href="../mayatnik/axis-4096/">4096</a>. Крупные фигуры, исходные кадры и архивы полных расчётов.</aside>
-<aside class="key"><b><a href="../mayatnik/romb.html">Ромбовый Маятник</a></b>. Один полный проход растёт до середины, сужается до одной клетки и сдвигается по маршруту Маятника. <a href="wolfram-nks/romb-period.html">Точные периоды</a> · <a href="wolfram-nks/romb-atlas.html">Атлас шаблонов и GIF</a>.</aside>
+<aside class="key" id="rhomb-release">
+  <b><a href="../mayatnik/romb.html">Ромбовый Маятник</a></b>. Поле от 8 до 4096 строк, две ветви и два режима края. Шаг в обе стороны, скорость, масштаб, переход к кадру и разворот при касании. «Повторы» окрашивают совпадающие области. Два ромба можно совместить по центрам, отразить вторую сторону и сравнить наложением, XOR или AND.<br>
+  <a href="wolfram-nks/romb-period.html#sizes">Точные периоды для 8–128 строк</a> · <a href="wolfram-nks/romb-period.html#large-sizes">Гарантированный возврат до 4096 строк</a> · <a href="wolfram-nks/romb-atlas.html">Атлас симметричных фигур и центральных осей</a>.<br>
+  В <a href="../">Хабе</a>, в панели «Сравнение», отдельный вид из четырёх треугольных половин двух ромбов на поле 2047 × 1024. «Цвет осей» включает раскраску как в GIF.<br>
+  <a href="image-journal/#rhomb-gifs">Серии GIF в Журнале</a> · <a href="../rezultaty/Zerkalius-rezultaty.html#rhomb-axes">Ролик в Битмультфильмах</a>.
+</aside>
 <aside class="key"><b>Живые обои для компьютера.</b> <a href="desktop-wallpapers/">Маятники, Зеркалиусы и ромбы в 4K</a>. Девять широких работ с видео и PNG для рабочего стола.</aside>
 <aside class="key"><b>Стивен Вольфрам · Простые программы.</b> <a href="wolfram-nks/">Глава 2 по-русски и лаборатория правил 254, 250, 90, 30 и 110</a>. Полный перевод с оригинальными рисунками, примечаниями и PDF. Первые опыты: запуск, шаги и изменение таблицы правила.</aside>
 <aside class="key"><b>Зеркалиус · Вольфрам.</b> <a href="../wolfram/">Конусная лаборатория: правила 0–255, память XOR и порядок прохода</a>. Статьи: <a href="../wolfram/mayatnik.html">Маятник и его алгоритмы</a>, <a href="../wolfram/animatrix.html">Две Аниматрицы: Code и Маятник/Excel, отдельное сравнение с Вольфрамом</a>. <a href="wolfram-nks/xor-pendulum-comparison.html">Поиск XOR-маятника во всей книге</a>. <a href="wolfram-nks/experiments.html">Опыты Зеркалиуса по Вольфраму</a>. <a href="wolfram-nks/chapter-2-ru-print.pdf">Глава 2 для печати: только русский текст и рисунки</a>.</aside>
