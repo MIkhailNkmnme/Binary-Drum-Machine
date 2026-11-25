@@ -1,0 +1,94 @@
+{
+  "version": "0.003",
+  "revision": "ab9d031a",
+  "settings": {
+    "rows": 64,
+    "width": 127,
+    "edge": "wrap",
+    "initialField": "empty",
+    "changesOfEdgeMode": 0
+  },
+  "cells": 8128,
+  "routePeriod": 254,
+  "firstFullFrame": 127,
+  "firstFieldRepeat": [
+    127,
+    8255
+  ],
+  "firstRouteRepeat": [
+    127,
+    8255
+  ],
+  "period": 8128,
+  "upperBound": 16256,
+  "checkedThrough": 18352,
+  "roundComparisons": [
+    {
+      "rounds": 1,
+      "frame": 381,
+      "differentFromReference": 2745
+    },
+    {
+      "rounds": 2,
+      "frame": 635,
+      "differentFromReference": 2717
+    },
+    {
+      "rounds": 4,
+      "frame": 1143,
+      "differentFromReference": 2609
+    },
+    {
+      "rounds": 8,
+      "frame": 2159,
+      "differentFromReference": 2456
+    },
+    {
+      "rounds": 16,
+      "frame": 4191,
+      "differentFromReference": 1645
+    },
+    {
+      "rounds": 32,
+      "frame": 8255,
+      "differentFromReference": 0
+    },
+    {
+      "rounds": 64,
+      "frame": 16383,
+      "differentFromReference": 0
+    }
+  ],
+  "photographed": {
+    "frame": 2096,
+    "column": 32,
+    "branchColumns": [
+      95,
+      32
+    ],
+    "zeros": 3364,
+    "ones": 4764,
+    "matches": [
+      2096,
+      10224,
+      18352
+    ]
+  },
+  "phases": [
+    {
+      "frame": 1842,
+      "differsFrom2096": 2722,
+      "sha256": "2d459602d97e8adce5b02d93e250bcaf7b9631359e0b368f86ca935d60a3d97c"
+    },
+    {
+      "frame": 2096,
+      "differsFrom2096": 0,
+      "sha256": "bbaaf5689d00f3f45b1d98e2bc8dc3c9a03a4cd88c4eb5ee29cd25a1e410482d"
+    },
+    {
+      "frame": 10224,
+      "differsFrom2096": 0,
+      "sha256": "bbaaf5689d00f3f45b1d98e2bc8dc3c9a03a4cd88c4eb5ee29cd25a1e410482d"
+    }
+  ]
+}

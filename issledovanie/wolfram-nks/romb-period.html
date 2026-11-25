@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Точный период ромбового Маятника на 64 строках. Состояния кадров 2096 и 10224, начало цикла и роль пустого кадра.">
+  <title>Период ромбового Маятника · 64 строки</title>
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <style>
+    main { max-width: 920px; }
+    figure { margin: 20px 0; }
+    figure img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+    figcaption { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--line); }
+    pre { overflow: auto; border: 1px solid var(--line); padding: 10px; }
+  </style>
+</head>
+<body><main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+    <a href="../Zerkalius-issledovanie.html">Исследования</a>
+  </nav>
+  <header>
+    <h1>Когда повторяется ромбовый Маятник</h1>
+    <p class="lead">Кадр <strong>2096</strong> точно повторяется на кадре <strong>10224</strong>. Период составляет <strong>8128 ходов</strong>. Первый повтор во всей последовательности — кадр <strong>8255</strong>, совпадающий с кадром <strong>127</strong>.</p>
+    <p class="hint">26 ноября 2026 · Ромбовый Маятник v0.003 · 64 строки, 127 столбцов, пустое начало, «Перескок» включён с первого прохода.</p>
+  </header>
+
+  <section aria-labelledby="comparison">
+    <h2 id="comparison">Рисунок и положение ромбов</h2>
+    <figure>
+      <img src="romb-period.png" width="389" height="64" alt="Три точных поля. Слева кадр 1842. В центре кадр 2096. Справа его побитовый повтор на кадре 10224.">
+      <figcaption><span>1842</span><span>2096</span><span>10224</span></figcaption>
+    </figure>
+    <p>Маршрут возвращается в ту же фазу через 254 хода. Каждая из двух ветвей делает по 127 перемещений, а ходы ветвей чередуются. На кадрах 1842 и 2096 центры находятся в одних и тех же столбцах 32 и 95, однако <strong>2722 клетки</strong> различаются. Кадры 2096 и 10224 совпадают во всех 8128 клетках и в положении ветвей.</p>
+    <p>На исходном снимке из основного поля удалось однозначно прочитать 7862 клетки по двум цветам палитры. Все они совпали с расчётом кадра 2096. Для остальных 266 центральные отсчёты не дали чистого цвета бита. Боковые склейки показывают копии половин поля, поэтому полное сравнение выполнено по основному растру.</p>
+  </section>
+
+  <section aria-labelledby="zero">
+    <h2 id="zero">Кадр 0</h2>
+    <p>Крайнее левое положение ползунка открывает пустой кадр 0. При обычном ходе он встречается один раз. Уже первый проход записывает единицу в верхнюю вершину. Последующие проходы меняют значения заполненных клеток между 0 и 1 и сохраняют их заполненность. На кадре 127 заполнено всё поле. Именно этот кадр первым возвращается в цикле.</p>
+  </section>
+
+  <section aria-labelledby="period">
+    <h2 id="period">Почему период равен 32 кругам</h2>
+    <p>После заполнения верхняя строка постоянна. Ниже каждый проход прибавляет к прежнему значению клетки по XOR выражение из более высоких строк. При одном круге маршрута из 254 ходов это даёт преобразование вида <code>T = I + L</code>. Матрица <code>L</code> строго нижнетреугольная по блокам строк, если постоянную единицу поместить в первый блок. При 64 блоках <code>L<sup>64</sup> = 0</code>.</p>
+    <p>Над двоичными битами <code>(I + L)<sup>64</sup> = I + L<sup>64</sup></code>. Поэтому возврат происходит за 64 круга или за делитель 64. Сравнение полного поля кадра 127 с той же фазой на следующих кругах даёт:</p>
+    <table>
+      <thead><tr><th scope="col">Кругов</th><th scope="col">Кадр</th><th scope="col">Различий с кадром 127</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>381</td><td>2745</td></tr>
+        <tr><td>2</td><td>635</td><td>2717</td></tr>
+        <tr><td>4</td><td>1143</td><td>2609</td></tr>
+        <tr><td>8</td><td>2159</td><td>2456</td></tr>
+        <tr><td>16</td><td>4191</td><td>1645</td></tr>
+        <tr><td>32</td><td>8255</td><td>0</td></tr>
+        <tr><td>64</td><td>16383</td><td>0</td></tr>
+      </tbody>
+    </table>
+    <p>32 круга дают 8128 ходов. Дополнительно перебраны все кадры до 18352 включительно. Для кадра 2096 найдены совпадения на кадрах 10224 и 18352. Кандидаты на повтор сверены побайтно.</p>
+  </section>
+
+  <section aria-labelledby="repeat">
+    <h2 id="repeat">Как воспроизвести</h2>
+    <p>Выберите 64 строки, ширину 2N−1 и «Перескок». Выключите «Стоп · Касание», затем нажмите «Сброс». Из кадра 1 выполните шаг на 2095 проходов. Следующий шаг на 8128 проходов даст кадр 10224.</p>
+    <p>Исходник расчёта использует штатные переходы v0.003 и запускается в Node.js 22 или новее. <a href="romb-period.json">Точные числа и SHA-256</a> · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/tools/mayatnik-journal/analyze-rhomb-period.cjs">Исходник расчёта</a>.</p>
+    <pre><code>node tools/mayatnik-journal/analyze-rhomb-period.cjs</code></pre>
+  </section>
+</main></body>
+</html>
