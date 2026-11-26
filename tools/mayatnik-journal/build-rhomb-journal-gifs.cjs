@@ -77,6 +77,7 @@ function symmetry({width, height, pixels}) {
 
 function chooseKeys(item) {
   const lookup = startField(item);
+  const early = [1, 2, 4, 6, 8, 12, 16, 24, 32, 48];
   const windows = [0, 2, 5, 8].map(index => {
     const from = item.images[index];
     const center = Math.max(step, Math.round(from.frame * rows / item.rows / step) * step);
@@ -85,12 +86,13 @@ function chooseKeys(item) {
     return {from, center, candidates};
   });
   const comparisons = new Map();
-  for (const candidate of [...new Set(windows.flatMap(window => window.candidates))].sort((a, b) => a - b)) {
+  const candidates = new Set([...early, ...windows.flatMap(window => window.candidates)]);
+  for (const candidate of [...candidates].sort((a, b) => a - b)) {
     comparisons.set(candidate, symmetry(lookup(candidate)));
   }
 
   const used = new Set();
-  return windows.map(({from, center, candidates}) => {
+  const keys = windows.map(({from, center, candidates}) => {
     const eligible = candidates.filter(frame => !used.has(frame));
     eligible.sort((a, b) => {
       const first = comparisons.get(a), second = comparisons.get(b);
@@ -102,12 +104,27 @@ function chooseKeys(item) {
     used.add(frame);
     const {symmetry: score, axis, cells} = comparisons.get(frame);
     return {frame, sourceFrame: from.frame, palette: from.palette, symmetry: Math.round(score * 100), axis, cells};
-  }).sort((a, b) => a.frame - b.frame);
+  });
+
+  const strongest = Math.max(...keys.map(key => key.symmetry));
+  if (strongest < 65) {
+    const visible = early.filter(frame => !used.has(frame) && comparisons.get(frame).cells >= 16);
+    visible.sort((a, b) => comparisons.get(b).symmetry - comparisons.get(a).symmetry);
+    const frame = visible[0];
+    if (frame !== undefined) {
+      const {symmetry: score, axis, cells} = comparisons.get(frame);
+      const percent = Math.round(score * 100);
+      if (percent > strongest) {
+        keys[0] = {frame, sourceFrame: null, palette: keys[0].palette, symmetry: percent, axis, cells};
+      }
+    }
+  }
+  return keys.sort((a, b) => a.frame - b.frame);
 }
 
 function planPoses(keys) {
   return keys.flatMap((key, phase) => {
-    const first = Math.max(step, key.frame - 4 * step);
+    const first = Math.max((key.frame - 1) % step + 1, key.frame - 4 * step);
     return Array.from({length: poseCount}, (_, i) => {
       const frame = first + i * step;
       return {frame, key: key.frame, phase, palette: key.palette, delay: frame === key.frame ? keyDelay : regularDelay};
@@ -187,7 +204,9 @@ async function main() {
 
 function galleryCard(item) {
   const best = item.keys.reduce((first, key) => key.symmetry > first.symmetry ? key : first);
-  const original = `frame.html?series=${item.id}&amp;palette=${best.palette}&amp;edition=1024`;
+  const original = best.sourceFrame === null
+    ? `<a href="wallpapers.html#${item.id}">Серия на 1024 строки</a>`
+    : `<a href="frame.html?series=${item.id}&amp;palette=${best.palette}&amp;edition=1024">Исходный кадр ${best.sourceFrame}</a>`;
   const axis = best.axis === 'vertical' ? 'вертикальной' : 'горизонтальной';
   const metrics = best.axis ? ` · ${best.symmetry} % совпадений по ${axis} оси` : '';
   return `        <figure id="${item.id}">
@@ -195,7 +214,7 @@ function galleryCard(item) {
           <figcaption>
             <span class="figure-name">${item.name}</span>
             <p class="rhomb-settings">Кадры ${item.keys.map(key => key.frame).join(', ')}${metrics}</p>
-            <span class="figure-links"><a href="gifs/${item.file}">Смотреть GIF</a><a href="gifs/${item.file}" download>Скачать GIF</a><a href="${original}">Исходный кадр ${best.sourceFrame}</a></span>
+            <span class="figure-links"><a href="gifs/${item.file}">Смотреть GIF</a><a href="gifs/${item.file}" download>Скачать GIF</a>${original}</span>
           </figcaption>
         </figure>`;
 }
@@ -225,7 +244,7 @@ function html(items) {
     <header class="rhomb-intro">
       <p class="entry-meta">${items.length} GIF · 3:00 каждая · 512 строк</p>
       <h1>Ромбовые GIF</h1>
-      <p>Для каждого вида выбраны четыре опорных кадра из окрестностей опубликованных построений. Соседние состояния идут с шагом 4. В подписях указана доля единиц, совпавших при отражении лучшего опорного кадра.</p>
+      <p>Для каждого вида выбраны четыре опорных кадра. Если в ранней фазе отражение заметнее, она тоже включена. Соседние состояния идут с шагом 4. В подписях указана доля единиц, совпавших при отражении лучшего опорного кадра.</p>
       <nav class="contents" aria-label="Группы анимаций">
         ${groups.map(([id, label]) => `<a href="#${id}">${label}</a>`).join('\n        ')}
       </nav>

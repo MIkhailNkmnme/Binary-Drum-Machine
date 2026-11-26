@@ -66,12 +66,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 92,
-          "sourceFrame": 247,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 21,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 7894
+          "cells": 13122
         },
         {
           "frame": 316,
@@ -100,8 +100,8 @@
       ],
       "file": "field-2-bounce-and.gif",
       "preview": "field-2-bounce-and.webp",
-      "bytes": 319296,
-      "sha256": "3e66c58687f588245a8ad3d407de87677a5400f9bad77d099aad1ed47554452b"
+      "bytes": 314059,
+      "sha256": "325871c7f95c57f209b83e7c55050ebc8c150bc1a6a836b5a97b7b8a2567e51d"
     },
     {
       "id": "field-2-wrap-xor",
@@ -166,12 +166,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 116,
-          "sourceFrame": 295,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 17,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 9454
+          "cells": 13122
         },
         {
           "frame": 364,
@@ -200,8 +200,8 @@
       ],
       "file": "field-2-wrap-and.gif",
       "preview": "field-2-wrap-and.webp",
-      "bytes": 323353,
-      "sha256": "fc72a3d77d24d5f067944656895ffbe7938b0100f049ab4c4a0590cf8483cf65"
+      "bytes": 315201,
+      "sha256": "40366c317172896c595bae2aa4c0fda0cdc86fa48edae4d35635faa84cdbaea4"
     },
     {
       "id": "field-2-reverse-xor",
@@ -266,12 +266,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 56,
-          "sourceFrame": 176,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 29,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 5554
+          "cells": 13122
         },
         {
           "frame": 204,
@@ -300,8 +300,8 @@
       ],
       "file": "field-2-reverse-and.gif",
       "preview": "field-2-reverse-and.webp",
-      "bytes": 324805,
-      "sha256": "74911900402437ba06d6f88bfe3f49e875ad948f7288c91bfed79f18cdf58da5"
+      "bytes": 325364,
+      "sha256": "36c0427eacd91d56cda717e13c436199ac95de2a836255bf7c2c10baed2d9319"
     },
     {
       "id": "field-4-bounce-xor",
@@ -366,12 +366,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 92,
-          "sourceFrame": 247,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 21,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 7894
+          "cells": 13122
         },
         {
           "frame": 316,
@@ -400,8 +400,8 @@
       ],
       "file": "field-4-bounce-and.gif",
       "preview": "field-4-bounce-and.webp",
-      "bytes": 355659,
-      "sha256": "386e57d95bab55659000b1ca2e754db8ec27a535c32dc153a327fe573d901c1b"
+      "bytes": 350820,
+      "sha256": "eaa06460ad4f797e05716b82f71d069cb2365bb3703c3fbb1f306b90b7525bb4"
     },
     {
       "id": "field-4-wrap-xor",
@@ -466,12 +466,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 116,
-          "sourceFrame": 295,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 17,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 9454
+          "cells": 13122
         },
         {
           "frame": 364,
@@ -500,8 +500,8 @@
       ],
       "file": "field-4-wrap-and.gif",
       "preview": "field-4-wrap-and.webp",
-      "bytes": 360197,
-      "sha256": "38e6e8bb98957022da84753751c3ba94f4235ab91a053f2c09fea8823eeeb9db"
+      "bytes": 352134,
+      "sha256": "d85584057fe829072e9912a6ad96feb384619fbbd7bc117cc515c99561a6d2f4"
     },
     {
       "id": "field-4-reverse-xor",
@@ -566,12 +566,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 56,
-          "sourceFrame": 176,
+          "frame": 1,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 29,
+          "symmetry": 100,
           "axis": "vertical",
-          "cells": 5554
+          "cells": 13122
         },
         {
           "frame": 204,
@@ -600,8 +600,8 @@
       ],
       "file": "field-4-reverse-and.gif",
       "preview": "field-4-reverse-and.webp",
-      "bytes": 329402,
-      "sha256": "bba89ff4642413057c1352da8117042066fa574175a63754af5493d451ddbcab"
+      "bytes": 330512,
+      "sha256": "687e23f1bab93adbf9a63a0eeac5d1825405cac6b0ed02af126bc9feddfd954b"
     },
     {
       "id": "join-left",
@@ -1116,12 +1116,12 @@
       "frames": 64,
       "keys": [
         {
-          "frame": 376,
-          "sourceFrame": 736,
+          "frame": 32,
+          "sourceFrame": null,
           "palette": "amber",
-          "symmetry": 50,
+          "symmetry": 56,
           "axis": "vertical",
-          "cells": 32628
+          "cells": 25687
         },
         {
           "frame": 700,
@@ -1150,8 +1150,8 @@
       ],
       "file": "coin-xor-mirror.gif",
       "preview": "coin-xor-mirror.webp",
-      "bytes": 863300,
-      "sha256": "8cff391a73edd5ec8d702479e8986a1be9dd092b102d10ce43559fbbc3943336"
+      "bytes": 817784,
+      "sha256": "d0526b71d47cf66f0784770b0bb5b0f1654fdd2e9d15a70dc877641a30c97ccb"
     },
     {
       "id": "coin-and",
