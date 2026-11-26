@@ -1,0 +1,73 @@
+.rhomb-intro {
+  padding-block: clamp(2.8rem, 7vw, 6rem) 2.6rem;
+}
+.rhomb-intro h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 6vw, 5rem);
+  line-height: 1.08;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.rhomb-intro > p:not(.entry-meta), .rhomb-recipe p {
+  max-width: 74ch;
+  color: var(--muted);
+}
+.rhomb-series-nav {
+  margin-block: 1rem 1.65rem;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.rhomb-series-nav a {
+  display: inline-block;
+}
+.rhomb-series {
+  margin-block: 2.2rem 0;
+  scroll-margin-top: 1.1rem;
+}
+.rhomb-series h3 {
+  margin: 0;
+  font-size: clamp(1.2rem, 3vw, 1.65rem);
+  line-height: 1.25;
+}
+.rhomb-settings {
+  margin: .2rem 0 .9rem;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.rhomb-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.1rem .85rem;
+}
+.rhomb-grid .image-link {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+}
+.rhomb-grid img {
+  height: 100%;
+  object-fit: contain;
+}
+.rhomb-grid figcaption {
+  display: grid;
+  grid-template-columns: .55rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0 .45rem;
+  overflow-wrap: anywhere;
+}
+.rhomb-grid figcaption small {
+  grid-column: 2;
+  color: var(--muted);
+}
+.rhomb-swatch {
+  width: .55rem;
+  height: .55rem;
+  border-radius: 50%;
+  background: var(--swatch);
+}
+@media (max-width: 56rem) {
+  .rhomb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 37rem) {
+  .rhomb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

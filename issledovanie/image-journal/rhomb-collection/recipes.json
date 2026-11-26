@@ -1,0 +1,2622 @@
+{
+  "initialField": "empty",
+  "palettes": [
+    {
+      "id": "amber",
+      "name": "Янтарь",
+      "background": "#160d18",
+      "zero": "#4d2940",
+      "one": "#ffc06d",
+      "first": "#f48053",
+      "second": "#a28cff",
+      "shared": "#ffe6a3"
+    },
+    {
+      "id": "teal",
+      "name": "Бирюза",
+      "background": "#061c22",
+      "zero": "#16494d",
+      "one": "#a8f8e6",
+      "first": "#61cfed",
+      "second": "#f2a96a",
+      "shared": "#d9ffb0"
+    },
+    {
+      "id": "coral",
+      "name": "Коралл",
+      "background": "#240e1c",
+      "zero": "#653047",
+      "one": "#ffa59d",
+      "first": "#ffc57e",
+      "second": "#e281f0",
+      "shared": "#fff0cc"
+    },
+    {
+      "id": "indigo",
+      "name": "Индиго",
+      "background": "#0c112b",
+      "zero": "#323e78",
+      "one": "#b7c6ff",
+      "first": "#aa8bff",
+      "second": "#55e0db",
+      "shared": "#f4bfff"
+    },
+    {
+      "id": "jade",
+      "name": "Нефрит",
+      "background": "#0b1a12",
+      "zero": "#305440",
+      "one": "#b1ed93",
+      "first": "#e4d76d",
+      "second": "#68dfbb",
+      "shared": "#edffcd"
+    },
+    {
+      "id": "copper",
+      "name": "Медь",
+      "background": "#1c1410",
+      "zero": "#61412f",
+      "one": "#f2ab7c",
+      "first": "#ffd19c",
+      "second": "#62c4bd",
+      "shared": "#f9e8af"
+    },
+    {
+      "id": "violet",
+      "name": "Аметист",
+      "background": "#19102a",
+      "zero": "#4d3370",
+      "one": "#e6b8ff",
+      "first": "#f990bf",
+      "second": "#a7adff",
+      "shared": "#fff2fc"
+    },
+    {
+      "id": "sky",
+      "name": "Лазурь",
+      "background": "#0a192d",
+      "zero": "#244d76",
+      "one": "#97e2ff",
+      "first": "#79aaff",
+      "second": "#a5ed9a",
+      "shared": "#e5ffff"
+    },
+    {
+      "id": "rose",
+      "name": "Фуксия",
+      "background": "#220e26",
+      "zero": "#642d61",
+      "one": "#ffa2e7",
+      "first": "#f974a8",
+      "second": "#94d8ff",
+      "shared": "#ffd9c6"
+    },
+    {
+      "id": "silver",
+      "name": "Серебро",
+      "background": "#121719",
+      "zero": "#424c53",
+      "one": "#e7f2ef",
+      "first": "#a4b8da",
+      "second": "#e5bb8c",
+      "shared": "#fcfff5"
+    }
+  ],
+  "series": [
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "bounce",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-bounce-xor",
+      "group": "build-modes",
+      "name": "Отскок · 2N−1 · XOR",
+      "width": 255,
+      "images": [
+        {
+          "frame": 258,
+          "palette": "amber",
+          "file": "png/field-2-bounce-xor/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 266,
+          "palette": "teal",
+          "file": "png/field-2-bounce-xor/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 281,
+          "palette": "coral",
+          "file": "png/field-2-bounce-xor/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 304,
+          "palette": "indigo",
+          "file": "png/field-2-bounce-xor/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 327,
+          "palette": "jade",
+          "file": "png/field-2-bounce-xor/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 355,
+          "palette": "copper",
+          "file": "png/field-2-bounce-xor/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 406,
+          "palette": "violet",
+          "file": "png/field-2-bounce-xor/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 449,
+          "palette": "sky",
+          "file": "png/field-2-bounce-xor/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 494,
+          "palette": "rose",
+          "file": "png/field-2-bounce-xor/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 568,
+          "palette": "silver",
+          "file": "png/field-2-bounce-xor/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "bounce",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-bounce-and",
+      "group": "build-modes",
+      "name": "Отскок · 2N−1 · AND",
+      "width": 255,
+      "images": [
+        {
+          "frame": 31,
+          "palette": "amber",
+          "file": "png/field-2-bounce-and/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 57,
+          "palette": "teal",
+          "file": "png/field-2-bounce-and/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 87,
+          "palette": "coral",
+          "file": "png/field-2-bounce-and/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 139,
+          "palette": "indigo",
+          "file": "png/field-2-bounce-and/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 258,
+          "palette": "jade",
+          "file": "png/field-2-bounce-and/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 278,
+          "palette": "copper",
+          "file": "png/field-2-bounce-and/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 303,
+          "palette": "violet",
+          "file": "png/field-2-bounce-and/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 332,
+          "palette": "sky",
+          "file": "png/field-2-bounce-and/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 361,
+          "palette": "rose",
+          "file": "png/field-2-bounce-and/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 398,
+          "palette": "silver",
+          "file": "png/field-2-bounce-and/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-wrap-xor",
+      "group": "build-modes",
+      "name": "Перескок · 2N−1 · XOR",
+      "width": 255,
+      "images": [
+        {
+          "frame": 259,
+          "palette": "amber",
+          "file": "png/field-2-wrap-xor/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 272,
+          "palette": "teal",
+          "file": "png/field-2-wrap-xor/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "coral",
+          "file": "png/field-2-wrap-xor/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 302,
+          "palette": "indigo",
+          "file": "png/field-2-wrap-xor/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 337,
+          "palette": "jade",
+          "file": "png/field-2-wrap-xor/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 368,
+          "palette": "copper",
+          "file": "png/field-2-wrap-xor/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 412,
+          "palette": "violet",
+          "file": "png/field-2-wrap-xor/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 464,
+          "palette": "sky",
+          "file": "png/field-2-wrap-xor/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 522,
+          "palette": "rose",
+          "file": "png/field-2-wrap-xor/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 614,
+          "palette": "silver",
+          "file": "png/field-2-wrap-xor/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-wrap-and",
+      "group": "build-modes",
+      "name": "Перескок · 2N−1 · AND",
+      "width": 255,
+      "images": [
+        {
+          "frame": 37,
+          "palette": "amber",
+          "file": "png/field-2-wrap-and/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 65,
+          "palette": "teal",
+          "file": "png/field-2-wrap-and/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 99,
+          "palette": "coral",
+          "file": "png/field-2-wrap-and/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 153,
+          "palette": "indigo",
+          "file": "png/field-2-wrap-and/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 258,
+          "palette": "jade",
+          "file": "png/field-2-wrap-and/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 278,
+          "palette": "copper",
+          "file": "png/field-2-wrap-and/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 303,
+          "palette": "violet",
+          "file": "png/field-2-wrap-and/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 332,
+          "palette": "sky",
+          "file": "png/field-2-wrap-and/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 361,
+          "palette": "rose",
+          "file": "png/field-2-wrap-and/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 398,
+          "palette": "silver",
+          "file": "png/field-2-wrap-and/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "reverse",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-reverse-xor",
+      "group": "build-modes",
+      "name": "Разворот при касании · 2N−1 · XOR",
+      "width": 255,
+      "images": [
+        {
+          "frame": 128,
+          "palette": "amber",
+          "file": "png/field-2-reverse-xor/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/field-2-reverse-xor/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 150,
+          "palette": "coral",
+          "file": "png/field-2-reverse-xor/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 167,
+          "palette": "indigo",
+          "file": "png/field-2-reverse-xor/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 189,
+          "palette": "jade",
+          "file": "png/field-2-reverse-xor/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 214,
+          "palette": "copper",
+          "file": "png/field-2-reverse-xor/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 252,
+          "palette": "violet",
+          "file": "png/field-2-reverse-xor/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 298,
+          "palette": "sky",
+          "file": "png/field-2-reverse-xor/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 376,
+          "palette": "rose",
+          "file": "png/field-2-reverse-xor/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 484,
+          "palette": "silver",
+          "file": "png/field-2-reverse-xor/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "reverse",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-reverse-and",
+      "group": "build-modes",
+      "name": "Разворот при касании · 2N−1 · AND",
+      "width": 255,
+      "images": [
+        {
+          "frame": 22,
+          "palette": "amber",
+          "file": "png/field-2-reverse-and/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 41,
+          "palette": "teal",
+          "file": "png/field-2-reverse-and/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 59,
+          "palette": "coral",
+          "file": "png/field-2-reverse-and/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 79,
+          "palette": "indigo",
+          "file": "png/field-2-reverse-and/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 106,
+          "palette": "jade",
+          "file": "png/field-2-reverse-and/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 128,
+          "palette": "copper",
+          "file": "png/field-2-reverse-and/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 148,
+          "palette": "violet",
+          "file": "png/field-2-reverse-and/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 173,
+          "palette": "sky",
+          "file": "png/field-2-reverse-and/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 203,
+          "palette": "rose",
+          "file": "png/field-2-reverse-and/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 245,
+          "palette": "silver",
+          "file": "png/field-2-reverse-and/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "bounce",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-bounce-xor",
+      "group": "build-modes",
+      "name": "Отскок · 4N−1 · XOR",
+      "width": 511,
+      "images": [
+        {
+          "frame": 514,
+          "palette": "amber",
+          "file": "png/field-4-bounce-xor/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 522,
+          "palette": "teal",
+          "file": "png/field-4-bounce-xor/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 537,
+          "palette": "coral",
+          "file": "png/field-4-bounce-xor/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 560,
+          "palette": "indigo",
+          "file": "png/field-4-bounce-xor/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 583,
+          "palette": "jade",
+          "file": "png/field-4-bounce-xor/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 611,
+          "palette": "copper",
+          "file": "png/field-4-bounce-xor/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 662,
+          "palette": "violet",
+          "file": "png/field-4-bounce-xor/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 705,
+          "palette": "sky",
+          "file": "png/field-4-bounce-xor/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 750,
+          "palette": "rose",
+          "file": "png/field-4-bounce-xor/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 824,
+          "palette": "silver",
+          "file": "png/field-4-bounce-xor/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "bounce",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-bounce-and",
+      "group": "build-modes",
+      "name": "Отскок · 4N−1 · AND",
+      "width": 511,
+      "images": [
+        {
+          "frame": 31,
+          "palette": "amber",
+          "file": "png/field-4-bounce-and/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 57,
+          "palette": "teal",
+          "file": "png/field-4-bounce-and/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 87,
+          "palette": "coral",
+          "file": "png/field-4-bounce-and/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 139,
+          "palette": "indigo",
+          "file": "png/field-4-bounce-and/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 514,
+          "palette": "jade",
+          "file": "png/field-4-bounce-and/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 534,
+          "palette": "copper",
+          "file": "png/field-4-bounce-and/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 559,
+          "palette": "violet",
+          "file": "png/field-4-bounce-and/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 588,
+          "palette": "sky",
+          "file": "png/field-4-bounce-and/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 617,
+          "palette": "rose",
+          "file": "png/field-4-bounce-and/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 654,
+          "palette": "silver",
+          "file": "png/field-4-bounce-and/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-wrap-xor",
+      "group": "build-modes",
+      "name": "Перескок · 4N−1 · XOR",
+      "width": 511,
+      "images": [
+        {
+          "frame": 515,
+          "palette": "amber",
+          "file": "png/field-4-wrap-xor/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 528,
+          "palette": "teal",
+          "file": "png/field-4-wrap-xor/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 544,
+          "palette": "coral",
+          "file": "png/field-4-wrap-xor/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 558,
+          "palette": "indigo",
+          "file": "png/field-4-wrap-xor/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 593,
+          "palette": "jade",
+          "file": "png/field-4-wrap-xor/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 624,
+          "palette": "copper",
+          "file": "png/field-4-wrap-xor/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 668,
+          "palette": "violet",
+          "file": "png/field-4-wrap-xor/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 720,
+          "palette": "sky",
+          "file": "png/field-4-wrap-xor/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 778,
+          "palette": "rose",
+          "file": "png/field-4-wrap-xor/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 870,
+          "palette": "silver",
+          "file": "png/field-4-wrap-xor/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "wrap",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-wrap-and",
+      "group": "build-modes",
+      "name": "Перескок · 4N−1 · AND",
+      "width": 511,
+      "images": [
+        {
+          "frame": 37,
+          "palette": "amber",
+          "file": "png/field-4-wrap-and/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 65,
+          "palette": "teal",
+          "file": "png/field-4-wrap-and/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 99,
+          "palette": "coral",
+          "file": "png/field-4-wrap-and/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 153,
+          "palette": "indigo",
+          "file": "png/field-4-wrap-and/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 514,
+          "palette": "jade",
+          "file": "png/field-4-wrap-and/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 534,
+          "palette": "copper",
+          "file": "png/field-4-wrap-and/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 559,
+          "palette": "violet",
+          "file": "png/field-4-wrap-and/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 588,
+          "palette": "sky",
+          "file": "png/field-4-wrap-and/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 617,
+          "palette": "rose",
+          "file": "png/field-4-wrap-and/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 654,
+          "palette": "silver",
+          "file": "png/field-4-wrap-and/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "reverse",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-reverse-xor",
+      "group": "build-modes",
+      "name": "Разворот при касании · 4N−1 · XOR",
+      "width": 511,
+      "images": [
+        {
+          "frame": 128,
+          "palette": "amber",
+          "file": "png/field-4-reverse-xor/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/field-4-reverse-xor/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 150,
+          "palette": "coral",
+          "file": "png/field-4-reverse-xor/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 167,
+          "palette": "indigo",
+          "file": "png/field-4-reverse-xor/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 189,
+          "palette": "jade",
+          "file": "png/field-4-reverse-xor/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 214,
+          "palette": "copper",
+          "file": "png/field-4-reverse-xor/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 252,
+          "palette": "violet",
+          "file": "png/field-4-reverse-xor/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 298,
+          "palette": "sky",
+          "file": "png/field-4-reverse-xor/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 376,
+          "palette": "rose",
+          "file": "png/field-4-reverse-xor/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 484,
+          "palette": "silver",
+          "file": "png/field-4-reverse-xor/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 4,
+      "edge": "reverse",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-reverse-and",
+      "group": "build-modes",
+      "name": "Разворот при касании · 4N−1 · AND",
+      "width": 511,
+      "images": [
+        {
+          "frame": 22,
+          "palette": "amber",
+          "file": "png/field-4-reverse-and/amber.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 41,
+          "palette": "teal",
+          "file": "png/field-4-reverse-and/teal.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 59,
+          "palette": "coral",
+          "file": "png/field-4-reverse-and/coral.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 79,
+          "palette": "indigo",
+          "file": "png/field-4-reverse-and/indigo.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 106,
+          "palette": "jade",
+          "file": "png/field-4-reverse-and/jade.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 128,
+          "palette": "copper",
+          "file": "png/field-4-reverse-and/copper.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 148,
+          "palette": "violet",
+          "file": "png/field-4-reverse-and/violet.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 173,
+          "palette": "sky",
+          "file": "png/field-4-reverse-and/sky.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 203,
+          "palette": "rose",
+          "file": "png/field-4-reverse-and/rose.png",
+          "width": 1567,
+          "height": 418
+        },
+        {
+          "frame": 245,
+          "palette": "silver",
+          "file": "png/field-4-reverse-and/silver.png",
+          "width": 1567,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-left",
+      "name": "Склейка влево",
+      "joinLeft": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/join-left/amber.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/join-left/teal.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/join-left/coral.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/join-left/indigo.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/join-left/jade.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/join-left/copper.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/join-left/violet.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/join-left/sky.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/join-left/rose.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/join-left/silver.png",
+          "width": 1180,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-right",
+      "name": "Склейка вправо",
+      "joinRight": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/join-right/amber.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/join-right/teal.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/join-right/coral.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/join-right/indigo.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/join-right/jade.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/join-right/copper.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/join-right/violet.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/join-right/sky.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/join-right/rose.png",
+          "width": 1180,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/join-right/silver.png",
+          "width": 1180,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-both",
+      "name": "Склейка в обе стороны",
+      "joinLeft": true,
+      "joinRight": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/join-both/amber.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/join-both/teal.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/join-both/coral.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/join-both/indigo.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/join-both/jade.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/join-both/copper.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/join-both/violet.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/join-both/sky.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/join-both/rose.png",
+          "width": 1561,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/join-both/silver.png",
+          "width": 1561,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "repeats",
+      "name": "Совпадающие блоки 2 × 2",
+      "repeats": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/repeats/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/repeats/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/repeats/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/repeats/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/repeats/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/repeats/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/repeats/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/repeats/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/repeats/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/repeats/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "square",
+      "name": "Квадратная проекция поля",
+      "square": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/square/amber.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/square/teal.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/square/coral.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/square/indigo.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/square/jade.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/square/copper.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/square/violet.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/square/sky.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/square/rose.png",
+          "width": 887,
+          "height": 887
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/square/silver.png",
+          "width": 887,
+          "height": 887
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "pair",
+      "group": "field-views",
+      "id": "pair",
+      "name": "Два ромба",
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/pair/amber.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/pair/teal.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/pair/coral.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/pair/indigo.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/pair/jade.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/pair/copper.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/pair/violet.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/pair/sky.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/pair/rose.png",
+          "width": 820,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/pair/silver.png",
+          "width": 820,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "field-axes",
+      "name": "Поле с цветными осями",
+      "axes": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 71,
+          "palette": "amber",
+          "file": "png/field-axes/amber.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 117,
+          "palette": "teal",
+          "file": "png/field-axes/teal.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 166,
+          "palette": "coral",
+          "file": "png/field-axes/coral.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 207,
+          "palette": "indigo",
+          "file": "png/field-axes/indigo.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 269,
+          "palette": "jade",
+          "file": "png/field-axes/jade.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 301,
+          "palette": "copper",
+          "file": "png/field-axes/copper.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 349,
+          "palette": "violet",
+          "file": "png/field-axes/violet.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 403,
+          "palette": "sky",
+          "file": "png/field-axes/sky.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 479,
+          "palette": "rose",
+          "file": "png/field-axes/rose.png",
+          "width": 799,
+          "height": 418
+        },
+        {
+          "frame": 533,
+          "palette": "silver",
+          "file": "png/field-axes/silver.png",
+          "width": 799,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-overlay",
+      "group": "coin",
+      "name": "Наложение",
+      "combination": "overlay",
+      "flipSecond": false,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-overlay/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-overlay/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-overlay/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-overlay/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-overlay/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-overlay/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-overlay/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-overlay/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-overlay/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-overlay/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-overlay-mirror",
+      "group": "coin",
+      "name": "Наложение · с отражением",
+      "combination": "overlay",
+      "flipSecond": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-overlay-mirror/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-overlay-mirror/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-overlay-mirror/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-overlay-mirror/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-overlay-mirror/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-overlay-mirror/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-overlay-mirror/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-overlay-mirror/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-overlay-mirror/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-overlay-mirror/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-xor",
+      "group": "coin",
+      "name": "XOR",
+      "combination": "xor",
+      "flipSecond": false,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-xor/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-xor/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-xor/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-xor/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-xor/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-xor/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-xor/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-xor/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-xor/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-xor/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-xor-mirror",
+      "group": "coin",
+      "name": "XOR · с отражением",
+      "combination": "xor",
+      "flipSecond": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-xor-mirror/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-xor-mirror/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-xor-mirror/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-xor-mirror/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-xor-mirror/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-xor-mirror/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-xor-mirror/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-xor-mirror/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-xor-mirror/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-xor-mirror/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-and",
+      "group": "coin",
+      "name": "AND",
+      "combination": "and",
+      "flipSecond": false,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-and/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-and/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-and/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-and/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-and/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-and/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-and/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-and/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-and/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-and/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-and-mirror",
+      "group": "coin",
+      "name": "AND · с отражением",
+      "combination": "and",
+      "flipSecond": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-and-mirror/amber.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-and-mirror/teal.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-and-mirror/coral.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-and-mirror/indigo.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-and-mirror/jade.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-and-mirror/copper.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-and-mirror/violet.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-and-mirror/sky.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-and-mirror/rose.png",
+          "width": 415,
+          "height": 418
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-and-mirror/silver.png",
+          "width": 415,
+          "height": 418
+        }
+      ]
+    },
+    {
+      "rows": 128,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-square",
+      "group": "coin",
+      "name": "Наложение · квадратная проекция",
+      "combination": "overlay",
+      "square": true,
+      "width": 255,
+      "images": [
+        {
+          "frame": 92,
+          "palette": "amber",
+          "file": "png/coin-square/amber.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 134,
+          "palette": "teal",
+          "file": "png/coin-square/teal.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 183,
+          "palette": "coral",
+          "file": "png/coin-square/coral.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 223,
+          "palette": "indigo",
+          "file": "png/coin-square/indigo.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 259,
+          "palette": "jade",
+          "file": "png/coin-square/jade.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 288,
+          "palette": "copper",
+          "file": "png/coin-square/copper.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 331,
+          "palette": "violet",
+          "file": "png/coin-square/violet.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 383,
+          "palette": "sky",
+          "file": "png/coin-square/sky.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 448,
+          "palette": "rose",
+          "file": "png/coin-square/rose.png",
+          "width": 591,
+          "height": 591
+        },
+        {
+          "frame": 507,
+          "palette": "silver",
+          "file": "png/coin-square/silver.png",
+          "width": 591,
+          "height": 591
+        }
+      ]
+    },
+    {
+      "rows": 1024,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-four",
+      "name": "Четыре треугольника",
+      "width": 2047,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "png/hub-four/amber.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "png/hub-four/teal.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "png/hub-four/coral.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "png/hub-four/indigo.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "png/hub-four/jade.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "png/hub-four/copper.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "png/hub-four/violet.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "png/hub-four/sky.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "png/hub-four/rose.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "png/hub-four/silver.png",
+          "width": 2204,
+          "height": 1118
+        }
+      ]
+    },
+    {
+      "rows": 1024,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-four-axes",
+      "name": "Четыре треугольника · цветные оси",
+      "axes": true,
+      "width": 2047,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "png/hub-four-axes/amber.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "png/hub-four-axes/teal.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "png/hub-four-axes/coral.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "png/hub-four-axes/indigo.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "png/hub-four-axes/jade.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "png/hub-four-axes/copper.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "png/hub-four-axes/violet.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "png/hub-four-axes/sky.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "png/hub-four-axes/rose.png",
+          "width": 2204,
+          "height": 1118
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "png/hub-four-axes/silver.png",
+          "width": 2204,
+          "height": 1118
+        }
+      ]
+    },
+    {
+      "rows": 1024,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-vertical",
+      "name": "Вверх-вниз",
+      "vertical": true,
+      "width": 2047,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "png/hub-vertical/amber.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "png/hub-vertical/teal.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "png/hub-vertical/coral.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "png/hub-vertical/indigo.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "png/hub-vertical/jade.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "png/hub-vertical/copper.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "png/hub-vertical/violet.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "png/hub-vertical/sky.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "png/hub-vertical/rose.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "png/hub-vertical/silver.png",
+          "width": 1118,
+          "height": 2204
+        }
+      ]
+    },
+    {
+      "rows": 1024,
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-vertical-axes",
+      "name": "Вверх-вниз · цветные оси",
+      "vertical": true,
+      "axes": true,
+      "width": 2047,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "png/hub-vertical-axes/amber.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "png/hub-vertical-axes/teal.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "png/hub-vertical-axes/coral.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "png/hub-vertical-axes/indigo.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "png/hub-vertical-axes/jade.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "png/hub-vertical-axes/copper.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "png/hub-vertical-axes/violet.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "png/hub-vertical-axes/sky.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "png/hub-vertical-axes/rose.png",
+          "width": 1118,
+          "height": 2204
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "png/hub-vertical-axes/silver.png",
+          "width": 1118,
+          "height": 2204
+        }
+      ]
+    }
+  ]
+}
