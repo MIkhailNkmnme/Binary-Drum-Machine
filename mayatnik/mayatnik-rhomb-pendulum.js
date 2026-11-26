@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.029 */
+/* Ромбовый Маятник v0.030 */
 (() => {
   "use strict";
 
@@ -459,6 +459,8 @@
     if (!section) return;
     const styles = getComputedStyle(root);
     const colors = ["--romb-zero", "--romb-one"].map(name => styles.getPropertyValue(name).trim());
+    const reference = section.querySelector("figure[data-rows]");
+    const referenceHeight = Number(reference.dataset.rows);
     for (const figure of section.querySelectorAll("figure[data-rows]")) {
       const height = Number(figure.dataset.rows);
       const example = MAYATNIK.field(height - 1, height, "empty");
@@ -467,8 +469,8 @@
       const target = figure.querySelector("canvas");
       const ctx = target.getContext("2d");
       if (!ctx) continue;
-      const buttons = figure.querySelectorAll("button[data-scale]");
-      let scale = Number(figure.querySelector('[aria-pressed="true"]').dataset.scale);
+      const buttons = figure.querySelectorAll("button");
+      let selected = figure.querySelector('[aria-pressed="true"]');
 
       function sizeOnScreen() {
         const ratio = devicePixelRatio || 1;
@@ -477,27 +479,37 @@
       }
 
       function render() {
-        target.width = Math.round(example.W * scale);
-        target.height = Math.round(example.H * scale);
+        const match = selected.hasAttribute("data-match-height");
+        const scale = match ? Math.max(1, Math.round(referenceHeight / height)) : Number(selected.dataset.scale);
+        const block = Number(selected.dataset.block || 1);
+        const rows = Math.round(height * scale), columns = Math.round(example.W * scale);
+        target.width = columns * block;
+        target.height = rows * block;
         sizeOnScreen();
-        for (let y = 0; y < target.height; y++) {
+        for (let y = 0; y < rows; y++) {
           const row = Math.floor((y + 0.5) / scale) * example.W;
-          for (let x = 0; x < target.width; x++) {
+          for (let x = 0; x < columns; x++) {
             const col = Math.floor((x + 0.5) / scale);
             let bit = example.val[row + col];
             if (bit < 0 && scale < 1 && col + 1 < example.W) bit = example.val[row + col + 1];
             if (bit >= 0) {
               ctx.fillStyle = colors[bit];
-              ctx.fillRect(x, y, 1, 1);
+              ctx.fillRect(x * block, y * block, block, block);
             }
           }
         }
-        for (const button of buttons) button.setAttribute("aria-pressed", String(Number(button.dataset.scale) === scale));
-        figure.querySelector("output").textContent = example.H + " строк → " + target.height + " пикселей по высоте";
+        for (const button of buttons) button.setAttribute("aria-pressed", String(button === selected));
+        const cell = scale < 1 ? block : scale;
+        const difference = target.height - referenceHeight;
+        const comparison = difference === 0 ? " · высота как при 1:1" :
+          " · на " + Math.abs(difference) + " пикс. " + (difference < 0 ? "ниже" : "выше");
+        figure.querySelector("output").textContent = (scale < 1 ? rows : height) + " × " +
+          cell + " = " + target.height + " пикс." + comparison;
       }
 
       for (const button of buttons) button.addEventListener("click", () => {
-        scale = Number(button.dataset.scale);
+        selected = button;
+        if (button.hasAttribute("data-match-height")) reference.querySelector('[data-scale="1"]').click();
         render();
       });
       window.addEventListener("resize", sizeOnScreen);
