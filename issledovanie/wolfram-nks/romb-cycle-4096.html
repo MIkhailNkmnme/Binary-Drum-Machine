@@ -61,6 +61,30 @@
     </figcaption>
   </figure>
   <p>Медный цвет показывает плотность единиц в блоках 8×8. Фиолетовым и зелёным окрашены центральные столбцы двух ветвей и касающиеся их симметричные шаблоны. Шаблон состоит из четырёх или более одинаковых битов, связанных по стороне или углу, и целиком умещается в полосе шириной 17 клеток вокруг столбца.</p>
+  <section aria-labelledby="cycle-films-heading">
+    <h2 id="cycle-films-heading">Первый круг ветвей · MP4</h2>
+    <p>От кадра 4 096 до кадра 20 476 включительно. В каждой записи точный шаг, 10 кадров/с, без звука.</p>
+    <div class="cycle-films">
+      <figure id="step-2">
+        <video controls playsinline preload="none" width="1024" height="536" aria-label="Первый круг ветвей, шаг 2">
+          <source src="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/romb-contact-4096/step-2.mp4" type="video/mp4">
+        </video>
+        <figcaption>Шаг 2 · 8 191 кадров · 13:39 · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/romb-contact-4096/step-2.mp4">Скачать MP4</a></figcaption>
+      </figure>
+      <figure id="step-4">
+        <video controls playsinline preload="none" width="1024" height="536" aria-label="Первый круг ветвей, шаг 4">
+          <source src="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/romb-contact-4096/step-4.mp4" type="video/mp4">
+        </video>
+        <figcaption>Шаг 4 · 4 096 кадров · 6:50 · <a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/releases/download/romb-contact-4096/step-4.mp4">Скачать MP4</a></figcaption>
+      </figure>
+    </div>
+    <details>
+      <summary>Исходник записи</summary>
+      <p>Кадры рассчитаны тем же упакованным XOR и раскрашены по тем же правилам, что и в плеере. FFmpeg 7.0.2 кодирует H.264, 1024 × 536. Генератор не использует аудиовходы.</p>
+      <p><code>node tools/youtube/build-rhomb-contact-4096.cjs ffmpeg /путь/к/записям</code></p>
+      <p><a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/blob/main/tools/youtube/build-rhomb-contact-4096.cjs">Генератор двух MP4</a></p>
+    </details>
+  </section>
   <noscript><p>Для живого расчёта включите JavaScript.</p></noscript>
 </main>
 </body>
