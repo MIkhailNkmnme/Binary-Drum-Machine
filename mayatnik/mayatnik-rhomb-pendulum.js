@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.023 */
+/* Ромбовый Маятник v0.024 */
 (() => {
   "use strict";
 
@@ -27,8 +27,6 @@
     "spiral-cw": "спираль по часовой", "spiral-ccw": "спираль против часовой"};
   const rememberedModes = {x: "pendulum", y: "pendulum"};
   const stepSize = byId("romb-step-size");
-  const stepMinus = byId("romb-step-minus");
-  const stepPlus = byId("romb-step-plus");
   const speed = byId("romb-speed");
   const speedValue = byId("romb-speed-value");
   const play = byId("romb-play");
@@ -100,17 +98,6 @@
 
   function stepCount() {
     return clamp(Math.round(stepSize.valueAsNumber) || 1, 1, Number(stepSize.max));
-  }
-
-  function syncStepSize() {
-    const count = stepCount();
-    stepMinus.disabled = count === 1;
-    stepPlus.disabled = count === Number(stepSize.max);
-  }
-
-  function nudgeStepSize(direction) {
-    stepSize.value = clamp(stepCount() + direction, 1, Number(stepSize.max));
-    stepSize.dispatchEvent(new Event("change", {bubbles: true}));
   }
 
   function updateSpeed() {
@@ -1174,13 +1161,13 @@
     if (!holder) return;
     const controls = byId("romb-controls").cloneNode(true);
     (controls.querySelector("#romb-zen-pair") || controls.querySelector("#romb-zen"))?.remove();
-    controls.querySelector("#romb-step-label").htmlFor = "romb-step-size-coin";
     controls.querySelector("#romb-pattern-colors").setAttribute("aria-controls", "romb-pattern-palette-coin");
     controls.querySelector("#romb-route")?.setAttribute("aria-describedby", "romb-route-help-coin");
     controls.id = "romb-coin-toolbar";
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
     const timeline = frameControl.cloneNode(true);
     timeline.id += "-coin";
+    timeline.querySelector("#romb-step-label").htmlFor = "romb-step-size-coin";
     frameControls.push(timeline);
     const repeat = cycleNote.cloneNode(true);
     for (const copy of [...controls.querySelectorAll("[id]"), ...timeline.querySelectorAll("[id]"), repeat]) {
@@ -1339,7 +1326,6 @@
   }
 
   function syncTransport() {
-    syncStepSize();
     const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
@@ -1513,7 +1499,7 @@
       }
     }
 
-    place(top, frameLabel, size.closest(".romb-setting"), stepSize.closest(".romb-setting"),
+    place(top, frameLabel, size.closest(".romb-setting"),
       speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), cycleNote);
     place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
       byId("romb-route-group"), byId("romb-counter-step"), byId("romb-stop-contact"), byId("romb-reverse-contact"));
@@ -1719,15 +1705,9 @@
     save();
     redraw();
   });
-  stepMinus.addEventListener("click", () => nudgeStepSize(-1));
-  stepPlus.addEventListener("click", () => nudgeStepSize(1));
-  stepSize.addEventListener("input", () => {
-    syncStepSize();
-    syncMirrors();
-  });
+  stepSize.addEventListener("input", syncMirrors);
   stepSize.addEventListener("change", () => {
     stepSize.value = stepCount();
-    syncStepSize();
     syncMirrors();
     save();
   });
@@ -1745,8 +1725,6 @@
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
     const transport = byId("romb-hub-transport");
-    const actions = byId("romb-hub-actions");
-    actions.append(stepSize.closest(".romb-setting"));
     transport.prepend(frameControl);
     transport.append(frameLabel);
     transport.hidden = false;
