@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.018 */
+/* Ромбовый Маятник v0.019 */
 (() => {
   "use strict";
 
@@ -33,6 +33,7 @@
   const speedValue = byId("romb-speed-value");
   const play = byId("romb-play");
   const playIcon = byId("romb-play-icon");
+  const playLabel = byId("romb-play-label");
   const stepButton = byId("romb-step");
   const backButton = byId("romb-step-back");
   const frameSlider = byId("romb-frame-slider");
@@ -83,6 +84,7 @@
   let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
   let pixels, words, sampleColumn, samplePair, sampleStart, sampleEnd, colorWords, colorKey;
   let patternPainter, patternMarks;
+  let firstPaintedRow, endPaintedRow;
   let renderRhombs = [];
   let combinedPixels, combinedWords;
   let frameRequest = 0;
@@ -227,6 +229,8 @@
   }
 
   function initializeRun() {
+    firstPaintedRow = field.H;
+    endPaintedRow = 0;
     initializeMotion();
     const centerX = (field.W - 1) / 2;
     const centerY = Math.floor((field.H - 2 * depth) / 2);
@@ -406,6 +410,8 @@
   function buildPass(upperColumn, lowerColumn, and, upperTop = 0, lowerTop = 0) {
     const {W, H, val} = field;
     const rows = 2 * depth;
+    firstPaintedRow = Math.min(firstPaintedRow, upperTop, lowerTop + depth);
+    endPaintedRow = Math.max(endPaintedRow, upperTop + depth, lowerTop + rows);
     const upperField = H === rows ? field : {W, H: depth, val: val.subarray(upperTop * W, (upperTop + depth) * W)};
     MAYATNIK.cone(upperField, upperColumn, depth, null, undefined, null, undefined, and);
 
@@ -448,7 +454,7 @@
     }
     if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
       if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
-      checkpoints.set(frame, {bits: field.val.slice(), branches: branches.map(item => ({...item})),
+      checkpoints.set(frame, {bits: field.val.slice(), firstPaintedRow, endPaintedRow, branches: branches.map(item => ({...item})),
         jointPoints: jointPoints.map(point => ({...point})), spiral: {...spiral}, column, routeWrap, routeWrapY, routeReverse});
     }
     observeCycle();
@@ -598,6 +604,8 @@
     const retreat = hubFour && target < frame && frame - target < target - start;
     if (!retreat && checkpoint) {
       field.val.set(checkpoint.bits);
+      firstPaintedRow = checkpoint.firstPaintedRow;
+      endPaintedRow = checkpoint.endPaintedRow;
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
       routeWrap = checkpoint.routeWrap;
@@ -637,14 +645,21 @@
     seek(target, 0);
   }
 
-  function projectBox(start, end, height, square) {
-    if (!square) return {left: start, top: 0, right: end, bottom: height};
+  function projectBox(start, end, bottom, square, top = 0) {
+    if (!square) return {left: start, top, right: end, bottom};
     const s = Math.SQRT1_2;
-    return {left: start * s, top: -end * s, right: (end + height) * s, bottom: (height - start) * s};
+    return {left: (start + top) * s, top: (top - end) * s, right: (end + bottom) * s, bottom: (bottom - start) * s};
+  }
+
+  function pageField() {
+    return !zen && !hubFour && !inline;
   }
 
   function projectedBounds() {
-    return projectBox(view.start, view.end, field.H, options.square);
+    if (!pageField()) return projectBox(view.start, view.end, field.H, options.square);
+    if (endPaintedRow > firstPaintedRow) return projectBox(view.start, view.end, endPaintedRow, options.square, firstPaintedRow);
+    const top = Math.floor((field.H - 2 * depth) / 2);
+    return projectBox(view.start, view.end, top + 2 * depth, options.square, top);
   }
 
   function coinBounds() {
@@ -653,7 +668,9 @@
 
   function scaleFor(rect, camera = view, bounds = projectedBounds()) {
     if (camera.scale !== null) return camera.scale / (devicePixelRatio || 1);
-    return Math.min(rect.width / (bounds.right - bounds.left), rect.height / (bounds.bottom - bounds.top));
+    const widthScale = rect.width / (bounds.right - bounds.left);
+    if (camera === view && pageField()) return widthScale;
+    return Math.min(widthScale, rect.height / (bounds.bottom - bounds.top));
   }
 
   function updateViewBounds() {
@@ -815,10 +832,11 @@
   }
 
   function layoutFieldHeight(bounds) {
-    const fullHeight = !zen && !hubFour && !inline && view.scale !== null;
+    const fullHeight = pageField();
     fieldBoard.classList.toggle("romb-full-height", fullHeight);
     if (fullHeight) {
-      const height = Math.ceil((bounds.bottom - bounds.top) * view.scale / (devicePixelRatio || 1)) + "px";
+      const scale = scaleFor(fieldBoard.getBoundingClientRect(), view, bounds);
+      const height = Math.max(1, Math.ceil((bounds.bottom - bounds.top) * scale)) + "px";
       if (fieldBoard.style.getPropertyValue("--field-height") !== height) fieldBoard.style.setProperty("--field-height", height);
     }
     return fullHeight;
@@ -1152,9 +1170,8 @@
     const timeline = frameControl.cloneNode(true);
     timeline.id += "-coin";
     frameControls.push(timeline);
-    const range = timeline.querySelector("input");
     const repeat = cycleNote.cloneNode(true);
-    for (const copy of [...controls.querySelectorAll("[id]"), range, repeat]) {
+    for (const copy of [...controls.querySelectorAll("[id]"), ...timeline.querySelectorAll("[id]"), repeat]) {
       const source = byId(copy.id);
       copy.id += "-coin";
       if (source.matches("button")) copy.addEventListener("click", () => {
@@ -1314,10 +1331,11 @@
     const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
+    if (playLabel) playLabel.textContent = moving ? "Пауза" : "Пуск";
     const noMotion = !isHorizontal() && !isVertical();
     stepButton.disabled = noMotion || (hubFour ? seekTarget ?? frame : frame) === maxFrame;
     backButton.disabled = (seekTarget ?? frame) === 0;
-    play.disabled = noMotion || frame === maxFrame;
+    play.disabled = noMotion || (!moving && frame === (hubFour && playDirection < 0 ? 0 : maxFrame));
     for (const [direction, button] of hubPlayButtons) {
       const active = playing && playDirection === direction;
       const glyph = active ? "Ⅱ" : direction < 0 ? "◀" : "▶";
@@ -1685,7 +1703,6 @@
     document.documentElement.classList.add("romb-hub-four");
     const transport = byId("romb-hub-transport");
     const actions = byId("romb-hub-actions");
-    actions.prepend(backButton.parentElement);
     actions.append(stepSize.closest(".romb-setting"));
     transport.prepend(frameControl);
     transport.append(frameLabel);
