@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.019</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.020</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -13,7 +13,7 @@
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=005"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=019"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=020"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -76,24 +76,48 @@
     .romb-zen > :not(#romb-board, #romb-announcement) { visibility: hidden; }
     .romb-zen #romb-board { position: fixed; inset: 0; z-index: 100; width: 100%; height: 100%; margin: 0; overflow: hidden; }
     .romb-zen #romb-field { width: 100%; height: 100%; }
-    #romb-zen-exit:not([hidden]) {
-      position: absolute;
-      right: max(12px, env(safe-area-inset-right));
-      bottom: max(12px, env(safe-area-inset-bottom));
-      opacity: .65;
+    .romb-zen-grid {
+      position: absolute; inset: 0; z-index: 1; display: grid; pointer-events: none;
+      grid-template-columns: minmax(168px, 1fr) minmax(0, 2fr) minmax(168px, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-areas: "top top top" "motion . display" "play timeline reset";
+      gap: 8px; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+                         max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     }
-    #romb-zen-exit:is(:hover, :focus-visible) { opacity: 1; }
-    #romb-zen-exit[hidden] { display: none; }
-    .romb-zen #romb-board { display: flex; flex-direction: column; }
-    .romb-zen #romb-field { display: block; flex: 1 1 0; min-height: 0; height: 0; }
-    .romb-zen-toolbar, .romb-zen-footer { flex: 0 0 auto; padding: 6px; background: #0b1620; overflow: auto; }
-    .romb-zen-toolbar { max-height: 40%; }
-    .romb-zen-footer { max-height: 25%; }
-    .romb-zen-toolbar[hidden], .romb-zen-footer[hidden] { display: none; }
-    .romb-zen-toolbar .romb-controls { gap: 2px 6px; }
-    .romb-zen-footer .commands, .romb-zen-footer .progress { margin: 2px 0; }
-    .romb-zen-footer .romb-frame-control { margin-bottom: 2px; }
-    .romb-zen-controls #romb-zen-exit:not([hidden]) { position: static; opacity: 1; }
+    .romb-zen-grid[hidden], .romb-zen-grid [hidden] { display: none !important; }
+    .romb-zen-grid > * { min-width: 0; }
+    .romb-zen-top { grid-area: top; justify-self: center; max-width: 100%; max-height: 28dvh; overflow: auto;
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 3px 8px; }
+    .romb-zen-top > *, .romb-zen-play > *, .romb-zen-reset > *, .romb-zen-timeline > * { pointer-events: auto; }
+    .romb-zen-top > .progress { margin: 0; padding: 3px 6px; background: var(--bg); }
+    .romb-zen-top .romb-setting { background: var(--bg); }
+    .romb-zen-side { align-self: start; max-height: 100%; max-width: 100%; overflow: auto;
+      scrollbar-width: thin; background: var(--bg); pointer-events: auto; }
+    .romb-zen-motion { grid-area: motion; justify-self: start; }
+    .romb-zen-display { grid-area: display; justify-self: end; }
+    .romb-zen-side summary { cursor: pointer; padding: 3px 8px; color: var(--cyan); font-size: 12px; }
+    .romb-zen-side > div { padding: 4px; display: grid; align-items: end; gap: 4px; }
+    .romb-zen-motion .romb-route-group { display: grid; max-width: 252px; }
+    .romb-zen-display > div { grid-template-columns: repeat(2, 120px); }
+    .romb-zen-display .commands { grid-column: 1 / -1; display: grid; grid-template-columns: inherit; }
+    .romb-zen-play { grid-area: play; justify-self: start; align-self: end; }
+    .romb-zen-reset { grid-area: reset; justify-self: end; align-self: end; }
+    .romb-zen-timeline { grid-area: timeline; align-self: end; width: 100%; max-width: 840px; justify-self: center; }
+    .romb-zen-timeline .romb-frame-control { margin: 0; padding: 4px 0; }
+    .romb-zen-timeline .romb-frame-row { display: block; }
+    .romb-zen-timeline .romb-cycle-values { display: none; }
+    @media (max-width: 1080px) {
+      .romb-zen-side .romb-motion-group, .romb-zen-display > div { grid-template-columns: 120px; }
+      .romb-zen-motion .romb-route-group { max-width: 132px; }
+    }
+    @media (max-width: 640px) {
+      .romb-zen-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        grid-template-areas: "top top" "motion display" "play reset" "timeline timeline"; }
+      .romb-zen-top { justify-self: stretch; flex-wrap: nowrap; justify-content: start; }
+      .romb-zen-top > * { flex-shrink: 0; }
+      .romb-zen-timeline { width: 85%; }
+    }
     .romb-zen-pair .gz-half[aria-pressed="true"] { background: var(--cyan); }
     .romb-zen-pair .gz-half[aria-pressed="true"]::before { inset: 2px; }
     .romb-combine-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
@@ -170,7 +194,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.019</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.020</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">

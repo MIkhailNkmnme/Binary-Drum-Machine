@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.019 */
+/* Ромбовый Маятник v0.020 */
 (() => {
   "use strict";
 
@@ -1467,23 +1467,50 @@
     const enter = byId("romb-zen");
     const withControls = byId("romb-zen-controls");
     const exit = byId("romb-zen-exit");
-    const toolbar = document.createElement("div");
-    const footer = document.createElement("div");
-    toolbar.className = "romb-zen-toolbar";
-    footer.className = "romb-zen-footer";
-    toolbar.hidden = footer.hidden = true;
-    board.prepend(toolbar);
-    board.append(footer);
-    const controls = byId("romb-controls");
-    const zoomControls = squareButton?.closest(".commands");
-    const placements = [
-      [controls, toolbar], [frameLabel, toolbar], [frameControl, toolbar],
-      [zoomControls, footer], [byId("romb-record-status"), footer], [exit, footer]
-    ].filter(([element]) => element).map(([element, holder]) => {
-      const marker = document.createComment("romb-zen-home");
-      element.before(marker);
-      return {element, holder, marker};
-    });
+    const grid = document.createElement("div");
+    grid.className = "romb-zen-grid";
+    grid.hidden = true;
+    board.append(grid);
+
+    function panel(name, title) {
+      const section = document.createElement(title ? "details" : "div");
+      section.className = "romb-zen-" + name;
+      grid.append(section);
+      if (!title) return section;
+      section.classList.add("romb-zen-side");
+      section.open = !window.matchMedia("(max-width: 640px)").matches;
+      const heading = document.createElement("summary");
+      heading.textContent = title;
+      const body = document.createElement("div");
+      section.append(heading, body);
+      return body;
+    }
+
+    const top = panel("top");
+    const motion = panel("motion", "Движение");
+    const display = panel("display", "Рисунок и вид");
+    const playback = panel("play");
+    const timeline = panel("timeline");
+    const resetPanel = panel("reset");
+    const placements = [];
+    function place(holder, ...elements) {
+      for (const element of elements) {
+        if (!element) continue;
+        const marker = document.createComment("romb-zen-home");
+        element.before(marker);
+        placements.push({element, holder, marker});
+      }
+    }
+
+    place(top, frameLabel, size.closest(".romb-setting"), stepSize.closest(".romb-setting"),
+      speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), cycleNote);
+    place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
+      byId("romb-route-group"), byId("romb-counter-step"), byId("romb-stop-contact"), byId("romb-reverse-contact"));
+    place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
+      byId("romb-pattern-colors"), patternPalette, squareButton?.closest(".commands"), recordButton);
+    place(playback, play.closest(".romb-run-steps"));
+    place(resetPanel, byId("romb-reset"));
+    place(timeline, frameControl);
     let previousView, previousFocus, nativeZen = false, mode = 0;
 
     function exitFullscreen() {
@@ -1502,7 +1529,7 @@
       document.documentElement.classList.toggle("romb-zen-open", active);
       enter.setAttribute("aria-pressed", String(next === 2));
       withControls?.setAttribute("aria-pressed", String(next === 1));
-      toolbar.hidden = footer.hidden = next !== 1;
+      grid.hidden = next !== 1;
       exit.hidden = next !== 1;
       if (active && !wasActive) {
         previousView = {x: view.x, y: view.y, scale: view.scale};
