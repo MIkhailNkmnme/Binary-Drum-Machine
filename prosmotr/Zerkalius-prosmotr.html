@@ -1,4 +1,4 @@
-<!-- Zerkalius Просмотр GIF — v0.022. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
+<!-- Zerkalius Просмотр GIF — v0.023. Покадровый просмотрщик и склейка GIF: открыть один или несколько GIF (кнопкой или бросив
      на страницу), листать по кадру и через 2 / 4 / 8, играть с любой скоростью, отметить участок «с — по» и положить в склейку;
      участки — из разных GIF, в любом порядке; склейку посмотреть и скачать одним GIF. Всё в самой странице, без библиотек:
      свой разбор GIF (LZW, палитры, прозрачность, способы смены кадра, чересстрочность) и своя сборка (тот же LZW, что в Code).
@@ -72,14 +72,16 @@
      v0.020: по снимкам ромба 4 — «квадраты и ромбы вплотную — тут нужно только ромбы, почему вместе с квадратами? Вот так надо, как в
              Треугольнике». Всё вокруг ромба в его рамке заливалось серой щелью раскладки, а щели у форм клеток рисуются квадратами
              поверх — вокруг ромба стояли серые квадраты и обрезали крайние ромбы. Теперь вокруг ромбов чёрный фон (и в ленте, и в GIF
-             нарезки), квадратами он не рисуется; сцене дано поле в клетку — ромбы на вершинах не режет край холста. -->
+             нарезки), квадратами он не рисуется; сцене дано поле в клетку — ромбы на вершинах не режет край холста.
+     v0.023: опубликованные GIF Ромбового Маятника открываются целиком в исходных пикселях. Вписывание фильтрует
+             уменьшенный растр, увеличение сохраняет пропорции и размер растрового буфера ограничен разрешением источника. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script defer src="/_js/site-clarity.js?v=1"></script>
-<title>Zerkalius Просмотр GIF — v0.022</title>
+<title>Zerkalius Просмотр GIF — v0.023</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -117,7 +119,7 @@
   .view { flex: 1; min-height: 0; background: #000; border: 1px solid #2c303a; border-radius: 5px; overflow: auto; display: flex; position: relative; cursor: grab; }
   .view.pan { cursor: grabbing; }
   .view.drop { outline: 2px dashed #22d3ee; outline-offset: -6px; }
-  #cv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; margin: auto; flex: none; }
+  #cv { image-rendering: pixelated; display: block; margin: auto; flex: none; }
   .bar { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
   .bar .sp { flex: 1; }
   #pos { flex: 1; min-width: 120px; accent-color: #ffcc00; }
@@ -137,7 +139,7 @@
 <body>
 <div class="wrap">
   <div class="panel">
-    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.022</span></h1>
+    <h1 id="appTitle">Просмотр GIF <span style="color:#8a94a6; font-size:11px;">v0.023</span></h1>
     <div class="bar">
       <button id="openBtn" title="Открыть один или несколько GIF (их можно и просто бросить на страницу)">📂 Открыть GIF</button>
       <input type="file" id="file" accept="image/gif,.gif" multiple>
@@ -755,7 +757,13 @@ const cv = $('cv'), ctx = cv.getContext('2d'), off = document.createElement('can
 const lutOf = g => g.lut || (g.lut = Uint32Array.from(g.cols.map(c => (255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0])));
 function draw() {
   const ref = SEQ[S.i];
-  if (!ref) { $('num').textContent = '—'; cv.width = 1; cv.height = 1; S.offKey = ''; return; }
+  if (!ref) {
+    $('num').textContent = '—';
+    cv.width = cv.height = 1;
+    cv.style.width = cv.style.height = '';
+    S.offKey = '';
+    return;
+  }
   let W, H, label, nameTxt = '', par;   // v0.003: nameTxt — имя файла (набор) — в своё поле, в стороне от счётчика; v0.013: par — чётность шахматки
   // v0.005: картинка сцены строится заново, только когда сменился кадр или набор; прокрутка лишь сдвигает её при выводе
   const gid = k => S.gifs[k] ? S.gifs[k].id : 0;
@@ -929,11 +937,17 @@ $('zeroBtn').addEventListener('click', () => { S.zeros = !S.zeros; $('zeroBtn').
 // v0.005: вывод на экран — масштаб и сдвиг по кругу (строка shift источника — вверху экрана)
 function blit() {
   const W = off.width, H = off.height;
-  const z = zoomNow(W, H), CW = Math.max(1, Math.round(W * z)), CH = Math.max(1, Math.round(H * z));
+  const z = zoomNow(W, H);
+  const shp = useShp() && S.shapeKey === S.offKey && offS.width === W * (S.shapeM || 1) && z >= 2;
+  const SRC = shp ? offS : off, mm = shp ? S.shapeM : 1;
+  // Один масштаб для видимой ширины и высоты. При увеличении браузер растягивает готовый растр.
+  cv.style.width = W * z + 'px';
+  cv.style.height = H * z + 'px';
+  const rasterScale = Math.min(mm, z * (window.devicePixelRatio || 1));
+  const CW = Math.max(1, Math.round(W * rasterScale)), CH = Math.max(1, Math.round(H * rasterScale));
   if (cv.width !== CW || cv.height !== CH) { cv.width = CW; cv.height = CH; }
-  // v0.011: с формой клеток источник — крупная картинка offS (в mm раз), при уменьшении — сглаживать, иначе рябит
-  const shp = useShp() && S.shapeKey === S.offKey && offS.width === W * (S.shapeM || 1) && CW / W >= 2, SRC = shp ? offS : off, mm = shp ? S.shapeM : 1;
-  ctx.imageSmoothingEnabled = shp && CW / W < mm;
+  ctx.imageSmoothingEnabled = CW < SRC.width || CH < SRC.height;
+  ctx.imageSmoothingQuality = 'high';
   /* v0.006: ось и нарезка. Точка экрана (x, y) показывает точку сцены (x + sx, y + sy) по кругу; у полосы k свой сдвиг —
      сдвиг × множитель (целиком 1, встречно ±1, лесенкой k + 1) × направление оси. Полосы режутся поперёк движения:
      по столбцам — горизонтальными лентами, иначе — вертикальными. Каждая полоса — до четырёх кусков сцены. */
@@ -1255,11 +1269,15 @@ function abTxt() {
 }
 
 /* ---------- открыть ---------- */
-async function openFiles(files) {
+async function openFiles(files, {originalPixels = false} = {}) {
   for (const f of files) {
     if (!/\.gif$/i.test(f.name) && f.type !== 'image/gif') continue;
     try {
       const g = parseGif(await f.arrayBuffer(), f.name);
+      if (originalPixels) {
+        $('cellShape').value = 'sq';
+        $('latSel').value = 'both';
+      }
       S.gifs.push(g); S.cur = S.gifs.length - 1; S.mont = false; S.i = 0; S.a = S.b = null; $('msInp').value = g.delays[0];
     } catch (e) { alert(f.name + ': ' + e.message); }
   }
@@ -1274,14 +1292,14 @@ async function openPublishedRhomb() {
   const sourceId = (contact ? 'source:rhomb-contact:' : 'source:rhomb-gif:') + rows;
   const entry = await window.ZerkBitoteka?.get(sourceId).catch(() => null);
   if (entry?.blob) {
-    await openFiles([new File([entry.blob], entry.filename, {type: 'image/gif'})]);
+    await openFiles([new File([entry.blob], entry.filename, {type: 'image/gif'})], {originalPixels: true});
     return;
   }
   try {
     const folder = contact ? 'contact' : 'sizes';
     const response = await fetch('../issledovanie/wolfram-nks/romb-gifs/' + folder + '/' + rows + '.gif');
     if (!response.ok) throw Error('HTTP ' + response.status);
-    await openFiles([new File([await response.blob()], (contact ? 'romb-contact-' : 'romb-') + rows + '.gif', {type: 'image/gif'})]);
+    await openFiles([new File([await response.blob()], (contact ? 'romb-contact-' : 'romb-') + rows + '.gif', {type: 'image/gif'})], {originalPixels: true});
   } catch (error) {
     alert('GIF Ромбового Маятника не открылся · ' + error.message);
   }
