@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.015</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.018</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -12,8 +12,8 @@
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
-  <script defer src="mayatnik-rhomb-pattern-colors.js?v=003"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=015"></script>
+  <script defer src="mayatnik-rhomb-pattern-colors.js?v=005"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=018"></script>
   <style>
     main {
       max-width: 1040px;
@@ -33,11 +33,22 @@
     .romb-step-pair .gz-half:disabled { color: var(--muted); cursor: default; }
     .romb-setting { display: grid; color: var(--muted); font-size: 12px; }
     .romb-setting .gz-hx { color: var(--text); }
-    .romb-step-count.gz-hx { width: 94px; flex-basis: 94px; }
-    .romb-step-count .gz-half { width: 21px; }
+    .romb-motion-group { position: relative; display: grid; grid-template-columns: repeat(2, 120px); align-items: end; gap: 2px 6px; padding: 4px 6px; isolation: isolate; }
+    .romb-motion-group::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #15222c; clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%); }
+    .romb-motion-group > .gz-hx { align-self: end; }
+    .romb-motion-group .romb-setting { min-width: 0; }
+    .romb-route-group { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: end; gap: 2px 12px; }
+    .romb-route-group[hidden], .romb-controls [hidden] { display: none !important; }
+    .romb-route-help { flex: 1 1 300px; margin: 0; color: var(--muted); font-size: 12px; }
+    .romb-step-count.gz-hx {
+      display: grid; grid-template-columns: 24px minmax(0, 1fr) 24px;
+      align-items: center; width: 98px; flex-basis: 98px;
+    }
+    .romb-step-count.gz-pair .gz-half { width: 100%; margin: 0; padding: 0; }
     .romb-step-count input {
-      flex: 1 1 0; width: 0; min-width: 0; height: 18px; padding: 0;
-      text-align: center; color: inherit; font: inherit; background: transparent; border: 0; appearance: textfield;
+      width: 100%; box-sizing: border-box; min-width: 0; height: 18px; padding: 0; margin: 0;
+      text-align: center; color: #e1f2ec; font: 600 12px/18px monospace; font-variant-numeric: tabular-nums;
+      background: var(--gz-bg, #1b2430); border: 0; appearance: textfield;
     }
     .romb-step-count input::-webkit-inner-spin-button,
     .romb-step-count input::-webkit-outer-spin-button { appearance: none; margin: 0; }
@@ -50,6 +61,10 @@
     .romb-setting input[type=range] { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
     .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
+    main:not(.romb-zen) #romb-board.romb-full-height { height: var(--field-height); overflow-anchor: none; }
+    main:not(.romb-zen) .romb-full-height #romb-field {
+      position: sticky; top: 0; height: min(var(--field-height), max(100vh, 1200px));
+    }
     .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
     .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
     .romb-board .romb-zoomed:active { cursor: grabbing; }
@@ -65,6 +80,18 @@
     }
     #romb-zen-exit:is(:hover, :focus-visible) { opacity: 1; }
     #romb-zen-exit[hidden] { display: none; }
+    .romb-zen #romb-board { display: flex; flex-direction: column; }
+    .romb-zen #romb-field { display: block; flex: 1 1 0; min-height: 0; height: 0; }
+    .romb-zen-toolbar, .romb-zen-footer { flex: 0 0 auto; padding: 6px; background: #0b1620; overflow: auto; }
+    .romb-zen-toolbar { max-height: 40%; }
+    .romb-zen-footer { max-height: 25%; }
+    .romb-zen-toolbar[hidden], .romb-zen-footer[hidden] { display: none; }
+    .romb-zen-toolbar .romb-controls { gap: 2px 6px; }
+    .romb-zen-footer .commands, .romb-zen-footer .progress { margin: 2px 0; }
+    .romb-zen-footer .romb-frame-control { margin-bottom: 2px; }
+    .romb-zen-controls #romb-zen-exit:not([hidden]) { position: static; opacity: 1; }
+    .romb-zen-pair .gz-half[aria-pressed="true"] { background: var(--cyan); }
+    .romb-zen-pair .gz-half[aria-pressed="true"]::before { inset: 2px; }
     .romb-combine-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 12px 0; }
     #romb-combined-view h2 { margin-bottom: 10px; }
     .romb-hub-four body { overflow: hidden; background: #07131e; }
@@ -92,7 +119,7 @@
     .romb-cycle-return { color: var(--romb-outline); }
     #romb-hub-transport .romb-frame-control { margin: 0; }
     .romb-hub-four #romb-hub-transport:not([hidden]) {
-      position: fixed; inset-inline: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+      position: fixed; inset-inline: 12px; top: max(12px, env(safe-area-inset-top));
       width: min(440px, calc(100% - 280px)); margin-inline: auto;
       display: grid; gap: 4px;
     }
@@ -117,6 +144,7 @@
   <main id="rhomb-pendulum">
     <nav class="site-nav" aria-label="Разделы Зеркалиуса">
       <a href="Zerkalius-mayatnik.html">Маятник</a>
+      <a href="romb-instruction.html">Инструкция</a>
       <a href="romb-motion-256.html">Движение по двум осям · 256</a>
       <a href="../issledovanie/wolfram-nks/romb-atlas.html">Атлас и GIF</a>
       <a href="../issledovanie/wolfram-nks/romb-contact.html">Цикл с разворотом</a>
@@ -124,7 +152,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.015</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.018</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -138,9 +166,6 @@
       </div>
       <button type="button" class="gz-hx" id="romb-reset" title="Очистить поле и показать первый ромб" aria-label="Начать сначала">
         <span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-wrap" aria-pressed="false" title="Перескок на противоположный край в том же направлении. В выключенном состоянии действует отскок." aria-label="Перескок через край">
-        <span class="gz-ic" aria-hidden="true">⇥</span><span class="gz-nm">Перескок</span>
       </button>
       <button type="button" class="gz-hx" id="romb-join-left" aria-pressed="false" title="Присоединить слева копию правой половины поля" aria-label="Соединить влево">
         <span class="gz-ic" aria-hidden="true">←</span><span class="gz-nm">Соединить</span>
@@ -157,17 +182,18 @@
       <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
         <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
       </button>
-      <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить центральные столбцы, рёбра и примыкающие симметричные шаблоны" aria-label="Раскрасить оси, рёбра и шаблоны">
+      <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить узоры на исходной центральной оси" aria-label="Раскрасить узоры на исходной центральной оси">
         <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
       </button>
       <div class="gz-hx romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Палитра шаблонов" hidden>
         <label title="Цвет единиц">1 <input id="romb-pattern-one" type="color" value="#ffe184" aria-label="Цвет единиц"></label>
         <label title="Цвет нулей">0 <input id="romb-pattern-zero" type="color" value="#a55383" aria-label="Цвет нулей"></label>
       </div>
-      <button type="button" class="gz-hx" id="romb-zen" aria-pressed="false" aria-controls="romb-board" aria-keyshortcuts="Q" title="Дзен · показать ромбы во весь экран. Q открывает и закрывает режим." aria-label="Дзен, полноэкранный вид">
-        <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Дзен</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-counter-step" aria-pressed="false" title="Встречный шаг · верх начинает влево, низ вправо. Переключение начинает новое поле." aria-label="Встречный шаг">
+      <div class="gz-hx gz-pair gz-split romb-step-pair romb-zen-pair" id="romb-zen-pair" role="group" aria-label="Дзен без кнопок или с кнопками">
+        <button type="button" class="gz-half gz-h0" id="romb-zen" aria-pressed="false" aria-controls="romb-board" aria-keyshortcuts="Q" title="Дзен без кнопок. Возврат: Esc, Q или нажатие колёсика." aria-label="Дзен без кнопок">◇ Дзен</button>
+        <button type="button" class="gz-half gz-h1" id="romb-zen-controls" aria-pressed="false" aria-controls="romb-board" title="Дзен с кнопками управления. Повторное нажатие возвращает обычный вид." aria-label="Дзен с кнопками">▦ Кнопки</button>
+      </div>
+      <button type="button" class="gz-hx" id="romb-counter-step" aria-pressed="false" title="Встречный шаг · верх начинает влево, низ вправо. Переключение начинает новое поле." aria-label="Встречный шаг" hidden>
         <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Встречный шаг</span>
       </button>
       <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
@@ -184,26 +210,75 @@
           </select>
         </span>
       </label>
-      <label class="romb-setting"><span id="romb-width-label">Ширина поля</span>
-        <span class="gz-hx value-control">
-          <select id="romb-width" title="Размер поля вдоль движения ромба">
-            <option value="2">2N−1</option><option value="4">4N−1</option>
-          </select>
-        </span>
-      </label>
-      <label class="romb-setting">Ход по вертикали
-        <span class="gz-hx value-control">
-          <select id="romb-vertical-motion" title="Вертикальный ход половин или целого ромба">
-            <option value="off">Выключен</option>
-            <option value="outward">Врозь</option>
-            <option value="inward">Навстречу</option>
-            <option value="sync">Вместе</option>
-          </select>
-        </span>
-      </label>
+      <div class="romb-motion-group" role="group" aria-label="Движение по горизонтали">
+        <button type="button" class="gz-hx" id="romb-horizontal-enabled" aria-pressed="true" title="Включить или выключить движение по горизонтали" aria-label="Движение по горизонтали">
+          <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Горизонталь</span>
+        </button>
+        <label class="romb-setting">Ход по горизонтали
+          <span class="gz-hx value-control">
+            <select id="romb-horizontal-motion" title="Горизонтальный ход половин или целого ромба">
+              <option value="off">Выключен</option>
+              <option value="pendulum" selected>Вместе · маятник</option>
+              <option value="sync">Вместе · подряд</option>
+              <option value="outward">Врозь</option>
+              <option value="inward">Навстречу</option>
+            </select>
+          </span>
+        </label>
+        <label class="romb-setting"><span id="romb-width-label">Ширина поля</span>
+          <span class="gz-hx value-control">
+            <select id="romb-width" title="Ширина поля по горизонтали">
+              <option value="2" selected>2N−1</option><option value="4">4N−1</option>
+            </select>
+          </span>
+        </label>
+        <button type="button" class="gz-hx" id="romb-wrap" aria-pressed="false" title="Перескок по горизонтали на противоположный край в том же направлении. В выключенном состоянии действует отскок." aria-label="Перескок через горизонтальный край">
+          <span class="gz-ic" aria-hidden="true">⇥</span><span class="gz-nm">Перескок</span>
+        </button>
+      </div>
+      <div class="romb-motion-group" role="group" aria-label="Движение по вертикали">
+        <button type="button" class="gz-hx" id="romb-vertical-enabled" aria-pressed="false" title="Включить или выключить движение по вертикали" aria-label="Движение по вертикали">
+          <span class="gz-ic" aria-hidden="true">↕</span><span class="gz-nm">Вертикаль</span>
+        </button>
+        <label class="romb-setting">Ход по вертикали
+          <span class="gz-hx value-control">
+            <select id="romb-vertical-motion" title="Вертикальный ход половин или целого ромба">
+              <option value="off" selected>Выключен</option>
+              <option value="pendulum">Вместе · маятник</option>
+              <option value="sync">Вместе · подряд</option>
+              <option value="outward">Врозь</option>
+              <option value="inward">Навстречу</option>
+            </select>
+          </span>
+        </label>
+        <label class="romb-setting">Высота поля
+          <span class="gz-hx value-control">
+            <select id="romb-height" title="Высота поля по вертикали">
+              <option value="2" selected>2N−1</option><option value="4">4N−1</option>
+            </select>
+          </span>
+        </label>
+        <button type="button" class="gz-hx" id="romb-wrap-y" aria-pressed="false" title="Перескок по вертикали на противоположный край в том же направлении. В выключенном состоянии действует отскок." aria-label="Перескок через вертикальный край">
+          <span class="gz-ic" aria-hidden="true">↥</span><span class="gz-nm">Перескок</span>
+        </button>
+      </div>
+      <div class="romb-route-group" id="romb-route-group" role="group" aria-label="Общий маршрут по двум осям" hidden>
+        <label class="romb-setting">Общий маршрут
+          <span class="gz-hx value-control">
+            <select id="romb-route" title="Маршрут при включении горизонтального и вертикального движения" aria-describedby="romb-route-help">
+              <option value="cw">По часовой</option>
+              <option value="ccw">Против часовой</option>
+              <option value="cross">Крестом</option>
+              <option value="spiral-cw">Спираль ↻</option>
+              <option value="spiral-ccw">Спираль ↺</option>
+            </select>
+          </span>
+        </label>
+        <p class="romb-route-help" id="romb-route-help">Когда включены обе оси, действует общий маршрут; выбранные одноосевые ходы сохраняются. Радиальные точки идут от центра на расстояниях 1, 2, 3…; спираль проходит отрезки длиной 1, 1, 2, 2, 3, 3…</p>
+      </div>
       <div class="romb-setting">
         <label id="romb-step-label" for="romb-step-size">Проходов за шаг</label>
-        <div class="gz-hx gz-pair gz-split gz-mid romb-step-pair romb-step-count" role="group" aria-label="Размер шага">
+        <div class="gz-hx gz-pair romb-step-pair romb-step-count" role="group" aria-label="Размер шага">
           <button type="button" class="gz-half gz-h0" id="romb-step-minus" aria-label="Уменьшить шаг на один кадр" title="Уменьшить шаг на один кадр" disabled>◂</button>
           <input id="romb-step-size" type="number" min="1" max="16384" step="1" value="1" title="Число проходов на одно нажатие или такт анимации">
           <button type="button" class="gz-half gz-h1" id="romb-step-plus" aria-label="Увеличить шаг на один кадр" title="Увеличить шаг на один кадр">▸</button>
@@ -217,12 +292,6 @@
     </fieldset>
     <p id="romb-frame" class="progress"></p>
     <p id="romb-announcement" class="romb-announcement" aria-live="polite"></p>
-    <div class="romb-board" id="romb-board">
-      <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
-      <button type="button" class="gz-hx" id="romb-zen-exit" aria-keyshortcuts="Escape Q" title="Вернуть меню · Esc или Q" aria-label="Выйти из режима Дзен" hidden>
-        <span class="gz-ic" aria-hidden="true">↙</span><span class="gz-nm">Меню</span>
-      </button>
-    </div>
     <div class="romb-frame-control" id="romb-frame-control">
       <div class="romb-frame-track">
         <input id="romb-frame-slider" class="romb-frame-slider" type="range" min="0" max="2047" step="1" value="1" aria-label="Кадр Маятника">
@@ -233,6 +302,12 @@
       </div>
     </div>
     <p id="romb-cycle-note" class="progress" hidden></p>
+    <div class="romb-board" id="romb-board">
+      <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
+      <button type="button" class="gz-hx" id="romb-zen-exit" aria-keyshortcuts="Escape Q" title="Вернуть меню · Esc или Q" aria-label="Выйти из режима Дзен" hidden>
+        <span class="gz-ic" aria-hidden="true">↙</span><span class="gz-nm">Меню</span>
+      </button>
+    </div>
     <div class="commands" role="group" aria-label="Масштаб поля">
       <button type="button" class="gz-hx" id="romb-exact" title="Одна клетка на один физический пиксель" aria-label="Масштаб один к одному">
         <span class="gz-nm">1:1</span>
@@ -259,11 +334,12 @@
     <section id="romb-combined-view" aria-labelledby="romb-coin-name" hidden>
       <h2 id="romb-coin-name">Ромб-монета</h2>
       <div id="romb-coin-controls"></div>
+      <div id="romb-coin-frames"></div>
       <div class="romb-board" id="romb-coin-board">
         <canvas id="romb-combined" tabindex="0" role="img" aria-label="Результат совмещения ромбов по центрам" aria-describedby="romb-zoom-help"></canvas>
         <canvas id="romb-vertical" role="img" aria-label="Ветви, движущиеся вверх и вниз" hidden></canvas>
       </div>
-      <div id="romb-coin-frames"></div>
+      
       <div class="commands" role="group" aria-label="Масштаб Ромба-монеты">
         <button type="button" class="gz-hx" id="romb-coin-exact" title="Одна клетка на один физический пиксель"><span class="gz-nm">1:1</span></button>
         <button type="button" class="gz-hx" id="romb-coin-fit" title="Вписать Ромб-монету в окно"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span></button>
@@ -281,7 +357,7 @@
       </div>
     </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
-    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен, Esc возвращает меню.</p>
+    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен без кнопок, Esc возвращает меню. Нажатия колёсика переключают: Дзен с кнопками → Дзен без кнопок → обычный вид. Вращение колеса меняет масштаб.</p>
     <div class="legend" aria-label="Цвета поля">
       <span><i class="one" aria-hidden="true"></i>1</span>
       <span><i class="zero" aria-hidden="true"></i>0</span>
@@ -291,14 +367,14 @@
     <section class="explanation" aria-labelledby="romb-rule">
       <h2 id="romb-rule">Как строится ромб</h2>
       <p>Верх считает обычное ядро Маятника. В середине самый широкий ряд занимает две строки. Ниже ширина уменьшается на один бит в каждой строке. Чтобы получить очередной бит сужения, складываем по XOR биты предыдущей строки от левого края до клетки над ним слева. На пустом поле этот шаг восстанавливает ряды верхнего треугольника в обратном порядке.</p>
-      <p>Две ветви начинают с чередования 0, −1, +1, −2, +2… столбцов от центра. При отскоке ветвь разворачивается у края. При перескоке она выходит с противоположной стороны и продолжает идти в прежнем направлении. Склейка показывает рядом с краем живую копию противоположной половины поля.</p>
-      <p>Во «Встречном шаге» обе половины сдвигаются одновременно. Верх начинает влево, низ вправо. Средний ряд переносится к оси нижней половины перед сужением. Переключение начинает новое поле.</p>
-      <p>В вертикальном ходе «Врозь» верхняя половина начинает вверх, нижняя вниз. «Навстречу» ведёт их от двух концов поля друг к другу. «Вместе» перемещает целый ромб вверх и вниз. Высота поля для этих ходов задаётся как 2N−1 или 4N−1.</p>
-      <p>N — полная высота ромба. При 4096 строках доступны 8191 и 16383 столбца. Стоп при касании срабатывает в кадре, где контуры ещё соприкасаются в середине ромба перед расхождением. В этом опыте расстояние между центрами в такой момент равно N−1 столбцам.</p>
+      <p>Горизонталь и вертикаль включаются независимо. У каждой оси свои ход, размер поля и режим края. При отскоке движение разворачивается у края. При перескоке оно продолжается с противоположной стороны в прежнем направлении. Склейка показывает рядом с горизонтальным краем живую копию противоположной половины поля.</p>
+      <p>На одной включённой оси «Вместе · маятник» чередует положения целого ромба относительно центра: 0, −1, +1, −2, +2… «Вместе · подряд» ведёт его последовательно до края. «Врозь» разводит половины от центра, «Навстречу» ведёт их от противоположных концов поля друг к другу. Ширина и высота поля выбираются отдельно: 2N−1 или 4N−1.</p>
+      <p>Когда включены обе оси, вместо одноосевых ходов действует общий маршрут. «По часовой», «Против часовой» и «Крестом» перебирают радиальные точки относительно центра на расстояниях 1, 2, 3… Спирали обходят центр отрезками длиной 1, 1, 2, 2, 3, 3… в выбранном направлении. Выбранные одноосевые ходы сохраняются и возвращаются при выключении одной из осей.</p>
+      <p>N — полная высота ромба. При 4096 строках доступны 8191 и 16383 столбца. Стоп и разворот при касании доступны в парных одноосевых ходах. Для горизонтального маятника порог касания — N−1 столбцов между центрами. Общие маршруты по двум осям и ход «Вместе · подряд» управляются выбранным маршрутом и краями поля.</p>
       <p>«Разворот» меняет направление обеих ветвей на последнем касании. Если включён и «Стоп · Касание», пауза наступает уже после смены направления.</p>
       <p>С начального кадра цикла нумерация повторяется после совпадения битов и обеих ветвей. Если сменить режим края в ходе опыта, расчёт продолжится по новому маршруту. <a href="../issledovanie/wolfram-nks/romb-period.html#sizes">Периоды для разных размеров</a>.</p>
       <p>«Повторы» отмечают золотым одинаковые блоки 2 × 2 внутри двух ромбов. Фиолетовый связывает левую склейку с правой половиной поля, зелёный — правую склейку с левой. Оттенки сохраняют различие между 0 и 1.</p>
-      <p>«Раскрасить» выделяет биты на центральных столбцах и рёбрах двух ромбов. Рядом выделяются целые симметричные фигуры из четырёх и более одинаковых битов, которые касаются этих линий. Поиск охватывает по 12 столбцов с каждой стороны линии. Палитра задаёт отдельные цвета для 1 и 0.</p>
+      <p>«Раскрасить» ищет узоры вдоль одной неподвижной вертикальной оси в центре поля. Цвет получают заполненные клетки этой оси и касающиеся её симметричные фигуры из четырёх и более одинаковых битов. Поиск охватывает по 12 столбцов с каждой стороны оси. В палитре можно выбрать цвета для 1 и 0.</p>
       <p>Совмещение читает две вырезки по центрам и строит отдельный ромб. В наложении фиолетовый показывает единицу первой ветви, зелёный — второй, светлый — обеих. В XOR и AND пустая клетка даёт 0, а общей пустоте соответствует прозрачность.</p>
     </section>
   </main>

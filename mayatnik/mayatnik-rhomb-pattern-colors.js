@@ -1,14 +1,16 @@
+/* Раскраска Ромбового Маятника v0.005 */
 (() => {
   "use strict";
 
-  // Search a narrow band along each guide while checking neighbours in the
+  // Search a narrow band around the original center column, checking neighbours in the
   // full field. A shape crossing the band boundary cannot be matched in part.
   const reach = 12;
   const stride = 2 * reach + 1;
 
   function create(W, H) {
     const marks = new Uint8Array(Math.ceil(W * H / 8));
-    const origins = new Int32Array(H);
+    const center = Math.floor(W / 2);
+    const origin = center - reach;
     const labels = new Uint32Array(H * stride);
     const queue = new Int32Array(labels.length);
 
@@ -17,7 +19,7 @@
     }
 
     function contains(x, y, label) {
-      const local = x - origins[y];
+      const local = x - origin;
       return local >= 0 && local < stride && labels[y * stride + local] === label;
     }
 
@@ -27,7 +29,7 @@
       for (let i = 0; i < count && (vertical || horizontal || diagonal || antidiagonal); i++) {
         const index = queue[i];
         const y = Math.floor(index / stride);
-        const x = origins[y] + index % stride;
+        const x = origin + index % stride;
         vertical = vertical && contains(left + right - x, y, label);
         horizontal = horizontal && contains(x, top + bottom - y, label);
         diagonal = diagonal && contains(left + y - top, top + x - left, label);
@@ -36,19 +38,12 @@
       return vertical || horizontal || diagonal || antidiagonal;
     }
 
-    function scanGuide(values, center, side, start, end, top, rows) {
+    function update(values) {
+      marks.fill(0);
       labels.fill(0);
       let label = 0;
-      for (let y = 0; y < H; y++) {
-        const row = y - top;
-        const radius = Math.max(0, Math.min(row, rows - 1 - row));
-        origins[y] = center + side * radius - reach;
-      }
-
-      for (let row = start; row < end; row++) {
-        const column = origins[row] + reach;
-        if (column < 0 || column >= W) continue;
-        const index = row * W + column;
+      for (let row = 0; row < H; row++) {
+        const index = row * W + center;
         const bit = values[index];
         if (bit < 0) continue;
         mark(index);
@@ -56,7 +51,7 @@
         const seed = row * stride + reach;
         if (labels[seed]) continue;
         let count = 1;
-        let left = column, right = column, top = row, bottom = row;
+        let left = center, right = center, top = row, bottom = row;
         let complete = true;
         labels[seed] = ++label;
         queue[0] = seed;
@@ -64,14 +59,13 @@
         for (let head = 0; head < count; head++) {
           const point = queue[head];
           const y = Math.floor(point / stride);
-          const x = origins[y] + point % stride;
+          const x = origin + point % stride;
           left = Math.min(left, x);
           right = Math.max(right, x);
           top = Math.min(top, y);
           bottom = Math.max(bottom, y);
 
           for (let ny = Math.max(0, y - 1); ny <= Math.min(H - 1, y + 1); ny++) {
-            const origin = origins[ny];
             for (let nx = Math.max(0, x - 1); nx <= Math.min(W - 1, x + 1); nx++) {
               const local = nx - origin;
               const next = ny * stride + local;
@@ -91,38 +85,13 @@
         for (let i = 0; i < count; i++) {
           const point = queue[i];
           const y = Math.floor(point / stride);
-          mark(y * W + origins[y] + point % stride);
+          mark(y * W + origin + point % stride);
         }
       }
-    }
-
-    function scanRhomb(values, center, start, end, top = 0, rows = H) {
-      for (const side of [0, -1, 1]) scanGuide(values, center, side, start, end, top, rows);
-    }
-
-    function update(values, centers, counterStep) {
-      marks.fill(0);
-      if (counterStep && centers[0] !== centers[1]) {
-        scanRhomb(values, centers[1], 0, H / 2);
-        scanRhomb(values, centers[0], H / 2, H);
-      } else {
-        for (const center of new Set(centers)) scanRhomb(values, center, 0, H);
-      }
       return marks;
     }
 
-    function updateVertical(values, upper, lower, rows) {
-      marks.fill(0);
-      const center = (W - 1) / 2;
-      if (upper === lower) scanRhomb(values, center, upper, upper + rows, upper, rows);
-      else {
-        scanRhomb(values, center, upper, upper + rows / 2, upper, rows);
-        scanRhomb(values, center, lower + rows / 2, lower + rows, lower, rows);
-      }
-      return marks;
-    }
-
-    return {update, updateVertical};
+    return {update};
   }
 
   window.MayatnikRhombPatternColors = {create};

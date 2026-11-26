@@ -1,5 +1,6 @@
 (() => {
   'use strict';
+  /* Пульт ромбов в Хабе v0.010 */
   const mode = document.getElementById('hubFourTriangles');
   const colours = document.getElementById('hubFourAxisColour');
   const direction = document.getElementById('hubFourVertical');
@@ -35,7 +36,7 @@
     colours.classList.toggle('gz-on', open && axes);
     direction.setAttribute('aria-pressed', String(open && vertical));
     direction.classList.toggle('gz-on', open && vertical);
-    if (open && !frame.hasAttribute('src')) frame.src = 'mayatnik/romb.html?hub=four&v=014';
+    if (open && !frame.hasAttribute('src')) frame.src = 'mayatnik/romb.html?hub=four&v=017';
     if (open && !pausedOriginal && !pause.disabled && original.dataset.paused === 'false') {
       pause.click();
       pausedOriginal = true;

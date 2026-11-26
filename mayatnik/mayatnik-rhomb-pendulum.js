@@ -1,9 +1,11 @@
+/* Ромбовый Маятник v0.018 */
 (() => {
   "use strict";
 
   const root = document.getElementById("rhomb-pendulum");
   const byId = id => root.querySelector("#" + id);
   const canvas = byId("romb-field");
+  const fieldBoard = byId("romb-board");
   const frameLabel = byId("romb-frame");
   const announcement = byId("romb-announcement");
   const context = canvas.getContext("2d");
@@ -15,7 +17,15 @@
 
   const size = byId("romb-size");
   const width = byId("romb-width");
+  const heightFactor = byId("romb-height");
+  const horizontalMotion = byId("romb-horizontal-motion");
   const verticalMotion = byId("romb-vertical-motion");
+  const jointRoute = byId("romb-route");
+  const verticalWrapButton = byId("romb-wrap-y");
+  const motionModes = ["off", "outward", "inward", "sync", "pendulum"];
+  const routeNames = {cw: "по часовой", ccw: "против часовой", cross: "крестом",
+    "spiral-cw": "спираль по часовой", "spiral-ccw": "спираль против часовой"};
+  const rememberedModes = {x: "pendulum", y: "pendulum"};
   const stepSize = byId("romb-step-size");
   const stepMinus = byId("romb-step-minus");
   const stepPlus = byId("romb-step-plus");
@@ -51,7 +61,7 @@
     patternColors: byId("romb-pattern-colors"),
     counterStep: byId("romb-counter-step")
   };
-  const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
+  const options = {wrap: false, wrapY: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
     markRepeats: false, patternColors: false, counterStep: false, square: false, coinSquare: false, buildAnd: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
@@ -68,10 +78,12 @@
   const mirrors = [];
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
+  let routeWrapY, verticalRouteChanges, jointPoints, spiral;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
   let pixels, words, sampleColumn, samplePair, sampleStart, sampleEnd, colorWords, colorKey;
   let patternPainter, patternMarks;
+  let renderRhombs = [];
   let combinedPixels, combinedWords;
   let frameRequest = 0;
   let playing = false;
@@ -109,7 +121,19 @@
     if (!saved) return;
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
     if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
-    if (["off", "outward", "inward", "sync"].includes(saved.verticalMotion)) verticalMotion.value = saved.verticalMotion;
+    if (motionModes.includes(saved.verticalMotion)) verticalMotion.value = saved.verticalMotion;
+    if (horizontalMotion) {
+      horizontalMotion.value = motionModes.includes(saved.horizontalMotion) ? saved.horizontalMotion
+        : isVertical() ? "off" : saved.counterStep ? "outward" : "pendulum";
+    }
+    if (heightFactor) heightFactor.value = [2, 4].includes(saved.heightFactor) ? saved.heightFactor
+      : isVertical() && [2, 4].includes(saved.factor) ? saved.factor : 2;
+    if (jointRoute && Object.hasOwn(routeNames, saved.jointRoute)) jointRoute.value = saved.jointRoute;
+    for (const key of ["x", "y"]) {
+      if (motionModes.includes(saved.rememberedModes?.[key]) && saved.rememberedModes[key] !== "off") {
+        rememberedModes[key] = saved.rememberedModes[key];
+      }
+    }
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
     if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
     if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
@@ -122,6 +146,7 @@
     }
     updateSpeed();
     for (const key of Object.keys(options)) if (typeof saved[key] === "boolean") options[key] = saved[key];
+    if (typeof saved.wrapY !== "boolean") options.wrapY = !!saved.wrap;
   }
 
   function save() {
@@ -132,6 +157,8 @@
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
       verticalMotion: verticalMotion.value,
+      horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
+      jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
       patternPalette: patternColors.map(input => input.value), ...options
     };
@@ -143,7 +170,28 @@
   }
 
   function isVertical() {
-    return verticalMotion.value !== "off";
+    return !hubFour && verticalMotion.value !== "off";
+  }
+
+  function horizontalMode() {
+    return hubFour ? "pendulum" : horizontalMotion?.value || (isVertical() ? "off" : options.counterStep ? "outward" : "pendulum");
+  }
+
+  function isHorizontal() {
+    return horizontalMode() !== "off";
+  }
+
+  function isJoint() {
+    return isHorizontal() && isVertical();
+  }
+
+  function pairedMotion() {
+    const mode = isVertical() ? verticalMotion.value : horizontalMode();
+    return !isJoint() && ["pendulum", "outward", "inward"].includes(mode);
+  }
+
+  function motionKey() {
+    return [size.value, width.value, heightFactor?.value, horizontalMode(), verticalMotion.value, jointRoute?.value].join("|");
   }
 
   function reset() {
@@ -151,8 +199,8 @@
     patternMarks = null;
     const rows = Number(size.value);
     const length = Number(width.value) * rows - 1;
-    const height = isVertical() ? length : rows;
-    const columns = isVertical() ? rows - 1 : length;
+    const height = isVertical() ? Number(heightFactor?.value || width.value) * rows - 1 : rows;
+    const columns = isHorizontal() ? length : rows - 1;
     if (field?.W === columns && field.H === height) field.val.fill(-1);
     else {
       field = MAYATNIK.field(columns, height, "empty");
@@ -160,11 +208,12 @@
     }
     depth = rows / 2;
     routeChanges = new Map([[0, options.wrap]]);
+    verticalRouteChanges = new Map([[0, options.wrapY]]);
     reversalChanges = new Map([[0, options.reverseAtContact]]);
     checkpoints = new Map();
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
-    normalSliderMax = Math.min(maxFrame, 2 * length + 1);
+    normalSliderMax = Math.min(maxFrame, (isJoint() ? 4 : 2) * Math.max(columns, height) + 1);
     cycle = null;
     configureCycle();
     initializeRun();
@@ -179,6 +228,16 @@
 
   function initializeRun() {
     initializeMotion();
+    const centerX = (field.W - 1) / 2;
+    const centerY = Math.floor((field.H - 2 * depth) / 2);
+    jointPoints = [{center: centerX, top: centerY}, {center: centerX, top: centerY}];
+    spiral = {x: 0, y: 0, leg: 0, walked: 0, length: 1};
+    routeWrapY = verticalRouteChanges.get(0);
+    if (isJoint()) return;
+    if (horizontalMode() === "inward") {
+      branches[1] = {column: 0, direction: 1};
+      branches[0] = {column: field.W - 1, direction: -1};
+    }
     if (!isVertical()) return;
     const end = field.H - 2 * depth;
     const center = Math.floor(end / 2);
@@ -203,6 +262,10 @@
     return routeChanges.get(frame) ?? routeWrap;
   }
 
+  function currentWrapY() {
+    return verticalRouteChanges.get(frame) ?? routeWrapY;
+  }
+
   function changeRoute(wrap) {
     changeMotion(routeChanges, wrap);
   }
@@ -224,7 +287,7 @@
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (isVertical() || options.counterStep || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
+    if (isVertical() || horizontalMode() !== "pendulum" || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
         [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
       cycle = null;
       return;
@@ -282,12 +345,28 @@
     }
     patternPalette.hidden = !options.patternColors;
     edgeButtons.counterStep.disabled = isVertical();
-    const lengthLabel = isVertical() ? "Высота поля" : "Ширина поля";
+    const lengthLabel = !horizontalMotion && isVertical() ? "Высота поля" : "Ширина поля";
     const label = byId("romb-width-label");
     if (label.textContent !== lengthLabel) label.textContent = lengthLabel;
     squareButton?.setAttribute("aria-pressed", String(options.square));
     andButton?.setAttribute("aria-pressed", String(options.buildAnd));
     coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
+    const both = isJoint();
+    for (const [key, select, id] of [["x", horizontalMotion, "romb-horizontal-enabled"], ["y", verticalMotion, "romb-vertical-enabled"]]) {
+      if (!select) continue;
+      const active = select.value !== "off";
+      if (active) rememberedModes[key] = select.value;
+      byId(id)?.setAttribute("aria-pressed", String(active));
+      select.disabled = both;
+      select.title = both ? "При двух включённых осях движение задаёт общий маршрут. Этот одноосевой вариант сохранён."
+        : key === "x" ? "Горизонтальный ход половин или целого ромба" : "Вертикальный ход половин или целого ромба";
+    }
+    if (byId("romb-route-group")) byId("romb-route-group").hidden = !both;
+    verticalWrapButton?.setAttribute("aria-pressed", String(currentWrapY()));
+    if (verticalWrapButton) verticalWrapButton.disabled = !isVertical();
+    edgeButtons.wrap.disabled = !isHorizontal();
+    edgeButtons.stopAtContact.disabled = edgeButtons.reverseAtContact.disabled = !pairedMotion();
+    syncMirrors();
   }
 
   function optionEnabled(key) {
@@ -300,12 +379,12 @@
     return Math.abs(branches[0].column - branches[1].column);
   }
 
-  function moveBranch(branch, W) {
+  function moveBranch(branch, W, wrap = routeWrap) {
     if (!frame) return false;
     const previous = branch.column;
     const next = previous + branch.direction;
-    branch.column = MayatnikEdgeFlow.mapColumn(next, W, !routeWrap);
-    if (!routeWrap && branch.column !== next) branch.direction *= -1;
+    branch.column = MayatnikEdgeFlow.mapColumn(next, W, !wrap);
+    if (!wrap && branch.column !== next) branch.direction *= -1;
     return Math.abs(branch.column - previous) === 1;
   }
 
@@ -361,32 +440,99 @@
   function advanceFrame(stopAtContact) {
     patternMarks = null;
     routeReverse = currentReverse();
-    const watchContact = stopAtContact || routeReverse;
-    const contact = isVertical() ? advanceVertical(watchContact)
-      : advance(watchContact, options.buildAnd, options.counterStep);
+    const watchContact = pairedMotion() && (stopAtContact || routeReverse);
+    const contact = isJoint() ? advanceJoint()
+      : isVertical() ? advanceVertical(watchContact) : advanceHorizontal(watchContact);
     if (contact && routeReverse) {
       for (const branch of branches) branch.direction *= -1;
     }
     if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
       if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
-      checkpoints.set(frame, {bits: field.val.slice(), branches: branches.map(item => ({...item})), column, routeWrap, routeReverse});
+      checkpoints.set(frame, {bits: field.val.slice(), branches: branches.map(item => ({...item})),
+        jointPoints: jointPoints.map(point => ({...point})), spiral: {...spiral}, column, routeWrap, routeWrapY, routeReverse});
     }
     observeCycle();
     return contact && stopAtContact;
+  }
+
+  function advanceHorizontal(watchContact) {
+    const mode = horizontalMode();
+    if (mode === "pendulum") return advance(watchContact, options.buildAnd, false);
+    if (mode === "outward" || mode === "inward") {
+      const before = separation();
+      const touched = advance(watchContact, options.buildAnd, true);
+      return mode === "inward" ? watchContact && before > 2 * depth - 1 && separation() <= 2 * depth - 1 : touched;
+    }
+    routeWrap = currentWrap();
+    const branch = branches[1];
+    if (mode === "sync") moveBranch(branch, field.W);
+    branches[0] = {...branch};
+    column = branch.column;
+    buildPass(column, column, options.buildAnd);
+    frame++;
+    return false;
+  }
+
+  function advanceJoint() {
+    routeWrap = currentWrap();
+    routeWrapY = currentWrapY();
+    const mode = jointRoute?.value || "cw";
+    let dx = 0, dy = 0;
+    if (frame && mode.startsWith("spiral")) {
+      const directions = mode === "spiral-ccw" ? [[0, -1], [-1, 0], [0, 1], [1, 0]]
+        : [[0, -1], [1, 0], [0, 1], [-1, 0]];
+      const [x, y] = directions[spiral.leg % 4];
+      spiral.x += x;
+      spiral.y += y;
+      if (++spiral.walked === spiral.length) {
+        spiral.walked = 0;
+        spiral.leg++;
+        if (spiral.leg % 2 === 0) spiral.length++;
+      }
+      dx = spiral.x;
+      dy = spiral.y;
+    } else if (frame) {
+      const directions = mode === "cross" ? [[-1, 0], [1, 0], [0, -1], [0, 1]]
+        : mode === "ccw" ? [[0, -1], [-1, 0], [0, 1], [1, 0]]
+          : [[0, -1], [1, 0], [0, 1], [-1, 0]];
+      const radius = Math.floor((frame - 1) / 4) + 1;
+      const [x, y] = directions[(frame - 1) % 4];
+      dx = x * radius;
+      dy = y * radius;
+    }
+    const point = {
+      center: MayatnikEdgeFlow.mapColumn((field.W - 1) / 2 + dx, field.W, !routeWrap),
+      top: MayatnikEdgeFlow.mapColumn(Math.floor((field.H - 2 * depth) / 2) + dy, field.H - 2 * depth + 1, !routeWrapY)
+    };
+    jointPoints[frame % 2] = point;
+    column = point.center;
+    buildPass(column, column, options.buildAnd, point.top, point.top);
+    frame++;
+    return false;
   }
 
   function advanceVertical(watchContact) {
     const [lower, upper] = branches;
     const before = lower.column - upper.column;
     const positions = field.H - 2 * depth + 1;
-    routeWrap = currentWrap();
-    const upperMoved = moveBranch(upper, positions);
+    routeWrapY = currentWrapY();
+    if (verticalMotion.value === "pendulum") {
+      // Alternate two independent vertical branches, exactly as in advance().
+      // Screen rows increase downward: center, up 1, down 1, up 2, down 2.
+      const branch = branches[frame % 2];
+      const moved = moveBranch(branch, positions, routeWrapY);
+      buildPass(column, column, options.buildAnd, branch.column, branch.column);
+      frame++;
+      const contactDistance = 2 * depth - 1;
+      return watchContact && moved && Math.abs(before) < contactDistance && separation() === contactDistance;
+    }
+    const upperMoved = moveBranch(upper, positions, routeWrapY);
     const synchronous = verticalMotion.value === "sync";
     if (synchronous) {
       lower.column = upper.column;
       lower.direction = upper.direction;
     }
-    const lowerMoved = !synchronous && moveBranch(lower, positions);
+    const lowerMoved = !synchronous && moveBranch(lower, positions, routeWrapY);
     buildPass(column, column, options.buildAnd, upper.column, lower.column);
     frame++;
     const after = lower.column - upper.column;
@@ -455,6 +601,9 @@
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
       routeWrap = checkpoint.routeWrap;
+      routeWrapY = checkpoint.routeWrapY;
+      jointPoints = checkpoint.jointPoints.map(point => ({...point}));
+      spiral = {...checkpoint.spiral};
       routeReverse = checkpoint.routeReverse;
       frame = start;
     } else if (!retreat && frame > target) {
@@ -590,10 +739,9 @@
   }
 
   function repeatTone(row, col) {
-    const [first, second] = branches;
-    const matches = isVertical() ? matchingVerticalBlock : matchingBlock;
-    if (first.column !== second.column &&
-      (matches(row, col, first.column, second.column) || matches(row, col, second.column, first.column))) return 2;
+    const [first, second = first] = renderRhombs;
+    if ((first.center !== second.center || first.top !== second.top) &&
+      (matchingPositionBlock(row, col, first, second) || matchingPositionBlock(row, col, second, first))) return 2;
     const half = Math.floor(field.W / 2);
     if (options.joinLeft && col >= field.W - half) return 4;
     if (options.joinRight && col < half) return 6;
@@ -602,6 +750,37 @@
 
   function patternAt(marks, index) {
     return marks && (marks[index >> 3] & (1 << (index & 7)));
+  }
+
+  // Geometry of the two current source passes. Half modes keep the original
+  // upper/lower pieces; joint routes retain the two most recent whole rhombs.
+  function sourceRhombs(all = true) {
+    if (isJoint()) return all ? jointPoints : [jointPoints[frame ? (frame - 1) % 2 : 0]];
+    const vertical = isVertical();
+    const mode = vertical ? verticalMotion.value : horizontalMode();
+    const point = branch => vertical ? {center: (field.W - 1) / 2, top: branch.column}
+      : {center: branch.column, top: 0};
+    if (mode === "outward" || mode === "inward") {
+      return [{...point(branches[1]), half: "upper"}, {...point(branches[0]), half: "lower"}];
+    }
+    const selected = mode === "sync" || mode === "off" ? [branches[1]]
+      : all ? branches : [branches[frame ? (frame - 1) % 2 : 0]];
+    return selected.map(point);
+  }
+
+  function matchingPositionBlock(row, col, first, second) {
+    const {W, H} = field;
+    const localRow = row - first.top;
+    const top = localRow - (localRow & 1);
+    if (top < 0 || top + 1 >= 2 * depth) return false;
+    const radius = Math.min(top, 2 * depth - 2 - top);
+    const offset = col - first.center;
+    const left = offset - (offset & 1);
+    const a = first.center + left, b = second.center + left;
+    const ya = first.top + top, yb = second.top + top;
+    if (left < -radius || left + 1 > radius || a < 0 || b < 0 || a + 1 >= W || b + 1 >= W ||
+        ya < 0 || yb < 0 || ya + 1 >= H || yb + 1 >= H) return false;
+    return equalBlock(ya * W + a, yb * W + b);
   }
 
   function bitTone(row, col, marks, index) {
@@ -635,6 +814,16 @@
     }
   }
 
+  function layoutFieldHeight(bounds) {
+    const fullHeight = !zen && !hubFour && !inline && view.scale !== null;
+    fieldBoard.classList.toggle("romb-full-height", fullHeight);
+    if (fullHeight) {
+      const height = Math.ceil((bounds.bottom - bounds.top) * view.scale / (devicePixelRatio || 1)) + "px";
+      if (fieldBoard.style.getPropertyValue("--field-height") !== height) fieldBoard.style.setProperty("--field-height", height);
+    }
+    return fullHeight;
+  }
+
   function paint() {
     if (hubFour) {
       hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0, hubVertical);
@@ -644,17 +833,22 @@
       syncTransport();
       return;
     }
+    const bounds = projectedBounds();
+    const fullHeight = layoutFieldHeight(bounds);
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const {W, H} = field;
     const displayWidth = view.end - view.start;
-    const bounds = projectedBounds();
+    renderRhombs = sourceRhombs();
     const viewWidth = bounds.right - bounds.left;
     const viewHeight = bounds.bottom - bounds.top;
     const cssScale = scaleFor(rect);
     view.x = bounds.left + boundCenter(view.x - bounds.left, viewWidth, rect.width / cssScale);
-    view.y = bounds.top + boundCenter(view.y - bounds.top, viewHeight, rect.height / cssScale);
-    canvas.classList.toggle("romb-zoomed", viewWidth * cssScale > rect.width + 0.5 || viewHeight * cssScale > rect.height + 0.5);
+    view.y = fullHeight
+      ? bounds.top + (rect.top - fieldBoard.getBoundingClientRect().top + rect.height / 2) / cssScale
+      : bounds.top + boundCenter(view.y - bounds.top, viewHeight, rect.height / cssScale);
+    canvas.classList.toggle("romb-zoomed", viewWidth * cssScale > rect.width + 0.5 ||
+      viewHeight * cssScale > (fullHeight ? Math.min(innerHeight, rect.height) : rect.height) + 0.5);
 
     const dpr = devicePixelRatio || 1;
     const ratio = view.scale === null ? Math.min(dpr, 1.5) : dpr;
@@ -695,9 +889,7 @@
     let marks;
     if (options.patternColors && frame) {
       patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
-      patternMarks ??= isVertical()
-        ? patternPainter.updateVertical(field.val, branches[1].column, branches[0].column, 2 * depth)
-        : patternPainter.update(field.val, branches.map(branch => branch.column), options.counterStep);
+      patternMarks ??= patternPainter.update(field.val);
       marks = patternMarks;
     }
     words.fill(0);
@@ -812,29 +1004,38 @@
 
   function positionText() {
     if (!frame) return "";
+    if (isJoint()) {
+      const point = jointPoints[(frame - 1) % 2];
+      return " · " + routeNames[jointRoute?.value || "cw"] + " · вершина: столбец " +
+        formatter.format(point.center + 1) + ", строка " + formatter.format(point.top + 1);
+    }
     if (isVertical()) {
+      if (verticalMotion.value === "pendulum") {
+        return " · вершина, строка " + formatter.format(branches[(frame - 1) % 2].column + 1);
+      }
       const upper = formatter.format(branches[1].column + 1);
       const lower = formatter.format(branches[0].column + depth + 1);
       return verticalMotion.value === "sync" ? " · вершина, строка " + upper : " · строки · верх " + upper + " · низ " + lower;
     }
-    if (options.counterStep) {
+    if (["outward", "inward"].includes(horizontalMode())) {
       return " · верх " + formatter.format(branches[1].column + 1) + " · низ " + formatter.format(branches[0].column + 1);
     }
     return " · столбец " + formatter.format(column + 1);
   }
 
   function contactText() {
-    if (!options.stopAtContact && !currentReverse()) return "";
+    if (!pairedMotion() || (!options.stopAtContact && !currentReverse())) return "";
     const distance = separation();
+    if (isVertical() && verticalMotion.value === "pendulum") return distance === 2 * depth - 1 ? " · касание" : "";
     if (isVertical()) return verticalMotion.value !== "sync" && distance <= 1 ? " · касание" : "";
     if (distance === field.H - 1) return " · касание";
-    return options.counterStep && distance === field.H ? " · порог касания" : "";
+    return ["outward", "inward"].includes(horizontalMode()) && distance === field.H ? " · порог касания" : "";
   }
 
   function updateLabels(cssScale, dpr) {
     const {W, H} = field;
     const vertical = isVertical();
-    const position = positionText() + (frame && !options.counterStep && !vertical ? " из " + formatter.format(W) : "");
+    const position = positionText() + (frame && !["outward", "inward"].includes(horizontalMode()) && !vertical ? " из " + formatter.format(W) : "");
     const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
@@ -862,7 +1063,6 @@
     if (combinedView.hidden) return;
     const {W, val} = field;
     const H = 2 * depth;
-    const vertical = isVertical();
     const {left, top, right, bottom} = coinBounds();
     const rect = combinedCanvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -887,7 +1087,7 @@
     const x1 = Math.min(width, Math.ceil(originX + right * scale));
     const y0 = Math.max(0, Math.floor(originY + top * scale));
     const y1 = Math.min(height, Math.ceil(originY + bottom * scale));
-    const [first, second] = branches;
+    const [first, second = first] = sourceRhombs();
     const flip = flipSecond.checked ? -1 : 1;
     const s = Math.SQRT1_2;
     for (let py = y0; py < y1; py++) {
@@ -899,12 +1099,12 @@
         if (row < 0 || row >= H || col < 0 || col >= H - 1) continue;
         const offset = col - (depth - 1);
         if (Math.abs(offset) > Math.min(row, H - 1 - row)) continue;
-        const a = (vertical ? depth - 1 : first.column) + offset;
-        const b = (vertical ? depth - 1 : second.column) + flip * offset;
-        const rowA = row + (vertical ? first.column : 0);
-        const rowB = row + (vertical ? second.column : 0);
-        const left = a >= 0 && a < W ? val[rowA * W + a] : -1;
-        const right = b >= 0 && b < W ? val[rowB * W + b] : -1;
+        const a = first.center + offset;
+        const b = second.center + flip * offset;
+        const rowA = row + first.top;
+        const rowB = row + second.top;
+        const left = a >= 0 && a < W && rowA >= 0 && rowA < field.H ? val[rowA * W + a] : -1;
+        const right = b >= 0 && b < W && rowB >= 0 && rowB < field.H ? val[rowB * W + b] : -1;
         if (left < 0 && right < 0) continue;
         const firstOn = left === 1;
         const secondOn = right === 1;
@@ -923,6 +1123,7 @@
 
   function syncMirrors() {
     for (const [source, copy] of mirrors) {
+      copy.hidden = source.hidden;
       if (source.matches("button, input, select")) {
         copy.disabled = source.disabled;
         const pressed = source.getAttribute("aria-pressed");
@@ -933,8 +1134,7 @@
         if (source.matches("input[type=range]")) copy.max = source.max;
         if (source.matches("input, select") && copy.value !== source.value) copy.value = source.value;
       } else {
-        copy.hidden = source.hidden;
-        if (copy.textContent !== source.textContent) copy.textContent = source.textContent;
+        if (!source.querySelector("button, input, select") && copy.textContent !== source.textContent) copy.textContent = source.textContent;
       }
     }
   }
@@ -943,9 +1143,10 @@
     const holder = byId("romb-coin-controls");
     if (!holder) return;
     const controls = byId("romb-controls").cloneNode(true);
-    controls.querySelector("#romb-zen")?.remove();
+    (controls.querySelector("#romb-zen-pair") || controls.querySelector("#romb-zen"))?.remove();
     controls.querySelector("#romb-step-label").htmlFor = "romb-step-size-coin";
     controls.querySelector("#romb-pattern-colors").setAttribute("aria-controls", "romb-pattern-palette-coin");
+    controls.querySelector("#romb-route")?.setAttribute("aria-describedby", "romb-route-help-coin");
     controls.id = "romb-coin-toolbar";
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
     const timeline = frameControl.cloneNode(true);
@@ -1053,15 +1254,7 @@
   }
 
   function activeOutlines() {
-    const [lower, upper] = branches;
-    if (isVertical()) {
-      const center = depth - 1;
-      if (upper.column === lower.column) return [{center, top: upper.column}];
-      return [{center, top: upper.column, half: "upper"}, {center, top: lower.column, half: "lower"}];
-    }
-    if (options.counterStep) return [{center: upper.column, top: 0, half: "upper"}, {center: lower.column, top: 0, half: "lower"}];
-    const both = (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation();
-    return (both ? branches.map(branch => branch.column) : [column]).map(center => ({center, top: 0}));
+    return sourceRhombs(options.stopAtContact || options.markRepeats || currentReverse());
   }
 
   function paintOutlines(x, y, scale, ratio, color) {
@@ -1121,9 +1314,10 @@
     const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
-    stepButton.disabled = (hubFour ? seekTarget ?? frame : frame) === maxFrame;
+    const noMotion = !isHorizontal() && !isVertical();
+    stepButton.disabled = noMotion || (hubFour ? seekTarget ?? frame : frame) === maxFrame;
     backButton.disabled = (seekTarget ?? frame) === 0;
-    play.disabled = frame === maxFrame;
+    play.disabled = noMotion || frame === maxFrame;
     for (const [direction, button] of hubPlayButtons) {
       const active = playing && playDirection === direction;
       const glyph = active ? "Ⅱ" : direction < 0 ? "◀" : "▶";
@@ -1189,22 +1383,27 @@
 
   function bindViewport(element, camera, bounds, fitCamera) {
     let drag;
-    function zoomTo(physicalScale, px = 0, py = 0) {
+    function zoomTo(physicalScale, px = 0, py = 0, anchorPointer = false) {
       const rect = element.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       const box = bounds();
       const old = scaleFor(rect, camera, box);
+      const pointerRow = camera.y + py / old;
       camera.scale = clamp(physicalScale, 1, 16);
       const shift = 1 / old - 1 / scaleFor(rect, camera, box);
       camera.x += px * shift;
       camera.y += py * shift;
+      if (anchorPointer && element === canvas && layoutFieldHeight(box)) {
+        const projectedY = fieldBoard.getBoundingClientRect().top + (pointerRow - box.top) * scaleFor(rect, camera, box);
+        window.scrollBy(0, projectedY - (rect.top + rect.height / 2 + py));
+      }
       redraw();
     }
 
-    function zoomBy(factor, px = 0, py = 0) {
+    function zoomBy(factor, px = 0, py = 0, anchorPointer = false) {
       const current = scaleFor(element.getBoundingClientRect(), camera, bounds()) * (devicePixelRatio || 1);
       if (camera.scale === null && current < 1 && factor <= 1) return;
-      zoomTo(current * factor, px, py);
+      zoomTo(current * factor, px, py, anchorPointer);
     }
 
     function fitView() {
@@ -1217,7 +1416,7 @@
       const rect = element.getBoundingClientRect();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
       const factor = Math.exp(-clamp(event.deltaY * unit, -240, 240) * 0.003);
-      zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2);
+      zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2, true);
     }, {passive: false});
     element.addEventListener("keydown", event => {
       if (!["+", "=", "-", "−", "0", "1"].includes(event.key)) return;
@@ -1235,7 +1434,8 @@
       if (drag?.id !== event.pointerId) return;
       const scale = scaleFor(element.getBoundingClientRect(), camera, bounds());
       camera.x -= (event.clientX - drag.x) / scale;
-      camera.y -= (event.clientY - drag.y) / scale;
+      if (element === canvas && fieldBoard.classList.contains("romb-full-height")) window.scrollBy(0, drag.y - event.clientY);
+      else camera.y -= (event.clientY - drag.y) / scale;
       drag.x = event.clientX;
       drag.y = event.clientY;
       redraw();
@@ -1247,59 +1447,104 @@
   function mountZen() {
     const board = byId("romb-board");
     const enter = byId("romb-zen");
+    const withControls = byId("romb-zen-controls");
     const exit = byId("romb-zen-exit");
-    let previousView, nativeZen = false;
+    const toolbar = document.createElement("div");
+    const footer = document.createElement("div");
+    toolbar.className = "romb-zen-toolbar";
+    footer.className = "romb-zen-footer";
+    toolbar.hidden = footer.hidden = true;
+    board.prepend(toolbar);
+    board.append(footer);
+    const controls = byId("romb-controls");
+    const zoomControls = squareButton?.closest(".commands");
+    const placements = [
+      [controls, toolbar], [frameLabel, toolbar], [frameControl, toolbar],
+      [zoomControls, footer], [byId("romb-record-status"), footer], [exit, footer]
+    ].filter(([element]) => element).map(([element, holder]) => {
+      const marker = document.createComment("romb-zen-home");
+      element.before(marker);
+      return {element, holder, marker};
+    });
+    let previousView, previousFocus, nativeZen = false, mode = 0;
 
     function exitFullscreen() {
       if (document.fullscreenElement === board) document.exitFullscreen().catch(() => {});
     }
 
-    function setZen(active) {
-      if (active === zen) return;
+    // 0: normal page; 1: fullscreen field with controls; 2: field alone.
+    function setZen(next) {
+      if (next === mode) return;
+      const wasActive = mode !== 0;
+      const active = next !== 0;
+      mode = next;
       zen = active;
       root.classList.toggle("romb-zen", active);
+      root.classList.toggle("romb-zen-controls", next === 1);
       document.documentElement.classList.toggle("romb-zen-open", active);
-      enter.setAttribute("aria-pressed", String(active));
-      exit.hidden = !active;
-      if (active) {
+      enter.setAttribute("aria-pressed", String(next === 2));
+      withControls?.setAttribute("aria-pressed", String(next === 1));
+      toolbar.hidden = footer.hidden = next !== 1;
+      exit.hidden = next !== 1;
+      if (active && !wasActive) {
         previousView = {x: view.x, y: view.y, scale: view.scale};
+        previousFocus = document.activeElement;
+        placements.forEach(({element, holder}) => holder.append(element));
         fit();
         canvas.focus({preventScroll: true});
         board.requestFullscreen?.()?.catch(() => {});
-      } else {
+      } else if (!active) {
         nativeZen = false;
+        placements.forEach(({element, marker}) => marker.after(element));
         Object.assign(view, previousView);
         exitFullscreen();
-        enter.focus({preventScroll: true});
+        const target = previousFocus?.isConnected && previousFocus !== document.body ? previousFocus : enter;
+        target.focus({preventScroll: true});
+      } else {
+        // Focus must not remain inside the controls when they become hidden.
+        canvas.focus({preventScroll: true});
       }
       redraw();
     }
 
-    enter.addEventListener("click", () => setZen(true));
-    exit.addEventListener("click", () => setZen(false));
+    enter.addEventListener("click", () => setZen(mode === 2 ? 0 : 2));
+    withControls?.addEventListener("click", () => setZen(mode === 1 ? 0 : 1));
+    exit.addEventListener("click", () => setZen(0));
+    // Cancel native middle-button autoscroll on press; switch once on release.
+    root.addEventListener("mousedown", event => {
+      if (event.button === 1) event.preventDefault();
+    });
+    root.addEventListener("auxclick", event => {
+      if (event.button !== 1) return;
+      event.preventDefault();
+      setZen((mode + 1) % 3);
+    });
     document.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement === board) {
         if (zen) nativeZen = true;
         else exitFullscreen();
       } else if (nativeZen) {
         nativeZen = false;
-        setZen(false);
+        setZen(0);
       }
     });
     document.addEventListener("keydown", event => {
       if (event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
       if (zen && event.key === "Escape") {
         event.preventDefault();
-        setZen(false);
+        setZen(0);
       } else if ((event.code === "KeyQ" || event.key.toLowerCase() === "q") &&
           !event.target.closest?.("input, select, textarea, [contenteditable=true]")) {
         event.preventDefault();
-        setZen(!zen);
+        setZen(zen ? 0 : 2);
       }
     });
   }
 
   const {zoomTo, zoomBy, fitView} = bindViewport(canvas, view, projectedBounds, fit);
+  window.addEventListener("scroll", () => {
+    if (fieldBoard.classList.contains("romb-full-height")) redraw();
+  }, {passive: true});
 
   root.querySelectorAll("[data-romb-zoom]").forEach(button => {
     button.addEventListener("click", () => zoomBy(Number(button.dataset.rombZoom)));
@@ -1326,6 +1571,7 @@
 
   function togglePlay() {
     if (hubFour) return toggleHubPlayback(playDirection);
+    if (!isHorizontal() && !isVertical()) return;
     if (frame === maxFrame) return;
     if (playing || pending) {
       stop();
@@ -1385,7 +1631,33 @@
     input.addEventListener("input", redraw);
     input.addEventListener("change", save);
   }
-  for (const select of [size, width, verticalMotion]) select.addEventListener("change", () => { save(); reset(); });
+  for (const select of [size, width, heightFactor, horizontalMotion, verticalMotion, jointRoute].filter(Boolean)) {
+    select.addEventListener("change", () => {
+      if (horizontalMotion?.value !== "off") rememberedModes.x = horizontalMode();
+      if (verticalMotion.value !== "off") rememberedModes.y = verticalMotion.value;
+      save();
+      reset();
+    });
+  }
+  for (const [key, select, id] of [["x", horizontalMotion, "romb-horizontal-enabled"], ["y", verticalMotion, "romb-vertical-enabled"]]) {
+    byId(id)?.addEventListener("click", () => {
+      if (select.value === "off") select.value = rememberedModes[key];
+      else {
+        rememberedModes[key] = select.value;
+        select.value = "off";
+      }
+      save();
+      reset();
+    });
+  }
+  verticalWrapButton?.addEventListener("click", () => {
+    options.wrapY = !currentWrapY();
+    if (seekTarget !== null) stop();
+    changeMotion(verticalRouteChanges, options.wrapY);
+    syncEdgeButtons();
+    save();
+    redraw();
+  });
   stepMinus.addEventListener("click", () => nudgeStepSize(-1));
   stepPlus.addEventListener("click", () => nudgeStepSize(1));
   stepSize.addEventListener("input", () => {
@@ -1415,7 +1687,8 @@
     const actions = byId("romb-hub-actions");
     actions.prepend(backButton.parentElement);
     actions.append(stepSize.closest(".romb-setting"));
-    transport.append(frameControl, frameLabel);
+    transport.prepend(frameControl);
+    transport.append(frameLabel);
     transport.hidden = false;
     byId("romb-step-label").textContent = "Кадров за шаг";
     for (const [direction, button] of hubPlayButtons) {
@@ -1448,15 +1721,19 @@
   } else if (inline) {
     restore(window.openai?.widgetState?.modelContent);
     window.addEventListener("openai:set_globals", event => {
-      const before = size.value + "|" + width.value + "|" + verticalMotion.value;
+      const before = motionKey();
       const previous = {...options};
       restore(event.detail?.globals?.widgetState?.modelContent);
-      if (before !== size.value + "|" + width.value + "|" + verticalMotion.value ||
+      if (before !== motionKey() ||
           previous.counterStep !== options.counterStep || previous.buildAnd !== options.buildAnd) reset();
       else {
         if (previous.wrap !== options.wrap) {
           if (seekTarget !== null) stop();
           changeRoute(options.wrap);
+        }
+        if (previous.wrapY !== options.wrapY) {
+          if (seekTarget !== null) stop();
+          changeMotion(verticalRouteChanges, options.wrapY);
         }
         if (previous.reverseAtContact !== options.reverseAtContact) {
           if (seekTarget !== null) stop();
