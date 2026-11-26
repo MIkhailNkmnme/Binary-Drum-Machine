@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.021 */
+/* Ромбовый Маятник v0.022 */
 (() => {
   "use strict";
 
@@ -46,6 +46,7 @@
   const andButton = byId("romb-build-and");
   const coinSquareButton = byId("romb-coin-square");
   const patternPalette = byId("romb-pattern-palette");
+  const patternArea = byId("romb-pattern-area");
   const patternColors = [byId("romb-pattern-zero"), byId("romb-pattern-one")];
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
@@ -140,6 +141,10 @@
     if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
     if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
     if (typeof saved.flipSecond === "boolean") flipSecond.checked = saved.flipSecond;
+    if (patternArea && Array.from(patternArea.options).some(option => option.value === saved.patternArea)) {
+      patternArea.value = saved.patternArea;
+      patternMarks = null;
+    }
     if (Array.isArray(saved.patternPalette)) {
       patternColors.forEach((input, bit) => {
         const tone = saved.patternPalette[bit];
@@ -162,7 +167,7 @@
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
-      patternPalette: patternColors.map(input => input.value), ...options
+      patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value), ...options
     };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
@@ -907,7 +912,7 @@
     let marks;
     if (options.patternColors && frame) {
       patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
-      patternMarks ??= patternPainter.update(field.val);
+      patternMarks ??= patternPainter.update(field.val, patternArea?.value);
       marks = patternMarks;
     }
     words.fill(0);
@@ -1495,7 +1500,6 @@
     const display = panel("display", "Рисунок и вид");
     const playback = panel("play");
     const timeline = panel("timeline");
-    const resetPanel = panel("reset");
     const placements = [];
     function place(holder, ...elements) {
       for (const element of elements) {
@@ -1513,7 +1517,6 @@
     place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
       byId("romb-pattern-colors"), patternPalette, squareButton?.closest(".commands"), recordButton);
     place(playback, play.closest(".romb-run-steps"));
-    place(resetPanel, byId("romb-reset"));
     place(timeline, frameControl);
     let previousView, previousFocus, nativeZen = false, mode = 0;
 
@@ -1676,6 +1679,12 @@
       redraw();
     });
   }
+  patternArea?.addEventListener("change", () => {
+    patternMarks = null;
+    syncMirrors();
+    save();
+    redraw();
+  });
   for (const input of patternColors) {
     input.addEventListener("input", redraw);
     input.addEventListener("change", save);

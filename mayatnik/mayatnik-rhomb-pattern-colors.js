@@ -1,4 +1,4 @@
-/* Раскраска Ромбового Маятника v0.005 */
+/* Раскраска Ромбового Маятника v0.006 */
 (() => {
   "use strict";
 
@@ -38,7 +38,7 @@
       return vertical || horizontal || diagonal || antidiagonal;
     }
 
-    function update(values) {
+    function symmetricPatterns(values) {
       marks.fill(0);
       labels.fill(0);
       let label = 0;
@@ -87,6 +87,41 @@
           const y = Math.floor(point / stride);
           mark(y * W + origin + point % stride);
         }
+      }
+      return marks;
+    }
+
+    function update(values, mode = "patterns") {
+      if (mode === "patterns") return symmetricPatterns(values);
+      marks.fill(0);
+      const pending = [];
+      const move = (cell, dx, dy) => {
+        const c = cell.c + dx, r = cell.r + dy;
+        return c >= 0 && c < W && r >= 0 && r < H ? {c, r} : null;
+      };
+      // Reuse the same visited mask for every seed on the fixed center line.
+      function flood({seed, match, neighbours}) {
+        const enqueue = cell => {
+          const index = cell.r * W + cell.c;
+          if ((marks[index >> 3] & (1 << (index & 7))) || !match(cell)) return;
+          mark(index);
+          pending.push(index);
+        };
+        enqueue(seed);
+        while (pending.length) {
+          const index = pending.pop();
+          neighbours({c: index % W, r: Math.floor(index / W)}, enqueue);
+        }
+      }
+      for (let r = 0; r < H; r++) {
+        const index = r * W + center;
+        const bit = values[index];
+        if (bit < 0 || (marks[index >> 3] & (1 << (index & 7)))) continue;
+        if (mode === "bit") mark(index);
+        else window.MayatnikCellArea.select({
+          seed: {c: center, r}, bit, mode, topology: "square", move, flood,
+          match: cell => values[cell.r * W + cell.c] === bit
+        });
       }
       return marks;
     }

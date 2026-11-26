@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.023</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.024</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -12,8 +12,9 @@
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
-  <script defer src="mayatnik-rhomb-pattern-colors.js?v=005"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=021"></script>
+  <script defer src="mayatnik-cell-area.js?v=658"></script>
+  <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=022"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -66,11 +67,13 @@
     .romb-step-count input::-webkit-inner-spin-button,
     .romb-step-count input::-webkit-outer-spin-button { appearance: none; margin: 0; }
     .romb-step-count input:focus-visible { outline: 1px solid var(--cyan); }
-    .romb-pattern-palette { justify-content: center; gap: 8px; cursor: default; }
+    .romb-pattern-palette { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--text); font-size: 12px; }
+    .romb-pattern-palette select { max-width: 100%; min-width: 0; height: 24px; font: inherit; color: inherit; background: var(--gz-bg); border: 1px solid var(--line); }
+    .romb-zen-display .romb-pattern-palette { grid-column: 1 / -1; }
+    .romb-pattern-palette label:has(select) { flex-wrap: wrap; }
     .romb-pattern-palette[hidden] { display: none; }
     .romb-pattern-palette label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
     .romb-pattern-palette input { width: 19px; height: 18px; padding: 0; border: 0; background: none; cursor: pointer; }
-    .romb-pattern-palette:focus-within { background: var(--cyan) !important; }
     .romb-setting input[type=range] { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
     html:not(.romb-hub-four) main:not(.romb-zen, [data-romb-inline]) {
@@ -96,7 +99,7 @@
       position: absolute; inset: 0; z-index: 1; display: grid; pointer-events: none;
       grid-template-columns: minmax(168px, 1fr) minmax(0, 2fr) minmax(168px, 1fr);
       grid-template-rows: auto minmax(0, 1fr) auto;
-      grid-template-areas: "top top top" "motion . display" "play timeline reset";
+      grid-template-areas: "top top top" "motion . display" "play timeline .";
       gap: 8px; padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
                          max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     }
@@ -104,7 +107,7 @@
     .romb-zen-grid > * { min-width: 0; }
     .romb-zen-top { grid-area: top; justify-self: center; max-width: 100%; max-height: 28dvh; overflow: auto;
       display: flex; flex-wrap: wrap; justify-content: center; align-items: end; gap: 3px 8px; }
-    .romb-zen-top > *, .romb-zen-play > *, .romb-zen-reset > *, .romb-zen-timeline > * { pointer-events: auto; }
+    .romb-zen-top > *, .romb-zen-play > *, .romb-zen-timeline > * { pointer-events: auto; }
     .romb-zen-top > .progress { margin: 0; padding: 3px 6px; background: var(--bg); }
     .romb-zen-top .romb-setting { background: var(--bg); }
     .romb-zen-side { align-self: start; max-height: 100%; max-width: 100%; overflow: auto;
@@ -117,7 +120,6 @@
     .romb-zen-display > div { grid-template-columns: repeat(2, 120px); }
     .romb-zen-display .commands { grid-column: 1 / -1; display: grid; grid-template-columns: inherit; }
     .romb-zen-play { grid-area: play; justify-self: start; align-self: end; }
-    .romb-zen-reset { grid-area: reset; justify-self: end; align-self: end; }
     .romb-zen-timeline { grid-area: timeline; align-self: end; width: 100%; max-width: 840px; justify-self: center; }
     .romb-zen-timeline .romb-frame-control { margin: 0; padding: 4px 0; }
     .romb-zen-timeline .romb-frame-row { display: block; }
@@ -128,7 +130,7 @@
     @media (max-width: 640px) {
       .romb-zen-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         grid-template-rows: auto minmax(0, 1fr) auto auto;
-        grid-template-areas: "top top" "motion display" "play reset" "timeline timeline"; }
+        grid-template-areas: "top top" "motion display" "play play" "timeline timeline"; }
       .romb-zen-top { justify-self: stretch; flex-wrap: nowrap; justify-content: start; }
       .romb-zen-top > * { flex-shrink: 0; }
       .romb-zen-timeline { width: 85%; }
@@ -148,17 +150,15 @@
     #romb-vertical[hidden] { display: none; }
     .romb-frame-control { min-width: 0; margin: 0 0 10px; }
     .romb-frame-control { container-type: inline-size; }
-    .romb-frame-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
-    .romb-run-steps { display: flex; align-items: center; gap: 8px; }
+    .romb-frame-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; }
+    .romb-run-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
     .romb-run-steps > .gz-hx { width: 96px; flex: 0 0 96px; }
-    .romb-run-steps > button.gz-hx { width: 72px; flex-basis: 72px; justify-content: center; }
-    .romb-frame-reset.gz-hx { width: 76px; justify-content: center; }
+    .romb-run-steps > .romb-play-reset { width: 136px; flex-basis: 136px; }
+    .romb-play-reset .gz-half[aria-pressed="true"] { background: var(--cyan); }
     .romb-frame-track { position: relative; min-width: 0; }
     @container (max-width: 470px) {
       .romb-frame-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px; }
       .romb-frame-row .romb-frame-track { grid-column: 1 / -1; grid-row: 2; }
-      .romb-run-steps { flex-wrap: wrap; }
-      .romb-frame-reset.gz-hx { width: 62px; padding: 0 6px; }
     }
     .romb-frame-slider { display: block; width: 100%; margin: 0; accent-color: var(--cyan); }
     .romb-frame-track:has(.romb-cycle-values:not([hidden])) {
@@ -236,7 +236,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.023</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.024</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -265,7 +265,15 @@
             <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
           </button>
         </div>
-        <div class="gz-hx romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Палитра шаблонов" hidden>
+        <div class="romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Область и цвета раскраски" hidden>
+          <label>Область <select id="romb-pattern-area">
+            <option value="sides">По сторонам</option>
+            <option value="corners">Стороны + углы</option>
+            <option value="diagonal">Только углы</option>
+            <option value="chess0">Шахматки 0</option>
+            <option value="bit">Один бит</option>
+            <option value="patterns">Симметричные фигуры</option>
+          </select></label>
           <label title="Цвет единиц">1 <input id="romb-pattern-one" type="color" value="#ffe184" aria-label="Цвет единиц"></label>
           <label title="Цвет нулей">0 <input id="romb-pattern-zero" type="color" value="#a55383" aria-label="Цвет нулей"></label>
         </div>
@@ -375,10 +383,13 @@
     <p id="romb-announcement" class="romb-announcement" aria-live="polite"></p>
     <div class="romb-frame-control" id="romb-frame-control">
       <div class="romb-frame-row">
-        <div class="romb-run-steps" data-user-label role="group" aria-label="Пуск и шаги">
-          <button type="button" class="gz-hx" id="romb-play" aria-pressed="false">
-            <span id="romb-play-icon" aria-hidden="true">▶</span><span id="romb-play-label">Пуск</span>
-          </button>
+        <div class="romb-run-steps" data-user-label role="group" aria-label="Пуск, сброс и шаги">
+          <div class="gz-hx gz-pair gz-split romb-step-pair romb-play-reset" role="group" aria-label="Пуск и сброс">
+            <button type="button" class="gz-half gz-h0" id="romb-play" aria-pressed="false">
+              <span id="romb-play-icon" aria-hidden="true">▶</span><span id="romb-play-label">Пуск</span>
+            </button>
+            <button type="button" class="gz-half gz-h1" id="romb-reset"><span aria-hidden="true">↺</span><span>Сброс</span></button>
+          </div>
           <div class="gz-hx gz-pair gz-split gz-mid romb-step-pair" role="group" aria-label="Шаги">
             <button type="button" class="gz-half gz-h0" id="romb-step-back" aria-label="Шаг назад">◂</button>
             <span class="gz-pm" aria-hidden="true">Шаги</span>
@@ -392,9 +403,6 @@
             <span class="romb-cycle-start"></span><span class="romb-cycle-return"></span>
           </span>
         </div>
-        <button type="button" class="gz-hx romb-frame-reset" id="romb-reset" data-user-label>
-          <span aria-hidden="true">↺</span><span>Сброс</span>
-        </button>
       </div>
     </div>
     <p id="romb-cycle-note" class="progress" hidden></p>
@@ -470,7 +478,7 @@
       <p>«Разворот» меняет направление обеих ветвей на последнем касании. Если включён и «Стоп · Касание», пауза наступает уже после смены направления.</p>
       <p>С начального кадра цикла нумерация повторяется после совпадения битов и обеих ветвей. Если сменить режим края в ходе опыта, расчёт продолжится по новому маршруту. <a href="../issledovanie/wolfram-nks/romb-period.html#sizes">Периоды для разных размеров</a>.</p>
       <p>«Повторы» отмечают золотым одинаковые блоки 2 × 2 внутри двух ромбов. Фиолетовый связывает левую склейку с правой половиной поля, зелёный — правую склейку с левой. Оттенки сохраняют различие между 0 и 1.</p>
-      <p>«Раскрасить» ищет узоры вдоль одной неподвижной вертикальной оси в центре поля. Цвет получают заполненные клетки этой оси и касающиеся её симметричные фигуры из четырёх и более одинаковых битов. Поиск охватывает по 12 столбцов с каждой стороны оси. В палитре можно выбрать цвета для 1 и 0.</p>
+      <p>«Раскрасить» начинает заливку с заполненных клеток исходной центральной оси. В списке «Область» выберите, как соединять одинаковые биты: по сторонам, по сторонам и углам или только по углам. «Шахматки 0» соединяет нулевые диагональные цепочки также боковыми касаниями. «Один бит» красит только саму ось. Прежний поиск симметричных узоров доступен в пункте «Симметричные фигуры». Цвета для 1 и 0 выбираются отдельно.</p>
       <p>Совмещение читает две вырезки по центрам и строит отдельный ромб. В наложении фиолетовый показывает единицу первой ветви, зелёный — второй, светлый — обеих. В XOR и AND пустая клетка даёт 0, а общей пустоте соответствует прозрачность.</p>
     </section>
   </main>
