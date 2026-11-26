@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.028</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.029</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=025"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=026"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -25,6 +25,14 @@
       --romb-right-zero: #245a4c; --romb-right-one: #c4efb8;
     }
     header { margin-bottom: 18px; }
+    .scale-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+    .scale-comparison figure { margin: 0; padding: 12px; background: #101c26; }
+    .scale-comparison figcaption { font-weight: 600; }
+    .scale-comparison .scale-stage { display: grid; place-items: center; min-height: 208px; margin: 8px 0; background: #0b1620; overflow: auto; }
+    .scale-comparison canvas { image-rendering: pixelated; }
+    .scale-comparison button { color: var(--text); background: var(--gz-bg); border: 1px solid var(--line); padding: 4px 10px; cursor: pointer; }
+    .scale-comparison button[aria-pressed="true"] { border-color: var(--cyan); color: var(--cyan); }
+    .scale-comparison output { display: block; margin-top: 6px; color: var(--muted); }
     .romb-controls { border: 0; margin: 0; padding: 0; align-items: end; row-gap: 8px; }
     .romb-command-bank { display: flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
     .romb-strip { display: inline-flex; align-items: center; flex-wrap: wrap; max-width: 100%; gap: 2px 0; }
@@ -241,6 +249,7 @@
     <nav class="site-nav" aria-label="Разделы Зеркалиуса">
       <a href="Zerkalius-mayatnik.html">Маятник</a>
       <a href="romb-instruction.html">Инструкция</a>
+      <a href="#scale-example">Пример масштаба</a>
       <a href="romb-motion-256.html">Движение по двум осям · 256</a>
       <a href="../issledovanie/wolfram-nks/romb-atlas.html">Атлас и GIF</a>
       <a href="../issledovanie/wolfram-nks/romb-contact.html">Цикл с разворотом</a>
@@ -248,7 +257,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.028</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.029</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -501,6 +510,27 @@
       <span><i class="empty" aria-hidden="true"></i>Пусто</span>
       <span><i class="active" aria-hidden="true"></i>Текущий ромб</span>
     </div>
+    <section id="scale-example" aria-labelledby="scale-example-title">
+      <h2 id="scale-example-title">Два ромба при разном масштабе</h2>
+      <div class="scale-comparison">
+        <figure data-rows="256">
+          <figcaption>Большой ромб · 256 строк</figcaption>
+          <div class="scale-stage"><canvas role="img" aria-label="Первый кадр ромба на 256 строк"></canvas></div>
+          <button type="button" data-scale="0.3333333333333333" aria-pressed="true">Уменьшить втрое</button>
+          <button type="button" data-scale="1" aria-pressed="false">Показать каждый бит</button>
+          <output></output>
+        </figure>
+        <figure data-rows="64">
+          <figcaption>Малый ромб · 64 строки</figcaption>
+          <div class="scale-stage"><canvas role="img" aria-label="Первый кадр ромба на 64 строки"></canvas></div>
+          <span>Клетка</span>
+          <button type="button" data-scale="1" aria-pressed="true">1×1</button>
+          <button type="button" data-scale="2" aria-pressed="false">2×2</button>
+          <button type="button" data-scale="3" aria-pressed="false">3×3</button>
+          <output></output>
+        </figure>
+      </div>
+    </section>
     <section class="explanation" aria-labelledby="romb-rule">
       <h2 id="romb-rule">Как строится ромб</h2>
       <p>Верх считает обычное ядро Маятника. В середине самый широкий ряд занимает две строки. Ниже ширина уменьшается на один бит в каждой строке. Чтобы получить очередной бит сужения, складываем по XOR биты предыдущей строки от левого края до клетки над ним слева. На пустом поле этот шаг восстанавливает ряды верхнего треугольника в обратном порядке.</p>

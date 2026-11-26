@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.025 */
+/* Ромбовый Маятник v0.026 */
 (() => {
   "use strict";
 
@@ -403,10 +403,14 @@
   }
 
   function buildPass(upperColumn, lowerColumn, and, upperTop = 0, lowerTop = 0) {
+    firstPaintedRow = Math.min(firstPaintedRow, upperTop, lowerTop + depth);
+    endPaintedRow = Math.max(endPaintedRow, upperTop + depth, lowerTop + 2 * depth);
+    drawPass(field, depth, upperColumn, lowerColumn, and, upperTop, lowerTop);
+  }
+
+  function drawPass(field, depth, upperColumn, lowerColumn, and, upperTop, lowerTop) {
     const {W, H, val} = field;
     const rows = 2 * depth;
-    firstPaintedRow = Math.min(firstPaintedRow, upperTop, lowerTop + depth);
-    endPaintedRow = Math.max(endPaintedRow, upperTop + depth, lowerTop + rows);
     const upperField = H === rows ? field : {W, H: depth, val: val.subarray(upperTop * W, (upperTop + depth) * W)};
     MAYATNIK.cone(upperField, upperColumn, depth, null, undefined, null, undefined, and);
 
@@ -435,6 +439,57 @@
         prefix ^= c > 0 && val[i - W - 1] === 1;
         val[i] = MAYATNIK.accumulateBit(val[i], prefix, and);
       }
+    }
+  }
+
+  function mountScaleExample() {
+    const section = byId("scale-example");
+    if (!section) return;
+    const styles = getComputedStyle(root);
+    const colors = ["--romb-zero", "--romb-one"].map(name => styles.getPropertyValue(name).trim());
+    for (const figure of section.querySelectorAll("figure[data-rows]")) {
+      const height = Number(figure.dataset.rows);
+      const example = MAYATNIK.field(height - 1, height, "empty");
+      const center = (example.W - 1) / 2;
+      drawPass(example, height / 2, center, center, false, 0, 0);
+      const target = figure.querySelector("canvas");
+      const ctx = target.getContext("2d");
+      if (!ctx) continue;
+      const buttons = figure.querySelectorAll("button[data-scale]");
+      let scale = Number(figure.querySelector('[aria-pressed="true"]').dataset.scale);
+
+      function sizeOnScreen() {
+        const ratio = devicePixelRatio || 1;
+        target.style.width = target.width / ratio + "px";
+        target.style.height = target.height / ratio + "px";
+      }
+
+      function render() {
+        target.width = Math.round(example.W * scale);
+        target.height = Math.round(example.H * scale);
+        sizeOnScreen();
+        for (let y = 0; y < target.height; y++) {
+          const row = Math.floor((y + 0.5) / scale) * example.W;
+          for (let x = 0; x < target.width; x++) {
+            const col = Math.floor((x + 0.5) / scale);
+            let bit = example.val[row + col];
+            if (bit < 0 && scale < 1 && col + 1 < example.W) bit = example.val[row + col + 1];
+            if (bit >= 0) {
+              ctx.fillStyle = colors[bit];
+              ctx.fillRect(x, y, 1, 1);
+            }
+          }
+        }
+        for (const button of buttons) button.setAttribute("aria-pressed", String(Number(button.dataset.scale) === scale));
+        figure.querySelector("output").textContent = example.H + " строк → " + target.height + " пикселей по высоте";
+      }
+
+      for (const button of buttons) button.addEventListener("click", () => {
+        scale = Number(button.dataset.scale);
+        render();
+      });
+      window.addEventListener("resize", sizeOnScreen);
+      render();
     }
   }
 
@@ -1811,6 +1866,7 @@
   if (!hubFour) {
     mountCoinControls();
     mountZen();
+    mountScaleExample();
   }
   updateSpeed();
   reset();
