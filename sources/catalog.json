@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "entries": [
     {
       "id": "source:kraftwerk:cover",
@@ -381,6 +381,204 @@
         "folder": "Источники/Ромбовый Маятник/Разворот",
         "openUrl": "/prosmotr/Zerkalius-prosmotr.html?rhomb=4096&contact=1",
         "description": "Первый разворот на кадре 4096. Точный период 33546240 ходов."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:3a449f277add",
+      "kind": "image",
+      "name": "NINETOZERO — Симметричная ступенчатая фигура",
+      "filename": "3a449f277add-EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "url": "ninetozero/images/3a449f277add-EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/physicalchange"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/3a449f277add-EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+        "reference": "https://ninetozero.eu/release/physicalchange",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:4796c8414d6c",
+      "kind": "image",
+      "name": "NINETOZERO — Белый фрактальный узор",
+      "filename": "4796c8414d6c-9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "url": "ninetozero/images/4796c8414d6c-9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/glitchintime/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/4796c8414d6c-9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+        "reference": "https://ninetozero.eu/release/glitchintime/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:4c8da05b2137",
+      "kind": "image",
+      "name": "NINETOZERO — Зелёные круги",
+      "filename": "4c8da05b2137-9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "url": "ninetozero/images/4c8da05b2137-9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/4/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/4c8da05b2137-9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+        "reference": "https://ninetozero.eu/release/4/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:4d354297b865",
+      "kind": "image",
+      "name": "NINETOZERO — Чёрный и серый круги",
+      "filename": "4d354297b865-artwork-440x440-1.jpg",
+      "url": "ninetozero/images/4d354297b865-artwork-440x440-1.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/1/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/4d354297b865-artwork-440x440-1.jpg",
+        "reference": "https://ninetozero.eu/release/1/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:5dd4b8cf4c5d",
+      "kind": "image",
+      "name": "NINETOZERO — Зеркальный белый узор",
+      "filename": "5dd4b8cf4c5d-3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "url": "ninetozero/images/5dd4b8cf4c5d-3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/reflection/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/5dd4b8cf4c5d-3000x3000_9TO0_ARTWORK_7__14FEB.png",
+        "reference": "https://ninetozero.eu/release/reflection/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:5fbfe4d6f1a8",
+      "kind": "image",
+      "name": "NINETOZERO — Ритмические полосы",
+      "filename": "5fbfe4d6f1a8-9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "url": "ninetozero/images/5fbfe4d6f1a8-9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/2/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/5fbfe4d6f1a8-9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+        "reference": "https://ninetozero.eu/release/2/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:66bbb6a3048c",
+      "kind": "image",
+      "name": "NINETOZERO — Спираль из точек",
+      "filename": "66bbb6a3048c-9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "url": "ninetozero/images/66bbb6a3048c-9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/absence/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/66bbb6a3048c-9TO0_artwork_NTZ000_3000X3000-small.jpg",
+        "reference": "https://ninetozero.eu/release/absence/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:b0ebc0008509",
+      "kind": "image",
+      "name": "NINETOZERO — Белые ступенчатые полосы",
+      "filename": "b0ebc0008509-9TO0_ARTWORK_8_9SET.jpg",
+      "url": "ninetozero/images/b0ebc0008509-9TO0_ARTWORK_8_9SET.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/sound-of-space/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/b0ebc0008509-9TO0_ARTWORK_8_9SET.jpg",
+        "reference": "https://ninetozero.eu/release/sound-of-space/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:eefa4673c337",
+      "kind": "image",
+      "name": "NINETOZERO — Зелёный фрактальный узор",
+      "filename": "eefa4673c337-a1826344281_10.jpg",
+      "url": "ninetozero/images/eefa4673c337-a1826344281_10.jpg",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://ninetozero.eu/release/silence/"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/images/eefa4673c337-a1826344281_10.jpg",
+        "reference": "https://ninetozero.eu/release/silence/",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:7bad3839c12f",
+      "kind": "image",
+      "name": "NINETOZERO — Круги, прямоугольник и повёрнутый квадрат",
+      "filename": "26F1bXOqeUo.webp",
+      "url": "ninetozero/frames/26F1bXOqeUo.webp",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://www.youtube.com/watch?v=26F1bXOqeUo"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/frames/26F1bXOqeUo.webp",
+        "reference": "https://www.youtube.com/watch?v=26F1bXOqeUo",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
+      }
+    },
+    {
+      "id": "source:geometric-cover:ninetozero:2aad8eca7420",
+      "kind": "image",
+      "name": "NINETOZERO — Чёрные формы на зелёном фоне",
+      "filename": "gVYy-319J4o.webp",
+      "url": "ninetozero/frames/gVYy-319J4o.webp",
+      "source": {
+        "name": "NINETOZERO · геометрическое оформление",
+        "page": "https://www.youtube.com/watch?v=gVYy-319J4o"
+      },
+      "meta": {
+        "folder": "Источники",
+        "collection": "NINETOZERO",
+        "openUrl": "/sources/ninetozero/frames/gVYy-319J4o.webp",
+        "reference": "https://www.youtube.com/watch?v=gVYy-319J4o",
+        "description": "Только изображение геометрической обложки. Авторство принадлежит правообладателям."
       }
     }
   ]

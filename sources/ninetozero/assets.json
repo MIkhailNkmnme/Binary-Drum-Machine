@@ -1,0 +1,117 @@
+{
+  "version": 6,
+  "updated": "2026-11-26",
+  "scope": "Только геометрические обложки; без фотографий, комментариев, аудио и видео.",
+  "assets": [
+    {
+      "file": "images/3a449f277add-EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "title": "Симметричная ступенчатая фигура",
+      "source_page": "https://ninetozero.eu/release/physicalchange",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/EXE_D_9TO0_ARTWORK_6__13APR-1.png",
+      "sha256": "3a449f277addf27cbfd9861f4ff72d4d349a3d36c2ce4a0d2b350cdbcd4e5bee",
+      "bytes": 1581973,
+      "width": 2362,
+      "height": 2362
+    },
+    {
+      "file": "images/4796c8414d6c-9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "title": "Белый фрактальный узор",
+      "source_page": "https://ninetozero.eu/release/glitchintime/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_ARTWORK_05_9TO0_ARTWORK_05-scaled.jpg",
+      "sha256": "4796c8414d6c06fed239dd361375fc831269df9f714c348ee029927e6051fdf3",
+      "bytes": 561683,
+      "width": 2560,
+      "height": 2560
+    },
+    {
+      "file": "images/4c8da05b2137-9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "title": "Зелёные круги",
+      "source_page": "https://ninetozero.eu/release/4/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_ARTWORK_4_2024-06-25_07-scaled.jpg",
+      "sha256": "4c8da05b213700f199b8c4578c2ad0bb3f66ac5395d850ef449eaf88774662eb",
+      "bytes": 110379,
+      "width": 1280,
+      "height": 2560
+    },
+    {
+      "file": "images/4d354297b865-artwork-440x440-1.jpg",
+      "title": "Чёрный и серый круги",
+      "source_page": "https://ninetozero.eu/release/1/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/artwork-440x440-1.jpg",
+      "sha256": "4d354297b865b1287221c9e8b7aca7030dcbafdd4873cc626bc5b8b373b02bdd",
+      "bytes": 15366,
+      "width": 440,
+      "height": 440
+    },
+    {
+      "file": "images/5dd4b8cf4c5d-3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "title": "Зеркальный белый узор",
+      "source_page": "https://ninetozero.eu/release/reflection/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/3000x3000_9TO0_ARTWORK_7__14FEB.png",
+      "sha256": "5dd4b8cf4c5dd09123c607dcb9769695d1e9f48096d002a66f4971cf529cb9da",
+      "bytes": 1246294,
+      "width": 3000,
+      "height": 3000
+    },
+    {
+      "file": "images/5fbfe4d6f1a8-9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "title": "Ритмические полосы",
+      "source_page": "https://ninetozero.eu/release/2/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/9TO0_artwork_DISCIPLINE_3000X3000_DEF.png",
+      "sha256": "5fbfe4d6f1a82ba8616ea4644d7c52f6be6a51781420f8494120d2a5df392545",
+      "bytes": 1186421,
+      "width": 12500,
+      "height": 12500
+    },
+    {
+      "file": "images/66bbb6a3048c-9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "title": "Спираль из точек",
+      "source_page": "https://ninetozero.eu/release/absence/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2026/03/9TO0_artwork_NTZ000_3000X3000-small.jpg",
+      "sha256": "66bbb6a3048c0091a331b221bfb73a0f9af50d08ff34fa486bb8b3072648a997",
+      "bytes": 2945009,
+      "width": 12500,
+      "height": 12500
+    },
+    {
+      "file": "images/b0ebc0008509-9TO0_ARTWORK_8_9SET.jpg",
+      "title": "Белые ступенчатые полосы",
+      "source_page": "https://ninetozero.eu/release/sound-of-space/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/11/9TO0_ARTWORK_8_9SET.jpg",
+      "sha256": "b0ebc000850904726eff53c6c407ba6f86a097e94d9cb5c0376093fd956e386d",
+      "bytes": 1367645,
+      "width": 8333,
+      "height": 8333
+    },
+    {
+      "file": "images/eefa4673c337-a1826344281_10.jpg",
+      "title": "Зелёный фрактальный узор",
+      "source_page": "https://ninetozero.eu/release/silence/",
+      "source_url": "https://ninetozero.eu/wp-content/uploads/2022/07/a1826344281_10.jpg",
+      "sha256": "eefa4673c33770c035f2090162ebd5a309af07a9710cd6e6421a986fed43ef3b",
+      "bytes": 470459,
+      "width": 1200,
+      "height": 1200
+    },
+    {
+      "file": "frames/26F1bXOqeUo.webp",
+      "title": "Круги, прямоугольник и повёрнутый квадрат",
+      "source_page": "https://www.youtube.com/watch?v=26F1bXOqeUo",
+      "source_url": "https://www.youtube.com/watch?v=26F1bXOqeUo",
+      "sha256": "7bad3839c12f1dcd1f761548e71cb664649cbaf8e5d58f773b2de868995e3cf3",
+      "bytes": 123620,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "file": "frames/gVYy-319J4o.webp",
+      "title": "Чёрные формы на зелёном фоне",
+      "source_page": "https://www.youtube.com/watch?v=gVYy-319J4o",
+      "source_url": "https://www.youtube.com/watch?v=gVYy-319J4o",
+      "sha256": "2aad8eca74206da8db38a923409d1b5e19a5ea73afea5d7f55bd49a827d252d2",
+      "bytes": 410268,
+      "width": 1920,
+      "height": 1080
+    }
+  ]
+}
