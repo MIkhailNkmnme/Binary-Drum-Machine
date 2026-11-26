@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.027 */
+/* Ромбовый Маятник v0.028 */
 (() => {
   "use strict";
 
@@ -57,13 +57,12 @@
     wrap: byId("romb-wrap"),
     joinLeft: byId("romb-join-left"),
     joinRight: byId("romb-join-right"),
-    stopAtContact: byId("romb-stop-contact"),
     reverseAtContact: byId("romb-reverse-contact"),
     markRepeats: byId("romb-mark-repeats"),
     patternColors: byId("romb-pattern-colors"),
     counterStep: byId("romb-counter-step")
   };
-  const options = {wrap: false, wrapY: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
+  const options = {wrap: false, wrapY: false, joinLeft: false, joinRight: false, reverseAtContact: false,
     markRepeats: false, patternColors: false, counterStep: false, square: false, coinSquare: false, buildAnd: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
@@ -224,7 +223,7 @@
     initializeRun();
     fit();
     fitCoin();
-    advanceFrame(false);
+    advanceFrame();
     syncTransport();
     syncEdgeButtons();
     announcePosition();
@@ -372,7 +371,7 @@
     verticalWrapButton?.setAttribute("aria-pressed", String(currentWrapY()));
     if (verticalWrapButton) verticalWrapButton.disabled = !isVertical();
     edgeButtons.wrap.disabled = !isHorizontal();
-    edgeButtons.stopAtContact.disabled = edgeButtons.reverseAtContact.disabled = !pairedMotion();
+    edgeButtons.reverseAtContact.disabled = !pairedMotion();
     syncMirrors();
   }
 
@@ -501,13 +500,13 @@
     }
   }
 
-  function advanceFrame(stopAtContact) {
+  function advanceFrame() {
     patternMarks = null;
     routeReverse = currentReverse();
-    const watchContact = pairedMotion() && (stopAtContact || routeReverse);
+    const watchContact = pairedMotion() && routeReverse;
     const contact = isJoint() ? advanceJoint()
       : isVertical() ? advanceVertical(watchContact) : advanceHorizontal(watchContact);
-    if (contact && routeReverse) {
+    if (contact) {
       for (const branch of branches) branch.direction *= -1;
     }
     if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
@@ -516,7 +515,6 @@
         jointPoints: jointPoints.map(point => ({...point})), spiral: {...spiral}, column, routeWrap, routeWrapY, routeReverse});
     }
     observeCycle();
-    return contact && stopAtContact;
   }
 
   function advanceHorizontal(watchContact) {
@@ -1109,7 +1107,7 @@
   }
 
   function contactText() {
-    if (!pairedMotion() || (!options.stopAtContact && !currentReverse())) return "";
+    if (!pairedMotion() || !currentReverse()) return "";
     const distance = separation();
     if (isVertical() && verticalMotion.value === "pendulum") return distance === 2 * depth - 1 ? " · касание" : "";
     if (isVertical()) return verticalMotion.value !== "sync" && distance <= 1 ? " · касание" : "";
@@ -1337,7 +1335,7 @@
   }
 
   function activeOutlines() {
-    return sourceRhombs(options.stopAtContact || options.markRepeats || currentReverse());
+    return sourceRhombs(options.markRepeats || currentReverse());
   }
 
   function paintOutlines(x, y, scale, ratio, color) {
@@ -1407,9 +1405,8 @@
       const glyph = active ? "Ⅱ" : direction < 0 ? "◀" : "▶";
       const label = active ? "Пауза" : direction < 0 ? "Воспроизводить кадры назад" : "Воспроизводить кадры вперёд";
       button.disabled = !active && frame === (direction < 0 ? 0 : maxFrame);
-      if (button.textContent !== glyph) button.textContent = glyph;
+      if (button.firstElementChild.textContent !== glyph) button.firstElementChild.textContent = glyph;
       if (button.getAttribute("aria-label") !== label) {
-        button.title = label;
         button.setAttribute("aria-label", label);
         button.setAttribute("aria-pressed", String(active));
       }
@@ -1429,24 +1426,22 @@
     if (playing && !pending && now >= nextBatchAt) pending = playDirection < 0 ? -Math.min(frame, stepCount()) : stepCount();
     if (pending) {
       const deadline = performance.now() + 10;
-      const watchContact = options.stopAtContact && seekTarget === null;
       const reversing = pending < 0;
       const boundary = reversing ? 0 : maxFrame;
-      let contact = false;
       do {
         if (reversing) {
           retreatHubFrame();
           pending++;
         } else {
-          contact = advanceFrame(watchContact);
+          advanceFrame();
           pending--;
         }
-      } while (!contact && pending && frame !== boundary && performance.now() < deadline);
+      } while (pending && frame !== boundary && performance.now() < deadline);
       if (!pending) {
         seekTarget = null;
         nextBatchAt = now + delay;
       }
-      if (contact || frame === boundary) {
+      if (frame === boundary) {
         stop();
         announcePosition();
       } else if (!playing && !pending) {
@@ -1584,7 +1579,7 @@
     place(top, frameLabel, size.closest(".romb-setting"),
       speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), cycleNote);
     place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
-      byId("romb-route-group"), byId("romb-counter-step"), byId("romb-stop-contact"), byId("romb-reverse-contact"));
+      byId("romb-route-group"), byId("romb-counter-step"), byId("romb-reverse-contact"));
     place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
       byId("romb-pattern-colors"), patternPalette, squareButton?.closest(".commands"), recordButton);
     place(playback, play.closest(".romb-run-steps"));
@@ -1817,6 +1812,9 @@
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
     const transport = byId("romb-hub-transport");
+    const resetButton = byId("romb-reset");
+    resetButton.className = "gz-hx";
+    byId("romb-hub-play-forward").before(resetButton);
     transport.prepend(frameControl);
     transport.append(frameLabel);
     transport.hidden = false;
