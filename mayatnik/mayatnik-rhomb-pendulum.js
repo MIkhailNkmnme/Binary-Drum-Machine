@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.028 */
+/* Ромбовый Маятник v0.029 */
 (() => {
   "use strict";
 
@@ -288,6 +288,17 @@
     configureCycle();
   }
 
+  function horizontalCycle(wrap, reverse) {
+    const {W, H} = field;
+    // Same fixed routes and starts as the published 160-variant calculation.
+    const routePeriod = reverse ? 4 * (H - 1) : wrap ? 2 * W : 4 * (W - 1);
+    const start = options.buildAnd
+      ? reverse ? 2 * (H - 1) : wrap ? 2 * W : 2 * (W - 1)
+      : reverse ? H : W;
+    const knownPeriod = options.buildAnd ? routePeriod : routePeriod * H / 2;
+    return {start, routePeriod, knownPeriod};
+  }
+
   function configureCycle() {
     reportedCycle = null;
     // The first, centered pass is identical in both edge modes.
@@ -298,13 +309,7 @@
       cycle = null;
       return;
     }
-    const {W, H} = field;
-    // Same fixed routes and starts as the published 160-variant calculation.
-    const routePeriod = reverse ? 4 * (H - 1) : wrap ? 2 * W : 4 * (W - 1);
-    const start = options.buildAnd
-      ? reverse ? 2 * (H - 1) : wrap ? 2 * W : 2 * (W - 1)
-      : reverse ? H : W;
-    const knownPeriod = options.buildAnd ? routePeriod : routePeriod * H / 2;
+    const {start, routePeriod, knownPeriod} = horizontalCycle(wrap, reverse);
     reportedCycle = {start, returned: start + knownPeriod};
     if (options.buildAnd || reverse) {
       cycle = null;
@@ -312,7 +317,7 @@
     }
     if (cycle?.wrap === wrap) return;
     // Keep live wrap/rewind behaviour separate from the known reference.
-    const period = H <= 128 ? knownPeriod : 0;
+    const period = field.H <= 128 ? knownPeriod : 0;
     cycle = {wrap, start, routePeriod, period, lap: 0, reference: null};
   }
 
@@ -500,8 +505,7 @@
     }
   }
 
-  function advanceFrame() {
-    patternMarks = null;
+  function advancePass() {
     routeReverse = currentReverse();
     const watchContact = pairedMotion() && routeReverse;
     const contact = isJoint() ? advanceJoint()
@@ -509,6 +513,11 @@
     if (contact) {
       for (const branch of branches) branch.direction *= -1;
     }
+  }
+
+  function advanceFrame() {
+    patternMarks = null;
+    advancePass();
     if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
       if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
       checkpoints.set(frame, {bits: field.val.slice(), firstPaintedRow, endPaintedRow, branches: branches.map(item => ({...item})),
@@ -875,7 +884,7 @@
     return displayed < 0 ? displayed + width : displayed >= width ? displayed - width : displayed;
   }
 
-  function paintSquareBits(x, y, scale, w, h, bounds, marks) {
+  function paintSquareBits(x, y, scale, w, h, bounds, marks, output = words) {
     const {W, H, val} = field;
     const left = Math.max(0, Math.floor(x + bounds.left * scale));
     const right = Math.min(w, Math.ceil(x + bounds.right * scale));
@@ -892,7 +901,7 @@
         const col = sourceColumn(displayed, W);
         const index = row * W + col;
         const bit = val[index];
-        if (bit >= 0) words[py * w + px] = colorWords[bit + bitTone(row, col, marks, index)];
+        if (bit >= 0) output[py * w + px] = colorWords[bit + bitTone(row, col, marks, index)];
       }
     }
   }
@@ -996,12 +1005,12 @@
     context.stroke();
     if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
     context.restore();
-    if (!zen || recording?.coin) paintCombined();
+    if (!zen) paintCombined();
 
     updateLabels(scale);
   }
 
-  function paintFlatBits(x, y, scale, w, h, marks) {
+  function paintFlatBits(x, y, scale, w, h, marks, output = words, columns = sampleColumn, pairs = samplePair) {
     const {W, H, val} = field;
     const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
     const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
@@ -1011,9 +1020,9 @@
     for (let px = firstX; px < lastX; px++) {
       const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
       const col = sourceColumn(displayed, W);
-      sampleColumn[px] = col;
+      columns[px] = col;
       // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
-      samplePair[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
+      pairs[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
       if (searchPixel) {
         sampleStart[px] = Math.max(view.start, Math.ceil((px - x) / scale - 0.5));
         sampleEnd[px] = Math.min(view.end, Math.ceil((px + 1 - x) / scale - 0.5));
@@ -1024,9 +1033,9 @@
       const sourceRow = row * W;
       const out = py * w;
       for (let px = firstX; px < lastX; px++) {
-        let col = sampleColumn[px];
+        let col = columns[px];
         let bit = val[sourceRow + col];
-        if (bit < 0 && samplePair[px]) bit = val[sourceRow + ++col];
+        if (bit < 0 && pairs[px]) bit = val[sourceRow + ++col];
         // Keep a thin marked line visible when the field is fitted to the canvas.
         if (searchPixel && !patternAt(marks, sourceRow + col)) {
           for (let displayed = sampleStart[px]; displayed < sampleEnd[px]; displayed++) {
@@ -1037,7 +1046,7 @@
             break;
           }
         }
-        if (bit >= 0) words[out + px] = colorWords[bit + bitTone(row, col, marks, sourceRow + col)];
+        if (bit >= 0) output[out + px] = colorWords[bit + bitTone(row, col, marks, sourceRow + col)];
       }
     }
   }
@@ -1144,8 +1153,6 @@
     combinedView.hidden = mode === "off" || !combinedContext;
     flipSecond.disabled = mode === "off";
     if (combinedView.hidden) return;
-    const {W, val} = field;
-    const H = 2 * depth;
     const {left, top, right, bottom} = coinBounds();
     const rect = combinedCanvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -1166,6 +1173,18 @@
     combinedWords.fill(0);
     const originX = Math.round(width / 2 - coinView.x * scale);
     const originY = Math.round(height / 2 - coinView.y * scale);
+    paintCoinBits(combinedWords, width, height, originX, originY, scale, {left, top, right, bottom});
+    combinedContext.putImageData(combinedPixels, 0, 0);
+    if (coinFrameInfo) {
+      const zoom = scaleLabel(scale);
+      coinFrameInfo.textContent = "Кадр " + formatter.format(frame) + " · " + zoom + (options.coinSquare ? " · квадрат" : "");
+    }
+  }
+
+  function paintCoinBits(output, width, height, originX, originY, scale, {left, top, right, bottom}) {
+    const {W, val} = field;
+    const H = 2 * depth;
+    const mode = combineMode.value;
     const x0 = Math.max(0, Math.floor(originX + left * scale));
     const x1 = Math.min(width, Math.ceil(originX + right * scale));
     const y0 = Math.max(0, Math.floor(originY + top * scale));
@@ -1194,13 +1213,8 @@
         const color = mode === "xor" ? Number(firstOn !== secondOn)
           : mode === "and" ? Number(firstOn && secondOn)
             : firstOn && !secondOn ? 5 : secondOn && !firstOn ? 7 : Number(firstOn && secondOn);
-        combinedWords[py * width + px] = colorWords[color];
+        output[py * width + px] = colorWords[color];
       }
-    }
-    combinedContext.putImageData(combinedPixels, 0, 0);
-    if (coinFrameInfo) {
-      const zoom = scaleLabel(scale);
-      coinFrameInfo.textContent = "Кадр " + formatter.format(frame) + " · " + zoom + (options.coinSquare ? " · квадрат" : "");
     }
   }
 
@@ -1261,76 +1275,201 @@
     combinedCanvas.addEventListener("dblclick", togglePlay);
   }
 
-  function syncRecording() {
-    recordButton.setAttribute("aria-pressed", String(!!recording));
-    recordButton.disabled = recording?.finishing === true;
-    const action = recording ? "Сохранить GIF" : "Собрать GIF";
-    recordButton.setAttribute("aria-label", action);
-    recordButton.title = recording ? "Завершить запись и скачать GIF" : "Начать запись видимого поля в GIF. Второе нажатие сохраняет файл.";
-    recordLabel.textContent = action;
-    syncMirrors();
+  // The exporter advances a private field in synchronous slices. The live run
+  // is back in place before any browser event or animation tick can run.
+  function runState() {
+    return {field, frame, column, branches, jointPoints, spiral, routeWrap, routeWrapY, routeReverse,
+      routeChanges, verticalRouteChanges, reversalChanges, firstPaintedRow, endPaintedRow, renderRhombs};
   }
 
-  function stopRecording() {
-    if (!recording || recording.finishing) return;
-    recording.finishing = true;
-    recording.status.textContent = "Сборка GIF…";
-    recording.recorder.stop();
-    if (recording.startedPlayback && playing) stop();
-    syncRecording();
+  function useRun(state) {
+    ({field, frame, column, branches, jointPoints, spiral, routeWrap, routeWrapY, routeReverse,
+      routeChanges, verticalRouteChanges, reversalChanges, firstPaintedRow, endPaintedRow, renderRhombs} = state);
   }
 
-  function toggleRecording(coin = false) {
-    if (recording) return stopRecording();
-    const status = byId(coin ? "romb-coin-record-status" : "romb-record-status");
-    status.hidden = false;
-    const snapshot = () => coin ? combinedPixels : pixels;
-    if (!snapshot()) paint();
-    if (!snapshot()) {
-      status.textContent = "Откройте битовое полотно перед записью.";
+  function withGifRun(job, action) {
+    const live = runState();
+    try {
+      useRun(job.run);
+      return action();
+    } finally {
+      job.run = runState();
+      useRun(live);
+    }
+  }
+
+  function gifSettings() {
+    return JSON.stringify([motionKey(), options, combineMode.value, flipSecond.checked,
+      patternArea?.value, patternColors.map(input => input.value)]);
+  }
+
+  function checkGifJob(job) {
+    if (job.cancelled) throw Error("Сборка отменена.");
+    if (gifSettings() !== job.settings) throw Error("Параметры поля изменились. Запустите сборку ещё раз.");
+  }
+
+  function gifProgress(job, message) {
+    if (performance.now() < job.nextUpdate) return;
+    job.status.textContent = message + " · масштаб " + scaleLabel(job.scale);
+    job.nextUpdate = performance.now() + 200;
+  }
+
+  async function advanceGif(job, target) {
+    while (job.run.frame < target) {
+      checkGifJob(job);
+      withGifRun(job, () => {
+        const until = performance.now() + 12;
+        do { advancePass(); } while (frame < target && performance.now() < until);
+      });
+      if (job.run.frame < target) {
+        gifProgress(job, "Расчёт прохода " + formatter.format(job.run.frame));
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+  }
+
+  function routePhase() {
+    if (!isJoint()) {
+      const mode = isVertical() ? verticalMotion.value : horizontalMode();
+      return mode === "pendulum" ? frame % 2 : 0;
+    }
+    const radius = Math.floor((frame - 1) / 4) + 1;
+    const rows = field.H - 2 * depth + 1;
+    const px = routeWrap ? field.W : Math.max(1, 2 * (field.W - 1));
+    const py = routeWrapY ? rows : Math.max(1, 2 * (rows - 1));
+    return [frame % 4, radius % px, radius % py].join("/");
+  }
+
+  async function findGifCycle(job) {
+    if (!isVertical() && horizontalMode() === "pendulum") {
+      const {start, knownPeriod} = horizontalCycle(job.run.routeWrap, job.run.routeReverse);
+      await advanceGif(job, start);
+      return knownPeriod;
+    }
+    // Brent's algorithm keeps one reference field. On a match the current
+    // state is already on the repeating orbit, ready to encode a whole lap.
+    await advanceGif(job, 1);
+    let distance = 0, windowSize = 1, reference;
+    for (;;) {
+      checkGifJob(job);
+      const period = withGifRun(job, () => {
+        const until = performance.now() + 12;
+        do {
+          if (!reference || distance === windowSize) {
+            reference = {bits: field.val.slice(), phase: routePhase(), column,
+              branches: branches.map(b => ({...b})), points: jointPoints.map(p => ({...p}))};
+            if (distance) windowSize *= 2;
+            distance = 0;
+          }
+          advancePass();
+          distance++;
+          if (column === reference.column && routePhase() === reference.phase &&
+              branches.every((b, i) => b.column === reference.branches[i].column && b.direction === reference.branches[i].direction) &&
+              jointPoints.every((p, i) => p.center === reference.points[i].center && p.top === reference.points[i].top) &&
+              field.val.every((bit, i) => bit === reference.bits[i])) return distance;
+        } while (performance.now() < until);
+        return 0;
+      });
+      if (period) return period;
+      gifProgress(job, "Поиск повтора · проход " + formatter.format(job.run.frame));
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  function gifPixels(job) {
+    const {width, height, scale, bounds} = job;
+    const output = new Uint32Array(width * height);
+    const x = -Math.floor(bounds.left * scale), y = -Math.floor(bounds.top * scale);
+    if (job.coin) {
+      paintCoinBits(output, width, height, x, y, scale, bounds);
+    } else {
+      renderRhombs = sourceRhombs();
+      const marks = job.painter?.update(field.val, patternArea?.value);
+      if (options.square) paintSquareBits(x, y, scale, width, height, bounds, marks, output);
+      else paintFlatBits(x, y, scale, width, height, marks, output, job.columns, job.pairs);
+    }
+    return new Uint8ClampedArray(output.buffer);
+  }
+
+  async function toggleRecording(coin = false) {
+    if (recording) {
+      recording.cancelled = true;
       return;
     }
-    const copy = document.createElement("canvas");
-    const drawing = copy.getContext("2d");
-    const session = {coin, status, startedPlayback: !playing && !pending, start: frame};
-    function finish(message) {
-      if (recording !== session) return;
-      if (session.startedPlayback && playing) stop();
-      recording = null;
-      status.textContent = message;
-      syncRecording();
+    const status = byId(coin ? "romb-coin-record-status" : "romb-record-status");
+    status.hidden = false;
+    if (isJoint() && jointRoute.value.startsWith("spiral")) {
+      status.textContent = "У расширяющейся спирали нет полного цикла: длина витка растёт.";
+      return;
     }
+    const camera = coin ? coinView : view;
+    const rect = (coin ? combinedCanvas : canvas).getBoundingClientRect();
+    const bounds = coin ? coinBounds() : projectBox(view.start, view.end, field.H, options.square);
+    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? bounds : projectedBounds()));
+    const width = Math.ceil(bounds.right * scale) - Math.floor(bounds.left * scale);
+    const height = Math.ceil(bounds.bottom * scale) - Math.floor(bounds.top * scale);
+    if (width > 65535 || height > 65535) {
+      status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб поля.";
+      return;
+    }
+    const job = {coin, status, scale, width, height, bounds, nextUpdate: 0, settings: gifSettings()};
+    const stride = stepCount(), duration = Math.max(1, Math.round(delay / 10));
+    let writer, sink;
     try {
-      recording = session;
-      const {width, height} = snapshot();
-      session.recorder = window.MayatnikGif.record({width, height,
-        capture: () => {
-          const image = snapshot();
-          if (copy.width !== image.width || copy.height !== image.height) {
-            copy.width = image.width;
-            copy.height = image.height;
-          }
-          drawing.putImageData(image, 0, 0);
-          return copy;
-        },
-        onDone(blob, info) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + session.start + ".gif";
-          document.body.append(link);
-          link.click();
-          link.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 60000);
-          finish("GIF сохранён · " + formatter.format(info.frames) + " кадров.");
-        },
-        onError(error) { finish("GIF не собран · " + (error.message || String(error))); }
-      });
-      status.textContent = "Запись GIF · кадр " + formatter.format(frame);
-      if (session.startedPlayback) togglePlay();
-      syncRecording();
+      recording = job;
+      status.textContent = "Подготовка цикла · масштаб " + scaleLabel(scale);
+      recordLabel.textContent = "Отмена GIF";
+      recordButton.setAttribute("aria-label", "Отменить сборку GIF");
+      recordButton.setAttribute("aria-pressed", "true");
+      syncMirrors();
+      if (!colorWords) paint();
+      job.run = {...runState(), field: MAYATNIK.field(field.W, field.H, "empty"),
+        routeChanges: new Map([[0, currentWrap()]]), verticalRouteChanges: new Map([[0, currentWrapY()]]),
+        reversalChanges: new Map([[0, currentReverse()]])};
+      withGifRun(job, initializeRun);
+      if (!coin && options.patternColors) job.painter = window.MayatnikRhombPatternColors.create(field.W, field.H);
+      if (!coin && !options.square) {
+        job.columns = new Int32Array(width);
+        job.pairs = new Uint8Array(width);
+      }
+      const period = await findGifCycle(job);
+      const start = job.run.frame;
+      writer = await window.MayatnikGif.batch([{width, height}], {stream: true});
+      sink = await window.MayatnikGif.squareSink([width]);
+      const count = Math.ceil(period / stride);
+      for (let i = 0; i < count; i++) {
+        checkGifJob(job);
+        await advanceGif(job, start + i * stride);
+        const pixels = withGifRun(job, () => gifPixels(job));
+        const passes = Math.min(stride, period - i * stride);
+        const time = Math.max(1, Math.round(duration * passes / stride));
+        await sink.append(await writer.add([pixels], time));
+        gifProgress(job, "Сборка GIF · " + formatter.format(i + 1) + " из " + formatter.format(count));
+      }
+      await sink.append(await writer.finish());
+      const [file] = await sink.finish();
+      checkGifJob(job);
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + start + "-cycle-" + period + ".gif";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      const downloaded = sink;
+      sink = null;
+      setTimeout(() => { URL.revokeObjectURL(url); downloaded.dispose(); }, 60000);
+      status.textContent = "GIF · " + formatter.format(count) + " кадров · " + scaleLabel(scale) + " · " + width + " × " + height;
     } catch (error) {
-      finish("GIF не собран · " + (error.message || String(error)));
+      status.textContent = job.cancelled ? "Сборка GIF отменена." : "GIF не собран · " + (error.message || String(error));
+    } finally {
+      writer?.cancel();
+      recording = null;
+      recordLabel.textContent = "Собрать GIF";
+      recordButton.setAttribute("aria-label", "Собрать GIF");
+      recordButton.setAttribute("aria-pressed", "false");
+      syncMirrors();
+      await sink?.dispose();
     }
   }
 
@@ -1804,7 +1943,6 @@
   });
   speed.addEventListener("change", save);
   for (const control of [combineMode, flipSecond]) control.addEventListener("change", () => {
-    if (combineMode.value === "off" && recording?.coin) stopRecording();
     save();
     redraw();
   });
