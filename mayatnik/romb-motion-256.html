@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Черновик Ромбового Маятника на 256 строк. Движение по кругу и крест-накрест с накоплением XOR.">
+  <title>Зеркалиус · Двухосевой Ромбовый Маятник 256</title>
+  <link rel="stylesheet" href="../_js/grozd.css">
+  <link rel="stylesheet" href="../wolfram/style.css?v=001">
+  <script defer src="../_js/hub-button-text.js"></script>
+  <script defer src="mayatnik-core.js?v=1106"></script>
+  <script defer src="romb-motion-256.js?v=001"></script>
+  <style>
+    main { max-width: 860px; }
+    header { margin-bottom: 16px; }
+    .motion-controls { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; }
+    .motion-transport { align-items: end; gap: 6px; }
+    .motion-transport .gz-half { border: 0; background: transparent; text-shadow: none; }
+    .motion-transport .gz-half:not(:disabled):hover,
+    .motion-transport .gz-half:focus-visible,
+    .motion-transport .gz-half[aria-pressed="true"] { background: var(--cyan); }
+    .motion-transport .gz-half:disabled { opacity: .45; cursor: default; }
+    .motion-transport .gz-pair { --gz-r0: var(--line); --gz-r1: var(--line); cursor: default; }
+    .motion-transport input[type="range"] { width: 120px; margin: 0; accent-color: var(--cyan); }
+    .motion-transport input[type="number"] { appearance: auto; }
+    .motion-field { max-width: 610px; margin: 16px auto 0; }
+    .motion-field canvas { width: 100%; height: auto; cursor: pointer; outline: 1px solid var(--line); }
+    .motion-field canvas:focus-visible { outline-color: var(--cyan); outline-offset: 2px; }
+    .motion-field input[type="range"] { display: block; width: 100%; margin: 10px 0 5px; accent-color: var(--cyan); }
+    .motion-field output { display: block; margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+      <a href="romb.html">Ромбовый Маятник</a>
+      <a href="../issledovanie/wolfram-nks/romb-search.html">Поиск по кадрам</a>
+    </nav>
+    <header>
+      <h1>Двухосевой Ромбовый Маятник <small>черновик v0.001</small></h1>
+      <p class="lead">Две ветви строят ромбы из 256 строк на общем поле 511 × 511. На каждом проходе вершина движется по выбранному маршруту, а биты накапливаются по XOR.</p>
+    </header>
+    <fieldset id="motion-controls" class="motion-controls" aria-label="Настройки двухосевого Маятника">
+      <div class="commands" role="group" aria-label="Маршрут">
+        <button type="button" class="gz-hx" data-motion="circle" title="По кругу · вправо, вверх, влево, вниз" aria-label="По кругу" aria-pressed="true"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">По кругу</span></button>
+        <button type="button" class="gz-hx" data-motion="reverse" title="Обратный круг · вправо, вниз, влево, вверх" aria-label="Обратный круг" aria-pressed="false"><span class="gz-ic" aria-hidden="true">↻</span><span class="gz-nm">Обратный</span></button>
+        <button type="button" class="gz-hx" data-motion="horizontal" title="Крест · сначала вправо и влево, затем вверх и вниз" aria-label="Крест с горизонтали" aria-pressed="false"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Крест ↔</span></button>
+        <button type="button" class="gz-hx" data-motion="vertical" title="Крест · сначала вверх и вниз, затем вправо и влево" aria-label="Крест с вертикали" aria-pressed="false"><span class="gz-ic" aria-hidden="true">↕</span><span class="gz-nm">Крест ↕</span></button>
+        <button type="button" class="gz-hx" id="motion-guide" title="Показать линию маршрута и положения двух ромбов" aria-label="Линия маршрута и контуры ромбов" aria-pressed="true"><span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Линия хода</span></button>
+      </div>
+      <div class="commands motion-transport">
+        <div class="gz-hx gz-pair gz-split gz-mid" role="group" aria-label="Воспроизведение">
+          <button type="button" class="gz-half gz-h0" id="motion-play-back" aria-label="Воспроизвести назад" title="Воспроизвести назад" aria-pressed="false">◀</button>
+          <span class="gz-pm">Анимация</span>
+          <button type="button" class="gz-half gz-h1" id="motion-play-forward" aria-label="Воспроизвести вперёд" title="Воспроизвести вперёд" aria-pressed="false">▶</button>
+        </div>
+        <div class="gz-hx gz-pair gz-split gz-mid" role="group" aria-label="Шаг по кадрам">
+          <button type="button" class="gz-half gz-h0" id="motion-prev" aria-label="Шаг назад" title="Шаг назад">◂</button>
+          <span class="gz-pm">Шаг</span>
+          <button type="button" class="gz-half gz-h1" id="motion-next" aria-label="Шаг вперёд" title="Шаг вперёд">▸</button>
+        </div>
+        <button type="button" class="gz-hx" id="motion-reset" title="Вернуться к пустому полю" aria-label="Сброс к пустому полю"><span class="gz-ic" aria-hidden="true">↺</span><span class="gz-nm">Сброс</span></button>
+        <label class="setting">Кадров за шаг
+          <span class="gz-hx value-control"><input id="motion-step" type="number" min="1" max="2044" value="1" step="1"></span>
+        </label>
+        <label class="setting"><span id="motion-delay">Интервал · 80 мс</span>
+          <input id="motion-speed" type="range" min="20" max="600" value="80" step="5">
+        </label>
+      </div>
+    </fieldset>
+    <figure class="motion-field">
+      <canvas id="motion-board" width="511" height="511" tabindex="0" aria-label="Двухосевое поле. Двойной щелчок или пробел запускает и останавливает ход. Стрелки влево и вправо перемещают курсор кадров."></canvas>
+      <input id="motion-frame" type="range" min="0" max="2044" value="1" step="1" aria-label="Кадр">
+      <output id="motion-state" class="progress">Кадр 1</output>
+    </figure>
+  </main>
+</body>
+</html>
