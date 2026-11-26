@@ -399,14 +399,32 @@ ${groups.map(group => groupSection(group, catalogue)).join('\n')}
 `;
 }
 
-const catalogue = series.map(buildSeries);
-writeFileSync(join(output, 'recipes.json'), JSON.stringify({
-  initialField: 'empty',
-  palettes: palettes.map(({png, ...palette}) => {
-    const [background, zero, one, first, second, shared] = palette.colors.map(hex => '#' + hex);
-    return {id: palette.id, name: palette.name, background, zero, one, first, second, shared};
-  }),
-  series: catalogue,
-}, null, 2) + '\n');
-writeFileSync(join(output, 'index.html'), gallery(catalogue));
-console.log(`${catalogue.length} серий, ${catalogue.reduce((count, item) => count + item.images.length, 0)} PNG.`);
+function collectionFrames(item) {
+  const simulation = simulate(item, item.width);
+  const rasterize = {field: fieldView, pair: pairView, coin: coinView, hub: pairView}[item.view];
+  let frame = 0;
+  return function at(target) {
+    if (target < frame) throw RangeError('Кадры коллекции обходятся по возрастанию.');
+    while (frame < target) {
+      simulation.advance();
+      frame++;
+    }
+    return rasterize(simulation.snapshot(), item);
+  };
+}
+
+if (require.main === module) {
+  const catalogue = series.map(buildSeries);
+  writeFileSync(join(output, 'recipes.json'), JSON.stringify({
+    initialField: 'empty',
+    palettes: palettes.map(({png, ...palette}) => {
+      const [background, zero, one, first, second, shared] = palette.colors.map(hex => '#' + hex);
+      return {id: palette.id, name: palette.name, background, zero, one, first, second, shared};
+    }),
+    series: catalogue,
+  }, null, 2) + '\n');
+  writeFileSync(join(output, 'index.html'), gallery(catalogue));
+  console.log(`${catalogue.length} серий, ${catalogue.reduce((count, item) => count + item.images.length, 0)} PNG.`);
+}
+
+module.exports = {collectionFrames};

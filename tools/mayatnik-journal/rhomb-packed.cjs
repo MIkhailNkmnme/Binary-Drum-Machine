@@ -1,18 +1,42 @@
 'use strict';
 
 // Store the two column parities separately. Each update touches just one of them.
-function createPackedRhomb(height, {reverseAtContact = false} = {}) {
-  const width = 2 * height - 1;
+function createPackedRhomb(height, {reverseAtContact = false, widthFactor = 2, bounce = false, and = false} = {}) {
+  const width = widthFactor * height - 1;
   const middle = height / 2;
-  const anchor = height - 1;
-  const words = Math.ceil(height / 32);
+  const anchor = (width - 1) / 2;
+  const words = Math.ceil((anchor + 1) / 32);
   const stride = 2 * words;
   const bits = new Uint32Array(height * stride);
+  const liveWords = and ? new Uint32Array(height) : null;
   const centers = [anchor, anchor];
   const directions = [1, -1];
   const radii = Array.from({length: height}, (_, row) => Math.min(row, height - 1 - row));
   let leftmost = width, rightmost = -1;
   let frame = 0;
+  let changed = false;
+
+  function intersect(row, center, index, contribution, mask) {
+    // After the center sweep, every touched cell is already occupied.
+    let vacant = 0;
+    if (frame < start) {
+      const radius = radii[row];
+      const firstCenter = leftmost + ((center - leftmost) & 1);
+      const lastCenter = rightmost - ((rightmost - center) & 1);
+      const base = (index % words) * 32;
+      const from = Math.max(0, ((firstCenter - radius) >> 1) - base);
+      const to = Math.min(31, ((lastCenter + radius) >> 1) - base);
+      const known = firstCenter <= lastCenter && from <= to ? (-1 << from) & (-1 >>> (31 - to)) : 0;
+      vacant = mask & ~known;
+    }
+    const old = bits[index];
+    const next = (old & ~mask) | ((old | vacant) & contribution & mask);
+    if ((old | 0) !== next) {
+      liveWords[row] += Number(next !== 0) - Number(old !== 0);
+      bits[index] = next;
+      changed = true;
+    } else if (vacant) changed = true;
+  }
 
   function transformRow(row, center) {
     const radius = radii[row];
@@ -25,7 +49,9 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
     if (row === middle) {
       for (let w = first; w <= last; w++) {
         const mask = (w === first ? low : -1) & (w === last ? high : -1);
-        bits[dest + w] ^= bits[dest - stride + w] & mask;
+        const contribution = bits[dest - stride + w];
+        if (and) intersect(row, center, dest + w, contribution, mask);
+        else bits[dest + w] ^= contribution & mask;
       }
       return;
     }
@@ -38,7 +64,9 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
         const adjacent = parity
           ? (upper >>> 1) | (w + 1 < words ? bits[source + w + 1] << 31 : 0)
           : (upper << 1) | (w ? bits[source + w - 1] >>> 31 : 0);
-        bits[dest + w] ^= (upper ^ adjacent) & mask;
+        const contribution = upper ^ adjacent;
+        if (and) intersect(row, center, dest + w, contribution, mask);
+        else bits[dest + w] ^= contribution & mask;
       }
       return;
     }
@@ -56,7 +84,8 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
       prefix ^= carry;
       carry = prefix >> 31;
       const mask = (w === first ? low : -1) & (w === last ? high : -1);
-      bits[dest + w] ^= prefix & mask;
+      if (and) intersect(row, center, dest + w, prefix, mask);
+      else bits[dest + w] ^= prefix & mask;
     }
   }
 
@@ -69,10 +98,19 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
     const before = reverseAtContact ? separation() : 0;
     const branch = frame & 1;
     const previous = centers[branch];
-    if (frame) centers[branch] = move(previous, directions[branch]);
+    if (frame) {
+      const next = previous + directions[branch];
+      if (bounce && (next < 0 || next >= width)) {
+        directions[branch] *= -1;
+        centers[branch] = previous + directions[branch];
+      } else centers[branch] = move(previous, directions[branch]);
+    }
     const center = centers[branch];
+    changed = center < leftmost || center > rightmost;
     bits[(center & 1) * words + (center >> 6)] |= 1 << ((center >> 1) & 31);
-    for (let row = 1; row <= lastRow; row++) transformRow(row, center);
+    for (let row = 1; row <= lastRow; row++) {
+      if (!and || frame < start || liveWords[row]) transformRow(row, center);
+    }
     leftmost = Math.min(leftmost, center);
     rightmost = Math.max(rightmost, center);
     frame++;
@@ -102,13 +140,18 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
   }
 
   function retreat() {
-    if (frame <= (reverseAtContact ? height : width)) throw new RangeError('Обратный расчёт начинается с опорного кадра.');
+    if (and || frame <= (reverseAtContact ? height : width)) throw new RangeError('Обратный расчёт начинается с опорного кадра.');
     if (reverseAtContact && separation() === height - 1) turn();
     frame--;
     const branch = frame & 1;
     const center = centers[branch];
     for (let row = height - 1; row > 0; row--) transformRow(row, center);
-    centers[branch] = move(center, -directions[branch]);
+    const previous = move(center, -directions[branch]);
+    centers[branch] = previous;
+    if (bounce && (previous === 0 || previous === width - 1)) {
+      // At a bounce endpoint the incoming phase still points outwards.
+      directions[branch] *= -1;
+    }
   }
 
   function cell(row, column) {
@@ -123,25 +166,27 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
 
   // Compute the first possible changed row at half the proven return time.
   // At each stage only the two immediate rows above the target can contribute.
-  function contactWitness() {
-    if (!reverseAtContact || frame !== 0) throw Error('Свидетель строится с пустого поля и с разворотом.');
-    const first = height;
-    const routePeriod = 4 * (height - 1);
+  const start = reverseAtContact ? height : width;
+  const routePeriod = reverseAtContact ? 4 * (height - 1) : bounce ? 4 * (width - 1) : 2 * width;
+
+  function periodWitness() {
+    if (and || frame !== 0) throw Error('Свидетель XOR строится с пустого поля.');
     const slice = row => bits.slice(row * stride, (row + 1) * stride);
-    while (frame < first) advance(2);
-    const reference = bits.slice(0, 3 * stride);
+    const firstChanged = bounce && !reverseAtContact ? 3 : 2;
+    while (frame < start) advance(firstChanged);
+    const reference = bits.slice(0, (firstChanged + 1) * stride);
     const phase = String([...centers, ...directions]);
     const route = new Uint16Array(routePeriod);
     for (let i = 0; i < routePeriod; i++) {
-      advance(2);
+      advance(firstChanged);
       route[i] = centers[(frame - 1) & 1];
     }
-    if (String([...centers, ...directions]) !== phase || reference.subarray(0, 2 * stride).some((v, i) => v !== bits[i])) {
+    if (String([...centers, ...directions]) !== phase || reference.subarray(0, firstChanged * stride).some((v, i) => v !== bits[i])) {
       throw Error('Не совпал маршрут или две верхние строки после круга.');
     }
-    let delta = slice(2).map((value, i) => value ^ reference[2 * stride + i]);
-    const row = height / 2;
-    for (let target = 4; target <= row; target += 2) {
+    let delta = slice(firstChanged).map((value, i) => value ^ reference[firstChanged * stride + i]);
+    const row = height / 2 + firstChanged - 2;
+    for (let target = firstChanged + 2; target <= row; target += 2) {
       bits.fill(0, (target - 2) * stride, (target + 1) * stride);
       bits.set(delta, (target - 2) * stride);
       for (const center of route) {
@@ -156,7 +201,9 @@ function createPackedRhomb(height, {reverseAtContact = false} = {}) {
     return {row, column: 2 * ((word % words) * 32 + bit) + Number(word >= words)};
   }
 
-  return {width, height, centers, directions, advance, retreat, cell, skipToReturn, contactWitness,
+  return {width, height, centers, directions, advance, retreat, cell, skipToReturn, start, routePeriod,
+    periodWitness, contactWitness: periodWitness,
+    get changed() { return changed; },
     get frame() { return frame; },
     snapshot() { return {bits: bits.slice(), centers: centers.slice(), directions: directions.slice(), leftmost, rightmost, frame}; }};
 }
