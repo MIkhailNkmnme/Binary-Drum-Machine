@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.022 */
+/* Ромбовый Маятник v0.023 */
 (() => {
   "use strict";
 
@@ -114,8 +114,11 @@
   }
 
   function updateSpeed() {
-    const position = Number(speed.value) / 50 - 1;
-    delay = Math.round(115 * (position <= 0 ? 16 ** -position : (16 / 115) ** position));
+    const speedStep = speed.valueAsNumber;
+    const position = speedStep / 50 - 1;
+    // Keep existing slider settings; the extra 16 positions count down to zero.
+    delay = speedStep > 100 ? 16 - (speedStep - 100)
+      : Math.round(115 * (position <= 0 ? 16 ** -position : (16 / 115) ** position));
     speedValue.textContent = formatter.format(delay) + " мс";
     speed.setAttribute("aria-valuetext", delay + " миллисекунд между шагами");
   }
@@ -138,7 +141,7 @@
       }
     }
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
-    if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
+    if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, Number(speed.max));
     if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
     if (typeof saved.flipSecond === "boolean") flipSecond.checked = saved.flipSecond;
     if (patternArea && Array.from(patternArea.options).some(option => option.value === saved.patternArea)) {
