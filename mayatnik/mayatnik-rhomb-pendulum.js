@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.031 */
+/* Ромбовый Маятник v0.032 */
 (() => {
   "use strict";
 
@@ -25,7 +25,8 @@
   const verticalMotion = byId("romb-vertical-motion");
   const jointRoute = byId("romb-route");
   const verticalWrapButton = byId("romb-wrap-y");
-  const motionModes = ["off", "outward", "inward", "sync", "pendulum"];
+  const halves = {x: byId("romb-horizontal-halves"), y: byId("romb-vertical-halves")};
+  const motionModes = ["off", "double", "inward", "sync", "pendulum"];
   const routeNames = {cw: "по часовой", ccw: "против часовой", cross: "крестом",
     "spiral-cw": "спираль по часовой", "spiral-ccw": "спираль против часовой"};
   const rememberedModes = {x: "pendulum", y: "pendulum"};
@@ -124,17 +125,24 @@
     if (!saved) return;
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
     if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
-    if (motionModes.includes(saved.verticalMotion)) verticalMotion.value = saved.verticalMotion;
-    if (horizontalMotion) {
-      horizontalMotion.value = motionModes.includes(saved.horizontalMotion) ? saved.horizontalMotion
-        : isVertical() ? "off" : saved.counterStep ? "outward" : "pendulum";
+    for (const [key, select, name] of [["y", verticalMotion, "verticalMotion"], ["x", horizontalMotion, "horizontalMotion"]]) {
+      if (!select) continue;
+      const previous = saved[name] ?? (key === "x" ? (isVertical() ? "off" : saved.counterStep ? "outward" : "pendulum") : "off");
+      const mode = previous === "outward" ? "sync" : previous;
+      if (motionModes.includes(mode)) select.value = mode;
+      if (halves[key]) {
+        const legacy = previous === "off" ? saved.rememberedModes?.[key] : previous;
+        halves[key].value = saved.halves?.[key] ?? (["outward", "inward"].includes(legacy) ? "apart" : "together");
+      }
     }
     if (heightFactor) heightFactor.value = [2, 4].includes(saved.heightFactor) ? saved.heightFactor
       : isVertical() && [2, 4].includes(saved.factor) ? saved.factor : 2;
     if (jointRoute && Object.hasOwn(routeNames, saved.jointRoute)) jointRoute.value = saved.jointRoute;
     for (const key of ["x", "y"]) {
-      if (motionModes.includes(saved.rememberedModes?.[key]) && saved.rememberedModes[key] !== "off") {
-        rememberedModes[key] = saved.rememberedModes[key];
+      const previous = saved.rememberedModes?.[key];
+      const mode = previous === "outward" ? "sync" : previous;
+      if (motionModes.includes(mode) && mode !== "off") {
+        rememberedModes[key] = mode;
       }
     }
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
@@ -163,7 +171,7 @@
     }
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
-      verticalMotion: verticalMotion.value,
+      verticalMotion: verticalMotion.value, halves: {x: halves.x?.value, y: halves.y?.value},
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
@@ -181,7 +189,7 @@
   }
 
   function horizontalMode() {
-    return hubFour ? "pendulum" : horizontalMotion?.value || (isVertical() ? "off" : options.counterStep ? "outward" : "pendulum");
+    return hubFour ? "pendulum" : horizontalMotion?.value || (isVertical() ? "off" : options.counterStep ? "sync" : "pendulum");
   }
 
   function isHorizontal() {
@@ -192,13 +200,19 @@
     return isHorizontal() && isVertical();
   }
 
+  function splitAxis(key) {
+    return !hubFour && (halves[key]?.value === "apart" || (key === "x" && !horizontalMotion && options.counterStep));
+  }
+
   function pairedMotion() {
     const mode = isVertical() ? verticalMotion.value : horizontalMode();
-    return !isJoint() && ["pendulum", "outward", "inward"].includes(mode);
+    return !isJoint() && (["pendulum", "double", "inward"].includes(mode) ||
+      (mode === "sync" && splitAxis(isVertical() ? "y" : "x")));
   }
 
   function motionKey() {
-    return [size.value, width.value, heightFactor?.value, horizontalMode(), verticalMotion.value, jointRoute?.value].join("|");
+    return [size.value, width.value, heightFactor?.value, horizontalMode(), verticalMotion.value,
+      splitAxis("x"), splitAxis("y"), jointRoute?.value].join("|");
   }
 
   function reset() {
@@ -307,7 +321,7 @@
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (isVertical() || horizontalMode() !== "pendulum" || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
+    if (isVertical() || horizontalMode() !== "pendulum" || splitAxis("x") || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
         [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
       cycle = null;
       return;
@@ -369,6 +383,7 @@
     for (const [key, select, id] of [["x", horizontalMotion, "romb-horizontal-enabled"], ["y", verticalMotion, "romb-vertical-enabled"]]) {
       if (!select) continue;
       const active = select.value !== "off";
+      if (halves[key]) halves[key].disabled = !active;
       if (active) rememberedModes[key] = select.value;
       byId(id)?.setAttribute("aria-pressed", String(active));
       select.disabled = both;
@@ -400,21 +415,6 @@
     branch.column = MayatnikEdgeFlow.mapColumn(next, W, !wrap);
     if (!wrap && branch.column !== next) branch.direction *= -1;
     return Math.abs(branch.column - previous) === 1;
-  }
-
-  function advance(watchContact = false, and = false, counterStep = false) {
-    const {W, H} = field;
-    const before = watchContact ? separation() : 0;
-    routeWrap = currentWrap();
-    const upper = counterStep ? branches[1] : branches[frame % 2];
-    const lower = counterStep ? branches[0] : upper;
-    const upperMoved = moveBranch(upper, W);
-    const lowerMoved = lower === upper ? upperMoved : moveBranch(lower, W);
-    column = upper.column;
-    buildPass(column, lower.column, and);
-    frame++;
-    // Two moving halves can cross the contact threshold between frames.
-    return watchContact && upperMoved && lowerMoved && before < H - 1 && separation() >= H - 1;
   }
 
   function buildPass(upperColumn, lowerColumn, and, upperTop = 0, lowerTop = 0) {
@@ -523,8 +523,7 @@
   function advancePass() {
     routeReverse = currentReverse();
     const watchContact = pairedMotion() && routeReverse;
-    const contact = isJoint() ? advanceJoint()
-      : isVertical() ? advanceVertical(watchContact) : advanceHorizontal(watchContact);
+    const contact = isJoint() ? advanceJoint() : advanceAxis(watchContact);
     if (contact) {
       for (const branch of branches) branch.direction *= -1;
     }
@@ -541,22 +540,96 @@
     observeCycle();
   }
 
-  function advanceHorizontal(watchContact) {
-    const mode = horizontalMode();
-    if (mode === "pendulum") return advance(watchContact, options.buildAnd, false);
-    if (mode === "outward" || mode === "inward") {
-      const before = separation();
-      const touched = advance(watchContact, options.buildAnd, true);
-      return mode === "inward" ? watchContact && before > 2 * depth - 1 && separation() <= 2 * depth - 1 : touched;
+  function axisPoint(branch) {
+    return isVertical() ? {center: (field.W - 1) / 2, top: branch.column} : {center: branch.column, top: 0};
+  }
+
+  function lowerPoint(upper) {
+    const end = field.H - 2 * depth;
+    return {
+      center: isHorizontal() && splitAxis("x") ? field.W - 1 - upper.center : upper.center,
+      top: isVertical() && splitAxis("y")
+        ? MayatnikEdgeFlow.mapColumn(2 * Math.floor(end / 2) - upper.top, end + 1, !routeWrapY) : upper.top
+    };
+  }
+
+  function passAt(upper, lower = lowerPoint(upper)) {
+    buildPass(upper.center, lower.center, options.buildAnd, upper.top, lower.top);
+  }
+
+  // Both tips read the same pre-frame field. Save the rows touched by the
+  // first pass, then combine its XOR or AND contribution with the second.
+  function simultaneousPasses(first, second) {
+    const lower = lowerPoint(first);
+    if (first.center === second.center && first.top === second.top) {
+      passAt(first, lower);
+      return;
     }
+    const {W, val} = field;
+    const top = Math.min(first.top, lower.top + depth);
+    const bottom = Math.max(first.top + depth, lower.top + 2 * depth);
+    const saved = [];
+    for (let row = top; row < bottom; row++) {
+      const upperRow = row - first.top;
+      const lowerRow = row - lower.top;
+      let left = W, right = -1;
+      if (upperRow >= 0 && upperRow < depth) {
+        left = first.center - upperRow;
+        right = first.center + upperRow;
+      }
+      if (lowerRow >= depth && lowerRow < 2 * depth) {
+        const radius = 2 * depth - lowerRow - 1;
+        left = Math.min(left, lower.center - radius);
+        right = Math.max(right, lower.center + radius);
+      }
+      if (left > right) continue;
+      const start = row * W + Math.max(0, left);
+      saved.push({start, data: val.slice(start, row * W + Math.min(W, right + 1))});
+    }
+    passAt(first, lower);
+    for (const {start, data} of saved) {
+      for (let i = 0; i < data.length; i++) {
+        const old = data[i], next = val[start + i];
+        val[start + i] = old;
+        if (next === old) data[i] = -1;
+        else data[i] = old < 0 || options.buildAnd ? next : old ^ next;
+      }
+    }
+    passAt(second);
+    for (const {start, data} of saved) {
+      for (let i = 0; i < data.length; i++) {
+        if (data[i] >= 0) val[start + i] = MAYATNIK.accumulateBit(val[start + i], data[i], options.buildAnd);
+      }
+    }
+  }
+
+  function advanceAxis(watchContact) {
+    const vertical = isVertical();
+    const mode = vertical ? verticalMotion.value : horizontalMode();
     routeWrap = currentWrap();
-    const branch = branches[1];
-    if (mode === "sync") moveBranch(branch, field.W);
-    branches[0] = {...branch};
-    column = branch.column;
-    buildPass(column, column, options.buildAnd);
+    routeWrapY = currentWrapY();
+    const wrap = vertical ? routeWrapY : routeWrap;
+    const positions = vertical ? field.H - 2 * depth + 1 : field.W;
+    const before = branches[0].column - branches[1].column;
+    const split = splitAxis(vertical ? "y" : "x");
+    const upper = mode === "pendulum" ? branches[frame % 2] : branches[1];
+    const moved = mode !== "off" && moveBranch(upper, positions, wrap);
+    const twoTracks = mode === "double" || mode === "inward" || (mode === "sync" && split);
+    const otherMoved = twoTracks && moveBranch(branches[0], positions, wrap);
+    if (!twoTracks && mode !== "pendulum") branches[0] = {...upper};
+    const point = axisPoint(upper);
+    column = point.center;
+    if (mode === "double" || (mode === "inward" && !split)) simultaneousPasses(point, axisPoint(branches[0]));
+    else if (twoTracks) passAt(point, axisPoint(branches[0]));
+    else passAt(point);
     frame++;
-    return false;
+    if (!watchContact || !moved || (twoTracks && !otherMoved)) return false;
+    const after = branches[0].column - branches[1].column;
+    if (vertical && twoTracks && split && mode !== "double")
+      return before !== 0 && (after === 0 || Math.sign(after) !== Math.sign(before));
+    const contact = 2 * depth - 1;
+    return mode === "inward" ? Math.abs(before) > contact && Math.abs(after) <= contact
+      : Math.abs(before) < contact && Math.abs(after) >= contact;
   }
 
   function advanceJoint() {
@@ -592,37 +665,9 @@
     };
     jointPoints[frame % 2] = point;
     column = point.center;
-    buildPass(column, column, options.buildAnd, point.top, point.top);
+    passAt(point);
     frame++;
     return false;
-  }
-
-  function advanceVertical(watchContact) {
-    const [lower, upper] = branches;
-    const before = lower.column - upper.column;
-    const positions = field.H - 2 * depth + 1;
-    routeWrapY = currentWrapY();
-    if (verticalMotion.value === "pendulum") {
-      // Alternate two independent vertical branches, exactly as in advance().
-      // Screen rows increase downward: center, up 1, down 1, up 2, down 2.
-      const branch = branches[frame % 2];
-      const moved = moveBranch(branch, positions, routeWrapY);
-      buildPass(column, column, options.buildAnd, branch.column, branch.column);
-      frame++;
-      const contactDistance = 2 * depth - 1;
-      return watchContact && moved && Math.abs(before) < contactDistance && separation() === contactDistance;
-    }
-    const upperMoved = moveBranch(upper, positions, routeWrapY);
-    const synchronous = verticalMotion.value === "sync";
-    if (synchronous) {
-      lower.column = upper.column;
-      lower.direction = upper.direction;
-    }
-    const lowerMoved = !synchronous && moveBranch(lower, positions, routeWrapY);
-    buildPass(column, column, options.buildAnd, upper.column, lower.column);
-    frame++;
-    const after = lower.column - upper.column;
-    return watchContact && upperMoved && lowerMoved && before !== 0 && (after === 0 || Math.sign(after) !== Math.sign(before));
   }
 
   function retreatHubFrame() {
@@ -847,9 +892,15 @@
   }
 
   function repeatTone(row, col) {
-    const [first, second = first] = renderRhombs;
-    if ((first.center !== second.center || first.top !== second.top) &&
-      (matchingPositionBlock(row, col, first, second) || matchingPositionBlock(row, col, second, first))) return 2;
+    for (let i = 0; i < renderRhombs.length; i++) {
+      const first = renderRhombs[i];
+      for (let j = i + 1; j < renderRhombs.length; j++) {
+        const second = renderRhombs[j];
+        if (renderRhombs.length === 4 && first.half !== second.half) continue;
+        if (first.center === second.center && first.top === second.top) continue;
+        if (matchingPositionBlock(row, col, first, second) || matchingPositionBlock(row, col, second, first)) return 2;
+      }
+    }
     const half = Math.floor(field.W / 2);
     if (options.joinLeft && col >= field.W - half) return 4;
     if (options.joinRight && col < half) return 6;
@@ -863,17 +914,19 @@
   // Geometry of the two current source passes. Half modes keep the original
   // upper/lower pieces; joint routes retain the two most recent whole rhombs.
   function sourceRhombs(all = true) {
-    if (isJoint()) return all ? jointPoints : [jointPoints[frame ? (frame - 1) % 2 : 0]];
     const vertical = isVertical();
     const mode = vertical ? verticalMotion.value : horizontalMode();
-    const point = branch => vertical ? {center: (field.W - 1) / 2, top: branch.column}
-      : {center: branch.column, top: 0};
-    if (mode === "outward" || mode === "inward") {
-      return [{...point(branches[1]), half: "upper"}, {...point(branches[0]), half: "lower"}];
+    const split = (isHorizontal() && splitAxis("x")) || (vertical && splitAxis("y"));
+    const active = frame ? (frame - 1) % 2 : 0;
+    if (!isJoint() && split && (mode === "sync" || mode === "inward")) {
+      return [{...axisPoint(branches[1]), half: "upper"}, {...axisPoint(branches[0]), half: "lower"}];
     }
-    const selected = mode === "sync" || mode === "off" ? [branches[1]]
-      : all ? branches : [branches[frame ? (frame - 1) % 2 : 0]];
-    return selected.map(point);
+    let points;
+    if (isJoint()) points = all ? jointPoints : [jointPoints[active]];
+    else if (mode === "double" || mode === "inward") points = branches.map(axisPoint);
+    else if (mode === "pendulum") points = (all ? branches : [branches[active]]).map(axisPoint);
+    else points = [axisPoint(branches[1])];
+    return split ? points.flatMap(point => [{...point, half: "upper"}, {...lowerPoint(point), half: "lower"}]) : points;
   }
 
   function matchingPositionBlock(row, col, first, second) {
@@ -1225,33 +1278,28 @@
       return " · " + routeNames[jointRoute?.value || "cw"] + " · вершина: столбец " +
         formatter.format(point.center + 1) + ", строка " + formatter.format(point.top + 1);
     }
-    if (isVertical()) {
-      if (verticalMotion.value === "pendulum") {
-        return " · вершина, строка " + formatter.format(branches[(frame - 1) % 2].column + 1);
-      }
-      const upper = formatter.format(branches[1].column + 1);
-      const lower = formatter.format(branches[0].column + depth + 1);
-      return verticalMotion.value === "sync" ? " · вершина, строка " + upper : " · строки · верх " + upper + " · низ " + lower;
-    }
-    if (["outward", "inward"].includes(horizontalMode())) {
-      return " · верх " + formatter.format(branches[1].column + 1) + " · низ " + formatter.format(branches[0].column + 1);
-    }
-    return " · столбец " + formatter.format(column + 1);
+    const vertical = isVertical();
+    const points = sourceRhombs(false);
+    const position = point => formatter.format(1 + (vertical ? point.top + (point.half === "lower" ? depth : 0) : point.center));
+    if (points.length === 1) return (vertical ? " · вершина, строка " : " · столбец ") + position(points[0]);
+    if (!points[0].half) return (vertical ? " · вершины, строки " : " · вершины, столбцы ") + points.map(position).join(", ");
+    return " · верх " + points.filter(p => p.half === "upper").map(position).join(", ") +
+      " · низ " + points.filter(p => p.half === "lower").map(position).join(", ");
   }
 
   function contactText() {
     if (!pairedMotion() || !currentReverse()) return "";
     const distance = separation();
-    if (isVertical() && verticalMotion.value === "pendulum") return distance === 2 * depth - 1 ? " · касание" : "";
-    if (isVertical()) return verticalMotion.value !== "sync" && distance <= 1 ? " · касание" : "";
-    if (distance === field.H - 1) return " · касание";
-    return ["outward", "inward"].includes(horizontalMode()) && distance === field.H ? " · порог касания" : "";
+    if (isVertical() && splitAxis("y") && ["sync", "inward"].includes(verticalMotion.value))
+      return distance <= 1 ? " · касание" : "";
+    if (distance === 2 * depth - 1) return " · касание";
+    return distance === 2 * depth ? " · порог касания" : "";
   }
 
   function updateLabels(scale, sideScale) {
     const {W, H} = field;
     const vertical = isVertical();
-    const position = positionText() + (frame && !["outward", "inward"].includes(horizontalMode()) && !vertical ? " из " + formatter.format(W) : "");
+    const position = positionText() + (frame && !vertical && !splitAxis("x") && !["double", "inward"].includes(horizontalMode()) ? " из " + formatter.format(W) : "");
     const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
@@ -1313,7 +1361,7 @@
     const x1 = Math.min(width, Math.ceil(originX + right * scale));
     const y0 = Math.max(0, Math.floor(originY + top * scale));
     const y1 = Math.min(height, Math.ceil(originY + bottom * scale));
-    const [first, second = first] = sourceRhombs();
+    const sources = sourceRhombs();
     const flip = flipSecond.checked ? -1 : 1;
     const s = Math.SQRT1_2;
     for (let py = y0; py < y1; py++) {
@@ -1325,6 +1373,8 @@
         if (row < 0 || row >= H || col < 0 || col >= H - 1) continue;
         const offset = col - (depth - 1);
         if (Math.abs(offset) > Math.min(row, H - 1 - row)) continue;
+        const piece = sources.length === 4 && row >= depth ? 1 : 0;
+        const first = sources[piece], second = sources.length === 4 ? sources[piece + 2] : sources[1] || first;
         const a = first.center + offset;
         const b = second.center + flip * offset;
         const rowA = row + first.top;
@@ -1465,7 +1515,7 @@
   }
 
   async function findGifCycle(job) {
-    if (!isVertical() && horizontalMode() === "pendulum") {
+    if (!isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
       const {start, knownPeriod} = horizontalCycle(job.run.routeWrap, job.run.routeReverse);
       await advanceGif(job, start);
       return knownPeriod;
@@ -2018,7 +2068,7 @@
     input.addEventListener("input", redraw);
     input.addEventListener("change", save);
   }
-  for (const select of [size, width, heightFactor, horizontalMotion, verticalMotion, jointRoute].filter(Boolean)) {
+  for (const select of [size, width, heightFactor, horizontalMotion, verticalMotion, jointRoute, halves.x, halves.y].filter(Boolean)) {
     select.addEventListener("change", () => {
       if (horizontalMotion?.value !== "off") rememberedModes.x = horizontalMode();
       if (verticalMotion.value !== "off") rememberedModes.y = verticalMotion.value;
