@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.021</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.022</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -25,6 +25,16 @@
     }
     header { margin-bottom: 18px; }
     .romb-controls { border: 0; margin: 0; padding: 0; align-items: end; row-gap: 8px; }
+    .romb-command-bank { display: flex; flex: 1 1 100%; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+    .romb-strip { display: inline-flex; align-items: center; flex-wrap: wrap; max-width: 100%; gap: 2px 0; }
+    .romb-strip > button.gz-hx {
+      width: auto; flex: 0 0 auto; padding: 0 10px; gap: 3px;
+      clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+    }
+    .romb-strip > button.gz-hx + button.gz-hx { margin-left: -5px; }
+    .romb-strip > button.gz-hx::before { clip-path: inherit; }
+    .romb-command-bank > button.gz-hx { width: auto; flex-basis: auto; }
+    .romb-controls > .romb-route-group { order: 1; }
     .romb-step-pair { --gz-r0: var(--line); --gz-r1: var(--line); cursor: default; }
     .romb-step-pair .gz-half { border: 0; text-shadow: none; }
     .romb-step-pair .gz-half:enabled:hover,
@@ -63,9 +73,13 @@
     .romb-pattern-palette:focus-within { background: var(--cyan) !important; }
     .romb-setting input[type=range] { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
-    html:not(.romb-hub-four) main:not(.romb-zen, [data-romb-inline]) > #romb-board {
-      margin-inline: calc(0px - var(--page-gutter));
+    html:not(.romb-hub-four) main:not(.romb-zen, [data-romb-inline]) {
+      display: grid; padding-inline: 0;
+      grid-template-columns: 1fr minmax(0, min(980px, calc(100% - 2 * var(--page-gutter)))) 1fr;
     }
+    html:not(.romb-hub-four) main:not(.romb-zen, [data-romb-inline]) > * { grid-column: 2; min-width: 0; }
+    html:not(.romb-hub-four) main:not(.romb-zen, [data-romb-inline]) > #romb-board { grid-column: 1 / -1; }
+    #romb-zen-exit[hidden] { display: none; }
     .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
     main:not(.romb-zen) #romb-board.romb-full-height { height: var(--field-height); overflow-anchor: none; }
     main:not(.romb-zen) .romb-full-height #romb-field {
@@ -194,45 +208,53 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.021</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.022</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
-      <button type="button" class="gz-hx" id="romb-join-left" aria-pressed="false" title="Присоединить слева копию правой половины поля" aria-label="Соединить влево">
-        <span class="gz-ic" aria-hidden="true">←</span><span class="gz-nm">Соединить</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-join-right" aria-pressed="false" title="Присоединить справа копию левой половины поля" aria-label="Соединить вправо">
-        <span class="gz-ic" aria-hidden="true">→</span><span class="gz-nm">Соединить</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-stop-contact" aria-pressed="false" title="Остановить ход на последнем касании контуров расходящихся ромбов" aria-label="Стоп при касании ромбов">
-        <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Стоп · Касание</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-reverse-contact" aria-pressed="false" title="Развернуть обе ветви при последнем касании" aria-label="Разворот при касании">
-        <span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Разворот</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
-        <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить узоры на исходной центральной оси" aria-label="Раскрасить узоры на исходной центральной оси">
-        <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
-      </button>
-      <div class="gz-hx romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Палитра шаблонов" hidden>
-        <label title="Цвет единиц">1 <input id="romb-pattern-one" type="color" value="#ffe184" aria-label="Цвет единиц"></label>
-        <label title="Цвет нулей">0 <input id="romb-pattern-zero" type="color" value="#a55383" aria-label="Цвет нулей"></label>
+      <div class="romb-command-bank">
+        <div class="romb-strip" role="group" aria-label="Склейка поля">
+          <button type="button" class="gz-hx" id="romb-join-left" aria-pressed="false" title="Присоединить слева копию правой половины поля" aria-label="Соединить влево">
+            <span class="gz-ic" aria-hidden="true">←</span><span class="gz-nm">Соединить</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-join-right" aria-pressed="false" title="Присоединить справа копию левой половины поля" aria-label="Соединить вправо">
+            <span class="gz-ic" aria-hidden="true">→</span><span class="gz-nm">Соединить</span>
+          </button>
+        </div>
+        <div class="romb-strip" role="group" aria-label="Действия при касании">
+          <button type="button" class="gz-hx" id="romb-stop-contact" aria-pressed="false" title="Остановить ход на последнем касании контуров расходящихся ромбов" aria-label="Стоп при касании ромбов">
+            <span class="gz-ic" aria-hidden="true">◇</span><span class="gz-nm">Стоп · Касание</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-reverse-contact" aria-pressed="false" title="Развернуть обе ветви при последнем касании" aria-label="Разворот при касании">
+            <span class="gz-ic" aria-hidden="true">↶</span><span class="gz-nm">Разворот</span>
+          </button>
+        </div>
+        <div class="romb-strip" role="group" aria-label="Раскраска поля">
+          <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
+            <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить узоры на исходной центральной оси" aria-label="Раскрасить узоры на исходной центральной оси">
+            <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
+          </button>
+        </div>
+        <div class="gz-hx romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Палитра шаблонов" hidden>
+          <label title="Цвет единиц">1 <input id="romb-pattern-one" type="color" value="#ffe184" aria-label="Цвет единиц"></label>
+          <label title="Цвет нулей">0 <input id="romb-pattern-zero" type="color" value="#a55383" aria-label="Цвет нулей"></label>
+        </div>
+        <div class="gz-hx gz-pair gz-split romb-step-pair romb-zen-pair" id="romb-zen-pair" role="group" aria-label="Дзен без кнопок или с кнопками">
+          <button type="button" class="gz-half gz-h0" id="romb-zen" aria-pressed="false" aria-controls="romb-board" aria-keyshortcuts="Q" title="Дзен без кнопок. Возврат: Esc, Q или нажатие колёсика." aria-label="Дзен без кнопок">◇ Дзен</button>
+          <button type="button" class="gz-half gz-h1" id="romb-zen-controls" aria-pressed="false" aria-controls="romb-board" title="Дзен с кнопками управления. Повторное нажатие возвращает обычный вид." aria-label="Дзен с кнопками">▦ Кнопки</button>
+        </div>
+        <button type="button" class="gz-hx" id="romb-counter-step" aria-pressed="false" title="Встречный шаг · верх начинает влево, низ вправо. Переключение начинает новое поле." aria-label="Встречный шаг" hidden>
+          <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Встречный шаг</span>
+        </button>
+        <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
+          <span class="gz-nm">AND</span>
+        </button>
+        <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" title="Начать запись видимого поля в GIF. Второе нажатие сохраняет файл." aria-label="Собрать GIF">
+          <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
+        </button>
       </div>
-      <div class="gz-hx gz-pair gz-split romb-step-pair romb-zen-pair" id="romb-zen-pair" role="group" aria-label="Дзен без кнопок или с кнопками">
-        <button type="button" class="gz-half gz-h0" id="romb-zen" aria-pressed="false" aria-controls="romb-board" aria-keyshortcuts="Q" title="Дзен без кнопок. Возврат: Esc, Q или нажатие колёсика." aria-label="Дзен без кнопок">◇ Дзен</button>
-        <button type="button" class="gz-half gz-h1" id="romb-zen-controls" aria-pressed="false" aria-controls="romb-board" title="Дзен с кнопками управления. Повторное нажатие возвращает обычный вид." aria-label="Дзен с кнопками">▦ Кнопки</button>
-      </div>
-      <button type="button" class="gz-hx" id="romb-counter-step" aria-pressed="false" title="Встречный шаг · верх начинает влево, низ вправо. Переключение начинает новое поле." aria-label="Встречный шаг" hidden>
-        <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Встречный шаг</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
-        <span class="gz-nm">AND</span>
-      </button>
-      <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" title="Начать запись видимого поля в GIF. Второе нажатие сохраняет файл." aria-label="Собрать GIF">
-        <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
-      </button>
       <label class="romb-setting">Высота ромба, N
         <span class="gz-hx value-control">
           <select id="romb-size" title="Выбрать высоту ромба в строках">
