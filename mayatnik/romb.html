@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.029</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.030</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=026"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=027"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -72,12 +72,15 @@
     .romb-route-group[hidden], .romb-controls [hidden] { display: none !important; }
     .romb-route-help { flex: 1 1 300px; margin: 0; color: var(--muted); font-size: 12px; }
     .romb-step-count.gz-hx {
-      display: grid; grid-template-columns: minmax(24px, 1fr) auto auto minmax(24px, 1fr);
-      align-items: center; column-gap: 3px; padding: 0;
+      display: grid; grid-template-columns: 1fr 24px auto 24px 1fr;
+      align-items: center; column-gap: 2px; padding: 0;
     }
     .romb-step-count.gz-pair .gz-half { width: 100%; margin: 0; padding: 0; }
     .romb-step-count.gz-pair .gz-half.gz-h0 { justify-content: flex-end; padding-right: 10px; }
     .romb-step-count.gz-pair .gz-half.gz-h1 { justify-content: flex-start; padding-left: 10px; }
+    .romb-step-adjust { align-self: stretch; padding: 0; border: 0; background: transparent; color: var(--cyan); font: 16px/1 monospace; cursor: pointer; }
+    .romb-step-adjust:disabled { color: var(--muted); opacity: .55; cursor: default; }
+    .romb-step-adjust:enabled:is(:hover, :focus-visible) { color: var(--bg); background: var(--cyan); }
     .romb-step-count input {
       width: 2ch; box-sizing: border-box; min-width: 0; height: 18px; padding: 0; margin: 0;
       text-align: center; color: #e1f2ec; font: 600 12px/18px monospace; font-variant-numeric: tabular-nums;
@@ -172,7 +175,7 @@
     .romb-frame-control { container-type: inline-size; }
     .romb-frame-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; }
     .romb-run-steps { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .romb-run-steps > .romb-step-count { width: 186px; flex: 0 0 186px; }
+    .romb-run-steps > .romb-step-count { width: 140px; flex: 0 0 140px; }
     .romb-run-steps > .romb-play-reset { width: 136px; flex-basis: 136px; }
     .romb-play-reset .gz-half[aria-pressed="true"] { background: var(--cyan); }
     .romb-frame-track { position: relative; min-width: 0; }
@@ -257,7 +260,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.029</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.030</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -433,8 +436,9 @@
           </div>
           <div class="gz-hx gz-pair romb-step-pair romb-step-count" role="group" aria-label="Шаги">
             <button type="button" class="gz-half gz-h0" id="romb-step-back" aria-label="Шаг назад">◂</button>
-            <label id="romb-step-label" for="romb-step-size">Проходов за шаг</label>
-            <input id="romb-step-size" type="number" min="1" max="16384" step="1" value="1">
+            <button type="button" class="romb-step-adjust" id="romb-step-minus" aria-label="Уменьшить число проходов" disabled>‹</button>
+            <input id="romb-step-size" aria-label="Проходов за шаг" type="number" min="1" max="16384" step="1" value="1">
+            <button type="button" class="romb-step-adjust" id="romb-step-plus" aria-label="Увеличить число проходов">›</button>
             <button type="button" class="gz-half gz-h1" id="romb-step" aria-label="Шаг вперёд">▸</button>
           </div>
         </div>

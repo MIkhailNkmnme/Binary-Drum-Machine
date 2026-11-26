@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.026 */
+/* Ромбовый Маятник v0.027 */
 (() => {
   "use strict";
 
@@ -27,6 +27,8 @@
     "spiral-cw": "спираль по часовой", "spiral-ccw": "спираль против часовой"};
   const rememberedModes = {x: "pendulum", y: "pendulum"};
   const stepSize = byId("romb-step-size");
+  const stepMinus = byId("romb-step-minus");
+  const stepPlus = byId("romb-step-plus");
   const speed = byId("romb-speed");
   const speedValue = byId("romb-speed-value");
   const play = byId("romb-play");
@@ -98,6 +100,12 @@
 
   function stepCount() {
     return clamp(Math.round(stepSize.valueAsNumber) || 1, 1, Number(stepSize.max));
+  }
+
+  function syncStepArrows() {
+    const count = stepCount();
+    stepMinus.disabled = count <= Number(stepSize.min);
+    stepPlus.disabled = count >= Number(stepSize.max);
   }
 
   function updateSpeed() {
@@ -1227,7 +1235,6 @@
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
     const timeline = frameControl.cloneNode(true);
     timeline.id += "-coin";
-    timeline.querySelector("#romb-step-label").htmlFor = "romb-step-size-coin";
     frameControls.push(timeline);
     const repeat = cycleNote.cloneNode(true);
     for (const copy of [...controls.querySelectorAll("[id]"), ...timeline.querySelectorAll("[id]"), repeat]) {
@@ -1386,6 +1393,7 @@
   }
 
   function syncTransport() {
+    syncStepArrows();
     const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
@@ -1779,9 +1787,19 @@
     save();
     redraw();
   });
-  stepSize.addEventListener("input", syncMirrors);
+  for (const [button, delta] of [[stepMinus, -1], [stepPlus, 1]]) {
+    button.addEventListener("click", () => {
+      stepSize.value = stepCount() + delta;
+      stepSize.dispatchEvent(new Event("change", {bubbles: true}));
+    });
+  }
+  stepSize.addEventListener("input", () => {
+    syncStepArrows();
+    syncMirrors();
+  });
   stepSize.addEventListener("change", () => {
     stepSize.value = stepCount();
+    syncStepArrows();
     syncMirrors();
     save();
   });
@@ -1802,7 +1820,7 @@
     transport.prepend(frameControl);
     transport.append(frameLabel);
     transport.hidden = false;
-    byId("romb-step-label").textContent = "Кадров за шаг";
+    stepSize.setAttribute("aria-label", "Кадров за шаг");
     for (const [direction, button] of hubPlayButtons) {
       button.addEventListener("click", () => toggleHubPlayback(direction));
     }
