@@ -27,17 +27,19 @@ function appSection(start, end) {
 }
 
 const createModel = runInNewContext(
-  '(function (rows, width, wrap = true) {\n' +
+  '(function (rows, width, wrap = true, reverseAtContact = false) {\n' +
   '  const field = MAYATNIK.field(width, rows, "empty");\n' +
   '  const depth = rows / 2;\n' +
   '  const routeChanges = new Map([[0, wrap]]);\n' +
-  '  const reversalChanges = new Map([[0, false]]);\n' +
+  '  const reversalChanges = new Map([[0, reverseAtContact]]);\n' +
   '  let column, branches, routeWrap, routeReverse, frame;\n' +
   appSection('  function initializeMotion()', '  function changeRoute(') +
-  appSection('  function separation()', '    frame++;') +
-  '    frame++;\n  }\n' +
+  appSection('  function separation()', '  function advanceFrame(') +
+  '  function advanceFrame(and = false) {\n' +
+  '    if (advance(reverseAtContact, and)) for (const branch of branches) branch.direction *= -1;\n' +
+  '  }\n' +
   '  initializeMotion();\n' +
-  '  return {advance, field, val: field.val, route: () => [frame % 2, column, ...branches.map(branch => branch.column)],\n' +
+  '  return {advance, advanceFrame, field, val: field.val, route: () => [frame % 2, column, ...branches.map(branch => branch.column)],\n' +
   '    phase: () => [frame % 2, column, ...branches.flatMap(branch => [branch.column, branch.direction])].join(":")};\n' +
   '})',
   {MAYATNIK: core, MayatnikEdgeFlow: edgeFlow}
@@ -206,4 +208,4 @@ if (require.main === module) {
   console.log(JSON.stringify(writeStudy(directory), null, 2));
 }
 
-module.exports = {createModel, writeStudy};
+module.exports = {createModel, pngChunk, writeStudy};
