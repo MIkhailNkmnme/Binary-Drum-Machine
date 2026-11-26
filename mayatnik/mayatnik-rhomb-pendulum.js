@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.020 */
+/* Ромбовый Маятник v0.021 */
 (() => {
   "use strict";
 
@@ -993,6 +993,10 @@
     if (frameSlider.max !== limit) frameSlider.max = limit;
     const sliderValue = String(seekTarget ?? frame);
     if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    if (reportedCycle) {
+      const progress = (frameSlider.valueAsNumber / end * 100) + "%";
+      if (root.style.getPropertyValue("--frame-progress") !== progress) root.style.setProperty("--frame-progress", progress);
+    }
     syncCycleMarks(end);
     return end;
   }
@@ -1014,7 +1018,7 @@
       risks.style.setProperty("--romb-cycle-return", Math.min(100, 100 * returned / limit) + "%");
       risks.classList.toggle("romb-cycle-outside", outside);
       first.textContent = "Начало " + formatter.format(start);
-      last.textContent = "Возврат " + formatter.format(returned) + (outside ? " →" : "");
+      last.textContent = "Повтор " + formatter.format(returned) + (outside ? " →" : "");
       const distance = outside ? returned > maxFrame ? "За пределом перемотки. " : "За видимой частью шкалы. " : "";
       last.title = distance + "Период " + formatter.format(returned - start) + " ходов.";
     }

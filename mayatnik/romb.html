@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.022</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.023</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -13,7 +13,7 @@
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=005"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=020"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=021"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -121,7 +121,6 @@
     .romb-zen-timeline { grid-area: timeline; align-self: end; width: 100%; max-width: 840px; justify-self: center; }
     .romb-zen-timeline .romb-frame-control { margin: 0; padding: 4px 0; }
     .romb-zen-timeline .romb-frame-row { display: block; }
-    .romb-zen-timeline .romb-cycle-values { display: none; }
     @media (max-width: 1080px) {
       .romb-zen-side .romb-motion-group, .romb-zen-display > div { grid-template-columns: 120px; }
       .romb-zen-motion .romb-route-group { max-width: 132px; }
@@ -155,13 +154,33 @@
     .romb-run-steps > button.gz-hx { width: 72px; flex-basis: 72px; justify-content: center; }
     .romb-frame-reset.gz-hx { width: 76px; justify-content: center; }
     .romb-frame-track { position: relative; min-width: 0; }
-    @container (max-width: 330px) {
+    @container (max-width: 470px) {
       .romb-frame-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px; }
       .romb-frame-row .romb-frame-track { grid-column: 1 / -1; grid-row: 2; }
       .romb-run-steps { flex-wrap: wrap; }
       .romb-frame-reset.gz-hx { width: 62px; padding: 0 6px; }
     }
     .romb-frame-slider { display: block; width: 100%; margin: 0; accent-color: var(--cyan); }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) {
+      --track-height: 22px;
+      background: linear-gradient(to right, #16535e var(--frame-progress, 0%), #16232e 0);
+      border-radius: 5px; box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) .romb-frame-slider {
+      appearance: none; height: var(--track-height); background: transparent; cursor: pointer;
+    }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) .romb-frame-slider::-webkit-slider-runnable-track {
+      height: var(--track-height); background: transparent;
+    }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) .romb-frame-slider::-moz-range-track { background: transparent; }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) .romb-frame-slider::-webkit-slider-thumb {
+      appearance: none; width: 14px; height: var(--track-height);
+      background: #1b4953; border: 2px solid var(--cyan); border-radius: 5px;
+    }
+    .romb-frame-track:has(.romb-cycle-values:not([hidden])) .romb-frame-slider::-moz-range-thumb {
+      box-sizing: border-box; width: 14px; height: var(--track-height);
+      background: #1b4953; border: 2px solid var(--cyan); border-radius: 5px;
+    }
     .romb-cycle-risks { position: absolute; inset: 0 8px; pointer-events: none; }
     .romb-cycle-risks::before, .romb-cycle-risks::after {
       content: ""; position: absolute; bottom: 0; height: 5px; border-left: 2px solid;
@@ -169,7 +188,16 @@
     .romb-cycle-risks::before { left: var(--romb-cycle-start); color: var(--cyan); }
     .romb-cycle-risks::after { left: var(--romb-cycle-return); color: var(--romb-outline); }
     .romb-cycle-outside::after { border-left-style: dotted; }
-    .romb-cycle-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 12px; font-size: 11px; }
+    .romb-cycle-values {
+      position: absolute; inset: 0 8px; display: flex; align-items: center; justify-content: space-between;
+      font: 600 11px/1.1 "Segoe UI", sans-serif; white-space: nowrap; text-shadow: 0 1px 2px #07131e;
+      pointer-events: none; user-select: none;
+    }
+    @container (max-width: 190px) {
+      .romb-frame-track:has(.romb-cycle-values:not([hidden])) { --track-height: 32px; }
+      .romb-cycle-values { flex-direction: column; align-items: start; padding-block: 3px; }
+      .romb-cycle-return { align-self: end; }
+    }
     .romb-cycle-risks[hidden], .romb-cycle-values[hidden] { display: none; }
     .romb-cycle-start { color: var(--cyan); }
     .romb-cycle-return { color: var(--romb-outline); }
@@ -208,7 +236,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.022</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.023</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -360,13 +388,13 @@
         <div class="romb-frame-track">
           <input id="romb-frame-slider" class="romb-frame-slider" type="range" min="0" max="2047" step="1" value="1" aria-label="Кадр Маятника">
           <span class="romb-cycle-risks" aria-hidden="true" hidden></span>
+          <span class="romb-cycle-values" hidden>
+            <span class="romb-cycle-start"></span><span class="romb-cycle-return"></span>
+          </span>
         </div>
         <button type="button" class="gz-hx romb-frame-reset" id="romb-reset" data-user-label>
           <span aria-hidden="true">↺</span><span>Сброс</span>
         </button>
-      </div>
-      <div class="romb-cycle-values" hidden>
-        <span class="romb-cycle-start"></span><span class="romb-cycle-return"></span>
       </div>
     </div>
     <p id="romb-cycle-note" class="progress" hidden></p>
