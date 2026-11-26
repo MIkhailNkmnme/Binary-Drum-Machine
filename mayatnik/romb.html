@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.027</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.028</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=024"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=025"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -159,6 +159,7 @@
     .romb-hub-four :is(#romb-combined, #romb-vertical) { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
     #romb-vertical:not([hidden]) { position: absolute; inset: 0; pointer-events: none; opacity: .78; }
     #romb-vertical[hidden] { display: none; }
+    #romb-frame, #romb-coin-frames > .progress { text-align: center; }
     .romb-frame-control { min-width: 0; margin: 0 0 10px; }
     .romb-frame-control { container-type: inline-size; }
     .romb-frame-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 6px; }
@@ -247,7 +248,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.027</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.028</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -446,7 +447,7 @@
     </div>
     <div class="commands" role="group" aria-label="Масштаб поля">
       <button type="button" class="gz-hx" id="romb-exact" title="Одна клетка на один физический пиксель" aria-label="Масштаб один к одному">
-        <span class="gz-nm">1:1</span>
+        <span class="gz-nm">1/1</span>
       </button>
       <button type="button" class="gz-hx" id="romb-fit" title="Вписать рисунок по ширине страницы, в Дзене — в окно" aria-label="Вписать рисунок">
         <span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span>
@@ -477,7 +478,7 @@
       </div>
       
       <div class="commands" role="group" aria-label="Масштаб Ромба-монеты">
-        <button type="button" class="gz-hx" id="romb-coin-exact" title="Одна клетка на один физический пиксель"><span class="gz-nm">1:1</span></button>
+        <button type="button" class="gz-hx" id="romb-coin-exact" title="Одна клетка на один физический пиксель"><span class="gz-nm">1/1</span></button>
         <button type="button" class="gz-hx" id="romb-coin-fit" title="Вписать Ромб-монету в окно"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span></button>
         <button type="button" class="gz-hx" id="romb-coin-square" aria-pressed="false" title="Повернуть Ромб-монету в квадрат"><span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span></button>
       </div>
@@ -493,7 +494,7 @@
       </div>
     </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
-    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо меняет масштаб под указателем от 1:1, увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен без кнопок, Esc возвращает меню. Нажатия колёсика переключают: Дзен с кнопками → Дзен без кнопок → обычный вид. Вращение колеса меняет масштаб.</p>
+    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо переключает точные масштабы под указателем (1/2, 1/1, 2/1 и далее), увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен без кнопок, Esc возвращает меню. Нажатия колёсика переключают: Дзен с кнопками → Дзен без кнопок → обычный вид. Вращение колеса меняет масштаб.</p>
     <div class="legend" aria-label="Цвета поля">
       <span><i class="one" aria-hidden="true"></i>1</span>
       <span><i class="zero" aria-hidden="true"></i>0</span>

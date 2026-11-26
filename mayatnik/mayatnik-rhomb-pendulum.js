@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.024 */
+/* Ромбовый Маятник v0.025 */
 (() => {
   "use strict";
 
@@ -661,11 +661,21 @@
     return projectBox(0, 2 * depth - 1, 2 * depth, options.coinSquare);
   }
 
+  function fittedPixelScale(rect, camera, bounds) {
+    const dpr = devicePixelRatio || 1;
+    const across = Math.round(rect.width * dpr) / (bounds.right - bounds.left);
+    const available = camera === view && pageField() ? across
+      : Math.min(across, Math.round(rect.height * dpr) / (bounds.bottom - bounds.top));
+    if (available <= 0) return 1;
+    return available >= 1 ? Math.floor(available) : 1 / Math.ceil(1 / available);
+  }
+
   function scaleFor(rect, camera = view, bounds = projectedBounds()) {
-    if (camera.scale !== null) return camera.scale / (devicePixelRatio || 1);
-    const widthScale = rect.width / (bounds.right - bounds.left);
-    if (camera === view && pageField()) return widthScale;
-    return Math.min(widthScale, rect.height / (bounds.bottom - bounds.top));
+    return (camera.scale ?? fittedPixelScale(rect, camera, bounds)) / (devicePixelRatio || 1);
+  }
+
+  function scaleLabel(scale) {
+    return scale >= 1 ? scale + "/1" : "1/" + Math.round(1 / scale);
   }
 
   function updateViewBounds() {
@@ -855,7 +865,9 @@
     renderRhombs = sourceRhombs();
     const viewWidth = bounds.right - bounds.left;
     const viewHeight = bounds.bottom - bounds.top;
-    const cssScale = scaleFor(rect);
+    const ratio = devicePixelRatio || 1;
+    const scale = view.scale ?? fittedPixelScale(rect, view, bounds);
+    const cssScale = scale / ratio;
     view.x = bounds.left + boundCenter(view.x - bounds.left, viewWidth, rect.width / cssScale);
     view.y = fullHeight
       ? bounds.top + (rect.top - fieldBoard.getBoundingClientRect().top + rect.height / 2) / cssScale
@@ -863,8 +875,6 @@
     canvas.classList.toggle("romb-zoomed", viewWidth * cssScale > rect.width + 0.5 ||
       viewHeight * cssScale > (fullHeight ? Math.min(innerHeight, rect.height) : rect.height) + 0.5);
 
-    const dpr = devicePixelRatio || 1;
-    const ratio = view.scale === null ? Math.min(dpr, 1.5) : dpr;
     const w = Math.max(1, Math.round(rect.width * ratio));
     const h = Math.max(1, Math.round(rect.height * ratio));
     if (!pixels || canvas.width !== w || canvas.height !== h) {
@@ -892,13 +902,8 @@
       colorKey = key;
     }
 
-    const scale = view.scale ?? cssScale * ratio;
-    let x = w / 2 - view.x * scale;
-    let y = h / 2 - view.y * scale;
-    if (view.scale === 1) {
-      x = Math.round(x);
-      y = Math.round(y);
-    }
+    const x = Math.round(w / 2 - view.x * scale);
+    const y = Math.round(h / 2 - view.y * scale);
     let marks;
     if (options.patternColors && frame) {
       patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
@@ -932,7 +937,7 @@
     context.restore();
     if (!zen || recording?.coin) paintCombined();
 
-    updateLabels(cssScale, dpr);
+    updateLabels(scale);
   }
 
   function paintFlatBits(x, y, scale, w, h, marks) {
@@ -1049,14 +1054,14 @@
     return ["outward", "inward"].includes(horizontalMode()) && distance === field.H ? " · порог касания" : "";
   }
 
-  function updateLabels(cssScale, dpr) {
+  function updateLabels(scale) {
     const {W, H} = field;
     const vertical = isVertical();
     const position = positionText() + (frame && !["outward", "inward"].includes(horizontalMode()) && !vertical ? " из " + formatter.format(W) : "");
     const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
-    const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
+    const zoom = scaleLabel(scale);
     const label = "Кадр " + formatter.format(frame) + target + position +
       dimensions + " · " + zoom + contact + (options.square ? " · квадрат" : "") +
       (options.buildAnd ? " · AND" : "");
@@ -1083,13 +1088,13 @@
     const {left, top, right, bottom} = coinBounds();
     const rect = combinedCanvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const cssScale = scaleFor(rect, coinView, {left, top, right, bottom});
+    const ratio = devicePixelRatio || 1;
+    const scale = coinView.scale ?? fittedPixelScale(rect, coinView, {left, top, right, bottom});
+    const cssScale = scale / ratio;
     coinView.x = left + boundCenter(coinView.x - left, right - left, rect.width / cssScale);
     coinView.y = top + boundCenter(coinView.y - top, bottom - top, rect.height / cssScale);
     combinedCanvas.classList.toggle("romb-zoomed",
       (right - left) * cssScale > rect.width + .5 || (bottom - top) * cssScale > rect.height + .5);
-    const dpr = devicePixelRatio || 1;
-    const ratio = coinView.scale === null ? Math.min(dpr, 1.5) : dpr;
     const width = Math.max(1, Math.round(rect.width * ratio)), height = Math.max(1, Math.round(rect.height * ratio));
     if (!combinedPixels || combinedCanvas.width !== width || combinedCanvas.height !== height) {
       combinedCanvas.width = width;
@@ -1098,8 +1103,8 @@
       combinedWords = new Uint32Array(combinedPixels.data.buffer);
     }
     combinedWords.fill(0);
-    const scale = coinView.scale ?? cssScale * ratio;
-    const originX = width / 2 - coinView.x * scale, originY = height / 2 - coinView.y * scale;
+    const originX = Math.round(width / 2 - coinView.x * scale);
+    const originY = Math.round(height / 2 - coinView.y * scale);
     const x0 = Math.max(0, Math.floor(originX + left * scale));
     const x1 = Math.min(width, Math.ceil(originX + right * scale));
     const y0 = Math.max(0, Math.floor(originY + top * scale));
@@ -1133,7 +1138,7 @@
     }
     combinedContext.putImageData(combinedPixels, 0, 0);
     if (coinFrameInfo) {
-      const zoom = coinView.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
+      const zoom = scaleLabel(scale);
       coinFrameInfo.textContent = "Кадр " + formatter.format(frame) + " · " + zoom + (options.coinSquare ? " · квадрат" : "");
     }
   }
@@ -1405,7 +1410,7 @@
       const box = bounds();
       const old = scaleFor(rect, camera, box);
       const pointerRow = camera.y + py / old;
-      camera.scale = clamp(physicalScale, 1, 16);
+      camera.scale = physicalScale;
       const shift = 1 / old - 1 / scaleFor(rect, camera, box);
       camera.x += px * shift;
       camera.y += py * shift;
@@ -1417,9 +1422,17 @@
     }
 
     function zoomBy(factor, px = 0, py = 0, anchorPointer = false) {
-      const current = scaleFor(element.getBoundingClientRect(), camera, bounds()) * (devicePixelRatio || 1);
-      if (camera.scale === null && current < 1 && factor <= 1) return;
-      zoomTo(current * factor, px, py, anchorPointer);
+      const box = bounds();
+      const fitScale = fittedPixelScale(element.getBoundingClientRect(), camera, box);
+      const current = camera.scale ?? fitScale;
+      if (factor === 1) return;
+      // Adjacent steps: … 1/3, 1/2, 1/1, 2/1, 3/1 …
+      const direction = factor > 1 ? 1 : -1;
+      const level = current >= 1 ? current : 2 - Math.round(1 / current);
+      const next = level + direction;
+      const maxDivisor = Math.ceil(Math.max(box.right - box.left, box.bottom - box.top));
+      const scale = next >= 1 ? Math.min(next, Math.max(16, fitScale)) : 1 / Math.min(2 - next, maxDivisor);
+      if (scale !== current) zoomTo(scale, px, py, anchorPointer);
     }
 
     function fitView() {
@@ -1427,11 +1440,17 @@
       redraw();
     }
 
+    let wheelDistance = 0;
     element.addEventListener("wheel", event => {
       event.preventDefault();
       const rect = element.getBoundingClientRect();
       const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1;
-      const factor = Math.exp(-clamp(event.deltaY * unit, -240, 240) * 0.003);
+      const delta = event.deltaY * unit;
+      if (Math.sign(wheelDistance) !== Math.sign(delta)) wheelDistance = 0;
+      wheelDistance += delta;
+      if (Math.abs(wheelDistance) < 24 && event.deltaMode === 0) return;
+      const factor = wheelDistance < 0 ? 2 : wheelDistance > 0 ? 0.5 : 1;
+      wheelDistance = 0;
       zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2, true);
     }, {passive: false});
     element.addEventListener("keydown", event => {
