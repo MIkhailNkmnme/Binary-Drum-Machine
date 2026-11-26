@@ -16,6 +16,8 @@
   const size = byId("romb-size");
   const width = byId("romb-width");
   const stepSize = byId("romb-step-size");
+  const stepMinus = byId("romb-step-minus");
+  const stepPlus = byId("romb-step-plus");
   const speed = byId("romb-speed");
   const speedValue = byId("romb-speed-value");
   const play = byId("romb-play");
@@ -74,10 +76,22 @@
   let nextBatchAt = 0;
   let nextPaintAt = 0;
   let dirty = false;
+  let zen = false;
   let delay = 115;
 
   function stepCount() {
     return clamp(Math.round(stepSize.valueAsNumber) || 1, 1, Number(stepSize.max));
+  }
+
+  function syncStepSize() {
+    const count = stepCount();
+    stepMinus.disabled = count === 1;
+    stepPlus.disabled = count === Number(stepSize.max);
+  }
+
+  function nudgeStepSize(direction) {
+    stepSize.value = clamp(stepCount() + direction, 1, Number(stepSize.max));
+    stepSize.dispatchEvent(new Event("change", {bubbles: true}));
   }
 
   function updateSpeed() {
@@ -617,7 +631,7 @@
     context.stroke();
     if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
     context.restore();
-    paintCombined();
+    if (!zen || recording?.coin) paintCombined();
 
     updateLabels(cssScale, dpr);
   }
@@ -783,6 +797,9 @@
     const holder = byId("romb-coin-controls");
     if (!holder) return;
     const controls = byId("romb-controls").cloneNode(true);
+    controls.querySelector("#romb-zen")?.remove();
+    controls.querySelector("#romb-step-label").htmlFor = "romb-step-size-coin";
+    controls.querySelector("#romb-pattern-colors").setAttribute("aria-controls", "romb-pattern-palette-coin");
     controls.id = "romb-coin-toolbar";
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
     const range = frameSlider.cloneNode(true);
@@ -934,6 +951,7 @@
   }
 
   function syncTransport() {
+    syncStepSize();
     const moving = playing || pending !== 0;
     play.setAttribute("aria-pressed", String(moving));
     if (playIcon) playIcon.textContent = moving ? "⏸" : "▶";
@@ -1060,6 +1078,61 @@
     return {zoomTo, zoomBy, fitView};
   }
 
+  function mountZen() {
+    const board = byId("romb-board");
+    const enter = byId("romb-zen");
+    const exit = byId("romb-zen-exit");
+    let previousView, nativeZen = false;
+
+    function exitFullscreen() {
+      if (document.fullscreenElement === board) document.exitFullscreen().catch(() => {});
+    }
+
+    function setZen(active) {
+      if (active === zen) return;
+      zen = active;
+      root.classList.toggle("romb-zen", active);
+      document.documentElement.classList.toggle("romb-zen-open", active);
+      enter.setAttribute("aria-pressed", String(active));
+      exit.hidden = !active;
+      if (active) {
+        previousView = {x: view.x, y: view.y, scale: view.scale};
+        fit();
+        canvas.focus({preventScroll: true});
+        board.requestFullscreen?.()?.catch(() => {});
+      } else {
+        nativeZen = false;
+        Object.assign(view, previousView);
+        exitFullscreen();
+        enter.focus({preventScroll: true});
+      }
+      redraw();
+    }
+
+    enter.addEventListener("click", () => setZen(true));
+    exit.addEventListener("click", () => setZen(false));
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement === board) {
+        if (zen) nativeZen = true;
+        else exitFullscreen();
+      } else if (nativeZen) {
+        nativeZen = false;
+        setZen(false);
+      }
+    });
+    document.addEventListener("keydown", event => {
+      if (event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (zen && event.key === "Escape") {
+        event.preventDefault();
+        setZen(false);
+      } else if ((event.code === "KeyQ" || event.key.toLowerCase() === "q") &&
+          !event.target.closest?.("input, select, textarea, [contenteditable=true]")) {
+        event.preventDefault();
+        setZen(!zen);
+      }
+    });
+  }
+
   const {zoomTo, zoomBy, fitView} = bindViewport(canvas, view, projectedBounds, fit);
 
   root.querySelectorAll("[data-romb-zoom]").forEach(button => {
@@ -1142,7 +1215,18 @@
     input.addEventListener("change", save);
   }
   for (const select of [size, width]) select.addEventListener("change", () => { save(); reset(); });
-  stepSize.addEventListener("change", () => { stepSize.value = stepCount(); save(); });
+  stepMinus.addEventListener("click", () => nudgeStepSize(-1));
+  stepPlus.addEventListener("click", () => nudgeStepSize(1));
+  stepSize.addEventListener("input", () => {
+    syncStepSize();
+    syncMirrors();
+  });
+  stepSize.addEventListener("change", () => {
+    stepSize.value = stepCount();
+    syncStepSize();
+    syncMirrors();
+    save();
+  });
   speed.addEventListener("input", () => {
     updateSpeed();
     if (playing && !pending) nextBatchAt = performance.now() + delay;
@@ -1159,7 +1243,7 @@
     const transport = byId("romb-hub-transport");
     const actions = byId("romb-hub-actions");
     actions.prepend(backButton.parentElement);
-    actions.append(stepSize.closest("label"));
+    actions.append(stepSize.closest(".romb-setting"));
     transport.append(frameSlider, frameLabel);
     transport.hidden = false;
     byId("romb-step-label").textContent = "Кадров за шаг";
@@ -1218,7 +1302,10 @@
     } catch { /* Use default preferences. */ }
   }
 
-  if (!hubFour) mountCoinControls();
+  if (!hubFour) {
+    mountCoinControls();
+    mountZen();
+  }
   updateSpeed();
   reset();
   if (hubFour && window.parent === window) togglePlay();
