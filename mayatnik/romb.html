@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.033</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.034</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=030"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=031"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -117,6 +117,25 @@
     main:not(.romb-zen) .romb-full-height #romb-field {
       position: sticky; top: 0; height: min(var(--field-height), max(100vh, 1200px));
     }
+    .romb-samples { display: none; }
+    #romb-board.romb-comparing {
+      display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--reference-width)) minmax(0, 1fr);
+      min-height: 100px;
+    }
+    .romb-comparing > #romb-field { grid-area: 1 / 2; min-width: 0; }
+    .romb-comparing > .romb-samples {
+      display: block; position: sticky; top: 0; align-self: start; grid-row: 1;
+      max-height: min(max(100px, var(--field-height, 100dvh)), 100dvh); overflow: auto;
+      color: var(--muted); text-align: center; font: 12px/1.3 monospace;
+    }
+    .romb-zen .romb-comparing > .romb-samples { max-height: 100dvh; }
+    #romb-average-panel { grid-column: 1; }
+    #romb-phase-panel { grid-column: 3; }
+    .romb-samples header { margin: 0; padding: 2px; }
+    .romb-phase-list { display: flex; flex-wrap: wrap; align-items: start; justify-content: safe center; gap: 3px 8px; }
+    .romb-samples figure { flex: none; margin: 0; }
+    .romb-samples figcaption { color: var(--muted); }
+    .romb-samples input { width: 8ch; font: inherit; color: var(--text); background: var(--bg); }
     .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
     .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
     .romb-board .romb-zoomed:active { cursor: grabbing; }
@@ -270,7 +289,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.033</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.034</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -461,6 +480,15 @@
     <p id="romb-cycle-note" class="progress" hidden></p>
     <div class="romb-board" id="romb-board">
       <canvas id="romb-field" tabindex="0" role="img" aria-label="Битовое поле ромбового Маятника" aria-describedby="romb-frame romb-zoom-help"></canvas>
+      <section class="romb-samples" id="romb-average-panel" aria-label="Средний цвет">
+        <header>Средний цвет</header><canvas id="romb-average" role="img" aria-label="Средний цвет блоков видимой части поля"></canvas>
+      </section>
+      <section class="romb-samples" id="romb-phase-panel" aria-label="Все фазы">
+        <header>Все фазы <span id="romb-phase-count"></span>
+          <label id="romb-phase-pages" hidden>Стр. <input id="romb-phase-page" type="number" min="1" step="1" value="1"></label>
+        </header>
+        <div class="romb-phase-list" id="romb-phase-list"></div>
+      </section>
       <button type="button" class="gz-hx" id="romb-zen-exit" aria-keyshortcuts="Escape Q" title="Вернуть меню · Esc или Q" aria-label="Выйти из режима Дзен" hidden>
         <span class="gz-ic" aria-hidden="true">↙</span><span class="gz-nm">Меню</span>
       </button>
@@ -511,7 +539,7 @@
       </div>
     </div>
     <noscript><p>Для построения поля нужен JavaScript.</p></noscript>
-    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. Колесо переключает точные масштабы под указателем (1/2, 1/1, 2/1 и далее), увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен без кнопок, Esc возвращает меню. Нажатия колёсика переключают: Дзен с кнопками → Дзен без кнопок → обычный вид. Вращение колеса меняет масштаб.</p>
+    <p id="romb-zoom-help" class="hint">Двойной щелчок запускает и приостанавливает анимацию. При уменьшении в центре остаётся видимая область 1:1. Слева показан средний цвет каждого блока, справа — все позиции пикселя в блоке. Координаты фаз отсчитываются от нуля. Колесо переключает точные масштабы под указателем (1/2, 1/1, 2/1 и далее), увеличенное поле можно перетаскивать. С клавиатуры работают +, −, 1 для масштаба 1:1 и 0 для вписывания. Q открывает Дзен без кнопок, Esc возвращает меню. Нажатия колёсика переключают: Дзен с кнопками → Дзен без кнопок → обычный вид. Вращение колеса меняет масштаб.</p>
     <div class="legend" aria-label="Цвета поля">
       <span><i class="one" aria-hidden="true"></i>1</span>
       <span><i class="zero" aria-hidden="true"></i>0</span>

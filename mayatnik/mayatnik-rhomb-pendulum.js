@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.030 */
+/* Ромбовый Маятник v0.031 */
 (() => {
   "use strict";
 
@@ -6,6 +6,9 @@
   const byId = id => root.querySelector("#" + id);
   const canvas = byId("romb-field");
   const fieldBoard = byId("romb-board");
+  const phaseList = byId("romb-phase-list");
+  const phasePage = byId("romb-phase-page");
+  let phaseFactor = 0, phaseKey = "", phaseTiles = [], averageTile;
   const frameLabel = byId("romb-frame");
   const announcement = byId("romb-announcement");
   const context = canvas.getContext("2d");
@@ -753,7 +756,8 @@
   }
 
   function scaleFor(rect, camera = view, bounds = projectedBounds()) {
-    return (camera.scale ?? fittedPixelScale(rect, camera, bounds)) / (devicePixelRatio || 1);
+    const selected = camera.scale ?? fittedPixelScale(camera === view && phaseList ? fieldBoard.getBoundingClientRect() : rect, camera, bounds);
+    return (camera === view && phaseList ? Math.max(1, selected) : selected) / (devicePixelRatio || 1);
   }
 
   function scaleLabel(scale) {
@@ -918,6 +922,107 @@
     }
   }
 
+  function tileBuffer(tile, width, height, ratio) {
+    if (!tile.image || tile.image.width !== width || tile.image.height !== height) {
+      tile.canvas.width = width;
+      tile.canvas.height = height;
+      tile.image = tile.ctx.createImageData(width, height);
+      tile.words = new Uint32Array(tile.image.data.buffer);
+    }
+    tile.canvas.style.width = width / ratio + "px";
+    tile.canvas.style.height = height / ratio + "px";
+  }
+
+  function sampleTiles(factor, width, height, ratio) {
+    if (phaseFactor !== factor) {
+      phaseFactor = factor;
+      phasePage.value = "1";
+    }
+    const total = factor * factor;
+    const pages = Math.ceil(total / 64);
+    const page = clamp(Math.round(phasePage.valueAsNumber) || 1, 1, pages);
+    const key = factor + "/" + page;
+    if (phaseKey !== key) {
+      phasePage.max = String(pages);
+      phasePage.value = String(page);
+      byId("romb-phase-pages").hidden = pages === 1;
+      byId("romb-phase-count").textContent = "· " + formatter.format(total);
+      const fragment = document.createDocumentFragment();
+      phaseTiles = [];
+      for (let i = (page - 1) * 64; i < Math.min(page * 64, total); i++) {
+        const dx = i % factor, dy = Math.floor(i / factor);
+        const figure = document.createElement("figure");
+        const label = document.createElement("figcaption");
+        label.textContent = "(" + dx + ", " + dy + ")";
+        const tile = document.createElement("canvas");
+        figure.append(label, tile);
+        fragment.append(figure);
+        phaseTiles.push({dx, dy, canvas: tile, ctx: tile.getContext("2d")});
+      }
+      phaseList.replaceChildren(fragment);
+      phaseKey = key;
+    }
+    if (!averageTile) {
+      const tile = byId("romb-average");
+      averageTile = {canvas: tile, ctx: tile.getContext("2d")};
+    }
+    tileBuffer(averageTile, width, height, ratio);
+    for (const tile of phaseTiles) tileBuffer(tile, width, height, ratio);
+  }
+
+  function paintSamples(factor, x, y, bounds, ratio) {
+    // Align blocks to the 1:1 raster. Panning clips edge blocks without changing their phase.
+    const originX = x + Math.floor(bounds.left), originY = y + Math.floor(bounds.top);
+    const left = Math.max(0, originX), top = Math.max(0, originY);
+    const right = Math.min(pixels.width, x + Math.ceil(bounds.right));
+    const bottom = Math.min(pixels.height, y + Math.ceil(bounds.bottom));
+    const startX = originX + Math.floor((left - originX) / factor) * factor;
+    const startY = originY + Math.floor((top - originY) / factor) * factor;
+    const width = Math.max(1, Math.ceil((right - startX) / factor));
+    const height = Math.max(1, Math.ceil((bottom - startY) / factor));
+    sampleTiles(factor, width, height, ratio);
+    const source = pixels.data, stride = pixels.width;
+    const average = averageTile.image.data;
+    for (let row = 0; row < height; row++) {
+      const by = startY + row * factor, y0 = Math.max(top, by), y1 = Math.min(bottom, by + factor);
+      for (let col = 0; col < width; col++) {
+        const bx = startX + col * factor, x0 = Math.max(left, bx), x1 = Math.min(right, bx + factor);
+        let red = 0, green = 0, blue = 0, alpha = 0;
+        for (let sy = y0; sy < y1; sy++) {
+          let at = (sy * stride + x0) * 4;
+          for (let sx = x0; sx < x1; sx++, at += 4) {
+            const a = source[at + 3];
+            red += source[at] * a;
+            green += source[at + 1] * a;
+            blue += source[at + 2] * a;
+            alpha += a;
+          }
+        }
+        const at = 4 * (row * width + col);
+        average[at] = alpha ? red / alpha : 0;
+        average[at + 1] = alpha ? green / alpha : 0;
+        average[at + 2] = alpha ? blue / alpha : 0;
+        average[at + 3] = alpha / Math.max(1, (x1 - x0) * (y1 - y0));
+      }
+    }
+    averageTile.ctx.putImageData(averageTile.image, 0, 0);
+    for (const tile of phaseTiles) {
+      for (let row = 0; row < height; row++) {
+        const sy = startY + row * factor + tile.dy;
+        for (let col = 0; col < width; col++) {
+          const sx = startX + col * factor + tile.dx;
+          tile.words[row * width + col] = sy >= top && sy < bottom && sx >= left && sx < right ? words[sy * stride + sx] : 0;
+        }
+      }
+      tile.ctx.putImageData(tile.image, 0, 0);
+    }
+  }
+
+  phasePage?.addEventListener("change", () => {
+    phasePage.value = String(clamp(Math.round(phasePage.valueAsNumber) || 1, 1, Number(phasePage.max)));
+    redraw();
+  });
+
   function layoutFieldHeight(bounds) {
     const fullHeight = pageField();
     fieldBoard.classList.toggle("romb-full-height", fullHeight);
@@ -939,6 +1044,13 @@
       return;
     }
     const bounds = projectedBounds();
+    const ratio = devicePixelRatio || 1;
+    const selectedScale = view.scale ?? fittedPixelScale(phaseList ? fieldBoard.getBoundingClientRect() : canvas.getBoundingClientRect(), view, bounds);
+    const compare = !!phaseList && selectedScale < 1;
+    fieldBoard.classList.toggle("romb-comparing", compare);
+    if (compare) {
+      fieldBoard.style.setProperty("--reference-width", "min(48%, " + Math.ceil((bounds.right - bounds.left) / ratio) + "px)");
+    }
     const fullHeight = layoutFieldHeight(bounds);
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -947,8 +1059,7 @@
     renderRhombs = sourceRhombs();
     const viewWidth = bounds.right - bounds.left;
     const viewHeight = bounds.bottom - bounds.top;
-    const ratio = devicePixelRatio || 1;
-    const scale = view.scale ?? fittedPixelScale(rect, view, bounds);
+    const scale = compare ? 1 : selectedScale;
     const cssScale = scale / ratio;
     view.x = bounds.left + boundCenter(view.x - bounds.left, viewWidth, rect.width / cssScale);
     view.y = fullHeight
@@ -995,6 +1106,7 @@
     words.fill(0);
     if (options.square) paintSquareBits(x, y, scale, w, h, bounds, marks);
     else paintFlatBits(x, y, scale, w, h, marks);
+    if (compare) paintSamples(Math.round(1 / selectedScale), x, y, bounds, ratio);
     context.putImageData(pixels, 0, 0);
     context.save();
     if (options.square) {
@@ -1019,7 +1131,7 @@
     context.restore();
     if (!zen) paintCombined();
 
-    updateLabels(scale);
+    updateLabels(scale, compare ? selectedScale : null);
   }
 
   function paintFlatBits(x, y, scale, w, h, marks, output = words, columns = sampleColumn, pairs = samplePair) {
@@ -1136,14 +1248,14 @@
     return ["outward", "inward"].includes(horizontalMode()) && distance === field.H ? " · порог касания" : "";
   }
 
-  function updateLabels(scale) {
+  function updateLabels(scale, sideScale) {
     const {W, H} = field;
     const vertical = isVertical();
     const position = positionText() + (frame && !["outward", "inward"].includes(horizontalMode()) && !vertical ? " из " + formatter.format(W) : "");
     const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
-    const zoom = scaleLabel(scale);
+    const zoom = sideScale ? "центр 1/1 · по бокам " + scaleLabel(sideScale) : scaleLabel(scale);
     const label = "Кадр " + formatter.format(frame) + target + position +
       dimensions + " · " + zoom + contact + (options.square ? " · квадрат" : "") +
       (options.buildAnd ? " · AND" : "");
@@ -1632,7 +1744,7 @@
 
     function zoomBy(factor, px = 0, py = 0, anchorPointer = false) {
       const box = bounds();
-      const fitScale = fittedPixelScale(element.getBoundingClientRect(), camera, box);
+      const fitScale = fittedPixelScale((element === canvas && phaseList ? fieldBoard : element).getBoundingClientRect(), camera, box);
       const current = camera.scale ?? fitScale;
       if (factor === 1) return;
       // Adjacent steps: … 1/3, 1/2, 1/1, 2/1, 3/1 …
