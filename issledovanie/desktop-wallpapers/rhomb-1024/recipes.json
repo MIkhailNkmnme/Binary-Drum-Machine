@@ -1,0 +1,2926 @@
+{
+  "width": 3840,
+  "height": 2160,
+  "rows": 1024,
+  "initialField": "empty",
+  "source": "../../image-journal/rhomb-collection/recipes.json",
+  "palettes": [
+    {
+      "id": "amber",
+      "name": "Янтарь",
+      "background": "#160d18",
+      "zero": "#4d2940",
+      "one": "#ffc06d",
+      "first": "#f48053",
+      "second": "#a28cff",
+      "shared": "#ffe6a3"
+    },
+    {
+      "id": "teal",
+      "name": "Бирюза",
+      "background": "#061c22",
+      "zero": "#16494d",
+      "one": "#a8f8e6",
+      "first": "#61cfed",
+      "second": "#f2a96a",
+      "shared": "#d9ffb0"
+    },
+    {
+      "id": "coral",
+      "name": "Коралл",
+      "background": "#240e1c",
+      "zero": "#653047",
+      "one": "#ffa59d",
+      "first": "#ffc57e",
+      "second": "#e281f0",
+      "shared": "#fff0cc"
+    },
+    {
+      "id": "indigo",
+      "name": "Индиго",
+      "background": "#0c112b",
+      "zero": "#323e78",
+      "one": "#b7c6ff",
+      "first": "#aa8bff",
+      "second": "#55e0db",
+      "shared": "#f4bfff"
+    },
+    {
+      "id": "jade",
+      "name": "Нефрит",
+      "background": "#0b1a12",
+      "zero": "#305440",
+      "one": "#b1ed93",
+      "first": "#e4d76d",
+      "second": "#68dfbb",
+      "shared": "#edffcd"
+    },
+    {
+      "id": "copper",
+      "name": "Медь",
+      "background": "#1c1410",
+      "zero": "#61412f",
+      "one": "#f2ab7c",
+      "first": "#ffd19c",
+      "second": "#62c4bd",
+      "shared": "#f9e8af"
+    },
+    {
+      "id": "violet",
+      "name": "Аметист",
+      "background": "#19102a",
+      "zero": "#4d3370",
+      "one": "#e6b8ff",
+      "first": "#f990bf",
+      "second": "#a7adff",
+      "shared": "#fff2fc"
+    },
+    {
+      "id": "sky",
+      "name": "Лазурь",
+      "background": "#0a192d",
+      "zero": "#244d76",
+      "one": "#97e2ff",
+      "first": "#79aaff",
+      "second": "#a5ed9a",
+      "shared": "#e5ffff"
+    },
+    {
+      "id": "rose",
+      "name": "Фуксия",
+      "background": "#220e26",
+      "zero": "#642d61",
+      "one": "#ffa2e7",
+      "first": "#f974a8",
+      "second": "#94d8ff",
+      "shared": "#ffd9c6"
+    },
+    {
+      "id": "silver",
+      "name": "Серебро",
+      "background": "#121719",
+      "zero": "#424c53",
+      "one": "#e7f2ef",
+      "first": "#a4b8da",
+      "second": "#e5bb8c",
+      "shared": "#fcfff5"
+    }
+  ],
+  "series": [
+    {
+      "widthFactor": 2,
+      "edge": "bounce",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-bounce-xor",
+      "group": "build-modes",
+      "name": "Отскок · 2N−1 · XOR",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 2064,
+          "palette": "amber",
+          "file": "media/field-2-bounce-xor/amber.png",
+          "preview": "media/field-2-bounce-xor/amber.webp",
+          "bytes": 353442,
+          "sha256": "8e3a054ff7bf1e4f0c6be1450f1f910ba1881f1ceb3ba56774c9c0b074d71486"
+        },
+        {
+          "frame": 2128,
+          "palette": "teal",
+          "file": "media/field-2-bounce-xor/teal.png",
+          "preview": "media/field-2-bounce-xor/teal.webp",
+          "bytes": 348774,
+          "sha256": "1bed32e56cabeacc11afa9b3e6186c974345252e00f574c0215fb102cd0c2f67"
+        },
+        {
+          "frame": 2247,
+          "palette": "coral",
+          "file": "media/field-2-bounce-xor/coral.png",
+          "preview": "media/field-2-bounce-xor/coral.webp",
+          "bytes": 346422,
+          "sha256": "b02884d1e5b627d10220e3c63590f7511e7914505851f5b07b5e7af2e4554cb3"
+        },
+        {
+          "frame": 2432,
+          "palette": "indigo",
+          "file": "media/field-2-bounce-xor/indigo.png",
+          "preview": "media/field-2-bounce-xor/indigo.webp",
+          "bytes": 349352,
+          "sha256": "9530a9dd317e6ee590a3128ef1ed36580ac200f0a883cebc63b98fbbbb6f7d07"
+        },
+        {
+          "frame": 2615,
+          "palette": "jade",
+          "file": "media/field-2-bounce-xor/jade.png",
+          "preview": "media/field-2-bounce-xor/jade.webp",
+          "bytes": 351161,
+          "sha256": "de148f1bfdd0a82aeb6b76154487bc9ed231ef65b7e23a792797068f70559c8a"
+        },
+        {
+          "frame": 2839,
+          "palette": "copper",
+          "file": "media/field-2-bounce-xor/copper.png",
+          "preview": "media/field-2-bounce-xor/copper.webp",
+          "bytes": 352244,
+          "sha256": "e1720b1e7667f55edc418638292ba91eaa8d39a4ae74cfc82238e3cc226f5813"
+        },
+        {
+          "frame": 3248,
+          "palette": "violet",
+          "file": "media/field-2-bounce-xor/violet.png",
+          "preview": "media/field-2-bounce-xor/violet.webp",
+          "bytes": 376186,
+          "sha256": "5185c3660cfdd8739b3ac6b447f0c36771c634ca4b06fef98cd4430931366409"
+        },
+        {
+          "frame": 3591,
+          "palette": "sky",
+          "file": "media/field-2-bounce-xor/sky.png",
+          "preview": "media/field-2-bounce-xor/sky.webp",
+          "bytes": 387058,
+          "sha256": "42108b0f31f809cd97285b1052a24ba6ec22eb169e8f684196b1c89ab8896ba4"
+        },
+        {
+          "frame": 3952,
+          "palette": "rose",
+          "file": "media/field-2-bounce-xor/rose.png",
+          "preview": "media/field-2-bounce-xor/rose.webp",
+          "bytes": 389706,
+          "sha256": "5c549ba43c180ef6a6d4841a897e81a559b46f25aa8745d24c021cd256e706d9"
+        },
+        {
+          "frame": 4544,
+          "palette": "silver",
+          "file": "media/field-2-bounce-xor/silver.png",
+          "preview": "media/field-2-bounce-xor/silver.webp",
+          "bytes": 398304,
+          "sha256": "5770279ebaff6e04d19326a628a96644ee3c1e738535b696e889009229aec5c1"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "bounce",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-bounce-and",
+      "group": "build-modes",
+      "name": "Отскок · 2N−1 · AND",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 247,
+          "palette": "amber",
+          "file": "media/field-2-bounce-and/amber.png",
+          "preview": "media/field-2-bounce-and/amber.webp",
+          "bytes": 128025,
+          "sha256": "48e759943e7494d9a65ff6d7235314e8073edac5b9df86bca9eef07f42739667"
+        },
+        {
+          "frame": 455,
+          "palette": "teal",
+          "file": "media/field-2-bounce-and/teal.png",
+          "preview": "media/field-2-bounce-and/teal.webp",
+          "bytes": 116840,
+          "sha256": "9c1d4bee75852eaeaac4185a3cdeb3346ef31be0bee34482ebc607889fc77366"
+        },
+        {
+          "frame": 695,
+          "palette": "coral",
+          "file": "media/field-2-bounce-and/coral.png",
+          "preview": "media/field-2-bounce-and/coral.webp",
+          "bytes": 104664,
+          "sha256": "1c0785bd977afb5b49cb6de979f2298f406b7d278fa001638c835f4002fe2fa5"
+        },
+        {
+          "frame": 1111,
+          "palette": "indigo",
+          "file": "media/field-2-bounce-and/indigo.png",
+          "preview": "media/field-2-bounce-and/indigo.webp",
+          "bytes": 80245,
+          "sha256": "4f1212b2af344b351f9d8baa36e7aff8c6783119c5d064eb7afceea2f31e33ce"
+        },
+        {
+          "frame": 2064,
+          "palette": "jade",
+          "file": "media/field-2-bounce-and/jade.png",
+          "preview": "media/field-2-bounce-and/jade.webp",
+          "bytes": 55730,
+          "sha256": "f0e53ce534e41f79c5f0b6900e2afdc21f0c3957c58c19f1135ba157e8aa18d5"
+        },
+        {
+          "frame": 2224,
+          "palette": "copper",
+          "file": "media/field-2-bounce-and/copper.png",
+          "preview": "media/field-2-bounce-and/copper.webp",
+          "bytes": 57369,
+          "sha256": "9b3ab9c79d4c587e6609f01f4bd945ddcfb7cd756c9014f41e9dce3b0f3c2f94"
+        },
+        {
+          "frame": 2423,
+          "palette": "violet",
+          "file": "media/field-2-bounce-and/violet.png",
+          "preview": "media/field-2-bounce-and/violet.webp",
+          "bytes": 59172,
+          "sha256": "050d9453005e27a48c8e58da9e13f77a6c2f61b8164a4cc746de383357aaed5d"
+        },
+        {
+          "frame": 2656,
+          "palette": "sky",
+          "file": "media/field-2-bounce-and/sky.png",
+          "preview": "media/field-2-bounce-and/sky.webp",
+          "bytes": 61496,
+          "sha256": "925725824dc7d7dc7a8b831de1ee28ea06152fb9655ac31370f55155c554885a"
+        },
+        {
+          "frame": 2887,
+          "palette": "rose",
+          "file": "media/field-2-bounce-and/rose.png",
+          "preview": "media/field-2-bounce-and/rose.webp",
+          "bytes": 63439,
+          "sha256": "9ecb5f60e72d12b403ca4c2bfd0668b09d70ae1ddc686e311537246ecba29496"
+        },
+        {
+          "frame": 3184,
+          "palette": "silver",
+          "file": "media/field-2-bounce-and/silver.png",
+          "preview": "media/field-2-bounce-and/silver.webp",
+          "bytes": 61095,
+          "sha256": "d0891df19caf193950d0eb4f19724310f6292f16f2564d85634b19d6007baa7f"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-wrap-xor",
+      "group": "build-modes",
+      "name": "Перескок · 2N−1 · XOR",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 2071,
+          "palette": "amber",
+          "file": "media/field-2-wrap-xor/amber.png",
+          "preview": "media/field-2-wrap-xor/amber.webp",
+          "bytes": 352832,
+          "sha256": "4b327f3ff3253b2be05a4c49dd7d463e91a0568ebbf95c17247a2dd7639f594f"
+        },
+        {
+          "frame": 2176,
+          "palette": "teal",
+          "file": "media/field-2-wrap-xor/teal.png",
+          "preview": "media/field-2-wrap-xor/teal.webp",
+          "bytes": 347672,
+          "sha256": "ef46233e42471f3bbbad3f77df889c14b70d7c9affec7b5a079a9cbc4f7a8221"
+        },
+        {
+          "frame": 2304,
+          "palette": "coral",
+          "file": "media/field-2-wrap-xor/coral.png",
+          "preview": "media/field-2-wrap-xor/coral.webp",
+          "bytes": 346653,
+          "sha256": "686795d5c832e4cf2c07e60ab6df8af354174554bc4fc8eee6f8aed939eee86a"
+        },
+        {
+          "frame": 2416,
+          "palette": "indigo",
+          "file": "media/field-2-wrap-xor/indigo.png",
+          "preview": "media/field-2-wrap-xor/indigo.webp",
+          "bytes": 345249,
+          "sha256": "bd7b5a3f4ef849d327ad1d995437026331d6e9a311945acaf97d214990a7824f"
+        },
+        {
+          "frame": 2695,
+          "palette": "jade",
+          "file": "media/field-2-wrap-xor/jade.png",
+          "preview": "media/field-2-wrap-xor/jade.webp",
+          "bytes": 356860,
+          "sha256": "fed3f31113de7c459e684a20d44641d4c339a5dfa168bd2941fb56121d0026b8"
+        },
+        {
+          "frame": 2944,
+          "palette": "copper",
+          "file": "media/field-2-wrap-xor/copper.png",
+          "preview": "media/field-2-wrap-xor/copper.webp",
+          "bytes": 349350,
+          "sha256": "b8eae3d195ecb1001f8642e73142b00f9030b649dc5f7046b1cc257a5bca074e"
+        },
+        {
+          "frame": 3296,
+          "palette": "violet",
+          "file": "media/field-2-wrap-xor/violet.png",
+          "preview": "media/field-2-wrap-xor/violet.webp",
+          "bytes": 374436,
+          "sha256": "525028f479e6e2f06727a6199cdc1f9711ff876f8ce2dc32b73e12f6a8b4e984"
+        },
+        {
+          "frame": 3712,
+          "palette": "sky",
+          "file": "media/field-2-wrap-xor/sky.png",
+          "preview": "media/field-2-wrap-xor/sky.webp",
+          "bytes": 386312,
+          "sha256": "347ef53ef41bc6ee69be84abc634cafe8b0bc3e59206bd98bbb7f5bd6fe88d22"
+        },
+        {
+          "frame": 4176,
+          "palette": "rose",
+          "file": "media/field-2-wrap-xor/rose.png",
+          "preview": "media/field-2-wrap-xor/rose.webp",
+          "bytes": 392488,
+          "sha256": "a5660e8678f4de96c7ca384dc5e73e056ce0b776f6403975c9051984fc19b7b8"
+        },
+        {
+          "frame": 4912,
+          "palette": "silver",
+          "file": "media/field-2-wrap-xor/silver.png",
+          "preview": "media/field-2-wrap-xor/silver.webp",
+          "bytes": 403361,
+          "sha256": "7ea660a925e1d2afe6f2ce9d97c1bad74f8a7c37cf89ce041abff0e91186abe0"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-wrap-and",
+      "group": "build-modes",
+      "name": "Перескок · 2N−1 · AND",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 295,
+          "palette": "amber",
+          "file": "media/field-2-wrap-and/amber.png",
+          "preview": "media/field-2-wrap-and/amber.webp",
+          "bytes": 124750,
+          "sha256": "134564b217f81d36c4233e4579b7ad6fe52e12cc2de07ad429ae00d520a4c6b0"
+        },
+        {
+          "frame": 519,
+          "palette": "teal",
+          "file": "media/field-2-wrap-and/teal.png",
+          "preview": "media/field-2-wrap-and/teal.webp",
+          "bytes": 114381,
+          "sha256": "73fa5612daf9d22119ecc7fe7283587e6a368f3315952a2f7c4f2147ae348e9a"
+        },
+        {
+          "frame": 791,
+          "palette": "coral",
+          "file": "media/field-2-wrap-and/coral.png",
+          "preview": "media/field-2-wrap-and/coral.webp",
+          "bytes": 99016,
+          "sha256": "f5adaf78effa860ef21d1940dd8b173d38b2089e399b69d0e78d78f6cdfa8288"
+        },
+        {
+          "frame": 1223,
+          "palette": "indigo",
+          "file": "media/field-2-wrap-and/indigo.png",
+          "preview": "media/field-2-wrap-and/indigo.webp",
+          "bytes": 74100,
+          "sha256": "7d959903f034d7fc24b36360c23f856548410ad0bd49ae971fe899d975274af5"
+        },
+        {
+          "frame": 2064,
+          "palette": "jade",
+          "file": "media/field-2-wrap-and/jade.png",
+          "preview": "media/field-2-wrap-and/jade.webp",
+          "bytes": 55804,
+          "sha256": "386a491e9e51684be2a9661fd0046e9e43631cb037c7becb89bb11c345155938"
+        },
+        {
+          "frame": 2224,
+          "palette": "copper",
+          "file": "media/field-2-wrap-and/copper.png",
+          "preview": "media/field-2-wrap-and/copper.webp",
+          "bytes": 57301,
+          "sha256": "6bfe0810b45224c128d45ca7990c2aedc8543c662624e55b6942ffe8037747a5"
+        },
+        {
+          "frame": 2423,
+          "palette": "violet",
+          "file": "media/field-2-wrap-and/violet.png",
+          "preview": "media/field-2-wrap-and/violet.webp",
+          "bytes": 59430,
+          "sha256": "0795e38dadfb54fb1b6e45c9e7766af54a7e52908ef1914a7145763ca4464173"
+        },
+        {
+          "frame": 2656,
+          "palette": "sky",
+          "file": "media/field-2-wrap-and/sky.png",
+          "preview": "media/field-2-wrap-and/sky.webp",
+          "bytes": 61472,
+          "sha256": "6419fd51374edd5e5d84f579e83a82f5092bcfd6e6a14006914458ebbf5c7016"
+        },
+        {
+          "frame": 2887,
+          "palette": "rose",
+          "file": "media/field-2-wrap-and/rose.png",
+          "preview": "media/field-2-wrap-and/rose.webp",
+          "bytes": 63810,
+          "sha256": "1ea6a507388d4199e49541c6a117234294c1a0ce894bdb748ec9e030598b28ca"
+        },
+        {
+          "frame": 3184,
+          "palette": "silver",
+          "file": "media/field-2-wrap-and/silver.png",
+          "preview": "media/field-2-wrap-and/silver.webp",
+          "bytes": 61307,
+          "sha256": "7f9492b5a2efc93ca39493ff4bd5037b689963bc18cfe7e85ff6321ae4add1cd"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "reverse",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-2-reverse-xor",
+      "group": "build-modes",
+      "name": "Разворот при касании · 2N−1 · XOR",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 1024,
+          "palette": "amber",
+          "file": "media/field-2-reverse-xor/amber.png",
+          "preview": "media/field-2-reverse-xor/amber.webp",
+          "bytes": 303226,
+          "sha256": "9e5c6e9cd7e1da3738dc977df1a799be4f1c138ccb5dd369c810ac6413bbdee8"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/field-2-reverse-xor/teal.png",
+          "preview": "media/field-2-reverse-xor/teal.webp",
+          "bytes": 333578,
+          "sha256": "504ed8d2e6a94bc65b0d40180c4e82a773bc1b1553fa9441ceefab84345b88c8"
+        },
+        {
+          "frame": 1200,
+          "palette": "coral",
+          "file": "media/field-2-reverse-xor/coral.png",
+          "preview": "media/field-2-reverse-xor/coral.webp",
+          "bytes": 334514,
+          "sha256": "82f714bc3d78ae424356b7c00be1d38cad1a71f23bd96a48c4dd2e5ac1e9b1d4"
+        },
+        {
+          "frame": 1335,
+          "palette": "indigo",
+          "file": "media/field-2-reverse-xor/indigo.png",
+          "preview": "media/field-2-reverse-xor/indigo.webp",
+          "bytes": 336361,
+          "sha256": "c425494e08b30e842ca185a101a8831e0b16b7dc0c98a70f1d097a3f4f61b4cb"
+        },
+        {
+          "frame": 1511,
+          "palette": "jade",
+          "file": "media/field-2-reverse-xor/jade.png",
+          "preview": "media/field-2-reverse-xor/jade.webp",
+          "bytes": 340676,
+          "sha256": "3fe9e5b4047ae1c5382d1127aae8607ff36f2eb710b3ed6cba091f6695cefd48"
+        },
+        {
+          "frame": 1712,
+          "palette": "copper",
+          "file": "media/field-2-reverse-xor/copper.png",
+          "preview": "media/field-2-reverse-xor/copper.webp",
+          "bytes": 340210,
+          "sha256": "7c202f66bd00fae821f81bd319e9393f25f82deb742d30ab8663a162dd2763e6"
+        },
+        {
+          "frame": 2016,
+          "palette": "violet",
+          "file": "media/field-2-reverse-xor/violet.png",
+          "preview": "media/field-2-reverse-xor/violet.webp",
+          "bytes": 339503,
+          "sha256": "91b13157aa54c1efdaa4f6cbda6ec99ad95993b5602e95375411563f7ddb9d1c"
+        },
+        {
+          "frame": 2384,
+          "palette": "sky",
+          "file": "media/field-2-reverse-xor/sky.png",
+          "preview": "media/field-2-reverse-xor/sky.webp",
+          "bytes": 354735,
+          "sha256": "a5768a62183d075788d41acf23ffc672802353cb9ad37d304f83ab4f73234f0f"
+        },
+        {
+          "frame": 3008,
+          "palette": "rose",
+          "file": "media/field-2-reverse-xor/rose.png",
+          "preview": "media/field-2-reverse-xor/rose.webp",
+          "bytes": 387429,
+          "sha256": "8474c3978021a394e01aa143d175ab47506fb3e451488d6df56f4addafe7e41a"
+        },
+        {
+          "frame": 3872,
+          "palette": "silver",
+          "file": "media/field-2-reverse-xor/silver.png",
+          "preview": "media/field-2-reverse-xor/silver.webp",
+          "bytes": 374362,
+          "sha256": "288daa5504d3fb84f07c39d0d43b10b7e6366101e65f3ec6ba3bf3ec7dc578d0"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "reverse",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-2-reverse-and",
+      "group": "build-modes",
+      "name": "Разворот при касании · 2N−1 · AND",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 176,
+          "palette": "amber",
+          "file": "media/field-2-reverse-and/amber.png",
+          "preview": "media/field-2-reverse-and/amber.webp",
+          "bytes": 131387,
+          "sha256": "d8610ee62229faa66ef9b0b8e490fc17fca360547dde3bf290500587b9a02b2f"
+        },
+        {
+          "frame": 327,
+          "palette": "teal",
+          "file": "media/field-2-reverse-and/teal.png",
+          "preview": "media/field-2-reverse-and/teal.webp",
+          "bytes": 124145,
+          "sha256": "793c1b1f0248f2da799af2184da5f99a0699c9045bbb9c7d876873f9666d2039"
+        },
+        {
+          "frame": 471,
+          "palette": "coral",
+          "file": "media/field-2-reverse-and/coral.png",
+          "preview": "media/field-2-reverse-and/coral.webp",
+          "bytes": 116721,
+          "sha256": "b652fa4ca8b5e1cff1d97ec0ba6d3111bf06ed433ad0ace615a8a31cfe585673"
+        },
+        {
+          "frame": 631,
+          "palette": "indigo",
+          "file": "media/field-2-reverse-and/indigo.png",
+          "preview": "media/field-2-reverse-and/indigo.webp",
+          "bytes": 108128,
+          "sha256": "82d1279f42b8a84f05025dcb0d77089d76aabfe03967a97249ab71fceb444f5e"
+        },
+        {
+          "frame": 848,
+          "palette": "jade",
+          "file": "media/field-2-reverse-and/jade.png",
+          "preview": "media/field-2-reverse-and/jade.webp",
+          "bytes": 95155,
+          "sha256": "f9010e45ae63f176c67289249f734747329c899a3a40da893e86929ce94bcf15"
+        },
+        {
+          "frame": 1024,
+          "palette": "copper",
+          "file": "media/field-2-reverse-and/copper.png",
+          "preview": "media/field-2-reverse-and/copper.webp",
+          "bytes": 84034,
+          "sha256": "d966ed73f77f232f5edc500fca15e7e42ced35980fdde4d5f8c464c0bdb8ac3c"
+        },
+        {
+          "frame": 1184,
+          "palette": "violet",
+          "file": "media/field-2-reverse-and/violet.png",
+          "preview": "media/field-2-reverse-and/violet.webp",
+          "bytes": 89775,
+          "sha256": "e42f47643ec145b1ef17f3847523e4951f0543f0005cf085bce783cd9ba4acee"
+        },
+        {
+          "frame": 1383,
+          "palette": "sky",
+          "file": "media/field-2-reverse-and/sky.png",
+          "preview": "media/field-2-reverse-and/sky.webp",
+          "bytes": 90800,
+          "sha256": "d495c84c8ac91b431475ce3dc95d82117b539181d08949effd579e833d8537a8"
+        },
+        {
+          "frame": 1623,
+          "palette": "rose",
+          "file": "media/field-2-reverse-and/rose.png",
+          "preview": "media/field-2-reverse-and/rose.webp",
+          "bytes": 90497,
+          "sha256": "013038325497fa7baebbd33a6183ba3aca0e2165fed56c0b1e697d130cf68b47"
+        },
+        {
+          "frame": 1959,
+          "palette": "silver",
+          "file": "media/field-2-reverse-and/silver.png",
+          "preview": "media/field-2-reverse-and/silver.webp",
+          "bytes": 86503,
+          "sha256": "65373b3d2b3c8b05f660f42cf602a10656d3ad53c87a20f433a5d03dbd956e7e"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "bounce",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-bounce-xor",
+      "group": "build-modes",
+      "name": "Отскок · 4N−1 · XOR",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 4112,
+          "palette": "amber",
+          "file": "media/field-4-bounce-xor/amber.png",
+          "preview": "media/field-4-bounce-xor/amber.webp",
+          "bytes": 309265,
+          "sha256": "33cb9c6e371fedb42960701f4a8456455d494812e332f07e2a6b89e346653354"
+        },
+        {
+          "frame": 4176,
+          "palette": "teal",
+          "file": "media/field-4-bounce-xor/teal.png",
+          "preview": "media/field-4-bounce-xor/teal.webp",
+          "bytes": 308124,
+          "sha256": "e3ebc9da65cd0518194775aaf496336a00c776e6b3091eee4a545749b6c7c9b4"
+        },
+        {
+          "frame": 4295,
+          "palette": "coral",
+          "file": "media/field-4-bounce-xor/coral.png",
+          "preview": "media/field-4-bounce-xor/coral.webp",
+          "bytes": 304881,
+          "sha256": "ffe9512efe9e00db6f44298252b3e199d87c31a565ba0fdc2a8cf82209c2e35b"
+        },
+        {
+          "frame": 4480,
+          "palette": "indigo",
+          "file": "media/field-4-bounce-xor/indigo.png",
+          "preview": "media/field-4-bounce-xor/indigo.webp",
+          "bytes": 306013,
+          "sha256": "b326b801446c3d71febe9d796ac41c1d510a056b39a6e477784b403965d54eda"
+        },
+        {
+          "frame": 4663,
+          "palette": "jade",
+          "file": "media/field-4-bounce-xor/jade.png",
+          "preview": "media/field-4-bounce-xor/jade.webp",
+          "bytes": 307282,
+          "sha256": "3ff0126a325a7ce53d195a6ec634e36923c4b29ffa28d3c8b85d7c4b7c9bedc1"
+        },
+        {
+          "frame": 4887,
+          "palette": "copper",
+          "file": "media/field-4-bounce-xor/copper.png",
+          "preview": "media/field-4-bounce-xor/copper.webp",
+          "bytes": 308000,
+          "sha256": "b39f45a8560b1e58aab411f7f92cddd57efeffa9bf60fcb0931b5833043d739f"
+        },
+        {
+          "frame": 5296,
+          "palette": "violet",
+          "file": "media/field-4-bounce-xor/violet.png",
+          "preview": "media/field-4-bounce-xor/violet.webp",
+          "bytes": 316598,
+          "sha256": "62b49fa48ce5a0eab2201f8fe2421109b20a094c899f8e51f6a1abccf9e3cd05"
+        },
+        {
+          "frame": 5639,
+          "palette": "sky",
+          "file": "media/field-4-bounce-xor/sky.png",
+          "preview": "media/field-4-bounce-xor/sky.webp",
+          "bytes": 327045,
+          "sha256": "41c8423eb30c9049df97f70a0e872fa29a4a587e88f2864b398b17fdd6811295"
+        },
+        {
+          "frame": 6000,
+          "palette": "rose",
+          "file": "media/field-4-bounce-xor/rose.png",
+          "preview": "media/field-4-bounce-xor/rose.webp",
+          "bytes": 334877,
+          "sha256": "4259bc64516c87459f03074aac90b3cbb2a4d7a5e8b092b60503ba17dd3917fb"
+        },
+        {
+          "frame": 6592,
+          "palette": "silver",
+          "file": "media/field-4-bounce-xor/silver.png",
+          "preview": "media/field-4-bounce-xor/silver.webp",
+          "bytes": 350176,
+          "sha256": "f1caf063842e8195b4476599587038db58a4fdea38a2c5d6067ba52663c4152e"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "bounce",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-bounce-and",
+      "group": "build-modes",
+      "name": "Отскок · 4N−1 · AND",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 247,
+          "palette": "amber",
+          "file": "media/field-4-bounce-and/amber.png",
+          "preview": "media/field-4-bounce-and/amber.webp",
+          "bytes": 144760,
+          "sha256": "55741ccfad3b93b78f98e526d3483e29b5999d8d86711c967083951136ed1158"
+        },
+        {
+          "frame": 455,
+          "palette": "teal",
+          "file": "media/field-4-bounce-and/teal.png",
+          "preview": "media/field-4-bounce-and/teal.webp",
+          "bytes": 141228,
+          "sha256": "1d09c64feb9e33965a4bd207577d0e78253edde93a058ab1dcbed84c12e0552d"
+        },
+        {
+          "frame": 695,
+          "palette": "coral",
+          "file": "media/field-4-bounce-and/coral.png",
+          "preview": "media/field-4-bounce-and/coral.webp",
+          "bytes": 137039,
+          "sha256": "8e3491144e60f03a004d62b62d61cd74f30eba81f3cc97f06c75d23db3898782"
+        },
+        {
+          "frame": 1111,
+          "palette": "indigo",
+          "file": "media/field-4-bounce-and/indigo.png",
+          "preview": "media/field-4-bounce-and/indigo.webp",
+          "bytes": 131421,
+          "sha256": "c582b5acc8ea7c79d88e096578ec177eba09be1ec187d723af5d3b9458c9ec95"
+        },
+        {
+          "frame": 4112,
+          "palette": "jade",
+          "file": "media/field-4-bounce-and/jade.png",
+          "preview": "media/field-4-bounce-and/jade.webp",
+          "bytes": 104099,
+          "sha256": "48ce26530df2cff7d918bc8c57eec76d1b3fc497aca221e28871ba57924a0535"
+        },
+        {
+          "frame": 4272,
+          "palette": "copper",
+          "file": "media/field-4-bounce-and/copper.png",
+          "preview": "media/field-4-bounce-and/copper.webp",
+          "bytes": 105141,
+          "sha256": "7182cfaab22a59b68c3119b14e8a1577ece0592b30989698fbf43ac0b9892275"
+        },
+        {
+          "frame": 4471,
+          "palette": "violet",
+          "file": "media/field-4-bounce-and/violet.png",
+          "preview": "media/field-4-bounce-and/violet.webp",
+          "bytes": 105467,
+          "sha256": "e6113ac3a2c5fb95ab298d97fc43fb8adef3744da8a397dce63c21ea488b4a94"
+        },
+        {
+          "frame": 4704,
+          "palette": "sky",
+          "file": "media/field-4-bounce-and/sky.png",
+          "preview": "media/field-4-bounce-and/sky.webp",
+          "bytes": 106335,
+          "sha256": "f9fc801a180cd6a74e60d9201595852b3d8323cf10a9c8adce4ca1a1f7d57cbc"
+        },
+        {
+          "frame": 4935,
+          "palette": "rose",
+          "file": "media/field-4-bounce-and/rose.png",
+          "preview": "media/field-4-bounce-and/rose.webp",
+          "bytes": 107020,
+          "sha256": "221b30fe2c1b11b95a9584e01520a8a859f3d2402b8550ee2286b5f5d68ae074"
+        },
+        {
+          "frame": 5232,
+          "palette": "silver",
+          "file": "media/field-4-bounce-and/silver.png",
+          "preview": "media/field-4-bounce-and/silver.webp",
+          "bytes": 106142,
+          "sha256": "c26f0fa30932d4ca845345c175c13e03431441d13f5064eee4557b7228e91ef2"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-wrap-xor",
+      "group": "build-modes",
+      "name": "Перескок · 4N−1 · XOR",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 4119,
+          "palette": "amber",
+          "file": "media/field-4-wrap-xor/amber.png",
+          "preview": "media/field-4-wrap-xor/amber.webp",
+          "bytes": 307272,
+          "sha256": "c87c3a4c09c91f8397c4cc85635714dbbef555f69db1ccf4ccb4aff21d0eb476"
+        },
+        {
+          "frame": 4224,
+          "palette": "teal",
+          "file": "media/field-4-wrap-xor/teal.png",
+          "preview": "media/field-4-wrap-xor/teal.webp",
+          "bytes": 307308,
+          "sha256": "8eed963481f4c40a549c99ebe812bb70bd48ed233cf592ba64484d3eabdadf55"
+        },
+        {
+          "frame": 4352,
+          "palette": "coral",
+          "file": "media/field-4-wrap-xor/coral.png",
+          "preview": "media/field-4-wrap-xor/coral.webp",
+          "bytes": 305932,
+          "sha256": "d7af85ba385197cf27c8e10c7c4505b55af91939cd0975173b5d5a2f5a60a8ac"
+        },
+        {
+          "frame": 4464,
+          "palette": "indigo",
+          "file": "media/field-4-wrap-xor/indigo.png",
+          "preview": "media/field-4-wrap-xor/indigo.webp",
+          "bytes": 305972,
+          "sha256": "34502f46d4a7d7bb39cd41902dc30980060442fe3804a9e09e457034a1d23397"
+        },
+        {
+          "frame": 4743,
+          "palette": "jade",
+          "file": "media/field-4-wrap-xor/jade.png",
+          "preview": "media/field-4-wrap-xor/jade.webp",
+          "bytes": 309187,
+          "sha256": "4ea119748daaa633bc3d386f134b9e2b37d4dbfb51c795afd2b2bb0e0dc3bd6b"
+        },
+        {
+          "frame": 4992,
+          "palette": "copper",
+          "file": "media/field-4-wrap-xor/copper.png",
+          "preview": "media/field-4-wrap-xor/copper.webp",
+          "bytes": 307012,
+          "sha256": "fbaba4d1afc6367dbe74253fba85f41c3e6a571f5c1b8f6f0a33bb98f6a5b452"
+        },
+        {
+          "frame": 5344,
+          "palette": "violet",
+          "file": "media/field-4-wrap-xor/violet.png",
+          "preview": "media/field-4-wrap-xor/violet.webp",
+          "bytes": 317883,
+          "sha256": "9b5f7135b4d484d016d9c0f30bff2f582e108c7bdc4ef4aae215e26a88c8cacd"
+        },
+        {
+          "frame": 5760,
+          "palette": "sky",
+          "file": "media/field-4-wrap-xor/sky.png",
+          "preview": "media/field-4-wrap-xor/sky.webp",
+          "bytes": 329618,
+          "sha256": "9ed775760d7a4a4209d6bab9c0268feef215844e84d159d5ae9eaca0191e5d2d"
+        },
+        {
+          "frame": 6224,
+          "palette": "rose",
+          "file": "media/field-4-wrap-xor/rose.png",
+          "preview": "media/field-4-wrap-xor/rose.webp",
+          "bytes": 342086,
+          "sha256": "84fb81500a1fcf7bc66ba5edb0d0b65cfec25436fb6947248f4c79a57f862a01"
+        },
+        {
+          "frame": 6960,
+          "palette": "silver",
+          "file": "media/field-4-wrap-xor/silver.png",
+          "preview": "media/field-4-wrap-xor/silver.webp",
+          "bytes": 357300,
+          "sha256": "23eda0d5bf1ace406a77f9d302c32822d5d1e1ccd519811b7b2e6dd477a9b2be"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "wrap",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-wrap-and",
+      "group": "build-modes",
+      "name": "Перескок · 4N−1 · AND",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 295,
+          "palette": "amber",
+          "file": "media/field-4-wrap-and/amber.png",
+          "preview": "media/field-4-wrap-and/amber.webp",
+          "bytes": 144178,
+          "sha256": "f1c6d5319fce2472bebe1971eed3bcb4c768ac270db582a5733118390eac2291"
+        },
+        {
+          "frame": 519,
+          "palette": "teal",
+          "file": "media/field-4-wrap-and/teal.png",
+          "preview": "media/field-4-wrap-and/teal.webp",
+          "bytes": 140267,
+          "sha256": "72ed2e3211abf64e1bdab99d5b5a8010815815810fec64551f4f9561babae822"
+        },
+        {
+          "frame": 791,
+          "palette": "coral",
+          "file": "media/field-4-wrap-and/coral.png",
+          "preview": "media/field-4-wrap-and/coral.webp",
+          "bytes": 136057,
+          "sha256": "83679c8ce72ba8f2a60bfd2b2055d42ecd88557c7e67608dcdb653d834eca695"
+        },
+        {
+          "frame": 1223,
+          "palette": "indigo",
+          "file": "media/field-4-wrap-and/indigo.png",
+          "preview": "media/field-4-wrap-and/indigo.webp",
+          "bytes": 130116,
+          "sha256": "c9d71444353d422f6caccfc7baa1d8c373419fe99171027fd8bd0b95687c874a"
+        },
+        {
+          "frame": 4112,
+          "palette": "jade",
+          "file": "media/field-4-wrap-and/jade.png",
+          "preview": "media/field-4-wrap-and/jade.webp",
+          "bytes": 104161,
+          "sha256": "6825ceb1156f00103965d648c989e4af38e2c2525732f483021044c8cdb98862"
+        },
+        {
+          "frame": 4272,
+          "palette": "copper",
+          "file": "media/field-4-wrap-and/copper.png",
+          "preview": "media/field-4-wrap-and/copper.webp",
+          "bytes": 105106,
+          "sha256": "e01a80f1776d7c12040cb0b2677c95b3018c8d8449abf1e10667af08811766a1"
+        },
+        {
+          "frame": 4471,
+          "palette": "violet",
+          "file": "media/field-4-wrap-and/violet.png",
+          "preview": "media/field-4-wrap-and/violet.webp",
+          "bytes": 105441,
+          "sha256": "3b8901611c71e493417bdab54cbb0b71763b2ea41beccc1dee41b5351bf369b3"
+        },
+        {
+          "frame": 4704,
+          "palette": "sky",
+          "file": "media/field-4-wrap-and/sky.png",
+          "preview": "media/field-4-wrap-and/sky.webp",
+          "bytes": 106397,
+          "sha256": "3fae174b09e5d8e476aca329a9eff14f70468d29c980185495eb48a89a7a7153"
+        },
+        {
+          "frame": 4935,
+          "palette": "rose",
+          "file": "media/field-4-wrap-and/rose.png",
+          "preview": "media/field-4-wrap-and/rose.webp",
+          "bytes": 107111,
+          "sha256": "1d1f731f0987414c302ed246c9a1a5ddd35a76b7e1fd56ba1c5ceacbe9e0420a"
+        },
+        {
+          "frame": 5232,
+          "palette": "silver",
+          "file": "media/field-4-wrap-and/silver.png",
+          "preview": "media/field-4-wrap-and/silver.webp",
+          "bytes": 106079,
+          "sha256": "82a61b145c5609359ad37f8540e14811d5bd3523012c4a35352ecb67573dd9cc"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "reverse",
+      "accumulation": "xor",
+      "view": "field",
+      "id": "field-4-reverse-xor",
+      "group": "build-modes",
+      "name": "Разворот при касании · 4N−1 · XOR",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 1024,
+          "palette": "amber",
+          "file": "media/field-4-reverse-xor/amber.png",
+          "preview": "media/field-4-reverse-xor/amber.webp",
+          "bytes": 242373,
+          "sha256": "2d16c45bdb4037f1d32c0046ceea9b5e63dbb04ce0b5e5b46c4706a3c5a9ed1d"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/field-4-reverse-xor/teal.png",
+          "preview": "media/field-4-reverse-xor/teal.webp",
+          "bytes": 257693,
+          "sha256": "56693c4a0cd3cc8f21a4079e40cdb3f86ae60b2379e17eb6f8d22abc6f721a33"
+        },
+        {
+          "frame": 1200,
+          "palette": "coral",
+          "file": "media/field-4-reverse-xor/coral.png",
+          "preview": "media/field-4-reverse-xor/coral.webp",
+          "bytes": 256517,
+          "sha256": "5455b1c953b91483e27f57225b705e59c0259de080e34cb5e944ffeb21886b7e"
+        },
+        {
+          "frame": 1335,
+          "palette": "indigo",
+          "file": "media/field-4-reverse-xor/indigo.png",
+          "preview": "media/field-4-reverse-xor/indigo.webp",
+          "bytes": 257704,
+          "sha256": "fe2574e8b45b250d8d7abf6f822724ab4f73db91e5e8ff17e91662eed6a33a52"
+        },
+        {
+          "frame": 1511,
+          "palette": "jade",
+          "file": "media/field-4-reverse-xor/jade.png",
+          "preview": "media/field-4-reverse-xor/jade.webp",
+          "bytes": 259140,
+          "sha256": "6e995c7d2ceb7725b789c5aced85484a82fb4597f2b0e8a662815685abb01595"
+        },
+        {
+          "frame": 1712,
+          "palette": "copper",
+          "file": "media/field-4-reverse-xor/copper.png",
+          "preview": "media/field-4-reverse-xor/copper.webp",
+          "bytes": 259902,
+          "sha256": "417fd22b5ebcdf2f27e589f269cd60568b62444d802d8de73a297bda4950f446"
+        },
+        {
+          "frame": 2016,
+          "palette": "violet",
+          "file": "media/field-4-reverse-xor/violet.png",
+          "preview": "media/field-4-reverse-xor/violet.webp",
+          "bytes": 260034,
+          "sha256": "fe41750d493371e1a727cc4fb2126b8a1dad66493fb170c9e3e1ce4f4b7b38dd"
+        },
+        {
+          "frame": 2384,
+          "palette": "sky",
+          "file": "media/field-4-reverse-xor/sky.png",
+          "preview": "media/field-4-reverse-xor/sky.webp",
+          "bytes": 266400,
+          "sha256": "a91433ca8d2de65efef709e565a0aa9b2ab51c2a9b76b70243ea92296f5ea4ea"
+        },
+        {
+          "frame": 3008,
+          "palette": "rose",
+          "file": "media/field-4-reverse-xor/rose.png",
+          "preview": "media/field-4-reverse-xor/rose.webp",
+          "bytes": 282416,
+          "sha256": "f8b802c8302308aa331fcff076808470c2137cad59ea54794ac0eeb79d9c72d1"
+        },
+        {
+          "frame": 3872,
+          "palette": "silver",
+          "file": "media/field-4-reverse-xor/silver.png",
+          "preview": "media/field-4-reverse-xor/silver.webp",
+          "bytes": 273656,
+          "sha256": "36dc8d1632bb5ca33eb04c95301c9389054180013596e30bd0b0313cb83d6929"
+        }
+      ]
+    },
+    {
+      "widthFactor": 4,
+      "edge": "reverse",
+      "accumulation": "and",
+      "view": "field",
+      "id": "field-4-reverse-and",
+      "group": "build-modes",
+      "name": "Разворот при касании · 4N−1 · AND",
+      "width": 4095,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 176,
+          "palette": "amber",
+          "file": "media/field-4-reverse-and/amber.png",
+          "preview": "media/field-4-reverse-and/amber.webp",
+          "bytes": 146382,
+          "sha256": "eac757dacc8a55e844ff3f77255ce682b938317361bbe26537bc5da08a38236d"
+        },
+        {
+          "frame": 327,
+          "palette": "teal",
+          "file": "media/field-4-reverse-and/teal.png",
+          "preview": "media/field-4-reverse-and/teal.webp",
+          "bytes": 143669,
+          "sha256": "3a6e45cc91a9a21d3da13880be795d8b780a30eace618634154fa43a2705eaa1"
+        },
+        {
+          "frame": 471,
+          "palette": "coral",
+          "file": "media/field-4-reverse-and/coral.png",
+          "preview": "media/field-4-reverse-and/coral.webp",
+          "bytes": 141348,
+          "sha256": "e76de9340d366552f8c51209cd562bf2a77b65f5d8f812f929f91178be78af24"
+        },
+        {
+          "frame": 631,
+          "palette": "indigo",
+          "file": "media/field-4-reverse-and/indigo.png",
+          "preview": "media/field-4-reverse-and/indigo.webp",
+          "bytes": 137693,
+          "sha256": "7417458d8dbf070ded517cfe850734b1fcb29651ac4d2003216dc1369d445c76"
+        },
+        {
+          "frame": 848,
+          "palette": "jade",
+          "file": "media/field-4-reverse-and/jade.png",
+          "preview": "media/field-4-reverse-and/jade.webp",
+          "bytes": 134776,
+          "sha256": "16eb9e455a28d3655868535ed8a1b33fb2529c314516a146407379ad7512bfa3"
+        },
+        {
+          "frame": 1024,
+          "palette": "copper",
+          "file": "media/field-4-reverse-and/copper.png",
+          "preview": "media/field-4-reverse-and/copper.webp",
+          "bytes": 132957,
+          "sha256": "a46073b57e1ec2da26aa22ee85c4069a6f5ec59d32426b2898798d7843d1320c"
+        },
+        {
+          "frame": 1184,
+          "palette": "violet",
+          "file": "media/field-4-reverse-and/violet.png",
+          "preview": "media/field-4-reverse-and/violet.webp",
+          "bytes": 134060,
+          "sha256": "f2bf5c10e5d110fde75dfe4900deb17d4f2c2098f0d385e1753cca05ea03cfd7"
+        },
+        {
+          "frame": 1383,
+          "palette": "sky",
+          "file": "media/field-4-reverse-and/sky.png",
+          "preview": "media/field-4-reverse-and/sky.webp",
+          "bytes": 136437,
+          "sha256": "899fb16d2e980cc36a13af4ea4fdeb50b530bfc52f709da5af4b7512fff2469c"
+        },
+        {
+          "frame": 1623,
+          "palette": "rose",
+          "file": "media/field-4-reverse-and/rose.png",
+          "preview": "media/field-4-reverse-and/rose.webp",
+          "bytes": 136254,
+          "sha256": "e9c296cdb4d265643bc7fda05808e72320d4ff7075787b0e3ff2b4b4b11446f5"
+        },
+        {
+          "frame": 1959,
+          "palette": "silver",
+          "file": "media/field-4-reverse-and/silver.png",
+          "preview": "media/field-4-reverse-and/silver.webp",
+          "bytes": 133501,
+          "sha256": "53c49655930c73b4ec5535b116cf68e124c179aad14d6decda305cd1edf9f0ad"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-left",
+      "name": "Склейка влево",
+      "joinLeft": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/join-left/amber.png",
+          "preview": "media/join-left/amber.webp",
+          "bytes": 346668,
+          "sha256": "fb54282d27c62c13b8fe7da0d03d7853d69aefc11126df2faa891d3836168e8a"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/join-left/teal.png",
+          "preview": "media/join-left/teal.webp",
+          "bytes": 367180,
+          "sha256": "7ad3a25d22ebee3f85d627fe18e7aafb17cc37189a057e2912015f02539ef357"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/join-left/coral.png",
+          "preview": "media/join-left/coral.webp",
+          "bytes": 394550,
+          "sha256": "12b646c51e5a0a71af949da79c32cf0b518355d9e6ad11953acd890224dc7567"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/join-left/indigo.png",
+          "preview": "media/join-left/indigo.webp",
+          "bytes": 405575,
+          "sha256": "b8dc4f33267e4cc141ae7a006c8ad7eba7bdc09b1614c03cac96ea021afa5e52"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/join-left/jade.png",
+          "preview": "media/join-left/jade.webp",
+          "bytes": 429333,
+          "sha256": "c3ac42847fdb151c2e1c14b291ece1937f7498e17a9a13a89cb941678d43a9e9"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/join-left/copper.png",
+          "preview": "media/join-left/copper.webp",
+          "bytes": 424711,
+          "sha256": "4ef53ff80b1b7c0c0ac0929b1cf5d31279a2c728be3e901bcd2519902ceef586"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/join-left/violet.png",
+          "preview": "media/join-left/violet.webp",
+          "bytes": 424490,
+          "sha256": "e4fb884829630e54e4c6ed6d05672cc967fb115059142067606c5c8e1820f7c9"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/join-left/sky.png",
+          "preview": "media/join-left/sky.webp",
+          "bytes": 446075,
+          "sha256": "6616e4127571e909b953cefc9a71ef1efa5eac54364022b978196cd26ea8f297"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/join-left/rose.png",
+          "preview": "media/join-left/rose.webp",
+          "bytes": 452384,
+          "sha256": "9ff2bfdcf67b913f789ffad817d74f967d0ab0f5ef207e196c5913ec33d57caf"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/join-left/silver.png",
+          "preview": "media/join-left/silver.webp",
+          "bytes": 455476,
+          "sha256": "b99e1149decc5771d1a2cfdedd25ee52b6ddf361afb79a95c298998431f0e1c1"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-right",
+      "name": "Склейка вправо",
+      "joinRight": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/join-right/amber.png",
+          "preview": "media/join-right/amber.webp",
+          "bytes": 323599,
+          "sha256": "022b7e68ecbdee0066514f3f01147a46f9e77312db01660c65324233602d950a"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/join-right/teal.png",
+          "preview": "media/join-right/teal.webp",
+          "bytes": 329606,
+          "sha256": "b85c3aade744559f0c869be8250dc524cd94ba2e6982e2e7964f24d22c33c73e"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/join-right/coral.png",
+          "preview": "media/join-right/coral.webp",
+          "bytes": 351936,
+          "sha256": "60fc52712b302f317265f365f94334e68524c71c76aaa3dc87d0dcfff74ca445"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/join-right/indigo.png",
+          "preview": "media/join-right/indigo.webp",
+          "bytes": 354645,
+          "sha256": "a794221f6d75419b3d74207cb09129c36acf5c405ad3f5c1d6de1dee59a98e00"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/join-right/jade.png",
+          "preview": "media/join-right/jade.webp",
+          "bytes": 376393,
+          "sha256": "992540bbf1b285ffca9f97b8cbf34fe216b1bcb9c9b910fda3cf6a8b7d117fd5"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/join-right/copper.png",
+          "preview": "media/join-right/copper.webp",
+          "bytes": 374078,
+          "sha256": "f47f408508aefb3de8610bd01d2e801b9be3e9789f3940f956049d4be7d0c944"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/join-right/violet.png",
+          "preview": "media/join-right/violet.webp",
+          "bytes": 376581,
+          "sha256": "8bb12bb41a49e5219c3bb84b76bbd0d74a14f5b64f3d8d8a93be9beb8c7daf40"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/join-right/sky.png",
+          "preview": "media/join-right/sky.webp",
+          "bytes": 410404,
+          "sha256": "934bd959b9f32c7284d0a82a8e48df3c191c836de79894390e0e2bd0b94a2b0c"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/join-right/rose.png",
+          "preview": "media/join-right/rose.webp",
+          "bytes": 422784,
+          "sha256": "45e382069f704c05761c9c8f91ea900de2dcdce5487f9f1f45bf80a81b178c18"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/join-right/silver.png",
+          "preview": "media/join-right/silver.webp",
+          "bytes": 427187,
+          "sha256": "1fe672b104522c94b613d210e9ab348bb16be96a57eaae1d647678658cdb9e36"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "join-both",
+      "name": "Склейка в обе стороны",
+      "joinLeft": true,
+      "joinRight": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/join-both/amber.png",
+          "preview": "media/join-both/amber.webp",
+          "bytes": 324370,
+          "sha256": "181dd6ac19ddc2dfa6dad2b9101180a2cf20ba6dfc240e57b83f8c729d78eefd"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/join-both/teal.png",
+          "preview": "media/join-both/teal.webp",
+          "bytes": 333922,
+          "sha256": "ac39172ee1856a3fd144052d455b3cf2685cd7d076daa624989b48924e595636"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/join-both/coral.png",
+          "preview": "media/join-both/coral.webp",
+          "bytes": 356747,
+          "sha256": "9e2475d8d1869f94c11ac16c21295185e8a91aeffb83d94fd0ef3be2a8cd7957"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/join-both/indigo.png",
+          "preview": "media/join-both/indigo.webp",
+          "bytes": 363879,
+          "sha256": "0c44a39672cd9e88cf8249e3ba58ddea4804fe5d1caec1b30c57791d7a1a5896"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/join-both/jade.png",
+          "preview": "media/join-both/jade.webp",
+          "bytes": 386805,
+          "sha256": "9b3572f08451065ebc95899579e51fe631d8fd18f8d8ed13bf85401eddf748e5"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/join-both/copper.png",
+          "preview": "media/join-both/copper.webp",
+          "bytes": 382461,
+          "sha256": "1be4577f35bc4d150cbdd78747a0f2270406b4aa80be856a78719d61e6e9ce7f"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/join-both/violet.png",
+          "preview": "media/join-both/violet.webp",
+          "bytes": 382422,
+          "sha256": "560b87bc0cb720a85451d01e9aaf57d39273ef2d66cf3a275cb51d7ce0e02aab"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/join-both/sky.png",
+          "preview": "media/join-both/sky.webp",
+          "bytes": 404764,
+          "sha256": "ccab97f19b90fb8b6f3c57caf66da873120aa4bbca04a4cbc7f6157bb457811b"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/join-both/rose.png",
+          "preview": "media/join-both/rose.webp",
+          "bytes": 412070,
+          "sha256": "bd156b39b18af47822fc9644a74cb2d70207cd81987b5a5de8b7a88c7b11774f"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/join-both/silver.png",
+          "preview": "media/join-both/silver.webp",
+          "bytes": 415262,
+          "sha256": "e84468337e035f84f64629bf66b0cacf644015a4df27134727c0aedfa5e2b990"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "repeats",
+      "name": "Совпадающие блоки 2 × 2",
+      "repeats": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/repeats/amber.png",
+          "preview": "media/repeats/amber.webp",
+          "bytes": 339424,
+          "sha256": "497857ca80a47fe2840813d47f297952f3fcc723e2e056c456ccc0d63680d663"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/repeats/teal.png",
+          "preview": "media/repeats/teal.webp",
+          "bytes": 338480,
+          "sha256": "78b81c61cc5adcd32aca51ae58ce5e3fa68b06632a2feb6c3f0997bf0c9d0502"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/repeats/coral.png",
+          "preview": "media/repeats/coral.webp",
+          "bytes": 336283,
+          "sha256": "bedbec0aad2bb43fb3faab665981315013788f808daad79d178d0e14c96e2a3b"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/repeats/indigo.png",
+          "preview": "media/repeats/indigo.webp",
+          "bytes": 337824,
+          "sha256": "9beec87e798f75cfdc378d5340b42864b9263b09e8f08e88aaa1cc8f89770130"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/repeats/jade.png",
+          "preview": "media/repeats/jade.webp",
+          "bytes": 358404,
+          "sha256": "b212e2854792bb462d5e6b1b10da0c73c591b757bbe4c713407a1d2946bf3039"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/repeats/copper.png",
+          "preview": "media/repeats/copper.webp",
+          "bytes": 365426,
+          "sha256": "b3c671825a59b0481382ac98173ad9772cf18033edd72f8bfc1c9362a862af21"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/repeats/violet.png",
+          "preview": "media/repeats/violet.webp",
+          "bytes": 368696,
+          "sha256": "c73eb5ca32f00295c04ebdc6a0418837e420287499ce5ee0b9624eb6ea73c5e5"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/repeats/sky.png",
+          "preview": "media/repeats/sky.webp",
+          "bytes": 408935,
+          "sha256": "e06a012792ee4e7b2a3b95bd42d5ad8b0fac10cc1f3f15d70a4120f8bdc7aaa9"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/repeats/rose.png",
+          "preview": "media/repeats/rose.webp",
+          "bytes": 426255,
+          "sha256": "c4df17af5284c8dd2171000945411ef3647c31a57a77f8b9d95c0028cc39bfec"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/repeats/silver.png",
+          "preview": "media/repeats/silver.webp",
+          "bytes": 432738,
+          "sha256": "94960b2fb9f7c0b00fc7b9b32ef3ed3f3d762c29a2c8c3906d4311c5606a4684"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "square",
+      "name": "Квадратная проекция поля",
+      "square": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/square/amber.png",
+          "preview": "media/square/amber.webp",
+          "bytes": 274882,
+          "sha256": "390c0a830d8fdf712081eb3ab432c98343cf6f2d954364878be0fb14478ff554"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/square/teal.png",
+          "preview": "media/square/teal.webp",
+          "bytes": 281544,
+          "sha256": "b0e8d1c6c90f7bd6b2f41651eabd73a4da6bfb35b47c2b673b56a7ae06688e8d"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/square/coral.png",
+          "preview": "media/square/coral.webp",
+          "bytes": 302227,
+          "sha256": "de0622b59cd249da07448adf8b9ab61e8bc37ca1f4ba7db6eac18059968c2d61"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/square/indigo.png",
+          "preview": "media/square/indigo.webp",
+          "bytes": 291457,
+          "sha256": "3726dd6a2d62afaa3deb58d92be5a98f08d37de3e72966b342c4eca38d356c52"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/square/jade.png",
+          "preview": "media/square/jade.webp",
+          "bytes": 285637,
+          "sha256": "14638630664df3213c613700453ac361239e41e632ae16d35838adc5e2de295e"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/square/copper.png",
+          "preview": "media/square/copper.webp",
+          "bytes": 282882,
+          "sha256": "bbf08557e1ba6c655df1a55f46ea1fe1506d8f77b2f358d37788be49ff85e097"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/square/violet.png",
+          "preview": "media/square/violet.webp",
+          "bytes": 281201,
+          "sha256": "afd1f387d5eeb960a85e49e38a20f16c56b4500f34b9e2804f338994fa6bdc59"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/square/sky.png",
+          "preview": "media/square/sky.webp",
+          "bytes": 293514,
+          "sha256": "eb1d5c5c2cd47e948719c350b12b0267c7a3ef88bb560b36bdd8dac393612525"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/square/rose.png",
+          "preview": "media/square/rose.webp",
+          "bytes": 298239,
+          "sha256": "9481376067bc3944c9ac94820151e4e8dec8f26a9884401e404570227b6fa06c"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/square/silver.png",
+          "preview": "media/square/silver.webp",
+          "bytes": 300185,
+          "sha256": "c4181c8363614a3bb48c5f25b658d264f55392e6c2fde20634b392d46ab89c3b"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "pair",
+      "group": "field-views",
+      "id": "pair",
+      "name": "Два ромба",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/pair/amber.png",
+          "preview": "media/pair/amber.webp",
+          "bytes": 289045,
+          "sha256": "fc21b0b691ba0235e7c5c0691a7e5d54c2ae49e707b232b3321a9b94fdd53ec1"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/pair/teal.png",
+          "preview": "media/pair/teal.webp",
+          "bytes": 238150,
+          "sha256": "756d028df28bf8bd3e1bc345be6a9f29a7bb8413386fc677ad67b3cad9fae0e5"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/pair/coral.png",
+          "preview": "media/pair/coral.webp",
+          "bytes": 206312,
+          "sha256": "1debcde534602fc2833d98302465c57b032c3758603851ffe2eab15fd651965f"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/pair/indigo.png",
+          "preview": "media/pair/indigo.webp",
+          "bytes": 183626,
+          "sha256": "e381eb9749e57b03b6320870fd0bc82415bbc0321046ff0c7e26dcafdb73201f"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/pair/jade.png",
+          "preview": "media/pair/jade.webp",
+          "bytes": 197512,
+          "sha256": "36f6592d61036bb57f160efe03e915a46de99cd65f989b1a5940f73e1221446f"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/pair/copper.png",
+          "preview": "media/pair/copper.webp",
+          "bytes": 201538,
+          "sha256": "370586b8b10134bfd6c2d4c18d9d7c03a7eeb5eb624d60b2c54d8c4511e6405e"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/pair/violet.png",
+          "preview": "media/pair/violet.webp",
+          "bytes": 220625,
+          "sha256": "aa13af736edf01e10a07cd952de31524cbb213dd461dbdb5cf0019a1f693aa0f"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/pair/sky.png",
+          "preview": "media/pair/sky.webp",
+          "bytes": 281700,
+          "sha256": "0a27bddd6efd9617ccf24048459601ae1ab94a2c0141fbfd6d2e222a0c3c3ab3"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/pair/rose.png",
+          "preview": "media/pair/rose.webp",
+          "bytes": 346321,
+          "sha256": "f9a168e4887db42e844bde967eeb5a0ff5284985a54a2f1bd0da837287d01266"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/pair/silver.png",
+          "preview": "media/pair/silver.webp",
+          "bytes": 361885,
+          "sha256": "a25bd9bdc6239386452ea34733c3e45ce38c806cf6afbf8a33dfb1fa163d8fa5"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "field",
+      "group": "field-views",
+      "id": "field-axes",
+      "name": "Поле с цветными осями",
+      "axes": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 567,
+          "palette": "amber",
+          "file": "media/field-axes/amber.png",
+          "preview": "media/field-axes/amber.webp",
+          "bytes": 296495,
+          "sha256": "7ca58938250ecf5e2b0a40da2501d8139e31633efb768d9fc447799d198e729c"
+        },
+        {
+          "frame": 935,
+          "palette": "teal",
+          "file": "media/field-axes/teal.png",
+          "preview": "media/field-axes/teal.webp",
+          "bytes": 300839,
+          "sha256": "c15a7b2c7600102ba01e5e7d0536c3cf93c7e19cb99fa8cddbdf72db61dbc362"
+        },
+        {
+          "frame": 1328,
+          "palette": "coral",
+          "file": "media/field-axes/coral.png",
+          "preview": "media/field-axes/coral.webp",
+          "bytes": 316116,
+          "sha256": "78e898bd720e6abcbe2f41584e0ea5bd5fcba5f948c880e0c754b31531fd01a9"
+        },
+        {
+          "frame": 1655,
+          "palette": "indigo",
+          "file": "media/field-axes/indigo.png",
+          "preview": "media/field-axes/indigo.webp",
+          "bytes": 321176,
+          "sha256": "5ccf719cc720f43eb8eb3ef8784066b1b1255a4a34a8faa8074d3722ba7f171f"
+        },
+        {
+          "frame": 2151,
+          "palette": "jade",
+          "file": "media/field-axes/jade.png",
+          "preview": "media/field-axes/jade.webp",
+          "bytes": 347591,
+          "sha256": "0d80251b6b470b30c950bc9aee7cfc0f402dc3b70162596bf47609d95a1764f1"
+        },
+        {
+          "frame": 2407,
+          "palette": "copper",
+          "file": "media/field-axes/copper.png",
+          "preview": "media/field-axes/copper.webp",
+          "bytes": 343412,
+          "sha256": "1917c99c3035cc405c136d36d05a0ecd1e80ad4da7b8cf6fcf9bef35dc7e2369"
+        },
+        {
+          "frame": 2791,
+          "palette": "violet",
+          "file": "media/field-axes/violet.png",
+          "preview": "media/field-axes/violet.webp",
+          "bytes": 343081,
+          "sha256": "10713b7106d10fda7ca8848bba25944f2c760d8a17cd7bc75f4e012327fa5291"
+        },
+        {
+          "frame": 3223,
+          "palette": "sky",
+          "file": "media/field-axes/sky.png",
+          "preview": "media/field-axes/sky.webp",
+          "bytes": 373713,
+          "sha256": "a4aae6c99560a168eb3454d06fdaf41c48f20533700082904ab25a467d672b75"
+        },
+        {
+          "frame": 3831,
+          "palette": "rose",
+          "file": "media/field-axes/rose.png",
+          "preview": "media/field-axes/rose.webp",
+          "bytes": 385995,
+          "sha256": "9a25090d7e915e787b9474c27517a476be779d648724aaefa327daa74c111999"
+        },
+        {
+          "frame": 4263,
+          "palette": "silver",
+          "file": "media/field-axes/silver.png",
+          "preview": "media/field-axes/silver.webp",
+          "bytes": 389676,
+          "sha256": "7feb83fcc38db7e55cea5eb91d341936a5b6e192f864c8a85a1c7d8929a3465d"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-overlay",
+      "group": "coin",
+      "name": "Наложение",
+      "combination": "overlay",
+      "flipSecond": false,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-overlay/amber.png",
+          "preview": "media/coin-overlay/amber.webp",
+          "bytes": 298425,
+          "sha256": "bae5ec5629e5f6232730497b2ec3e498336535d3dd6106eccddc4e7c2d90a229"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-overlay/teal.png",
+          "preview": "media/coin-overlay/teal.webp",
+          "bytes": 266872,
+          "sha256": "947d94619944a591da7e23fe100f406d3e311c7e977699df25c8d77ee6245fca"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-overlay/coral.png",
+          "preview": "media/coin-overlay/coral.webp",
+          "bytes": 230225,
+          "sha256": "117ba85beb9bb4a3fcc66ca77d549ffdc1a73e687416196740a22561d57bf285"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-overlay/indigo.png",
+          "preview": "media/coin-overlay/indigo.webp",
+          "bytes": 202524,
+          "sha256": "5c87d38689bf5cfff7ef5fe9eaacdd1ebd1acccff0da2c7e59d397edeacb7397"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-overlay/jade.png",
+          "preview": "media/coin-overlay/jade.webp",
+          "bytes": 207644,
+          "sha256": "184ef76bbc9993bae232d309f18547d4548070c46c1484304d18d08f647d6941"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-overlay/copper.png",
+          "preview": "media/coin-overlay/copper.webp",
+          "bytes": 218086,
+          "sha256": "4b13b143ce5d174b5a19a0ccf70ba3990ea7641451335f5dac264f15cfb6ff4d"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-overlay/violet.png",
+          "preview": "media/coin-overlay/violet.webp",
+          "bytes": 249408,
+          "sha256": "80cbb68662e95f84036c39e75d29c5e30a1a552796a3e091c83ea5621c784793"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-overlay/sky.png",
+          "preview": "media/coin-overlay/sky.webp",
+          "bytes": 290842,
+          "sha256": "751498467f7ab756ffeecdadbd878ae0e4d8bd9eac3fd670a18734f6e388f890"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-overlay/rose.png",
+          "preview": "media/coin-overlay/rose.webp",
+          "bytes": 340548,
+          "sha256": "daa792e0d41405d4b75b3e013992dc8b45e47342623a7269c6258eebecc8577c"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-overlay/silver.png",
+          "preview": "media/coin-overlay/silver.webp",
+          "bytes": 391785,
+          "sha256": "f5631d5c1355cbb53fcc18987de9cd58b8ae0bd1b4a59fe67a0279f621330959"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-overlay-mirror",
+      "group": "coin",
+      "name": "Наложение · с отражением",
+      "combination": "overlay",
+      "flipSecond": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-overlay-mirror/amber.png",
+          "preview": "media/coin-overlay-mirror/amber.webp",
+          "bytes": 270919,
+          "sha256": "c98b03062250962d6b07177552197343f6b052a1070453aa68bde72be64b36cd"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-overlay-mirror/teal.png",
+          "preview": "media/coin-overlay-mirror/teal.webp",
+          "bytes": 255497,
+          "sha256": "4621ac046c79714d8a7e5c4250e6cd850b9782eed0c1f54cea3934447d991f27"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-overlay-mirror/coral.png",
+          "preview": "media/coin-overlay-mirror/coral.webp",
+          "bytes": 233171,
+          "sha256": "38b507732932bdbad5c21bf72e31e682a83f80b4084d18e6f34e5f7b4e023bc8"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-overlay-mirror/indigo.png",
+          "preview": "media/coin-overlay-mirror/indigo.webp",
+          "bytes": 218520,
+          "sha256": "072abc780c8407ccddf25f79ddcfddad0da96776204dcbcb555ced4c50a53128"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-overlay-mirror/jade.png",
+          "preview": "media/coin-overlay-mirror/jade.webp",
+          "bytes": 215731,
+          "sha256": "dbb09b658135536be53fcf79f521931da4686b62dcb484aeb4700a4efa635102"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-overlay-mirror/copper.png",
+          "preview": "media/coin-overlay-mirror/copper.webp",
+          "bytes": 229828,
+          "sha256": "e1ffd82bd1eed8664f49c6310c2a87922cac51f1431c8e8c467a9a66661c120d"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-overlay-mirror/violet.png",
+          "preview": "media/coin-overlay-mirror/violet.webp",
+          "bytes": 246143,
+          "sha256": "6c52451ccee0e088d67534245fd62f1b54fa0ad4063db75a6983b3e5aab57c4f"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-overlay-mirror/sky.png",
+          "preview": "media/coin-overlay-mirror/sky.webp",
+          "bytes": 281154,
+          "sha256": "9710e691a6c90ac8f86d454097f90524afa1310031ee30f05aa68fe174d102ea"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-overlay-mirror/rose.png",
+          "preview": "media/coin-overlay-mirror/rose.webp",
+          "bytes": 301206,
+          "sha256": "81f807cb786413e6ca8686cac67b23fa379cb725b6b0c1af9ed063e09b10fc33"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-overlay-mirror/silver.png",
+          "preview": "media/coin-overlay-mirror/silver.webp",
+          "bytes": 389130,
+          "sha256": "aa132a12f78b6477fb3230d27f005fa49817a19b80e35fcb8df4502ade7566ba"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-xor",
+      "group": "coin",
+      "name": "XOR",
+      "combination": "xor",
+      "flipSecond": false,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-xor/amber.png",
+          "preview": "media/coin-xor/amber.webp",
+          "bytes": 260891,
+          "sha256": "39c887cff6022d8e35ed93968c02639429212d3617351ad02e6e67b953a4857e"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-xor/teal.png",
+          "preview": "media/coin-xor/teal.webp",
+          "bytes": 231734,
+          "sha256": "b64e47c42368c21d46fcc3a2c8586a91281d8143d382499bbfe9ddc4bb73eab3"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-xor/coral.png",
+          "preview": "media/coin-xor/coral.webp",
+          "bytes": 214703,
+          "sha256": "0bac9733b9c284f547931e3090519076072003bb3838d2eacd939f544cdffdc2"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-xor/indigo.png",
+          "preview": "media/coin-xor/indigo.webp",
+          "bytes": 198958,
+          "sha256": "23cc65e638d2b927e37d586c162776f97335328210f56768a105f5b0db3095fb"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-xor/jade.png",
+          "preview": "media/coin-xor/jade.webp",
+          "bytes": 202785,
+          "sha256": "347c61fcca9a83a4b7a721e486914f7b0be9cc32921dfd7d9a52a5c4067b60ec"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-xor/copper.png",
+          "preview": "media/coin-xor/copper.webp",
+          "bytes": 210356,
+          "sha256": "aa9bb8de5e7e4678bf664708c8bef793104dd07cdf4e500b49a01e6d20834eeb"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-xor/violet.png",
+          "preview": "media/coin-xor/violet.webp",
+          "bytes": 221571,
+          "sha256": "812050577b16a5d09bfa344317ade89cdcb78df36109e3da700148d9c706268d"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-xor/sky.png",
+          "preview": "media/coin-xor/sky.webp",
+          "bytes": 244461,
+          "sha256": "fcc8ea26c8f9c2e07532cec7aaa428b7822307794cbb863d2bfbcf876faedfe4"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-xor/rose.png",
+          "preview": "media/coin-xor/rose.webp",
+          "bytes": 271256,
+          "sha256": "7119db74ba2ef14a73c802be3d5e67eeefc47b45fac8af43fbbc5c434e1b6b59"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-xor/silver.png",
+          "preview": "media/coin-xor/silver.webp",
+          "bytes": 283671,
+          "sha256": "79e4d332e244dc103097f037c2c540889712010612fbf3b684290ade93d8c5bc"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-xor-mirror",
+      "group": "coin",
+      "name": "XOR · с отражением",
+      "combination": "xor",
+      "flipSecond": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-xor-mirror/amber.png",
+          "preview": "media/coin-xor-mirror/amber.webp",
+          "bytes": 205523,
+          "sha256": "12d457621f10e7dde5b9a96dfd4987298f1e5ab1ea2a5062e69c70a23dd5461c"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-xor-mirror/teal.png",
+          "preview": "media/coin-xor-mirror/teal.webp",
+          "bytes": 206868,
+          "sha256": "16b26ddddf157403f26954485e0fc7eb2f3c18064dc0151087e9e4a86d53367e"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-xor-mirror/coral.png",
+          "preview": "media/coin-xor-mirror/coral.webp",
+          "bytes": 209667,
+          "sha256": "b1671fa7512040f8463bc8a7cdc93a0608484c7049a9c64fb49be429b7e8ab19"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-xor-mirror/indigo.png",
+          "preview": "media/coin-xor-mirror/indigo.webp",
+          "bytes": 204485,
+          "sha256": "a9950b3503348bb3de3f3364f05aba4e5114d19bc4c80a3c6e3a42fa230f9710"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-xor-mirror/jade.png",
+          "preview": "media/coin-xor-mirror/jade.webp",
+          "bytes": 189344,
+          "sha256": "77782335a193c9efcd9850a7cd1d0ffb6b8a4e6da138d4fa7d3d284d3475233f"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-xor-mirror/copper.png",
+          "preview": "media/coin-xor-mirror/copper.webp",
+          "bytes": 209847,
+          "sha256": "08f219cf2425e39274731bb4c00057ec9515e92e425b42177b1579488c932d91"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-xor-mirror/violet.png",
+          "preview": "media/coin-xor-mirror/violet.webp",
+          "bytes": 208240,
+          "sha256": "8bc48b01e741284cc1a344a56fae0689785d1857f1b9a32c5f680718345c7679"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-xor-mirror/sky.png",
+          "preview": "media/coin-xor-mirror/sky.webp",
+          "bytes": 225977,
+          "sha256": "168e767be160dd2c38072c470d6b64e41c08f7ba3f613c508c252641a0f8fe08"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-xor-mirror/rose.png",
+          "preview": "media/coin-xor-mirror/rose.webp",
+          "bytes": 206737,
+          "sha256": "44ab0c92c367690751b19c8529bbef7ce56efd4807a34742f8ae8862e1761ef8"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-xor-mirror/silver.png",
+          "preview": "media/coin-xor-mirror/silver.webp",
+          "bytes": 281198,
+          "sha256": "1d05e924107fb3d8ea939043985bb137ce109288e7849ecc909c64cc4032e323"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-and",
+      "group": "coin",
+      "name": "AND",
+      "combination": "and",
+      "flipSecond": false,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-and/amber.png",
+          "preview": "media/coin-and/amber.webp",
+          "bytes": 219231,
+          "sha256": "80be16d9711daa87147a88049efdeae2ad9332d479279b39f0480b7c5346b225"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-and/teal.png",
+          "preview": "media/coin-and/teal.webp",
+          "bytes": 191246,
+          "sha256": "69b5a160f3abb0e074dd24fa01036308748bb9744beaf018fc6946db0eb8b2d2"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-and/coral.png",
+          "preview": "media/coin-and/coral.webp",
+          "bytes": 144967,
+          "sha256": "cee26b71c5d43127c6176fc6c856eb514915a81e1b68a692219b5d8131a03035"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-and/indigo.png",
+          "preview": "media/coin-and/indigo.webp",
+          "bytes": 133001,
+          "sha256": "76536993c1f3a5fe128be6508025e0e8d01ece9f55ba3ff47e716ae42cb6c2e4"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-and/jade.png",
+          "preview": "media/coin-and/jade.webp",
+          "bytes": 129409,
+          "sha256": "2cb9dc204f1e19a8f212e28bb1caa38f6dd6f5f108d582d6613857b46e426a4d"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-and/copper.png",
+          "preview": "media/coin-and/copper.webp",
+          "bytes": 138931,
+          "sha256": "2a6db23c0cc35706fd9856dd7488c8ba72084db20b8bdcd383a0536af458f534"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-and/violet.png",
+          "preview": "media/coin-and/violet.webp",
+          "bytes": 160364,
+          "sha256": "715e7f7ac1abe5c5b139de61a1a6f667bff85e5c1f01caf3f51a926e187fe0b7"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-and/sky.png",
+          "preview": "media/coin-and/sky.webp",
+          "bytes": 214793,
+          "sha256": "ed5455c1a37b5eebd5b4e479e383403d12c47cc23f19832c2ba00aa3986e1ad2"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-and/rose.png",
+          "preview": "media/coin-and/rose.webp",
+          "bytes": 252781,
+          "sha256": "e85f88da88279b304765b798bbef6241baad642763a7f924fd929f5372e23db2"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-and/silver.png",
+          "preview": "media/coin-and/silver.webp",
+          "bytes": 264905,
+          "sha256": "e1dcdbf014e26d27ad51140b6dc0ccc96a58e9b2ac94d11f14c92aae67ed1ef3"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-and-mirror",
+      "group": "coin",
+      "name": "AND · с отражением",
+      "combination": "and",
+      "flipSecond": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-and-mirror/amber.png",
+          "preview": "media/coin-and-mirror/amber.webp",
+          "bytes": 195586,
+          "sha256": "4f4fd923a7871f51749d7ea7f60af1cb04ef13a6799c7a8e30eb5c50c188ace6"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-and-mirror/teal.png",
+          "preview": "media/coin-and-mirror/teal.webp",
+          "bytes": 180262,
+          "sha256": "7311350e9f5677dd371a632a018492d3d73c1d5834fdeb3a1dc14e33e04830cc"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-and-mirror/coral.png",
+          "preview": "media/coin-and-mirror/coral.webp",
+          "bytes": 157674,
+          "sha256": "9b46471149d0a74b200cc048d6454610d4087b1f016c03e304844b1c8d8f7c29"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-and-mirror/indigo.png",
+          "preview": "media/coin-and-mirror/indigo.webp",
+          "bytes": 156607,
+          "sha256": "6a6f4dae4db8ef3e459841db47238eda08e572b12900618c8912b736d06c5e97"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-and-mirror/jade.png",
+          "preview": "media/coin-and-mirror/jade.webp",
+          "bytes": 170266,
+          "sha256": "431872f6f246e6598998672fc8d30363d9e84c759365d8fa71bbcec5cb94e9fb"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-and-mirror/copper.png",
+          "preview": "media/coin-and-mirror/copper.webp",
+          "bytes": 164286,
+          "sha256": "e79767bb6ed841debb4f522089df3e3b7b8b5185f5d90eff8a85f414a4b98aa9"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-and-mirror/violet.png",
+          "preview": "media/coin-and-mirror/violet.webp",
+          "bytes": 169261,
+          "sha256": "58829398013e764728655bb621c993d7f969c3f95002854360fef2489717ea8d"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-and-mirror/sky.png",
+          "preview": "media/coin-and-mirror/sky.webp",
+          "bytes": 194551,
+          "sha256": "7470c54b684925e5e34c6c7919dbeed4913c243832d4873f16ef1ab257492c09"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-and-mirror/rose.png",
+          "preview": "media/coin-and-mirror/rose.webp",
+          "bytes": 231230,
+          "sha256": "cbaf3fbf10256bec97079a3302c591ad73f5c4c6cbce82fdd9100c36eeefd0bc"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-and-mirror/silver.png",
+          "preview": "media/coin-and-mirror/silver.webp",
+          "bytes": 260727,
+          "sha256": "dc771760941611978e69437ae6c866d22a305c45866d8d114d3f20bd71cdb0ad"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "coin",
+      "id": "coin-square",
+      "group": "coin",
+      "name": "Наложение · квадратная проекция",
+      "combination": "overlay",
+      "square": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 736,
+          "palette": "amber",
+          "file": "media/coin-square/amber.png",
+          "preview": "media/coin-square/amber.webp",
+          "bytes": 290872,
+          "sha256": "4c83a853c750e6a9519e7e832b5c82f19a3d13df3f9e804fd18893464dff9ca8"
+        },
+        {
+          "frame": 1072,
+          "palette": "teal",
+          "file": "media/coin-square/teal.png",
+          "preview": "media/coin-square/teal.webp",
+          "bytes": 260611,
+          "sha256": "f92bd09a3e3beeb111900d7e7e29de42013102010d43a62f1537cf63ac00afe5"
+        },
+        {
+          "frame": 1463,
+          "palette": "coral",
+          "file": "media/coin-square/coral.png",
+          "preview": "media/coin-square/coral.webp",
+          "bytes": 228735,
+          "sha256": "07d087845575ab733a188bf78523913632ba9d13ef438fbeb115e259d6cd369b"
+        },
+        {
+          "frame": 1783,
+          "palette": "indigo",
+          "file": "media/coin-square/indigo.png",
+          "preview": "media/coin-square/indigo.webp",
+          "bytes": 193785,
+          "sha256": "c00794de99782508b5adb5e624d9dd61b2d5f26ba4de769ba35e022375f9ea8d"
+        },
+        {
+          "frame": 2071,
+          "palette": "jade",
+          "file": "media/coin-square/jade.png",
+          "preview": "media/coin-square/jade.webp",
+          "bytes": 212713,
+          "sha256": "cdf65d654031b751f10143bf2a088e1b592c583cddcc2c94771e9fed99ed2f5f"
+        },
+        {
+          "frame": 2304,
+          "palette": "copper",
+          "file": "media/coin-square/copper.png",
+          "preview": "media/coin-square/copper.webp",
+          "bytes": 230430,
+          "sha256": "5635a00bbfe78f1df3b9bb59bdb1f160c4fe9d41bb5634b6c71999db606c06ff"
+        },
+        {
+          "frame": 2647,
+          "palette": "violet",
+          "file": "media/coin-square/violet.png",
+          "preview": "media/coin-square/violet.webp",
+          "bytes": 260048,
+          "sha256": "20e52e883622c094bd6e835cddb39cc0789567062b726e6c453c3a20c186b431"
+        },
+        {
+          "frame": 3063,
+          "palette": "sky",
+          "file": "media/coin-square/sky.png",
+          "preview": "media/coin-square/sky.webp",
+          "bytes": 280330,
+          "sha256": "2765212fe4e9777faddb2325e769e3a9f9b1a6fa35c5341b5e6036bdaa4e93f4"
+        },
+        {
+          "frame": 3584,
+          "palette": "rose",
+          "file": "media/coin-square/rose.png",
+          "preview": "media/coin-square/rose.webp",
+          "bytes": 329093,
+          "sha256": "5a4524f9ed8ee9459463bd081ecd211a9eff1cbe055ceb54ef94e6bdb5163aec"
+        },
+        {
+          "frame": 4055,
+          "palette": "silver",
+          "file": "media/coin-square/silver.png",
+          "preview": "media/coin-square/silver.webp",
+          "bytes": 371194,
+          "sha256": "dce0e3ea57a198da0c6729e5a7938f376b6f1b260c9c94cdae2a1571aa4f04a2"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-four",
+      "name": "Четыре треугольника",
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "media/hub-four/amber.png",
+          "preview": "media/hub-four/amber.webp",
+          "bytes": 308340,
+          "sha256": "e3c1678d9ca107464829e55902735ed1b4bac86ae155dda52e53bf682b3ad2ba"
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "media/hub-four/teal.png",
+          "preview": "media/hub-four/teal.webp",
+          "bytes": 322501,
+          "sha256": "2791718e3b87c58fab0f5fd56674f1d3bb4bb62fc76380c11277fcb17c9a9c7f"
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "media/hub-four/coral.png",
+          "preview": "media/hub-four/coral.webp",
+          "bytes": 297672,
+          "sha256": "6ac624a979937ac355fbdd8f675981f7a80764617e38c6f939167fa1494e37e2"
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "media/hub-four/indigo.png",
+          "preview": "media/hub-four/indigo.webp",
+          "bytes": 259865,
+          "sha256": "06c955733631ca4919c2b8d53a1f3cc30e54c9875f57623f1e90aff4b1bf5c7b"
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "media/hub-four/jade.png",
+          "preview": "media/hub-four/jade.webp",
+          "bytes": 229999,
+          "sha256": "73a278e246bcce67e92a4dfedb30a18237350f8c76ee320e644bea2f73c3ad10"
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "media/hub-four/copper.png",
+          "preview": "media/hub-four/copper.webp",
+          "bytes": 210417,
+          "sha256": "e6cd5221ada7e48169e3ee69a34d591762914ef2fd4ba25d169b463671417992"
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "media/hub-four/violet.png",
+          "preview": "media/hub-four/violet.webp",
+          "bytes": 192232,
+          "sha256": "199e0c00f341ccb5242ff7cd97d6afd365dd3e2c1001fe0768ab32e6f90d6ac0"
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "media/hub-four/sky.png",
+          "preview": "media/hub-four/sky.webp",
+          "bytes": 176988,
+          "sha256": "cc7a1fe09e8b96dd90b0e29523b684d9af3478c07006f712079d3f06c5d162b0"
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "media/hub-four/rose.png",
+          "preview": "media/hub-four/rose.webp",
+          "bytes": 193215,
+          "sha256": "746ddf4fc357d82854ac9136e4036e1aa733e8941d5f627b6ec328db18fb5b69"
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "media/hub-four/silver.png",
+          "preview": "media/hub-four/silver.webp",
+          "bytes": 213772,
+          "sha256": "1595b47d160f738217c6fdba96b3919d39f0edcc87e129b141cd4dc13b72afe5"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-four-axes",
+      "name": "Четыре треугольника · цветные оси",
+      "axes": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "media/hub-four-axes/amber.png",
+          "preview": "media/hub-four-axes/amber.webp",
+          "bytes": 315105,
+          "sha256": "463f4eae7a12fcf9b9057f81b49fc20687c8e8862128fe0fbf2394d6c9e2b17e"
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "media/hub-four-axes/teal.png",
+          "preview": "media/hub-four-axes/teal.webp",
+          "bytes": 327601,
+          "sha256": "b335a04e692bb7d6b2aad9b0d464656bfc7eded58de814330b8d740c2f3d811f"
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "media/hub-four-axes/coral.png",
+          "preview": "media/hub-four-axes/coral.webp",
+          "bytes": 303604,
+          "sha256": "e1523514a55ddd01b0061dc095b69f0318d8e66d76c932b2a56248fddcea740b"
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "media/hub-four-axes/indigo.png",
+          "preview": "media/hub-four-axes/indigo.webp",
+          "bytes": 265778,
+          "sha256": "24772a8089a481fd651790b16e4c9a1ef11af62316a13263b8e3276b74cc5cac"
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "media/hub-four-axes/jade.png",
+          "preview": "media/hub-four-axes/jade.webp",
+          "bytes": 236455,
+          "sha256": "a6b386f8457bdd9baf67dc26b6808940bc631cd28c0b9f6479831cc539240e67"
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "media/hub-four-axes/copper.png",
+          "preview": "media/hub-four-axes/copper.webp",
+          "bytes": 217664,
+          "sha256": "976426d5f35b25be4b5908e20651b64060581b641f08c4d62c33fca0ad9454f6"
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "media/hub-four-axes/violet.png",
+          "preview": "media/hub-four-axes/violet.webp",
+          "bytes": 198905,
+          "sha256": "949ee754f31ac6ff3962b998e5fd36fafc725b7e00d7313d59819f9df0738d42"
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "media/hub-four-axes/sky.png",
+          "preview": "media/hub-four-axes/sky.webp",
+          "bytes": 182016,
+          "sha256": "ff7d92a540a2a94a56a01ce0c47f2bfb6a05d96183718501a4ce0b465b988e0f"
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "media/hub-four-axes/rose.png",
+          "preview": "media/hub-four-axes/rose.webp",
+          "bytes": 198582,
+          "sha256": "9bccac5a86681f6d706106a9d52763aeb73dd293b6e11bf73c87913513741ae8"
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "media/hub-four-axes/silver.png",
+          "preview": "media/hub-four-axes/silver.webp",
+          "bytes": 219816,
+          "sha256": "3f54ddf49963a18f56d962d76e5304c866bf0ef1a05e4184c561d849c076b331"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-vertical",
+      "name": "Вверх-вниз",
+      "vertical": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "media/hub-vertical/amber.png",
+          "preview": "media/hub-vertical/amber.webp",
+          "bytes": 307522,
+          "sha256": "bf76c4afc96f71ad5e9a49517ac78211984a90e5ed1c915d9fb08bcbcc37e1c9"
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "media/hub-vertical/teal.png",
+          "preview": "media/hub-vertical/teal.webp",
+          "bytes": 289789,
+          "sha256": "5f753f73741b9d131d35c3b1634cdd67d462795a6e39425f96c632fff3fc282a"
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "media/hub-vertical/coral.png",
+          "preview": "media/hub-vertical/coral.webp",
+          "bytes": 273995,
+          "sha256": "4e15f1d774b9212e40a0fa4df2e53e25b6705f25fd6af8ac50999fa1a63df234"
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "media/hub-vertical/indigo.png",
+          "preview": "media/hub-vertical/indigo.webp",
+          "bytes": 255770,
+          "sha256": "2a028b508a279f3fb8d1cf07c9b7f38fbc6136880f62a20432935886df0b18e7"
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "media/hub-vertical/jade.png",
+          "preview": "media/hub-vertical/jade.webp",
+          "bytes": 238970,
+          "sha256": "0d6304854c21f738e54804f4997290307e0f852255f982f376fec5d5b53c12c0"
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "media/hub-vertical/copper.png",
+          "preview": "media/hub-vertical/copper.webp",
+          "bytes": 227936,
+          "sha256": "b1b0ae85fac78a90c8d9a8d60e21fd33905b21acae4a63ffe25355c0f2239841"
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "media/hub-vertical/violet.png",
+          "preview": "media/hub-vertical/violet.webp",
+          "bytes": 212724,
+          "sha256": "71f1289d7aa4ed2af44925734c2958793f360b97324332510798251fbabf0b90"
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "media/hub-vertical/sky.png",
+          "preview": "media/hub-vertical/sky.webp",
+          "bytes": 196039,
+          "sha256": "fb391005ae58e1696de801784cc5fc7271535537ebfa1a89e5b2d8fad7aa0552"
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "media/hub-vertical/rose.png",
+          "preview": "media/hub-vertical/rose.webp",
+          "bytes": 207469,
+          "sha256": "4bae9ddfd284202b09a6b67f860a5455d164191921a71c75ac82b16f4b9860a1"
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "media/hub-vertical/silver.png",
+          "preview": "media/hub-vertical/silver.webp",
+          "bytes": 228694,
+          "sha256": "327d72d40f3f6a4565e87294f44e9f28349eff706867e4644c7ef65f91d4fb39"
+        }
+      ]
+    },
+    {
+      "widthFactor": 2,
+      "edge": "wrap",
+      "accumulation": "xor",
+      "view": "hub",
+      "group": "hub",
+      "id": "hub-vertical-axes",
+      "name": "Вверх-вниз · цветные оси",
+      "vertical": true,
+      "axes": true,
+      "width": 2047,
+      "rows": 1024,
+      "images": [
+        {
+          "frame": 149,
+          "palette": "amber",
+          "file": "media/hub-vertical-axes/amber.png",
+          "preview": "media/hub-vertical-axes/amber.webp",
+          "bytes": 307858,
+          "sha256": "7b91b0a56293272328f1f8480586780b1e493d109334674520f59f1897e2c89c"
+        },
+        {
+          "frame": 333,
+          "palette": "teal",
+          "file": "media/hub-vertical-axes/teal.png",
+          "preview": "media/hub-vertical-axes/teal.webp",
+          "bytes": 290061,
+          "sha256": "ec932b45e995035d68cf4516f91933da9ae4a80ae0b834f14bdd9178f9417c2a"
+        },
+        {
+          "frame": 517,
+          "palette": "coral",
+          "file": "media/hub-vertical-axes/coral.png",
+          "preview": "media/hub-vertical-axes/coral.webp",
+          "bytes": 274120,
+          "sha256": "f19f5b648a0992dd4d6e41bec17b12c92f4485c3ed08cafa59ebd875fcf6727d"
+        },
+        {
+          "frame": 761,
+          "palette": "indigo",
+          "file": "media/hub-vertical-axes/indigo.png",
+          "preview": "media/hub-vertical-axes/indigo.webp",
+          "bytes": 255852,
+          "sha256": "550c85b9d31e7b7130130d692b87b0dbfb953e08da60067ee46ebc07a9ef3a11"
+        },
+        {
+          "frame": 1009,
+          "palette": "jade",
+          "file": "media/hub-vertical-axes/jade.png",
+          "preview": "media/hub-vertical-axes/jade.webp",
+          "bytes": 239040,
+          "sha256": "82d624b97788a218158e668caafa2af35b9fd013b761d17204a141d8a097fd88"
+        },
+        {
+          "frame": 1259,
+          "palette": "copper",
+          "file": "media/hub-vertical-axes/copper.png",
+          "preview": "media/hub-vertical-axes/copper.webp",
+          "bytes": 228002,
+          "sha256": "1de104104e90231a8b4d504af9ae920d46ffe41702eae9abc95e1590d0e10221"
+        },
+        {
+          "frame": 1511,
+          "palette": "violet",
+          "file": "media/hub-vertical-axes/violet.png",
+          "preview": "media/hub-vertical-axes/violet.webp",
+          "bytes": 212793,
+          "sha256": "c6fc58dcd98d8ab4ccc08d3fe4581e2bef7fa16fcaf12c0ce6cd83b0b6fe6fd6"
+        },
+        {
+          "frame": 1823,
+          "palette": "sky",
+          "file": "media/hub-vertical-axes/sky.png",
+          "preview": "media/hub-vertical-axes/sky.webp",
+          "bytes": 196104,
+          "sha256": "ea7a60d6a5acfc6c9b0b9efb3b9371d0b7676c325c9352fbc684b9b4af69b237"
+        },
+        {
+          "frame": 2167,
+          "palette": "rose",
+          "file": "media/hub-vertical-axes/rose.png",
+          "preview": "media/hub-vertical-axes/rose.webp",
+          "bytes": 207547,
+          "sha256": "d945364258f738341f54a325b012c5913ba1bc2097b72e4112486bca616d5d93"
+        },
+        {
+          "frame": 2567,
+          "palette": "silver",
+          "file": "media/hub-vertical-axes/silver.png",
+          "preview": "media/hub-vertical-axes/silver.webp",
+          "bytes": 228786,
+          "sha256": "960313d2a0cf076732adae9ad4fe7ea6784a62281c88a28e6a5dace21a8cd12f"
+        }
+      ]
+    }
+  ]
+}
