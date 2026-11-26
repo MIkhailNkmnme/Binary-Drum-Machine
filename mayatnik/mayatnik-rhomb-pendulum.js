@@ -25,6 +25,8 @@
   const stepButton = byId("romb-step");
   const backButton = byId("romb-step-back");
   const frameSlider = byId("romb-frame-slider");
+  const frameControl = byId("romb-frame-control");
+  const frameControls = [frameControl];
   const cycleNote = byId("romb-cycle-note");
   const combineMode = byId("romb-combine");
   const flipSecond = byId("romb-flip");
@@ -45,10 +47,11 @@
     stopAtContact: byId("romb-stop-contact"),
     reverseAtContact: byId("romb-reverse-contact"),
     markRepeats: byId("romb-mark-repeats"),
-    patternColors: byId("romb-pattern-colors")
+    patternColors: byId("romb-pattern-colors"),
+    counterStep: byId("romb-counter-step")
   };
   const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
-    markRepeats: false, patternColors: false, square: false, coinSquare: false, buildAnd: false};
+    markRepeats: false, patternColors: false, counterStep: false, square: false, coinSquare: false, buildAnd: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
@@ -65,7 +68,7 @@
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
-  let cycle, normalSliderMax;
+  let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
   let pixels, words, sampleColumn, samplePair, sampleStart, sampleEnd, colorWords, colorKey;
   let patternPainter, patternMarks;
   let combinedPixels, combinedWords;
@@ -138,6 +141,7 @@
 
   function reset() {
     stop();
+    patternMarks = null;
     const height = Number(size.value);
     const columns = Number(width.value) * height - 1;
     if (field?.W === columns && field.H === height) field.val.fill(-1);
@@ -165,7 +169,6 @@
   }
 
   function initializeMotion() {
-    patternMarks = null;
     const anchor = (field.W - 1) / 2;
     column = anchor;
     branches = [{column: anchor, direction: 1}, {column: anchor, direction: -1}];
@@ -195,23 +198,31 @@
   }
 
   function configureCycle() {
-    if (options.buildAnd) {
-      cycle = null;
-      return;
-    }
+    reportedCycle = null;
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (reverse || [...reversalChanges].some(([at, value]) => at > 1 && value) ||
-      [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
+    if (options.counterStep || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
+        [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
+      cycle = null;
+      return;
+    }
+    const {W, H} = field;
+    // Same fixed routes and starts as the published 160-variant calculation.
+    const routePeriod = reverse ? 4 * (H - 1) : wrap ? 2 * W : 4 * (W - 1);
+    const start = options.buildAnd
+      ? reverse ? 2 * (H - 1) : wrap ? 2 * W : 2 * (W - 1)
+      : reverse ? H : W;
+    const knownPeriod = options.buildAnd ? routePeriod : routePeriod * H / 2;
+    reportedCycle = {start, returned: start + knownPeriod};
+    if (options.buildAnd || reverse) {
       cycle = null;
       return;
     }
     if (cycle?.wrap === wrap) return;
-    const routePeriod = wrap ? 2 * field.W : 4 * (field.W - 1);
-    // Both widths and edge modes were measured for the offered sizes 8–128.
-    const period = field.H <= 128 ? routePeriod * field.H / 2 : 0;
-    cycle = {wrap, start: field.W, routePeriod, period, lap: 0, reference: null};
+    // Keep live wrap/rewind behaviour separate from the known reference.
+    const period = H <= 128 ? knownPeriod : 0;
+    cycle = {wrap, start, routePeriod, period, lap: 0, reference: null};
   }
 
   function observeCycle() {
@@ -263,33 +274,43 @@
     return Math.abs(branches[0].column - branches[1].column);
   }
 
-  function advance(watchContact = false, and = false) {
+  function moveBranch(branch, W) {
+    if (!frame) return false;
+    const previous = branch.column;
+    const next = previous + branch.direction;
+    branch.column = MayatnikEdgeFlow.mapColumn(next, W, !routeWrap);
+    if (!routeWrap && branch.column !== next) branch.direction *= -1;
+    return Math.abs(branch.column - previous) === 1;
+  }
+
+  function advance(watchContact = false, and = false, counterStep = false) {
     const {W, H, val} = field;
     const before = watchContact ? separation() : 0;
     routeWrap = currentWrap();
-    const branch = branches[frame % 2];
-    const previous = branch.column;
-    if (frame) {
-      const next = previous + branch.direction;
-      branch.column = MayatnikEdgeFlow.mapColumn(next, W, !routeWrap);
-      if (!routeWrap && branch.column !== next) branch.direction *= -1;
-    }
-    column = branch.column;
+    const upper = counterStep ? branches[1] : branches[frame % 2];
+    const lower = counterStep ? branches[0] : upper;
+    const upperMoved = moveBranch(upper, W);
+    const lowerMoved = lower === upper ? upperMoved : moveBranch(lower, W);
+    column = upper.column;
     MAYATNIK.cone(field, column, depth, null, undefined, null, undefined, and);
 
-    // Duplicate the widest row in the same lattice, clipped at the field edges.
-    let left = column - depth + 1;
-    let right = Math.min(column + depth - 1, W - 1);
+    // Move the widest row from the upper lattice to the lower one's axis.
+    const lowerColumn = lower.column;
+    const shift = column - lowerColumn;
+    let left = lowerColumn - depth + 1;
+    let right = Math.min(lowerColumn + depth - 1, W - 1);
     for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
       const i = depth * W + c;
-      val[i] = MAYATNIK.accumulateBit(val[i], Number(val[i - W] === 1), and);
+      const source = c + shift;
+      const bit = Number(source >= 0 && source < W && val[i - W + shift] === 1);
+      val[i] = MAYATNIK.accumulateBit(val[i], bit, and);
     }
 
     // XOR prefixes reverse the growing rule. Missing cells to the left
     // contribute zero, including the left parent of column zero.
     for (let r = depth + 1; r < H; r++) {
       left++;
-      right = Math.min(column + H - 1 - r, W - 1);
+      right = Math.min(lowerColumn + H - 1 - r, W - 1);
       let prefix = 0;
       const row = r * W;
       for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
@@ -299,14 +320,14 @@
       }
     }
     frame++;
-    // The contours touch when their centers are a diamond's width apart.
-    return watchContact && before === H - 2 && separation() === H - 1 && Math.abs(column - previous) === 1;
+    // Two moving halves can cross the contact threshold between frames.
+    return watchContact && upperMoved && lowerMoved && before < H - 1 && separation() >= H - 1;
   }
 
   function advanceFrame(stopAtContact) {
     patternMarks = null;
     routeReverse = currentReverse();
-    const contact = advance(stopAtContact || routeReverse, options.buildAnd);
+    const contact = advance(stopAtContact || routeReverse, options.buildAnd, options.counterStep);
     if (contact && routeReverse) {
       for (const branch of branches) branch.direction *= -1;
     }
@@ -364,6 +385,7 @@
 
   function seek(target, lap = cycle && target >= cycle.start ? cycle.lap : 0) {
     stop();
+    patternMarks = null;
     if (cycle) cycle.lap = lap;
     let start = frame <= target ? frame : 0;
     let checkpoint;
@@ -375,7 +397,6 @@
     }
     const retreat = hubFour && target < frame && frame - target < target - start;
     if (!retreat && checkpoint) {
-      patternMarks = null;
       field.val.set(checkpoint.bits);
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
@@ -603,7 +624,7 @@
     let marks;
     if (options.patternColors && frame) {
       patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
-      patternMarks ??= patternPainter.update(field.val, branches.map(branch => branch.column));
+      patternMarks ??= patternPainter.update(field.val, branches.map(branch => branch.column), options.counterStep);
       marks = patternMarks;
     }
     words.fill(0);
@@ -682,19 +703,60 @@
       const span = 2 * field.W + 1;
       normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
     }
-    const end = cycle?.period ? cycle.start + cycle.period - 1 : normalSliderMax;
+    const expectedEnd = reportedCycle?.returned ?? 0;
+    const end = cycle?.period ? cycle.start + cycle.period - 1
+      : Math.max(normalSliderMax, expectedEnd <= maxFrame ? expectedEnd : 0);
     const limit = String(end);
     if (frameSlider.max !== limit) frameSlider.max = limit;
     const sliderValue = String(seekTarget ?? frame);
     if (frameSlider.value !== sliderValue) frameSlider.value = sliderValue;
+    syncCycleMarks(end);
     return end;
+  }
+
+  function syncCycleMarks(limit) {
+    const key = reportedCycle ? [reportedCycle.start, reportedCycle.returned, limit, !!cycle?.period].join("|") : "";
+    if (cycleMarkKey === key) return;
+    cycleMarkKey = key;
+    for (const control of frameControls) {
+      const risks = control.querySelector(".romb-cycle-risks");
+      const values = control.querySelector(".romb-cycle-values");
+      risks.hidden = values.hidden = !reportedCycle;
+      if (!reportedCycle) continue;
+      const {start, returned} = reportedCycle;
+      const outside = returned > limit + Number(!!cycle?.period);
+      const first = values.querySelector(".romb-cycle-start");
+      const last = values.querySelector(".romb-cycle-return");
+      risks.style.setProperty("--romb-cycle-start", Math.min(100, 100 * start / limit) + "%");
+      risks.style.setProperty("--romb-cycle-return", Math.min(100, 100 * returned / limit) + "%");
+      risks.classList.toggle("romb-cycle-outside", outside);
+      first.textContent = "Начало " + formatter.format(start);
+      last.textContent = "Возврат " + formatter.format(returned) + (outside ? " →" : "");
+      const distance = outside ? returned > maxFrame ? "За пределом перемотки. " : "За видимой частью шкалы. " : "";
+      last.title = distance + "Период " + formatter.format(returned - start) + " ходов.";
+    }
+  }
+
+  function positionText() {
+    if (!frame) return "";
+    if (options.counterStep) {
+      return " · верх " + formatter.format(branches[1].column + 1) + " · низ " + formatter.format(branches[0].column + 1);
+    }
+    return " · столбец " + formatter.format(column + 1);
+  }
+
+  function contactText() {
+    if (!options.stopAtContact && !currentReverse()) return "";
+    const distance = separation();
+    if (distance === field.H - 1) return " · касание";
+    return options.counterStep && distance === field.H ? " · порог касания" : "";
   }
 
   function updateLabels(cssScale, dpr) {
     const {W, H} = field;
-    const position = frame ? " · столбец " + formatter.format(column + 1) + " из " + formatter.format(W) : "";
+    const position = positionText() + (frame && !options.counterStep ? " из " + formatter.format(W) : "");
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
-    const contact = (options.stopAtContact || currentReverse()) && separation() === H - 1 ? " · касание" : "";
+    const contact = contactText();
     const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
     const label = "Кадр " + formatter.format(frame) + target + position +
       " · " + formatter.format(H) + " строк · " + zoom + contact + (options.square ? " · квадрат" : "") +
@@ -802,7 +864,10 @@
     controls.querySelector("#romb-pattern-colors").setAttribute("aria-controls", "romb-pattern-palette-coin");
     controls.id = "romb-coin-toolbar";
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
-    const range = frameSlider.cloneNode(true);
+    const timeline = frameControl.cloneNode(true);
+    timeline.id += "-coin";
+    frameControls.push(timeline);
+    const range = timeline.querySelector("input");
     const repeat = cycleNote.cloneNode(true);
     for (const copy of [...controls.querySelectorAll("[id]"), range, repeat]) {
       const source = byId(copy.id);
@@ -822,7 +887,7 @@
     holder.append(controls);
     coinFrameInfo = document.createElement("p");
     coinFrameInfo.className = "progress";
-    byId("romb-coin-frames").append(coinFrameInfo, range, repeat);
+    byId("romb-coin-frames").append(coinFrameInfo, timeline, repeat);
     const viewport = bindViewport(combinedCanvas, coinView, coinBounds, fitCoin);
     byId("romb-coin-exact").addEventListener("click", () => viewport.zoomTo(1));
     byId("romb-coin-fit").addEventListener("click", viewport.fitView);
@@ -905,8 +970,9 @@
 
   function paintOutlines(x, y, scale, ratio, color) {
     const {W, H} = field;
-    const columns = (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation()
-      ? branches.map(branch => branch.column) : [column];
+    const columns = options.counterStep ? [branches[1].column, branches[0].column]
+      : (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation()
+        ? branches.map(branch => branch.column) : [column];
     const radius = (depth - 0.5) * scale;
     const middle = y + depth * scale;
     for (const offset of [-W, 0, W]) {
@@ -920,13 +986,19 @@
       context.strokeStyle = color;
       if (options.patternColors) context.globalAlpha = 0.35;
       context.lineWidth = 1.25 * ratio;
-      for (const col of columns) {
+      for (const [side, col] of columns.entries()) {
         const tip = x + (offset + col + 0.5) * scale;
         context.beginPath();
-        context.moveTo(tip, y);
-        context.lineTo(tip + radius, middle);
-        context.lineTo(tip, y + H * scale);
-        context.lineTo(tip - radius, middle);
+        if (options.counterStep) {
+          context.moveTo(tip - radius, middle);
+          context.lineTo(tip, side === 0 ? y : y + H * scale);
+          context.lineTo(tip + radius, middle);
+        } else {
+          context.moveTo(tip, y);
+          context.lineTo(tip + radius, middle);
+          context.lineTo(tip, y + H * scale);
+          context.lineTo(tip - radius, middle);
+        }
         context.closePath();
         context.stroke();
       }
@@ -945,9 +1017,7 @@
 
   function announcePosition() {
     if (!announcement) return;
-    const position = frame ? " · столбец " + formatter.format(column + 1) : "";
-    const contact = (options.stopAtContact || currentReverse()) && separation() === field.H - 1 ? " · касание" : "";
-    announcement.textContent = "Кадр " + formatter.format(frame) + position + contact;
+    announcement.textContent = "Кадр " + formatter.format(frame) + positionText() + contactText();
   }
 
   function syncTransport() {
@@ -1196,6 +1266,11 @@
   for (const [key, button] of Object.entries(edgeButtons)) {
     button.addEventListener("click", () => {
       options[key] = !optionEnabled(key);
+      if (key === "counterStep") {
+        save();
+        reset();
+        return;
+      }
       if (key === "wrap") {
         if (seekTarget !== null) stop();
         changeRoute(options.wrap);
@@ -1244,7 +1319,7 @@
     const actions = byId("romb-hub-actions");
     actions.prepend(backButton.parentElement);
     actions.append(stepSize.closest(".romb-setting"));
-    transport.append(frameSlider, frameLabel);
+    transport.append(frameControl, frameLabel);
     transport.hidden = false;
     byId("romb-step-label").textContent = "Кадров за шаг";
     for (const [direction, button] of hubPlayButtons) {
@@ -1280,7 +1355,7 @@
       const before = size.value + "|" + width.value;
       const previous = {...options};
       restore(event.detail?.globals?.widgetState?.modelContent);
-      if (before !== size.value + "|" + width.value) reset();
+      if (before !== size.value + "|" + width.value || previous.counterStep !== options.counterStep) reset();
       else {
         if (previous.wrap !== options.wrap) {
           if (seekTarget !== null) stop();

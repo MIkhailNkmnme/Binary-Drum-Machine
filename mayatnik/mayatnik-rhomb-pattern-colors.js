@@ -36,7 +36,7 @@
       return vertical || horizontal || diagonal || antidiagonal;
     }
 
-    function scanGuide(values, center, side) {
+    function scanGuide(values, center, side, start, end) {
       labels.fill(0);
       let label = 0;
       for (let y = 0; y < H; y++) {
@@ -44,7 +44,7 @@
         origins[y] = center + side * radius - reach;
       }
 
-      for (let row = 0; row < H; row++) {
+      for (let row = start; row < end; row++) {
         const column = origins[row] + reach;
         if (column < 0 || column >= W) continue;
         const index = row * W + column;
@@ -95,10 +95,17 @@
       }
     }
 
-    function update(values, centers) {
+    function scanRhomb(values, center, start, end) {
+      for (const side of [0, -1, 1]) scanGuide(values, center, side, start, end);
+    }
+
+    function update(values, centers, counterStep) {
       marks.fill(0);
-      for (const center of new Set(centers)) {
-        for (const side of [0, -1, 1]) scanGuide(values, center, side);
+      if (counterStep && centers[0] !== centers[1]) {
+        scanRhomb(values, centers[1], 0, H / 2);
+        scanRhomb(values, centers[0], H / 2, H);
+      } else {
+        for (const center of new Set(centers)) scanRhomb(values, center, 0, H);
       }
       return marks;
     }
