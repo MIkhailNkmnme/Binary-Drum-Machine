@@ -36,11 +36,12 @@
       return vertical || horizontal || diagonal || antidiagonal;
     }
 
-    function scanGuide(values, center, side, start, end) {
+    function scanGuide(values, center, side, start, end, top, rows) {
       labels.fill(0);
       let label = 0;
       for (let y = 0; y < H; y++) {
-        const radius = Math.min(y, H - 1 - y);
+        const row = y - top;
+        const radius = Math.max(0, Math.min(row, rows - 1 - row));
         origins[y] = center + side * radius - reach;
       }
 
@@ -95,8 +96,8 @@
       }
     }
 
-    function scanRhomb(values, center, start, end) {
-      for (const side of [0, -1, 1]) scanGuide(values, center, side, start, end);
+    function scanRhomb(values, center, start, end, top = 0, rows = H) {
+      for (const side of [0, -1, 1]) scanGuide(values, center, side, start, end, top, rows);
     }
 
     function update(values, centers, counterStep) {
@@ -110,7 +111,18 @@
       return marks;
     }
 
-    return {update};
+    function updateVertical(values, upper, lower, rows) {
+      marks.fill(0);
+      const center = (W - 1) / 2;
+      if (upper === lower) scanRhomb(values, center, upper, upper + rows, upper, rows);
+      else {
+        scanRhomb(values, center, upper, upper + rows / 2, upper, rows);
+        scanRhomb(values, center, lower + rows / 2, lower + rows, lower, rows);
+      }
+      return marks;
+    }
+
+    return {update, updateVertical};
   }
 
   window.MayatnikRhombPatternColors = {create};

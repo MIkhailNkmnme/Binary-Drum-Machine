@@ -15,6 +15,7 @@
 
   const size = byId("romb-size");
   const width = byId("romb-width");
+  const verticalMotion = byId("romb-vertical-motion");
   const stepSize = byId("romb-step-size");
   const stepMinus = byId("romb-step-minus");
   const stepPlus = byId("romb-step-plus");
@@ -108,6 +109,7 @@
     if (!saved) return;
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
     if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
+    if (["off", "outward", "inward", "sync"].includes(saved.verticalMotion)) verticalMotion.value = saved.verticalMotion;
     if (Number.isSafeInteger(saved.step)) stepSize.value = clamp(saved.step, 1, Number(stepSize.max));
     if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
     if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
@@ -129,6 +131,7 @@
     }
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
+      verticalMotion: verticalMotion.value,
       combination: combineMode.value, flipSecond: flipSecond.checked,
       patternPalette: patternColors.map(input => input.value), ...options
     };
@@ -139,26 +142,32 @@
     try { localStorage.setItem(storageKey, JSON.stringify(settings)); } catch { /* Optional preferences. */ }
   }
 
+  function isVertical() {
+    return verticalMotion.value !== "off";
+  }
+
   function reset() {
     stop();
     patternMarks = null;
-    const height = Number(size.value);
-    const columns = Number(width.value) * height - 1;
+    const rows = Number(size.value);
+    const length = Number(width.value) * rows - 1;
+    const height = isVertical() ? length : rows;
+    const columns = isVertical() ? rows - 1 : length;
     if (field?.W === columns && field.H === height) field.val.fill(-1);
     else {
       field = MAYATNIK.field(columns, height, "empty");
       patternPainter = null;
     }
-    depth = height / 2;
+    depth = rows / 2;
     routeChanges = new Map([[0, options.wrap]]);
     reversalChanges = new Map([[0, options.reverseAtContact]]);
     checkpoints = new Map();
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
-    normalSliderMax = Math.min(maxFrame, 2 * columns + 1);
+    normalSliderMax = Math.min(maxFrame, 2 * length + 1);
     cycle = null;
     configureCycle();
-    initializeMotion();
+    initializeRun();
     fit();
     fitCoin();
     advanceFrame(false);
@@ -166,6 +175,19 @@
     syncEdgeButtons();
     announcePosition();
     redraw();
+  }
+
+  function initializeRun() {
+    initializeMotion();
+    if (!isVertical()) return;
+    const end = field.H - 2 * depth;
+    const center = Math.floor(end / 2);
+    if (verticalMotion.value === "inward") {
+      branches[1] = {column: 0, direction: 1};
+      branches[0] = {column: end, direction: -1};
+    } else {
+      branches[0].column = branches[1].column = center;
+    }
   }
 
   function initializeMotion() {
@@ -202,7 +224,7 @@
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (options.counterStep || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
+    if (isVertical() || options.counterStep || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
         [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
       cycle = null;
       return;
@@ -259,6 +281,10 @@
       if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
     }
     patternPalette.hidden = !options.patternColors;
+    edgeButtons.counterStep.disabled = isVertical();
+    const lengthLabel = isVertical() ? "Высота поля" : "Ширина поля";
+    const label = byId("romb-width-label");
+    if (label.textContent !== lengthLabel) label.textContent = lengthLabel;
     squareButton?.setAttribute("aria-pressed", String(options.square));
     andButton?.setAttribute("aria-pressed", String(options.buildAnd));
     coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
@@ -284,7 +310,7 @@
   }
 
   function advance(watchContact = false, and = false, counterStep = false) {
-    const {W, H, val} = field;
+    const {W, H} = field;
     const before = watchContact ? separation() : 0;
     routeWrap = currentWrap();
     const upper = counterStep ? branches[1] : branches[frame % 2];
@@ -292,42 +318,52 @@
     const upperMoved = moveBranch(upper, W);
     const lowerMoved = lower === upper ? upperMoved : moveBranch(lower, W);
     column = upper.column;
-    MAYATNIK.cone(field, column, depth, null, undefined, null, undefined, and);
+    buildPass(column, lower.column, and);
+    frame++;
+    // Two moving halves can cross the contact threshold between frames.
+    return watchContact && upperMoved && lowerMoved && before < H - 1 && separation() >= H - 1;
+  }
+
+  function buildPass(upperColumn, lowerColumn, and, upperTop = 0, lowerTop = 0) {
+    const {W, H, val} = field;
+    const rows = 2 * depth;
+    const upperField = H === rows ? field : {W, H: depth, val: val.subarray(upperTop * W, (upperTop + depth) * W)};
+    MAYATNIK.cone(upperField, upperColumn, depth, null, undefined, null, undefined, and);
 
     // Move the widest row from the upper lattice to the lower one's axis.
-    const lowerColumn = lower.column;
-    const shift = column - lowerColumn;
+    const shift = upperColumn - lowerColumn;
+    const topRow = (upperTop + depth - 1) * W;
+    const lowerRow = (lowerTop + depth) * W;
     let left = lowerColumn - depth + 1;
     let right = Math.min(lowerColumn + depth - 1, W - 1);
     for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
-      const i = depth * W + c;
+      const i = lowerRow + c;
       const source = c + shift;
-      const bit = Number(source >= 0 && source < W && val[i - W + shift] === 1);
+      const bit = Number(source >= 0 && source < W && val[topRow + source] === 1);
       val[i] = MAYATNIK.accumulateBit(val[i], bit, and);
     }
 
     // XOR prefixes reverse the growing rule. Missing cells to the left
     // contribute zero, including the left parent of column zero.
-    for (let r = depth + 1; r < H; r++) {
+    for (let r = depth + 1; r < rows; r++) {
       left++;
-      right = Math.min(lowerColumn + H - 1 - r, W - 1);
+      right = Math.min(lowerColumn + rows - 1 - r, W - 1);
       let prefix = 0;
-      const row = r * W;
+      const row = (lowerTop + r) * W;
       for (let c = left < 0 ? left & 1 : left; c <= right; c += 2) {
         const i = row + c;
         prefix ^= c > 0 && val[i - W - 1] === 1;
         val[i] = MAYATNIK.accumulateBit(val[i], prefix, and);
       }
     }
-    frame++;
-    // Two moving halves can cross the contact threshold between frames.
-    return watchContact && upperMoved && lowerMoved && before < H - 1 && separation() >= H - 1;
   }
 
   function advanceFrame(stopAtContact) {
     patternMarks = null;
     routeReverse = currentReverse();
-    const contact = advance(stopAtContact || routeReverse, options.buildAnd, options.counterStep);
+    const watchContact = stopAtContact || routeReverse;
+    const contact = isVertical() ? advanceVertical(watchContact)
+      : advance(watchContact, options.buildAnd, options.counterStep);
     if (contact && routeReverse) {
       for (const branch of branches) branch.direction *= -1;
     }
@@ -337,6 +373,24 @@
     }
     observeCycle();
     return contact && stopAtContact;
+  }
+
+  function advanceVertical(watchContact) {
+    const [lower, upper] = branches;
+    const before = lower.column - upper.column;
+    const positions = field.H - 2 * depth + 1;
+    routeWrap = currentWrap();
+    const upperMoved = moveBranch(upper, positions);
+    const synchronous = verticalMotion.value === "sync";
+    if (synchronous) {
+      lower.column = upper.column;
+      lower.direction = upper.direction;
+    }
+    const lowerMoved = !synchronous && moveBranch(lower, positions);
+    buildPass(column, column, options.buildAnd, upper.column, lower.column);
+    frame++;
+    const after = lower.column - upper.column;
+    return watchContact && upperMoved && lowerMoved && before !== 0 && (after === 0 || Math.sign(after) !== Math.sign(before));
   }
 
   function retreatHubFrame() {
@@ -405,7 +459,7 @@
       frame = start;
     } else if (!retreat && frame > target) {
       field.val.fill(-1);
-      initializeMotion();
+      initializeRun();
     }
     pending = target - frame;
     seekTarget = pending ? target : null;
@@ -428,7 +482,7 @@
     options.buildAnd = !options.buildAnd;
     field.val.fill(-1);
     checkpoints.clear();
-    initializeMotion();
+    initializeRun();
     configureCycle();
     save();
     seek(target, 0);
@@ -445,7 +499,7 @@
   }
 
   function coinBounds() {
-    return projectBox(0, field.H - 1, field.H, options.coinSquare);
+    return projectBox(0, 2 * depth - 1, 2 * depth, options.coinSquare);
   }
 
   function scaleFor(rect, camera = view, bounds = projectedBounds()) {
@@ -503,7 +557,7 @@
   }
 
   function matchingBlock(row, col, firstCenter, secondCenter) {
-    const {W, H, val} = field;
+    const {W, H} = field;
     const top = row - (row & 1);
     const offset = col - firstCenter;
     const left = offset - (offset & 1);
@@ -511,8 +565,24 @@
     const a = firstCenter + left;
     const b = secondCenter + left;
     if (left < -radius || left + 1 > radius || a < 0 || b < 0 || a + 1 >= W || b + 1 >= W) return false;
-    const i = top * W + a;
-    const j = top * W + b;
+    return equalBlock(top * W + a, top * W + b);
+  }
+
+  function matchingVerticalBlock(row, col, firstTop, secondTop) {
+    const {W} = field;
+    const localRow = row - firstTop;
+    const top = localRow - (localRow & 1);
+    const radius = Math.min(top, 2 * depth - 2 - top);
+    const center = depth - 1;
+    const offset = col - center;
+    const left = offset - (offset & 1);
+    const x = center + left;
+    if (left < -radius || left + 1 > radius || x < 0 || x + 1 >= W) return false;
+    return equalBlock((firstTop + top) * W + x, (secondTop + top) * W + x);
+  }
+
+  function equalBlock(i, j) {
+    const {W, val} = field;
     return val[i] >= 0 && val[i] === val[j] &&
       val[i + 1] >= 0 && val[i + 1] === val[j + 1] &&
       val[i + W] >= 0 && val[i + W] === val[j + W] &&
@@ -521,8 +591,9 @@
 
   function repeatTone(row, col) {
     const [first, second] = branches;
+    const matches = isVertical() ? matchingVerticalBlock : matchingBlock;
     if (first.column !== second.column &&
-      (matchingBlock(row, col, first.column, second.column) || matchingBlock(row, col, second.column, first.column))) return 2;
+      (matches(row, col, first.column, second.column) || matches(row, col, second.column, first.column))) return 2;
     const half = Math.floor(field.W / 2);
     if (options.joinLeft && col >= field.W - half) return 4;
     if (options.joinRight && col < half) return 6;
@@ -624,7 +695,9 @@
     let marks;
     if (options.patternColors && frame) {
       patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
-      patternMarks ??= patternPainter.update(field.val, branches.map(branch => branch.column), options.counterStep);
+      patternMarks ??= isVertical()
+        ? patternPainter.updateVertical(field.val, branches[1].column, branches[0].column, 2 * depth)
+        : patternPainter.update(field.val, branches.map(branch => branch.column), options.counterStep);
       marks = patternMarks;
     }
     words.fill(0);
@@ -700,7 +773,7 @@
 
   function syncFrameSlider() {
     if (frame > normalSliderMax) {
-      const span = 2 * field.W + 1;
+      const span = 2 * (isVertical() ? field.H : field.W) + 1;
       normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
     }
     const expectedEnd = reportedCycle?.returned ?? 0;
@@ -739,6 +812,11 @@
 
   function positionText() {
     if (!frame) return "";
+    if (isVertical()) {
+      const upper = formatter.format(branches[1].column + 1);
+      const lower = formatter.format(branches[0].column + depth + 1);
+      return verticalMotion.value === "sync" ? " · вершина, строка " + upper : " · строки · верх " + upper + " · низ " + lower;
+    }
     if (options.counterStep) {
       return " · верх " + formatter.format(branches[1].column + 1) + " · низ " + formatter.format(branches[0].column + 1);
     }
@@ -748,18 +826,21 @@
   function contactText() {
     if (!options.stopAtContact && !currentReverse()) return "";
     const distance = separation();
+    if (isVertical()) return verticalMotion.value !== "sync" && distance <= 1 ? " · касание" : "";
     if (distance === field.H - 1) return " · касание";
     return options.counterStep && distance === field.H ? " · порог касания" : "";
   }
 
   function updateLabels(cssScale, dpr) {
     const {W, H} = field;
-    const position = positionText() + (frame && !options.counterStep ? " из " + formatter.format(W) : "");
+    const vertical = isVertical();
+    const position = positionText() + (frame && !options.counterStep && !vertical ? " из " + formatter.format(W) : "");
+    const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
     const zoom = view.scale === 1 ? "1:1" : formatter.format(cssScale * dpr * 100) + " %";
     const label = "Кадр " + formatter.format(frame) + target + position +
-      " · " + formatter.format(H) + " строк · " + zoom + contact + (options.square ? " · квадрат" : "") +
+      dimensions + " · " + zoom + contact + (options.square ? " · квадрат" : "") +
       (options.buildAnd ? " · AND" : "");
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
     const period = cycle?.period;
@@ -779,7 +860,9 @@
     combinedView.hidden = mode === "off" || !combinedContext;
     flipSecond.disabled = mode === "off";
     if (combinedView.hidden) return;
-    const {H, W, val} = field;
+    const {W, val} = field;
+    const H = 2 * depth;
+    const vertical = isVertical();
     const {left, top, right, bottom} = coinBounds();
     const rect = combinedCanvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -816,11 +899,12 @@
         if (row < 0 || row >= H || col < 0 || col >= H - 1) continue;
         const offset = col - (depth - 1);
         if (Math.abs(offset) > Math.min(row, H - 1 - row)) continue;
-        const source = row * W;
-        const a = first.column + offset;
-        const b = second.column + flip * offset;
-        const left = a >= 0 && a < W ? val[source + a] : -1;
-        const right = b >= 0 && b < W ? val[source + b] : -1;
+        const a = (vertical ? depth - 1 : first.column) + offset;
+        const b = (vertical ? depth - 1 : second.column) + flip * offset;
+        const rowA = row + (vertical ? first.column : 0);
+        const rowB = row + (vertical ? second.column : 0);
+        const left = a >= 0 && a < W ? val[rowA * W + a] : -1;
+        const right = b >= 0 && b < W ? val[rowB * W + b] : -1;
         if (left < 0 && right < 0) continue;
         const firstOn = left === 1;
         const secondOn = right === 1;
@@ -968,13 +1052,22 @@
     }
   }
 
+  function activeOutlines() {
+    const [lower, upper] = branches;
+    if (isVertical()) {
+      const center = depth - 1;
+      if (upper.column === lower.column) return [{center, top: upper.column}];
+      return [{center, top: upper.column, half: "upper"}, {center, top: lower.column, half: "lower"}];
+    }
+    if (options.counterStep) return [{center: upper.column, top: 0, half: "upper"}, {center: lower.column, top: 0, half: "lower"}];
+    const both = (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation();
+    return (both ? branches.map(branch => branch.column) : [column]).map(center => ({center, top: 0}));
+  }
+
   function paintOutlines(x, y, scale, ratio, color) {
     const {W, H} = field;
-    const columns = options.counterStep ? [branches[1].column, branches[0].column]
-      : (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation()
-        ? branches.map(branch => branch.column) : [column];
     const radius = (depth - 0.5) * scale;
-    const middle = y + depth * scale;
+    const outlines = activeOutlines();
     for (const offset of [-W, 0, W]) {
       const left = Math.max(view.start, offset);
       const right = Math.min(view.end, offset + W);
@@ -986,17 +1079,20 @@
       context.strokeStyle = color;
       if (options.patternColors) context.globalAlpha = 0.35;
       context.lineWidth = 1.25 * ratio;
-      for (const [side, col] of columns.entries()) {
-        const tip = x + (offset + col + 0.5) * scale;
+      for (const {center, top, half} of outlines) {
+        const tip = x + (offset + center + 0.5) * scale;
+        const from = y + top * scale;
+        const middle = from + depth * scale;
+        const to = from + 2 * depth * scale;
         context.beginPath();
-        if (options.counterStep) {
+        if (half) {
           context.moveTo(tip - radius, middle);
-          context.lineTo(tip, side === 0 ? y : y + H * scale);
+          context.lineTo(tip, half === "upper" ? from : to);
           context.lineTo(tip + radius, middle);
         } else {
-          context.moveTo(tip, y);
+          context.moveTo(tip, from);
           context.lineTo(tip + radius, middle);
-          context.lineTo(tip, y + H * scale);
+          context.lineTo(tip, to);
           context.lineTo(tip - radius, middle);
         }
         context.closePath();
@@ -1289,7 +1385,7 @@
     input.addEventListener("input", redraw);
     input.addEventListener("change", save);
   }
-  for (const select of [size, width]) select.addEventListener("change", () => { save(); reset(); });
+  for (const select of [size, width, verticalMotion]) select.addEventListener("change", () => { save(); reset(); });
   stepMinus.addEventListener("click", () => nudgeStepSize(-1));
   stepPlus.addEventListener("click", () => nudgeStepSize(1));
   stepSize.addEventListener("input", () => {
@@ -1352,10 +1448,11 @@
   } else if (inline) {
     restore(window.openai?.widgetState?.modelContent);
     window.addEventListener("openai:set_globals", event => {
-      const before = size.value + "|" + width.value;
+      const before = size.value + "|" + width.value + "|" + verticalMotion.value;
       const previous = {...options};
       restore(event.detail?.globals?.widgetState?.modelContent);
-      if (before !== size.value + "|" + width.value || previous.counterStep !== options.counterStep) reset();
+      if (before !== size.value + "|" + width.value + "|" + verticalMotion.value ||
+          previous.counterStep !== options.counterStep || previous.buildAnd !== options.buildAnd) reset();
       else {
         if (previous.wrap !== options.wrap) {
           if (seekTarget !== null) stop();
