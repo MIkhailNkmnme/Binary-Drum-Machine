@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101317">
+  <title>Ромбовый кадр · Журнал картинок</title>
+  <link rel="stylesheet" href="../style.css?v=017">
+  <link rel="stylesheet" href="style.css?v=002">
+  <script type="module" src="frame.js?v=001"></script>
+</head>
+<body>
+  <header class="site-bar">
+    <nav class="site-nav shell" aria-label="Разделы сайта">
+      <a class="brand" href="../#rhomb-collection">Журнал картинок</a>
+      <div class="site-links">
+        <a id="frame-gallery" href="./">Все кадры</a>
+        <a href="gifs.html">Трёхминутные GIF</a>
+      </div>
+    </nav>
+  </header>
+  <main class="shell rhomb-detail">
+    <p id="frame-status" role="status">Загрузка кадра…</p>
+    <noscript><p>Для открытия выбранного кадра включите JavaScript или перейдите к PNG в коллекции.</p></noscript>
+    <article id="frame-detail" hidden>
+      <header class="rhomb-detail-heading">
+        <p class="entry-meta" id="frame-series"></p>
+        <h1 id="frame-title"></h1>
+        <p class="rhomb-settings" id="frame-settings"></p>
+      </header>
+      <figure>
+        <img id="frame-image" decoding="async" alt="">
+        <figcaption class="figure-links">
+          <a id="frame-download" download>Скачать PNG</a>
+          <a id="frame-gif">GIF этой серии</a>
+        </figcaption>
+      </figure>
+    </article>
+  </main>
+</body>
+</html>

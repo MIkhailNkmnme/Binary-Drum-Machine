@@ -1,14 +1,17 @@
 'use strict';
 
 const { createHash } = require('node:crypto');
-const { mkdirSync, writeFileSync } = require('node:fs');
+const { mkdirSync, readFileSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { deflateSync } = require('node:zlib');
 const { createModel, pngChunk } = require('./analyze-rhomb-period.cjs');
 const { colourCentralAxes } = require('./build-rhomb-atlas.cjs');
 const { createPackedRhomb } = require('./rhomb-packed.cjs');
 
-const output = process.argv[2] ?? join(__dirname, '../../issledovanie/image-journal/rhomb-collection');
+const defaultOutput = join(__dirname, '../../issledovanie/image-journal/rhomb-collection');
+const pagesOnly = process.argv[2] === '--pages';
+const output = pagesOnly ? defaultOutput : process.argv[2] ?? defaultOutput;
+const wallpaperDirectory = '../../desktop-wallpapers/rhomb-1024/';
 const paletteDefinitions = [
   ['amber', 'Янтарь', '160d18', '4d2940', 'ffc06d', 'f48053', 'a28cff', 'ffe6a3'],
   ['teal', 'Бирюза', '061c22', '16494d', 'a8f8e6', '61cfed', 'f2a96a', 'd9ffb0'],
@@ -320,39 +323,42 @@ function buildSeries(item) {
   return {...item, width, images};
 }
 
-function card(item, image) {
+function card(item, image, wallpaper) {
   const palette = palettes.find(entry => entry.id === image.palette);
+  const base = wallpaper ? wallpaperDirectory : '';
+  const frame = `frame.html?series=${item.id}&amp;palette=${image.palette}${wallpaper ? '&amp;edition=1024' : ''}`;
   return `          <figure id="${item.id}-${image.palette}">
-            <a class="image-link" href="${image.file}" aria-label="${item.name} · ${palette.name} · кадр ${image.frame} · открыть PNG"><img src="${image.file}" alt="${item.name} в палитре «${palette.name}», кадр ${image.frame}" width="${image.width}" height="${image.height}" loading="lazy" decoding="async"></a>
-            <figcaption><span class="rhomb-swatch" style="--swatch:#${palette.colors[2]}"></span><span>${palette.name}</span><small>Кадр ${image.frame}</small></figcaption>
+            <a class="image-link" href="${base + image.file}" aria-label="${item.name} · ${palette.name} · кадр ${image.frame} · открыть PNG"><img src="${base + (wallpaper ? image.preview : image.file)}" alt="${item.name} в палитре «${palette.name}», кадр ${image.frame}" width="${wallpaper ? 640 : image.width}" height="${wallpaper ? 360 : image.height}" loading="lazy" decoding="async"></a>
+            <figcaption><span class="rhomb-swatch" style="--swatch:#${palette.colors[2]}"></span><span>${palette.name}</span><small><a href="${frame}" aria-label="Открыть страницу кадра ${image.frame} · ${item.name} · ${palette.name}">Кадр ${image.frame}</a></small></figcaption>
           </figure>`;
 }
 
-function seriesSection(item) {
+function seriesSection(item, wallpaper) {
   const name = item.group === 'build-modes' ? `${item.rows} × ${item.width}`
     : `${item.rows} × ${item.width} · ${routes.find(([edge]) => edge === item.edge)[1]} · XOR`;
   return `      <section class="rhomb-series" id="${item.id}" aria-labelledby="${item.id}-title">
         <h3 id="${item.id}-title">${item.name}</h3>
         <p class="rhomb-settings">${name}</p>
         <div class="rhomb-grid">
-${item.images.map(image => card(item, image)).join('\n')}
+${item.images.map(image => card(item, image, wallpaper)).join('\n')}
         </div>
       </section>`;
 }
 
-function groupSection([id, name], catalogue) {
+function groupSection([id, name], catalogue, wallpaper) {
   const items = catalogue.filter(item => item.group === id);
   const source = id === 'hub' ? `<a href="${hub}?four=axes">Открыть Хаб с осями</a>` : '';
   return `    <section class="entry rhomb-group" id="${id}" aria-labelledby="${id}-title">
       <h2 id="${id}-title">${name}</h2>
       ${source ? `<p>${source}</p>\n      ` : ''}<nav class="rhomb-series-nav" aria-label="${name}">${items.map(item =>
         `<a href="#${item.id}">${item.name}</a>`).join(' · ')}</nav>
-${items.map(seriesSection).join('\n')}
+${items.map(item => seriesSection(item, wallpaper)).join('\n')}
     </section>`;
 }
 
-function gallery(catalogue) {
+function gallery(catalogue, wallpaper = false) {
   const imageCount = catalogue.reduce((total, item) => total + item.images.length, 0);
+  const title = wallpaper ? 'Ромбовые кадры на 1024 строки' : 'Ромбовые построения';
   return `<!doctype html>
 <!-- Собрано tools/mayatnik-journal/build-rhomb-collection.cjs. -->
 <html lang="ru">
@@ -361,9 +367,9 @@ function gallery(catalogue) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101317">
   <meta name="description" content="${imageCount} цветных кадров Ромбового Маятника и Хаба для Журнала картинок Зеркалиуса.">
-  <title>Ромбовые построения · Журнал картинок</title>
+  <title>${title} · Журнал картинок</title>
   <link rel="stylesheet" href="../style.css?v=017">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=002">
 </head>
 <body>
   <a class="skip" href="#rhomb-collection">К коллекции</a>
@@ -380,18 +386,20 @@ function gallery(catalogue) {
   <main id="rhomb-collection" class="shell">
     <header class="rhomb-intro">
       <p class="entry-meta"><time datetime="2026-11-26">26 ноября 2026</time><span>${catalogue.length} серий · ${imageCount} PNG</span></p>
-      <h1>Ромбовые построения</h1>
-      <p>В каждой серии десять рассчитанных кадров в десяти палитрах. Щёлкните по изображению, чтобы открыть PNG в исходном размере.</p>
+      <h1>${title}</h1>
+      <p>${wallpaper ? 'В каждой серии десять кадров с полей в 1024 строки. PNG подготовлены в 3840 × 2160.' : 'В каждой серии десять рассчитанных кадров в десяти палитрах.'} Номер под изображением открывает страницу кадра.</p>
       <nav class="contents" aria-label="Группы коллекции">
+        ${wallpaper ? '<a href="./">Цветная коллекция</a>' : '<a href="wallpapers.html">Кадры на 1024 строки</a>'}
+        <a href="gifs.html">Трёхминутные GIF</a>
         ${groups.map(([id, name]) => `<a href="#${id}">${name}</a>`).join('\n        ')}
       </nav>
     </header>
-${groups.map(group => groupSection(group, catalogue)).join('\n')}
+${groups.map(group => groupSection(group, catalogue, wallpaper)).join('\n')}
     <footer id="recipe" class="entry rhomb-recipe">
       <h2>Как построить кадр</h2>
       <p>Начните с пустого поля в Ромбовом Маятнике. Выберите ширину, высоту, движение ветвей и способ накопления из заголовка серии и перейдите к кадру под изображением. Для разворота включите «Разворот при касании». Серии Ромба-монеты используют совмещение двух вырезок по центрам.</p>
       <p>Размеры в подписях относятся к исходному полю и указаны в порядке «строки × столбцы». Цвета показывают нули, единицы, ветви и оси. Парные виды собраны из вырезок вокруг центральных столбцов ветвей.</p>
-      <p><a href="recipes.json">Параметры кадров и палитр (JSON)</a> · <a href="${pendulum}">Ромбовый Маятник</a> · <a href="${hub}?four=vertical">Вертикальные ветви в Хабе</a> · <a href="#rhomb-collection">К началу коллекции</a></p>
+      <p><a href="${wallpaper ? wallpaperDirectory : ''}recipes.json">Параметры кадров и палитр (JSON)</a> · <a href="${pendulum}">Ромбовый Маятник</a> · <a href="${hub}?four=vertical">Вертикальные ветви в Хабе</a> · <a href="#rhomb-collection">К началу коллекции</a></p>
     </footer>
   </main>
 </body>
@@ -413,7 +421,12 @@ function collectionFrames(item) {
   };
 }
 
-if (require.main === module) {
+if (require.main === module && pagesOnly) {
+  const pictures = JSON.parse(readFileSync(join(output, 'recipes.json'), 'utf8'));
+  const wallpapers = JSON.parse(readFileSync(join(output, wallpaperDirectory, 'recipes.json'), 'utf8'));
+  writeFileSync(join(output, 'index.html'), gallery(pictures.series));
+  writeFileSync(join(output, 'wallpapers.html'), gallery(wallpapers.series, true));
+} else if (require.main === module) {
   const catalogue = series.map(buildSeries);
   writeFileSync(join(output, 'recipes.json'), JSON.stringify({
     initialField: 'empty',
@@ -427,4 +440,4 @@ if (require.main === module) {
   console.log(`${catalogue.length} серий, ${catalogue.reduce((count, item) => count + item.images.length, 0)} PNG.`);
 }
 
-module.exports = {collectionFrames};
+module.exports = {collectionFrames, groups, palettes, fieldView, pairView, coinView, squareView};

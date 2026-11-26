@@ -1,0 +1,1507 @@
+{
+  "source": "../../../desktop-wallpapers/rhomb-1024/recipes.json",
+  "duration": 180000,
+  "rows": 512,
+  "items": [
+    {
+      "id": "field-2-bounce-xor",
+      "name": "Отскок · 2N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 1064,
+          "sourceFrame": 2064,
+          "palette": "amber",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 291147
+        },
+        {
+          "frame": 1132,
+          "sourceFrame": 2247,
+          "palette": "coral",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 293486
+        },
+        {
+          "frame": 1428,
+          "sourceFrame": 2839,
+          "palette": "copper",
+          "symmetry": 74,
+          "axis": "vertical",
+          "cells": 299736
+        },
+        {
+          "frame": 1952,
+          "sourceFrame": 3952,
+          "palette": "rose",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 319083
+        }
+      ],
+      "file": "field-2-bounce-xor.gif",
+      "preview": "field-2-bounce-xor.webp",
+      "bytes": 1765919,
+      "sha256": "000e4ea0ae47dc67a5a8d7b255f006de22747a8a12d05bd9b2a99d382472192a"
+    },
+    {
+      "id": "field-2-bounce-and",
+      "name": "Отскок · 2N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 92,
+          "sourceFrame": 247,
+          "palette": "amber",
+          "symmetry": 21,
+          "axis": "vertical",
+          "cells": 7894
+        },
+        {
+          "frame": 316,
+          "sourceFrame": 695,
+          "palette": "coral",
+          "symmetry": 8,
+          "axis": "vertical",
+          "cells": 22454
+        },
+        {
+          "frame": 1112,
+          "sourceFrame": 2224,
+          "palette": "copper",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 22334
+        },
+        {
+          "frame": 1444,
+          "sourceFrame": 2887,
+          "palette": "rose",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 22334
+        }
+      ],
+      "file": "field-2-bounce-and.gif",
+      "preview": "field-2-bounce-and.webp",
+      "bytes": 319296,
+      "sha256": "3e66c58687f588245a8ad3d407de87677a5400f9bad77d099aad1ed47554452b"
+    },
+    {
+      "id": "field-2-wrap-xor",
+      "name": "Перескок · 2N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 1068,
+          "sourceFrame": 2071,
+          "palette": "amber",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 292485
+        },
+        {
+          "frame": 1176,
+          "sourceFrame": 2304,
+          "palette": "coral",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 296925
+        },
+        {
+          "frame": 1448,
+          "sourceFrame": 2944,
+          "palette": "copper",
+          "symmetry": 74,
+          "axis": "vertical",
+          "cells": 300905
+        },
+        {
+          "frame": 2056,
+          "sourceFrame": 4176,
+          "palette": "rose",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 318926
+        }
+      ],
+      "file": "field-2-wrap-xor.gif",
+      "preview": "field-2-wrap-xor.webp",
+      "bytes": 1805875,
+      "sha256": "4557057f531b162f2471fd513305f5fdceeb0aa27a27db668491f9557a8fa6ac"
+    },
+    {
+      "id": "field-2-wrap-and",
+      "name": "Перескок · 2N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 116,
+          "sourceFrame": 295,
+          "palette": "amber",
+          "symmetry": 17,
+          "axis": "vertical",
+          "cells": 9454
+        },
+        {
+          "frame": 364,
+          "sourceFrame": 791,
+          "palette": "coral",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 25574
+        },
+        {
+          "frame": 1112,
+          "sourceFrame": 2224,
+          "palette": "copper",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 22334
+        },
+        {
+          "frame": 1444,
+          "sourceFrame": 2887,
+          "palette": "rose",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 22334
+        }
+      ],
+      "file": "field-2-wrap-and.gif",
+      "preview": "field-2-wrap-and.webp",
+      "bytes": 323353,
+      "sha256": "fc72a3d77d24d5f067944656895ffbe7938b0100f049ab4c4a0590cf8483cf65"
+    },
+    {
+      "id": "field-2-reverse-xor",
+      "name": "Разворот при касании · 2N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 512,
+          "sourceFrame": 1024,
+          "palette": "amber",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 240152
+        },
+        {
+          "frame": 624,
+          "sourceFrame": 1200,
+          "palette": "coral",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 240200
+        },
+        {
+          "frame": 872,
+          "sourceFrame": 1712,
+          "palette": "copper",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 245199
+        },
+        {
+          "frame": 1496,
+          "sourceFrame": 3008,
+          "palette": "rose",
+          "symmetry": 81,
+          "axis": "vertical",
+          "cells": 251090
+        }
+      ],
+      "file": "field-2-reverse-xor.gif",
+      "preview": "field-2-reverse-xor.webp",
+      "bytes": 2357958,
+      "sha256": "3bea7b53c1d6829df3dd6981cfd68954c41edff82cb22c3f2b419fe2d56eb22f"
+    },
+    {
+      "id": "field-2-reverse-and",
+      "name": "Разворот при касании · 2N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 56,
+          "sourceFrame": 176,
+          "palette": "amber",
+          "symmetry": 29,
+          "axis": "vertical",
+          "cells": 5554
+        },
+        {
+          "frame": 204,
+          "sourceFrame": 471,
+          "palette": "coral",
+          "symmetry": 11,
+          "axis": "vertical",
+          "cells": 15174
+        },
+        {
+          "frame": 544,
+          "sourceFrame": 1024,
+          "palette": "copper",
+          "symmetry": 21,
+          "axis": "vertical",
+          "cells": 9874
+        },
+        {
+          "frame": 844,
+          "sourceFrame": 1623,
+          "palette": "rose",
+          "symmetry": 57,
+          "axis": "vertical",
+          "cells": 3612
+        }
+      ],
+      "file": "field-2-reverse-and.gif",
+      "preview": "field-2-reverse-and.webp",
+      "bytes": 324805,
+      "sha256": "74911900402437ba06d6f88bfe3f49e875ad948f7288c91bfed79f18cdf58da5"
+    },
+    {
+      "id": "field-4-bounce-xor",
+      "name": "Отскок · 4N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 2088,
+          "sourceFrame": 4112,
+          "palette": "amber",
+          "symmetry": 77,
+          "axis": "vertical",
+          "cells": 623323
+        },
+        {
+          "frame": 2156,
+          "sourceFrame": 4295,
+          "palette": "coral",
+          "symmetry": 77,
+          "axis": "vertical",
+          "cells": 625549
+        },
+        {
+          "frame": 2476,
+          "sourceFrame": 4887,
+          "palette": "copper",
+          "symmetry": 77,
+          "axis": "vertical",
+          "cells": 634744
+        },
+        {
+          "frame": 3032,
+          "sourceFrame": 6000,
+          "palette": "rose",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 681487
+        }
+      ],
+      "file": "field-4-bounce-xor.gif",
+      "preview": "field-4-bounce-xor.webp",
+      "bytes": 1881223,
+      "sha256": "693cbcf99c530e17b66d0fdf75535814600066825360b89bcbc76ea5a614f4be"
+    },
+    {
+      "id": "field-4-bounce-and",
+      "name": "Отскок · 4N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 92,
+          "sourceFrame": 247,
+          "palette": "amber",
+          "symmetry": 21,
+          "axis": "vertical",
+          "cells": 7894
+        },
+        {
+          "frame": 316,
+          "sourceFrame": 695,
+          "palette": "coral",
+          "symmetry": 8,
+          "axis": "vertical",
+          "cells": 22454
+        },
+        {
+          "frame": 2136,
+          "sourceFrame": 4272,
+          "palette": "copper",
+          "symmetry": 3,
+          "axis": "vertical",
+          "cells": 84862
+        },
+        {
+          "frame": 2468,
+          "sourceFrame": 4935,
+          "palette": "rose",
+          "symmetry": 3,
+          "axis": "vertical",
+          "cells": 84862
+        }
+      ],
+      "file": "field-4-bounce-and.gif",
+      "preview": "field-4-bounce-and.webp",
+      "bytes": 355659,
+      "sha256": "386e57d95bab55659000b1ca2e754db8ec27a535c32dc153a327fe573d901c1b"
+    },
+    {
+      "id": "field-4-wrap-xor",
+      "name": "Перескок · 4N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 2092,
+          "sourceFrame": 4119,
+          "palette": "amber",
+          "symmetry": 77,
+          "axis": "vertical",
+          "cells": 624419
+        },
+        {
+          "frame": 2200,
+          "sourceFrame": 4352,
+          "palette": "coral",
+          "symmetry": 77,
+          "axis": "vertical",
+          "cells": 629026
+        },
+        {
+          "frame": 2520,
+          "sourceFrame": 4992,
+          "palette": "copper",
+          "symmetry": 78,
+          "axis": "vertical",
+          "cells": 640836
+        },
+        {
+          "frame": 3144,
+          "sourceFrame": 6224,
+          "palette": "rose",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 689884
+        }
+      ],
+      "file": "field-4-wrap-xor.gif",
+      "preview": "field-4-wrap-xor.webp",
+      "bytes": 1964019,
+      "sha256": "5abd0303cb81c8b3402ebe84102e009575f5ade447da7e25a83e165f3c83ca37"
+    },
+    {
+      "id": "field-4-wrap-and",
+      "name": "Перескок · 4N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 116,
+          "sourceFrame": 295,
+          "palette": "amber",
+          "symmetry": 17,
+          "axis": "vertical",
+          "cells": 9454
+        },
+        {
+          "frame": 364,
+          "sourceFrame": 791,
+          "palette": "coral",
+          "symmetry": 7,
+          "axis": "vertical",
+          "cells": 25574
+        },
+        {
+          "frame": 2136,
+          "sourceFrame": 4272,
+          "palette": "copper",
+          "symmetry": 3,
+          "axis": "vertical",
+          "cells": 84862
+        },
+        {
+          "frame": 2468,
+          "sourceFrame": 4935,
+          "palette": "rose",
+          "symmetry": 3,
+          "axis": "vertical",
+          "cells": 84862
+        }
+      ],
+      "file": "field-4-wrap-and.gif",
+      "preview": "field-4-wrap-and.webp",
+      "bytes": 360197,
+      "sha256": "38e6e8bb98957022da84753751c3ba94f4235ab91a053f2c09fea8823eeeb9db"
+    },
+    {
+      "id": "field-4-reverse-xor",
+      "name": "Разворот при касании · 4N−1 · XOR",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 512,
+          "sourceFrame": 1024,
+          "palette": "amber",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 240152
+        },
+        {
+          "frame": 624,
+          "sourceFrame": 1200,
+          "palette": "coral",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 240200
+        },
+        {
+          "frame": 872,
+          "sourceFrame": 1712,
+          "palette": "copper",
+          "symmetry": 80,
+          "axis": "vertical",
+          "cells": 245199
+        },
+        {
+          "frame": 1496,
+          "sourceFrame": 3008,
+          "palette": "rose",
+          "symmetry": 81,
+          "axis": "vertical",
+          "cells": 251090
+        }
+      ],
+      "file": "field-4-reverse-xor.gif",
+      "preview": "field-4-reverse-xor.webp",
+      "bytes": 2370185,
+      "sha256": "b6c25c74a5c9966873c6ddec8254451a04a9f4a47f4a0000c85b72e70199b02f"
+    },
+    {
+      "id": "field-4-reverse-and",
+      "name": "Разворот при касании · 4N−1 · AND",
+      "group": "build-modes",
+      "rows": 512,
+      "columns": 2047,
+      "width": 2047,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 56,
+          "sourceFrame": 176,
+          "palette": "amber",
+          "symmetry": 29,
+          "axis": "vertical",
+          "cells": 5554
+        },
+        {
+          "frame": 204,
+          "sourceFrame": 471,
+          "palette": "coral",
+          "symmetry": 11,
+          "axis": "vertical",
+          "cells": 15174
+        },
+        {
+          "frame": 544,
+          "sourceFrame": 1024,
+          "palette": "copper",
+          "symmetry": 21,
+          "axis": "vertical",
+          "cells": 9874
+        },
+        {
+          "frame": 844,
+          "sourceFrame": 1623,
+          "palette": "rose",
+          "symmetry": 57,
+          "axis": "vertical",
+          "cells": 3612
+        }
+      ],
+      "file": "field-4-reverse-and.gif",
+      "preview": "field-4-reverse-and.webp",
+      "bytes": 329402,
+      "sha256": "bba89ff4642413057c1352da8117042066fa574175a63754af5493d451ddbcab"
+    },
+    {
+      "id": "join-left",
+      "name": "Склейка влево",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1534,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 316,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 53,
+          "axis": "horizontal",
+          "cells": 268862
+        },
+        {
+          "frame": 696,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 67,
+          "axis": "vertical",
+          "cells": 444830
+        },
+        {
+          "frame": 1172,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 71,
+          "axis": "vertical",
+          "cells": 463814
+        },
+        {
+          "frame": 1884,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 71,
+          "axis": "vertical",
+          "cells": 490396
+        }
+      ],
+      "file": "join-left.gif",
+      "preview": "join-left.webp",
+      "bytes": 3314108,
+      "sha256": "7f132613acec8c39914a60adcad7be181d572a18b8b6f4bb3b07e5126410f779"
+    },
+    {
+      "id": "join-right",
+      "name": "Склейка вправо",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1534,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 260,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 45,
+          "axis": "horizontal",
+          "cells": 224938
+        },
+        {
+          "frame": 696,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 68,
+          "axis": "vertical",
+          "cells": 410951
+        },
+        {
+          "frame": 1172,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 426443
+        },
+        {
+          "frame": 1884,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 70,
+          "axis": "vertical",
+          "cells": 469690
+        }
+      ],
+      "file": "join-right.gif",
+      "preview": "join-right.webp",
+      "bytes": 2941748,
+      "sha256": "6dbf1d91f1fe60af5b9121ce39924453d144ea66fe065626f1fb2317772194f9"
+    },
+    {
+      "id": "join-both",
+      "name": "Склейка в обе стороны",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 2045,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 316,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 70,
+          "axis": "vertical",
+          "cells": 347364
+        },
+        {
+          "frame": 656,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 560989
+        },
+        {
+          "frame": 1196,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 591493
+        },
+        {
+          "frame": 1892,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 640047
+        }
+      ],
+      "file": "join-both.gif",
+      "preview": "join-both.webp",
+      "bytes": 4397259,
+      "sha256": "3adfdf59ff618a2da7d832f694f231be1cb24a171d6c077eee15ce43ad4c753a"
+    },
+    {
+      "id": "repeats",
+      "name": "Совпадающие блоки 2 × 2",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 308,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 170365
+        },
+        {
+          "frame": 656,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 280620
+        },
+        {
+          "frame": 1196,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 295872
+        },
+        {
+          "frame": 1892,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 320159
+        }
+      ],
+      "file": "repeats.gif",
+      "preview": "repeats.webp",
+      "bytes": 2419158,
+      "sha256": "9c817460f60869f9137a32120cd696babadef706fbe752e2d0421251f1dc6e8c"
+    },
+    {
+      "id": "square",
+      "name": "Квадратная проекция поля",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1086,
+      "height": 1086,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 252,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 56,
+          "axis": "vertical",
+          "cells": 151765
+        },
+        {
+          "frame": 632,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 39,
+          "axis": "vertical",
+          "cells": 275334
+        },
+        {
+          "frame": 1212,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 36,
+          "axis": "vertical",
+          "cells": 294269
+        },
+        {
+          "frame": 1892,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 34,
+          "axis": "vertical",
+          "cells": 320199
+        }
+      ],
+      "file": "square.gif",
+      "preview": "square.webp",
+      "bytes": 1823154,
+      "sha256": "444b6d4ea1630ec89aeadd19f05b6cc301bff3becfb384f22239d1798fc8d702"
+    },
+    {
+      "id": "pair",
+      "name": "Два ромба",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1054,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 308,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 153625
+        },
+        {
+          "frame": 656,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 159578
+        },
+        {
+          "frame": 1236,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 111172
+        },
+        {
+          "frame": 1892,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 150742
+        }
+      ],
+      "file": "pair.gif",
+      "preview": "pair.webp",
+      "bytes": 1939690,
+      "sha256": "85b12f9cd9598e752aff7aad50f78d981d81ba05a3251537e0d86e2ce93fa439"
+    },
+    {
+      "id": "field-axes",
+      "name": "Поле с цветными осями",
+      "group": "field-views",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1023,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 308,
+          "sourceFrame": 567,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 170365
+        },
+        {
+          "frame": 656,
+          "sourceFrame": 1328,
+          "palette": "coral",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 280620
+        },
+        {
+          "frame": 1196,
+          "sourceFrame": 2407,
+          "palette": "copper",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 295872
+        },
+        {
+          "frame": 1892,
+          "sourceFrame": 3831,
+          "palette": "rose",
+          "symmetry": 75,
+          "axis": "vertical",
+          "cells": 320159
+        }
+      ],
+      "file": "field-axes.gif",
+      "preview": "field-axes.webp",
+      "bytes": 1916816,
+      "sha256": "0173e0e3b3473b42b579e1aae8ec278eb08c3feb400ede353f33e1a5a67c2376"
+    },
+    {
+      "id": "coin-overlay",
+      "name": "Наложение",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 360,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 86,
+          "axis": "vertical",
+          "cells": 106443
+        },
+        {
+          "frame": 708,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 84,
+          "axis": "vertical",
+          "cells": 98596
+        },
+        {
+          "frame": 1184,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 78,
+          "axis": "vertical",
+          "cells": 84888
+        },
+        {
+          "frame": 1824,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 89,
+          "axis": "vertical",
+          "cells": 109843
+        }
+      ],
+      "file": "coin-overlay.gif",
+      "preview": "coin-overlay.webp",
+      "bytes": 1712405,
+      "sha256": "4961dbfa38fb04d694e69f9d4b14670a1ca11b8b675d129d9f13c33e8ee27c66"
+    },
+    {
+      "id": "coin-overlay-mirror",
+      "name": "Наложение · с отражением",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 400,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 95315
+        },
+        {
+          "frame": 708,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 70,
+          "axis": "horizontal",
+          "cells": 89624
+        },
+        {
+          "frame": 1160,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 66,
+          "axis": "horizontal",
+          "cells": 64458
+        },
+        {
+          "frame": 1760,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 74,
+          "axis": "horizontal",
+          "cells": 97650
+        }
+      ],
+      "file": "coin-overlay-mirror.gif",
+      "preview": "coin-overlay-mirror.webp",
+      "bytes": 1388393,
+      "sha256": "cf190156b16f2473dbe6b909f487239d04a237a7c918198e4fc6a44079b50776"
+    },
+    {
+      "id": "coin-xor",
+      "name": "XOR",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 344,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 57257
+        },
+        {
+          "frame": 764,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 73,
+          "axis": "vertical",
+          "cells": 61004
+        },
+        {
+          "frame": 1184,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 70,
+          "axis": "vertical",
+          "cells": 70148
+        },
+        {
+          "frame": 1824,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 74,
+          "axis": "vertical",
+          "cells": 62619
+        }
+      ],
+      "file": "coin-xor.gif",
+      "preview": "coin-xor.webp",
+      "bytes": 1296870,
+      "sha256": "763b8cbeaa680a47d2a1eb791bc651f44a3d5482e99b314f99a267e75c1465a6"
+    },
+    {
+      "id": "coin-xor-mirror",
+      "name": "XOR · с отражением",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 376,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 50,
+          "axis": "vertical",
+          "cells": 32628
+        },
+        {
+          "frame": 700,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 36,
+          "axis": "vertical",
+          "cells": 30527
+        },
+        {
+          "frame": 1160,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 36,
+          "axis": "horizontal",
+          "cells": 33292
+        },
+        {
+          "frame": 1800,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 50,
+          "axis": "vertical",
+          "cells": 32929
+        }
+      ],
+      "file": "coin-xor-mirror.gif",
+      "preview": "coin-xor-mirror.webp",
+      "bytes": 863300,
+      "sha256": "8cff391a73edd5ec8d702479e8986a1be9dd092b102d10ce43559fbbc3943336"
+    },
+    {
+      "id": "coin-and",
+      "name": "AND",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 400,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 87,
+          "axis": "vertical",
+          "cells": 52474
+        },
+        {
+          "frame": 764,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 94,
+          "axis": "vertical",
+          "cells": 36233
+        },
+        {
+          "frame": 1144,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 90,
+          "axis": "vertical",
+          "cells": 11515
+        },
+        {
+          "frame": 1768,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 78,
+          "axis": "vertical",
+          "cells": 51865
+        }
+      ],
+      "file": "coin-and.gif",
+      "preview": "coin-and.webp",
+      "bytes": 678886,
+      "sha256": "5daddf4dacb4dc8a7956e9ec10b4313cf83de6e0df9783814e9403615c93711a"
+    },
+    {
+      "id": "coin-and-mirror",
+      "name": "AND · с отражением",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 511,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 400,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 72,
+          "axis": "vertical",
+          "cells": 62954
+        },
+        {
+          "frame": 700,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 65,
+          "axis": "vertical",
+          "cells": 59532
+        },
+        {
+          "frame": 1176,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 28,
+          "axis": "vertical",
+          "cells": 33736
+        },
+        {
+          "frame": 1760,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 62,
+          "axis": "vertical",
+          "cells": 64798
+        }
+      ],
+      "file": "coin-and-mirror.gif",
+      "preview": "coin-and-mirror.webp",
+      "bytes": 646565,
+      "sha256": "33cd6321ade677f6e44d2e19dfde818a686869f9a7d21dfb477110549d8cdbb4"
+    },
+    {
+      "id": "coin-square",
+      "name": "Наложение · квадратная проекция",
+      "group": "coin",
+      "rows": 512,
+      "columns": 1023,
+      "width": 724,
+      "height": 724,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 336,
+          "sourceFrame": 736,
+          "palette": "amber",
+          "symmetry": 83,
+          "axis": "vertical",
+          "cells": 106362
+        },
+        {
+          "frame": 708,
+          "sourceFrame": 1463,
+          "palette": "coral",
+          "symmetry": 76,
+          "axis": "vertical",
+          "cells": 98678
+        },
+        {
+          "frame": 1184,
+          "sourceFrame": 2304,
+          "palette": "copper",
+          "symmetry": 66,
+          "axis": "horizontal",
+          "cells": 84885
+        },
+        {
+          "frame": 1768,
+          "sourceFrame": 3584,
+          "palette": "rose",
+          "symmetry": 85,
+          "axis": "vertical",
+          "cells": 110758
+        }
+      ],
+      "file": "coin-square.gif",
+      "preview": "coin-square.webp",
+      "bytes": 1623727,
+      "sha256": "dbe4ff9cda18b89cd2d532ad00c064477d57d4bc06a7dee433a35941661bdaa7"
+    },
+    {
+      "id": "hub-four",
+      "name": "Четыре треугольника",
+      "group": "hub",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1054,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 44,
+          "sourceFrame": 149,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 127019
+        },
+        {
+          "frame": 276,
+          "sourceFrame": 517,
+          "palette": "coral",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 152141
+        },
+        {
+          "frame": 652,
+          "sourceFrame": 1259,
+          "palette": "copper",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 160032
+        },
+        {
+          "frame": 1116,
+          "sourceFrame": 2167,
+          "palette": "rose",
+          "symmetry": 65,
+          "axis": "vertical",
+          "cells": 80732
+        }
+      ],
+      "file": "hub-four.gif",
+      "preview": "hub-four.webp",
+      "bytes": 1959810,
+      "sha256": "2efbabc9eb5027219be99965e138b60e806637a24ab962defe715db546bb05aa"
+    },
+    {
+      "id": "hub-four-axes",
+      "name": "Четыре треугольника · цветные оси",
+      "group": "hub",
+      "rows": 512,
+      "columns": 1023,
+      "width": 1054,
+      "height": 512,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 44,
+          "sourceFrame": 149,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 127019
+        },
+        {
+          "frame": 276,
+          "sourceFrame": 517,
+          "palette": "coral",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 152141
+        },
+        {
+          "frame": 652,
+          "sourceFrame": 1259,
+          "palette": "copper",
+          "symmetry": 79,
+          "axis": "vertical",
+          "cells": 160032
+        },
+        {
+          "frame": 1116,
+          "sourceFrame": 2167,
+          "palette": "rose",
+          "symmetry": 65,
+          "axis": "vertical",
+          "cells": 80732
+        }
+      ],
+      "file": "hub-four-axes.gif",
+      "preview": "hub-four-axes.webp",
+      "bytes": 2028291,
+      "sha256": "26573497329eae6498a419c894d60430bc473b669074b9ddb31c84e4c31bbfa5"
+    },
+    {
+      "id": "hub-vertical",
+      "name": "Вверх-вниз",
+      "group": "hub",
+      "rows": 512,
+      "columns": 1023,
+      "width": 512,
+      "height": 1054,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 44,
+          "sourceFrame": 149,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 127019
+        },
+        {
+          "frame": 276,
+          "sourceFrame": 517,
+          "palette": "coral",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 152141
+        },
+        {
+          "frame": 652,
+          "sourceFrame": 1259,
+          "palette": "copper",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 160032
+        },
+        {
+          "frame": 1116,
+          "sourceFrame": 2167,
+          "palette": "rose",
+          "symmetry": 65,
+          "axis": "horizontal",
+          "cells": 80732
+        }
+      ],
+      "file": "hub-vertical.gif",
+      "preview": "hub-vertical.webp",
+      "bytes": 2032293,
+      "sha256": "8cf8485a6366223dab953c044926e2a0e37ea4fb42e7009d8d994ec5519c3aa9"
+    },
+    {
+      "id": "hub-vertical-axes",
+      "name": "Вверх-вниз · цветные оси",
+      "group": "hub",
+      "rows": 512,
+      "columns": 1023,
+      "width": 512,
+      "height": 1054,
+      "duration": 180000,
+      "step": 4,
+      "frames": 64,
+      "keys": [
+        {
+          "frame": 44,
+          "sourceFrame": 149,
+          "palette": "amber",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 127019
+        },
+        {
+          "frame": 276,
+          "sourceFrame": 517,
+          "palette": "coral",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 152141
+        },
+        {
+          "frame": 652,
+          "sourceFrame": 1259,
+          "palette": "copper",
+          "symmetry": 79,
+          "axis": "horizontal",
+          "cells": 160032
+        },
+        {
+          "frame": 1116,
+          "sourceFrame": 2167,
+          "palette": "rose",
+          "symmetry": 65,
+          "axis": "horizontal",
+          "cells": 80732
+        }
+      ],
+      "file": "hub-vertical-axes.gif",
+      "preview": "hub-vertical-axes.webp",
+      "bytes": 2046576,
+      "sha256": "695a460ad36d3e8369f6107bbd247e9db09ed515d170b40dc34dc27dc404195a"
+    }
+  ]
+}

@@ -47,15 +47,16 @@
     date.dateTime = frame.created;
     date.textContent = new Date(frame.created).toLocaleString('ru-RU', {dateStyle:'short', timeStyle:'short'});
     caption.append(title, date);
-    if ((video || frame.kind === 'gif') && /^[a-f0-9]{64}$/.test(frame.scene)) {
+    if (/^[a-f0-9]{64}$/.test(frame.scene)) {
+      const recording = video || frame.kind === 'gif';
       const links = document.createElement('span');
       links.className = 'figure-links';
       const start = document.createElement('a');
-      start.dataset.recordingStart = '';
+      if (recording) start.dataset.recordingStart = '';
       start.href = '/mayatnik/Zerkalius-mayatnik.html#journal=' + frame.scene;
       start.target = '_blank';
       start.rel = 'noopener';
-      start.textContent = 'Начало записи в Маятнике';
+      start.textContent = recording ? 'Начало записи в Маятнике' : 'Открыть кадр в Маятнике';
       links.append(start);
       caption.append(links);
     }

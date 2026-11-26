@@ -71,3 +71,38 @@
 @media (max-width: 37rem) {
   .rhomb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.rhomb-detail {
+  padding-block: clamp(2rem, 6vw, 4rem);
+}
+.rhomb-detail-heading {
+  margin-bottom: 1.15rem;
+}
+.rhomb-detail h1 {
+  margin: 0 0 .4rem;
+  font-size: clamp(1.8rem, 5vw, 4rem);
+  line-height: 1.1;
+}
+.rhomb-detail figure img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+}
+.rhomb-gif-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+.rhomb-gif-grid figure {
+  scroll-margin-top: 1.2rem;
+}
+.rhomb-gif-grid .image-link {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+}
+.rhomb-gif-grid img {
+  height: 100%;
+  object-fit: contain;
+}
+.rhomb-gif-grid .rhomb-settings {
+  font-size: .82rem;
+}
