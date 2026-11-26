@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.026</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.027</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -47,6 +47,17 @@
     .romb-setting .gz-hx { color: var(--text); }
     .romb-motion-group { position: relative; display: grid; grid-template-columns: repeat(2, 120px); align-items: end; gap: 2px 6px; padding: 4px 6px; isolation: isolate; }
     .romb-motion-group::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #15222c; clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%); }
+    .romb-motion-help { grid-column: 1 / -1; min-width: 0; color: var(--text); font-size: 12px; }
+    .romb-motion-help summary { color: var(--cyan); cursor: pointer; }
+    .romb-motion-help table { width: 100%; margin: 4px 0; border-collapse: collapse; font: inherit; }
+    .romb-motion-help :is(th, td) { padding: 3px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    .romb-motion-help p { margin: 4px 0; }
+    .romb-zen-motion:has(.romb-motion-help[open]) .romb-motion-group { max-width: 100%; }
+    @media (max-width: 1080px) {
+      .romb-zen-motion .romb-motion-help tr { display: grid; }
+      .romb-zen-motion .romb-motion-help thead { position: absolute; clip-path: inset(50%); }
+      .romb-zen-motion .romb-motion-help th[scope=row] { border-bottom: 0; }
+    }
     .romb-motion-group > .gz-hx { align-self: end; }
     .romb-motion-group .romb-setting { min-width: 0; }
     .romb-route-group { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: end; gap: 2px 12px; }
@@ -236,7 +247,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.026</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.027</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -324,6 +335,20 @@
         <button type="button" class="gz-hx" id="romb-wrap" aria-pressed="false" title="Перескок по горизонтали на противоположный край в том же направлении. В выключенном состоянии действует отскок." aria-label="Перескок через горизонтальный край">
           <span class="gz-ic" aria-hidden="true">⇥</span><span class="gz-nm">Перескок</span>
         </button>
+        <details class="romb-motion-help" data-user-label>
+          <summary>Как работает ход</summary>
+          <table aria-label="Ход по горизонтали">
+            <thead><tr><th scope="col">Режим</th><th scope="col">Движение</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Выключен</th><td>Горизонтальная позиция сохраняется.</td></tr>
+              <tr><th scope="row">Вместе · маятник</th><td>Целый ромб чередует стороны: центр, ←1, →1, ←2, →2…</td></tr>
+              <tr><th scope="row">Вместе · подряд</th><td>Целый ромб идёт из центра влево по одному столбцу за проход.</td></tr>
+              <tr><th scope="row">Врозь</th><td>Из центра верхняя половина идёт влево, нижняя — вправо.</td></tr>
+              <tr><th scope="row">Навстречу</th><td>Верхняя половина стартует слева и идёт вправо. Нижняя стартует справа и идёт влево.</td></tr>
+            </tbody>
+          </table>
+          <p>Числа у стрелок показывают расстояние от центра в столбцах. На краю действует отскок или включённый «Перескок». При двух включённых осях путь задаёт «Общий маршрут».</p>
+        </details>
       </div>
       <div class="romb-motion-group" role="group" aria-label="Движение по вертикали">
         <button type="button" class="gz-hx" id="romb-vertical-enabled" aria-pressed="false" title="Включить или выключить движение по вертикали" aria-label="Движение по вертикали">
@@ -350,6 +375,20 @@
         <button type="button" class="gz-hx" id="romb-wrap-y" aria-pressed="false" title="Перескок по вертикали на противоположный край в том же направлении. В выключенном состоянии действует отскок." aria-label="Перескок через вертикальный край">
           <span class="gz-ic" aria-hidden="true">↥</span><span class="gz-nm">Перескок</span>
         </button>
+        <details class="romb-motion-help" data-user-label>
+          <summary>Как работает ход</summary>
+          <table aria-label="Ход по вертикали">
+            <thead><tr><th scope="col">Режим</th><th scope="col">Движение</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Выключен</th><td>Вертикальная позиция сохраняется.</td></tr>
+              <tr><th scope="row">Вместе · маятник</th><td>Целый ромб чередует стороны: центр, ↑1, ↓1, ↑2, ↓2…</td></tr>
+              <tr><th scope="row">Вместе · подряд</th><td>Целый ромб идёт из центра вверх по одной строке за проход.</td></tr>
+              <tr><th scope="row">Врозь</th><td>Из центра верхняя половина идёт вверх, нижняя — вниз.</td></tr>
+              <tr><th scope="row">Навстречу</th><td>Верхняя половина стартует сверху и идёт вниз. Нижняя стартует снизу и идёт вверх.</td></tr>
+            </tbody>
+          </table>
+          <p>Числа у стрелок показывают расстояние от центра в строках. На краю действует отскок или включённый «Перескок». При двух включённых осях путь задаёт «Общий маршрут».</p>
+        </details>
       </div>
       <div class="romb-route-group" id="romb-route-group" role="group" aria-label="Общий маршрут по двум осям" hidden>
         <label class="romb-setting">Общий маршрут
