@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Живой цикл Ромбового Маятника с разворотом на 4096 строках. Точные шаги 2 и 4 и цветные центральные шаблоны.">
+  <title>Разворот на 4096 строк · Зеркалиус</title>
+  <link rel="stylesheet" href="../../_js/grozd.css">
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <script defer src="../../_js/hub-button-text.js"></script>
+  <script defer src="romb-cycle-4096.js"></script>
+  <style>
+    .cycle-figure { margin: 12px 0; }
+    #cycle-field { display: block; width: 100%; height: auto; background: #0b1620; image-rendering: pixelated; }
+    #cycle-position, #cycle-state { margin: 0; }
+    #cycle-state { min-height: 1.5em; }
+    #cycle-progress { display: block; width: 100%; accent-color: var(--cyan); }
+    .cycle-controls { align-items: center; }
+    .cycle-controls select { background: var(--panel); color: var(--text); }
+    .cycle-steps { display: inline-flex; align-items: center; gap: 6px; }
+    .cycle-films { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+    .cycle-films figure { margin: 0; }
+    .cycle-films video { width: 100%; height: auto; background: #0b1620; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../image-journal/#rhomb-contact-gifs">Журнал картинок</a>
+    <a href="romb-contact.html">Период разворота</a>
+    <a href="../../mayatnik/romb.html">Ромбовый Маятник</a>
+  </nav>
+  <header>
+    <h1>Разворот на 4096 строк</h1>
+    <p class="lead">Живой цикл XOR от первого касания на кадре 4 096 до точного возврата на 33 550 336. Каждый показанный кадр рассчитан на сетке шага 2 или 4.</p>
+  </header>
+  <div class="commands cycle-controls" role="group" aria-label="Пульт цикла">
+    <button class="gz-hx" id="cycle-play" type="button" aria-pressed="false" disabled>
+      <span class="gz-ic" aria-hidden="true">▶</span><span class="gz-nm">Воспроизвести</span>
+    </button>
+    <div class="gz-hx gz-pair gz-split gz-mid" role="group" aria-label="На один шаг назад или вперёд">
+      <button class="gz-half gz-h0" data-cycle-action="previous" type="button" title="Предыдущий кадр" aria-label="Предыдущий кадр" disabled>◂</button>
+      <span class="gz-pm" aria-hidden="true">Кадр</span>
+      <button class="gz-half gz-h1" data-cycle-action="next" type="button" title="Следующий кадр" aria-label="Следующий кадр" disabled>▸</button>
+    </div>
+    <label class="cycle-steps">Шаг
+      <select class="gz-hx" id="cycle-step" title="Ходов на один показанный кадр">
+        <option value="2">2</option>
+        <option value="4" selected>4</option>
+      </select>
+    </label>
+    <button class="gz-hx" data-cycle-action="first" type="button" disabled><span class="gz-nm">Начало</span></button>
+    <button class="gz-hx" data-cycle-action="last" type="button" title="Показать доказанный кадр возврата" disabled><span class="gz-nm">Возврат</span></button>
+  </div>
+  <figure class="cycle-figure">
+    <canvas id="cycle-field" width="1024" height="512" role="img" aria-label="Поле Ромбового Маятника и симметричные узоры у осей ветвей"></canvas>
+    <figcaption>
+      <p id="cycle-position" class="progress">Подготовка</p>
+      <progress id="cycle-progress" value="0" max="33546240" aria-label="Прогресс полного периода"></progress>
+      <p id="cycle-state" class="progress" role="status">Запуск расчёта</p>
+    </figcaption>
+  </figure>
+  <p>Медный цвет показывает плотность единиц в блоках 8×8. Фиолетовым и зелёным окрашены центральные столбцы двух ветвей и касающиеся их симметричные шаблоны. Шаблон состоит из четырёх или более одинаковых битов, связанных по стороне или углу, и целиком умещается в полосе шириной 17 клеток вокруг столбца.</p>
+  <noscript><p>Для живого расчёта включите JavaScript.</p></noscript>
+</main>
+</body>
+</html>
