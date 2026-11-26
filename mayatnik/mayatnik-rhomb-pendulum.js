@@ -29,6 +29,8 @@
   const squareButton = byId("romb-square");
   const andButton = byId("romb-build-and");
   const coinSquareButton = byId("romb-coin-square");
+  const patternPalette = byId("romb-pattern-palette");
+  const patternColors = [byId("romb-pattern-zero"), byId("romb-pattern-one")];
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
   const combinedView = byId("romb-combined-view");
@@ -40,10 +42,11 @@
     joinRight: byId("romb-join-right"),
     stopAtContact: byId("romb-stop-contact"),
     reverseAtContact: byId("romb-reverse-contact"),
-    markRepeats: byId("romb-mark-repeats")
+    markRepeats: byId("romb-mark-repeats"),
+    patternColors: byId("romb-pattern-colors")
   };
   const options = {wrap: false, joinLeft: false, joinRight: false, stopAtContact: false, reverseAtContact: false,
-    markRepeats: false, square: false, coinSquare: false, buildAnd: false};
+    markRepeats: false, patternColors: false, square: false, coinSquare: false, buildAnd: false};
   const storageKey = "zerk_mayatnik_rhomb";
   const inline = root.hasAttribute("data-romb-inline");
   const hubFour = !inline && new URLSearchParams(location.search).get("hub") === "four";
@@ -61,7 +64,8 @@
   let field, depth, frame, column, branches, routeWrap;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, normalSliderMax;
-  let pixels, words, sampleColumn, samplePair, colorWords, colorKey;
+  let pixels, words, sampleColumn, samplePair, sampleStart, sampleEnd, colorWords, colorKey;
+  let patternPainter, patternMarks;
   let combinedPixels, combinedWords;
   let frameRequest = 0;
   let playing = false;
@@ -91,6 +95,12 @@
     if (Number.isSafeInteger(saved.speed)) speed.value = clamp(saved.speed, 0, 100);
     if (["off", "overlay", "xor", "and"].includes(saved.combination)) combineMode.value = saved.combination;
     if (typeof saved.flipSecond === "boolean") flipSecond.checked = saved.flipSecond;
+    if (Array.isArray(saved.patternPalette)) {
+      patternColors.forEach((input, bit) => {
+        const tone = saved.patternPalette[bit];
+        if (typeof tone === "string" && /^#[0-9a-f]{6}$/i.test(tone)) input.value = tone;
+      });
+    }
     updateSpeed();
     for (const key of Object.keys(options)) if (typeof saved[key] === "boolean") options[key] = saved[key];
   }
@@ -102,7 +112,8 @@
     }
     const settings = {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
-      combination: combineMode.value, flipSecond: flipSecond.checked, ...options
+      combination: combineMode.value, flipSecond: flipSecond.checked,
+      patternPalette: patternColors.map(input => input.value), ...options
     };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
@@ -116,7 +127,10 @@
     const height = Number(size.value);
     const columns = Number(width.value) * height - 1;
     if (field?.W === columns && field.H === height) field.val.fill(-1);
-    else field = MAYATNIK.field(columns, height, "empty");
+    else {
+      field = MAYATNIK.field(columns, height, "empty");
+      patternPainter = null;
+    }
     depth = height / 2;
     routeChanges = new Map([[0, options.wrap]]);
     reversalChanges = new Map([[0, options.reverseAtContact]]);
@@ -137,6 +151,7 @@
   }
 
   function initializeMotion() {
+    patternMarks = null;
     const anchor = (field.W - 1) / 2;
     column = anchor;
     branches = [{column: anchor, direction: 1}, {column: anchor, direction: -1}];
@@ -218,6 +233,7 @@
       const pressed = String(optionEnabled(key));
       if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
     }
+    patternPalette.hidden = !options.patternColors;
     squareButton?.setAttribute("aria-pressed", String(options.square));
     andButton?.setAttribute("aria-pressed", String(options.buildAnd));
     coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
@@ -274,6 +290,7 @@
   }
 
   function advanceFrame(stopAtContact) {
+    patternMarks = null;
     routeReverse = currentReverse();
     const contact = advance(stopAtContact || routeReverse, options.buildAnd);
     if (contact && routeReverse) {
@@ -344,6 +361,7 @@
     }
     const retreat = hubFour && target < frame && frame - target < target - start;
     if (!retreat && checkpoint) {
+      patternMarks = null;
       field.val.set(checkpoint.bits);
       branches = checkpoint.branches.map(item => ({...item}));
       column = checkpoint.column;
@@ -476,7 +494,20 @@
     return 0;
   }
 
-  function paintSquareBits(x, y, scale, w, h, bounds) {
+  function patternAt(marks, index) {
+    return marks && (marks[index >> 3] & (1 << (index & 7)));
+  }
+
+  function bitTone(row, col, marks, index) {
+    if (patternAt(marks, index)) return 8;
+    return options.markRepeats ? repeatTone(row, col) : 0;
+  }
+
+  function sourceColumn(displayed, width) {
+    return displayed < 0 ? displayed + width : displayed >= width ? displayed - width : displayed;
+  }
+
+  function paintSquareBits(x, y, scale, w, h, bounds, marks) {
     const {W, H, val} = field;
     const left = Math.max(0, Math.floor(x + bounds.left * scale));
     const right = Math.min(w, Math.ceil(x + bounds.right * scale));
@@ -490,9 +521,10 @@
         const row = Math.floor(u + v);
         const displayed = Math.floor(u - v);
         if (row < 0 || row >= H || displayed < view.start || displayed >= view.end) continue;
-        const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
-        const bit = val[row * W + col];
-        if (bit >= 0) words[py * w + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
+        const col = sourceColumn(displayed, W);
+        const index = row * W + col;
+        const bit = val[index];
+        if (bit >= 0) words[py * w + px] = colorWords[bit + bitTone(row, col, marks, index)];
       }
     }
   }
@@ -529,10 +561,13 @@
       words = new Uint32Array(pixels.data.buffer);
       sampleColumn = new Int32Array(w);
       samplePair = new Uint8Array(w);
+      sampleStart = new Int32Array(w);
+      sampleEnd = new Int32Array(w);
     }
     const styles = getComputedStyle(root);
     const tones = ["zero", "one", "match-zero", "match-one", "left-zero", "left-one", "right-zero", "right-one"]
       .map(name => styles.getPropertyValue("--romb-" + name).trim());
+    tones.push(...patternColors.map(input => input.value));
     const key = tones.join("|");
     if (colorKey !== key) {
       swatch.clearRect(0, 0, tones.length, 1);
@@ -551,9 +586,15 @@
       x = Math.round(x);
       y = Math.round(y);
     }
+    let marks;
+    if (options.patternColors && frame) {
+      patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
+      patternMarks ??= patternPainter.update(field.val, branches.map(branch => branch.column));
+      marks = patternMarks;
+    }
     words.fill(0);
-    if (options.square) paintSquareBits(x, y, scale, w, h, bounds);
-    else paintFlatBits(x, y, scale, w, h);
+    if (options.square) paintSquareBits(x, y, scale, w, h, bounds, marks);
+    else paintFlatBits(x, y, scale, w, h, marks);
     context.putImageData(pixels, 0, 0);
     context.save();
     if (options.square) {
@@ -581,18 +622,23 @@
     updateLabels(cssScale, dpr);
   }
 
-  function paintFlatBits(x, y, scale, w, h) {
+  function paintFlatBits(x, y, scale, w, h, marks) {
     const {W, H, val} = field;
     const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
     const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
     const firstY = Math.max(0, Math.ceil(y - 0.5));
     const lastY = Math.min(h, Math.ceil(y + H * scale - 0.5));
+    const searchPixel = marks && scale < 1;
     for (let px = firstX; px < lastX; px++) {
       const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
-      const col = displayed < 0 ? displayed + W : displayed >= W ? displayed - W : displayed;
+      const col = sourceColumn(displayed, W);
       sampleColumn[px] = col;
       // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
       samplePair[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
+      if (searchPixel) {
+        sampleStart[px] = Math.max(view.start, Math.ceil((px - x) / scale - 0.5));
+        sampleEnd[px] = Math.min(view.end, Math.ceil((px + 1 - x) / scale - 0.5));
+      }
     }
     for (let py = firstY; py < lastY; py++) {
       const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
@@ -602,7 +648,17 @@
         let col = sampleColumn[px];
         let bit = val[sourceRow + col];
         if (bit < 0 && samplePair[px]) bit = val[sourceRow + ++col];
-        if (bit >= 0) words[out + px] = colorWords[bit + (options.markRepeats ? repeatTone(row, col) : 0)];
+        // Keep a thin marked line visible when the field is fitted to the canvas.
+        if (searchPixel && !patternAt(marks, sourceRow + col)) {
+          for (let displayed = sampleStart[px]; displayed < sampleEnd[px]; displayed++) {
+            const candidate = sourceColumn(displayed, W);
+            if (!patternAt(marks, sourceRow + candidate)) continue;
+            col = candidate;
+            bit = val[sourceRow + col];
+            break;
+          }
+        }
+        if (bit >= 0) words[out + px] = colorWords[bit + bitTone(row, col, marks, sourceRow + col)];
       }
     }
   }
@@ -832,7 +888,7 @@
 
   function paintOutlines(x, y, scale, ratio, color) {
     const {W, H} = field;
-    const columns = (options.stopAtContact || options.markRepeats || currentReverse()) && separation()
+    const columns = (options.stopAtContact || options.markRepeats || options.patternColors || currentReverse()) && separation()
       ? branches.map(branch => branch.column) : [column];
     const radius = (depth - 0.5) * scale;
     const middle = y + depth * scale;
@@ -845,6 +901,7 @@
       context.rect(x + left * scale, y, (right - left) * scale, H * scale);
       context.clip();
       context.strokeStyle = color;
+      if (options.patternColors) context.globalAlpha = 0.35;
       context.lineWidth = 1.25 * ratio;
       for (const col of columns) {
         const tip = x + (offset + col + 0.5) * scale;
@@ -1080,6 +1137,10 @@
       redraw();
     });
   }
+  for (const input of patternColors) {
+    input.addEventListener("input", redraw);
+    input.addEventListener("change", save);
+  }
   for (const select of [size, width]) select.addEventListener("change", () => { save(); reset(); });
   stepSize.addEventListener("change", () => { stepSize.value = stepCount(); save(); });
   speed.addEventListener("input", () => {
@@ -1146,6 +1207,7 @@
           changeMotion(reversalChanges, options.reverseAtContact);
         }
         if (previous.joinLeft !== options.joinLeft || previous.joinRight !== options.joinRight) updateViewBounds();
+        syncEdgeButtons();
         redraw();
       }
     });

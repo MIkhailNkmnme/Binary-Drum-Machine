@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.011</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.012</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -12,7 +12,8 @@
   <script defer src="mayatnik-edge-flow.js"></script>
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=010"></script>
+  <script defer src="mayatnik-rhomb-pattern-colors.js?v=001"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=012"></script>
   <style>
     main {
       max-width: 1040px;
@@ -33,6 +34,11 @@
     .romb-setting { display: grid; color: var(--muted); font-size: 12px; }
     .romb-setting .gz-hx { color: var(--text); }
     :is(#romb-step-size, #romb-step-size-coin), :is(#romb-step-size, #romb-step-size-coin)::-webkit-inner-spin-button { appearance: auto; }
+    .romb-pattern-palette { justify-content: center; gap: 8px; cursor: default; }
+    .romb-pattern-palette[hidden] { display: none; }
+    .romb-pattern-palette label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
+    .romb-pattern-palette input { width: 19px; height: 18px; padding: 0; border: 0; background: none; cursor: pointer; }
+    .romb-pattern-palette:focus-within { background: var(--cyan) !important; }
     .romb-setting input[type=range] { width: 100%; margin: 0; accent-color: var(--cyan); cursor: pointer; }
     .romb-board { background: radial-gradient(ellipse at center, #094051, #0b1620 90%); margin: 10px 0; }
     .romb-board canvas { width: 100%; height: clamp(240px, 56vh, 560px); }
@@ -84,7 +90,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.011</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.012</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -117,6 +123,13 @@
       <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
         <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
       </button>
+      <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить центральные столбцы, рёбра и примыкающие симметричные шаблоны" aria-label="Раскрасить оси, рёбра и шаблоны">
+        <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
+      </button>
+      <div class="gz-hx romb-pattern-palette" id="romb-pattern-palette" role="group" aria-label="Палитра шаблонов" hidden>
+        <label title="Цвет единиц">1 <input id="romb-pattern-one" type="color" value="#ffe184" aria-label="Цвет единиц"></label>
+        <label title="Цвет нулей">0 <input id="romb-pattern-zero" type="color" value="#a55383" aria-label="Цвет нулей"></label>
+      </div>
       <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
         <span class="gz-nm">AND</span>
       </button>
@@ -219,6 +232,7 @@
       <p>«Разворот» меняет направление обеих ветвей на последнем касании. Если включён и «Стоп · Касание», пауза наступает уже после смены направления.</p>
       <p>С начального кадра цикла нумерация повторяется после совпадения битов и обеих ветвей. Если сменить режим края в ходе опыта, расчёт продолжится по новому маршруту. <a href="../issledovanie/wolfram-nks/romb-period.html#sizes">Периоды для разных размеров</a>.</p>
       <p>«Повторы» отмечают золотым одинаковые блоки 2 × 2 внутри двух ромбов. Фиолетовый связывает левую склейку с правой половиной поля, зелёный — правую склейку с левой. Оттенки сохраняют различие между 0 и 1.</p>
+      <p>«Раскрасить» выделяет биты на центральных столбцах и рёбрах двух ромбов. Рядом выделяются целые симметричные фигуры из четырёх и более одинаковых битов, которые касаются этих линий. Поиск охватывает по 12 столбцов с каждой стороны линии. Палитра задаёт отдельные цвета для 1 и 0.</p>
       <p>Совмещение читает две вырезки по центрам и строит отдельный ромб. В наложении фиолетовый показывает единицу первой ветви, зелёный — второй, светлый — обеих. В XOR и AND пустая клетка даёт 0, а общей пустоте соответствует прозрачность.</p>
     </section>
   </main>
