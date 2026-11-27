@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.034 */
+/* Ромбовый Маятник v0.035 */
 (() => {
   "use strict";
 
@@ -6,6 +6,8 @@
   const byId = id => root.querySelector("#" + id);
   const canvas = byId("romb-field");
   const fieldBoard = byId("romb-board");
+  const fieldStage = byId("romb-field-stage");
+  const comparison = byId("romb-comparison");
   const phaseList = byId("romb-phase-list");
   const phasePage = byId("romb-phase-page");
   let phaseFactor = 0, phaseKey = "", phaseTiles = [], averageTile;
@@ -800,8 +802,13 @@
     return available >= 1 ? Math.floor(available) : 1 / Math.ceil(1 / available);
   }
 
+  function fieldFitRect() {
+    // In Zen, the comparison takes space from the canvas after the scale is chosen.
+    return (zen ? fieldBoard : fieldStage).getBoundingClientRect();
+  }
+
   function scaleFor(rect, camera = view, bounds = projectedBounds()) {
-    const selected = camera.scale ?? fittedPixelScale(camera === view && phaseList ? fieldBoard.getBoundingClientRect() : rect, camera, bounds);
+    const selected = camera.scale ?? fittedPixelScale(camera === view && phaseList ? fieldFitRect() : rect, camera, bounds);
     return (camera === view && phaseList ? Math.max(1, selected) : selected) / (devicePixelRatio || 1);
   }
 
@@ -1091,7 +1098,7 @@
     const fullHeight = pageField();
     fieldBoard.classList.toggle("romb-full-height", fullHeight);
     if (fullHeight) {
-      const scale = scaleFor(fieldBoard.getBoundingClientRect(), view, bounds);
+      const scale = scaleFor(fieldStage.getBoundingClientRect(), view, bounds);
       const height = Math.max(1, Math.ceil((bounds.bottom - bounds.top) * scale)) + "px";
       if (fieldBoard.style.getPropertyValue("--field-height") !== height) fieldBoard.style.setProperty("--field-height", height);
     }
@@ -1109,12 +1116,9 @@
     }
     const bounds = projectedBounds();
     const ratio = devicePixelRatio || 1;
-    const selectedScale = view.scale ?? fittedPixelScale(phaseList ? fieldBoard.getBoundingClientRect() : canvas.getBoundingClientRect(), view, bounds);
-    const compare = !!phaseList && selectedScale < 1;
-    fieldBoard.classList.toggle("romb-comparing", compare);
-    if (compare) {
-      fieldBoard.style.setProperty("--reference-width", "min(48%, " + Math.ceil((bounds.right - bounds.left) / ratio) + "px)");
-    }
+    const selectedScale = view.scale ?? fittedPixelScale(phaseList ? fieldFitRect() : canvas.getBoundingClientRect(), view, bounds);
+    const compare = !!comparison && selectedScale < 1;
+    if (comparison) comparison.hidden = !compare;
     const fullHeight = layoutFieldHeight(bounds);
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -1313,14 +1317,14 @@
     return distance === 2 * depth ? " · порог касания" : "";
   }
 
-  function updateLabels(scale, sideScale) {
+  function updateLabels(scale, comparisonScale) {
     const {W, H} = field;
     const vertical = isVertical();
     const position = positionText() + (frame && !vertical && !splitAxis("x") && !["double", "inward"].includes(horizontalMode()) ? " из " + formatter.format(W) : "");
     const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
-    const zoom = sideScale ? "центр 1/1 · по бокам " + scaleLabel(sideScale) : scaleLabel(scale);
+    const zoom = comparisonScale ? "поле 1/1 · внизу " + scaleLabel(comparisonScale) : scaleLabel(scale);
     const label = "Кадр " + formatter.format(frame) + target + position +
       dimensions + " · " + zoom + contact + (options.square ? " · квадрат" : "") +
       (options.buildAnd ? " · AND" : "");
@@ -1854,7 +1858,7 @@
 
     function zoomBy(factor, px = 0, py = 0, anchorPointer = false) {
       const box = bounds();
-      const fitScale = fittedPixelScale((element === canvas && phaseList ? fieldBoard : element).getBoundingClientRect(), camera, box);
+      const fitScale = fittedPixelScale(element === canvas && phaseList ? fieldFitRect() : element.getBoundingClientRect(), camera, box);
       const current = camera.scale ?? fitScale;
       if (factor === 1) return;
       // Adjacent steps: … 1/3, 1/2, 1/1, 2/1, 3/1 …
@@ -1918,7 +1922,7 @@
     const grid = document.createElement("div");
     grid.className = "romb-zen-grid";
     grid.hidden = true;
-    board.append(grid);
+    fieldStage.append(grid);
 
     function panel(name, title) {
       const section = document.createElement(title ? "details" : "div");
