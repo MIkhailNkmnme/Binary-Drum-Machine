@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.035 */
+/* Ромбовый Маятник v0.036 */
 (() => {
   "use strict";
 
@@ -1638,7 +1638,9 @@
         const pixels = withGifRun(job, () => gifPixels(job));
         const passes = Math.min(stride, period - i * stride);
         const time = Math.max(1, Math.round(duration * passes / stride));
-        await sink.append(await writer.add([pixels], time));
+        const {blobs} = await writer.add([pixels], time);
+        checkGifJob(job);
+        await sink.append(blobs);
         gifProgress(job, "Сборка GIF · " + formatter.format(i + 1) + " из " + formatter.format(count));
       }
       await sink.append(await writer.finish());
