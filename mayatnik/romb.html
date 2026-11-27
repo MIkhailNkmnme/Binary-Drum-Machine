@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.049</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.050</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=008"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=045"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=046"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -110,6 +110,20 @@
     .romb-route-group { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: end; gap: 2px 12px; }
     .romb-route-group[hidden], .romb-controls [hidden] { display: none !important; }
     .romb-route-help { flex: 1 1 300px; margin: 0; color: var(--muted); font-size: 12px; }
+    .romb-route-picker { position: relative; }
+    .romb-route-picker > summary.gz-hx { justify-content: space-between; list-style: none; }
+    .romb-route-picker > summary::-webkit-details-marker { display: none; }
+    .romb-route-picker[open] > summary.gz-hx { background: var(--cyan); }
+    .romb-route-picker .gz-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .romb-route-options {
+      display: grid; gap: 2px; position: absolute; z-index: 2; top: 0; inset-inline-start: calc(100% + 2px);
+    }
+    .romb-route-picker.romb-route-left > .romb-route-options { inset-inline: auto calc(100% + 2px); }
+    .romb-route-picker:not([open]) > .romb-route-options { display: none; }
+    .romb-zen-motion .romb-route-options { position: static; margin-top: 2px; }
+    @media (max-width: 420px) {
+      .romb-route-options { position: static; margin-top: 2px; }
+    }
     .romb-step-count {
       display: grid; grid-template-columns: 1fr 24px auto 24px 1fr;
       align-items: center; column-gap: 2px;
@@ -328,7 +342,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.049</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.050</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -515,17 +529,22 @@
         </details>
       </div>
       <div class="romb-route-group" id="romb-route-group" role="group" aria-label="Общий маршрут по двум осям" hidden>
-        <label class="romb-setting">Общий маршрут
-          <span class="gz-hx value-control">
-            <select id="romb-route" title="Маршрут при включении горизонтального и вертикального движения" aria-describedby="romb-route-help">
-              <option value="cw">По часовой</option>
-              <option value="ccw">Против часовой</option>
-              <option value="cross">Крестом</option>
-              <option value="spiral-cw">Спираль ↻</option>
-              <option value="spiral-ccw">Спираль ↺</option>
-            </select>
-          </span>
-        </label>
+        <div class="romb-setting">
+          <span>Общий маршрут</span>
+          <select id="romb-route" hidden>
+            <option value="cw">По часовой</option>
+            <option value="ccw">Против часовой</option>
+            <option value="cross">Крестом</option>
+            <option value="spiral-cw">Спираль ↻</option>
+            <option value="spiral-ccw">Спираль ↺</option>
+          </select>
+          <details class="romb-route-picker">
+            <summary class="gz-hx" aria-describedby="romb-route-help">
+              <span class="gz-nm">По часовой</span><span class="gz-ic" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="romb-route-options" role="group" aria-label="Варианты общего маршрута"></div>
+          </details>
+        </div>
         <p class="romb-route-help" id="romb-route-help">Когда включены обе оси, действует общий маршрут; выбранные одноосевые ходы сохраняются. Радиальные точки идут от центра на расстояниях 1, 2, 3…; спираль проходит отрезки длиной 1, 1, 2, 2, 3, 3…</p>
       </div>
       <label class="romb-setting"><span>Скорость · <span id="romb-speed-value">115 мс</span></span>

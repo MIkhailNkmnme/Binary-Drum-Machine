@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.045 */
+/* Ромбовый Маятник v0.046 */
 (() => {
   "use strict";
 
@@ -101,6 +101,7 @@
   let gifControlsDirty = true;
   const gifRange = [0, 64];
   const mirrors = [];
+  const routePickers = [];
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
   let routeWrapY, verticalRouteChanges, jointPoints, spiral;
@@ -435,6 +436,7 @@
         : key === "x" ? "Горизонтальный ход половин или целого ромба" : "Вертикальный ход половин или целого ромба";
     }
     if (byId("romb-route-group")) byId("romb-route-group").hidden = !both;
+    syncRoutePickers(both);
     verticalWrapButton?.setAttribute("aria-pressed", String(currentWrapY()));
     if (verticalWrapButton) verticalWrapButton.disabled = !isVertical();
     edgeButtons.wrap.disabled = !isHorizontal();
@@ -1614,13 +1616,79 @@
     }
   }
 
+  function syncRoutePickers(active) {
+    const option = jointRoute?.selectedOptions[0];
+    if (!option) return;
+    for (const entry of routePickers) {
+      const {picker, summary, choices} = entry;
+      if (!active && picker.open) picker.open = false;
+      if (entry.value === option.value) continue;
+      entry.value = option.value;
+      summary.querySelector(".gz-nm").textContent = option.textContent;
+      const name = "Общий маршрут · " + option.textContent;
+      summary.title = name;
+      summary.setAttribute("aria-label", name);
+      for (const choice of choices) choice.setAttribute("aria-pressed", String(choice.value === option.value));
+    }
+  }
+
+  function mountRoutePicker(container) {
+    const picker = container.querySelector(".romb-route-picker");
+    if (!picker || !jointRoute) return;
+    const summary = picker.querySelector("summary");
+    const list = picker.querySelector(".romb-route-options");
+    const choices = Array.from(jointRoute.options, option => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gz-hx";
+      button.value = option.value;
+      button.title = option.textContent;
+      const label = document.createElement("span");
+      label.className = "gz-nm";
+      label.textContent = option.textContent;
+      button.append(label);
+      button.addEventListener("click", () => {
+        picker.open = false;
+        summary.focus({preventScroll: true});
+        if (jointRoute.value === button.value) return;
+        jointRoute.value = button.value;
+        jointRoute.dispatchEvent(new Event("change", {bubbles: true}));
+      });
+      return button;
+    });
+    list.replaceChildren(...choices);
+    routePickers.push({picker, summary, choices});
+    picker.addEventListener("toggle", () => {
+      if (!picker.open) return;
+      const {left, right, width} = summary.getBoundingClientRect();
+      picker.classList.toggle("romb-route-left", right + width + 2 > innerWidth && left >= width + 2);
+    });
+    picker.addEventListener("keydown", event => {
+      if (event.key === "Escape" && picker.open) {
+        event.preventDefault();
+        event.stopPropagation();
+        picker.open = false;
+        summary.focus({preventScroll: true});
+        return;
+      }
+      const direction = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
+      if (!direction) return;
+      event.preventDefault();
+      if (!picker.open) picker.open = true;
+      const index = choices.indexOf(document.activeElement);
+      const next = index < 0 ? choices.find(choice => choice.value === jointRoute.value)
+        : choices[(index + direction + choices.length) % choices.length];
+      next?.focus();
+    });
+  }
+
   function mountCoinControls() {
     const holder = byId("romb-coin-controls");
     if (!holder) return;
     const controls = byId("romb-controls").cloneNode(true);
     (controls.querySelector("#romb-zen-pair") || controls.querySelector("#romb-zen"))?.remove();
     controls.querySelector("#romb-pattern-colors").setAttribute("aria-controls", "romb-pattern-palette-coin");
-    controls.querySelector("#romb-route")?.setAttribute("aria-describedby", "romb-route-help-coin");
+    controls.querySelector(".romb-route-picker summary")?.setAttribute("aria-describedby", "romb-route-help-coin");
     controls.id = "romb-coin-toolbar";
     controls.setAttribute("aria-label", "Общие команды Маятника в Ромбе-монете");
     const timeline = frameControl.cloneNode(true);
@@ -1646,6 +1714,7 @@
       mirrors.push([source, copy]);
     }
     holder.append(controls);
+    mountRoutePicker(controls);
     coinFrameInfo = document.createElement("p");
     coinFrameInfo.className = "progress";
     byId("romb-coin-frames").append(coinFrameInfo, timeline, repeat);
@@ -2841,9 +2910,15 @@
   }
 
   if (!hubFour) {
+    mountRoutePicker(root);
     mountCoinControls();
     mountZen();
     mountScaleExample();
+    document.addEventListener("pointerdown", event => {
+      for (const {picker} of routePickers) {
+        if (picker.open && !picker.contains(event.target)) picker.open = false;
+      }
+    });
   }
   updateSpeed();
   reset(sharedScene);
