@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.037 */
+/* Ромбовый Маятник v0.038 */
 (() => {
   "use strict";
 
@@ -57,6 +57,10 @@
   const patternColors = [byId("romb-pattern-zero"), byId("romb-pattern-one")];
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
+  const gifCycleButton = byId("romb-gif-cycle");
+  const gifTrack = byId("romb-gif-track");
+  const gifSliders = [byId("romb-gif-first"), byId("romb-gif-last")];
+  const gifNumbers = [byId("romb-gif-first-value"), byId("romb-gif-last-value")];
   const combinedView = byId("romb-combined-view");
   const combinedCanvas = byId("romb-combined");
   const combinedContext = combinedCanvas.getContext("2d");
@@ -84,6 +88,8 @@
   const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
   const coinView = {x: 0, y: 0, scale: null};
   let allowReducedZoom = false;
+  let gifFullCycle = false;
+  const gifRange = [0, 64];
   const mirrors = [];
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
@@ -168,6 +174,12 @@
     if (typeof saved.wrapY !== "boolean") options.wrapY = !!saved.wrap;
     allowReducedZoom = saved.allowReducedZoom === true;
     view.scale = limitPixelScale(view.scale, view);
+    gifFullCycle = saved.gifFullCycle === true;
+    if (Array.isArray(saved.gifRange) && Number.isSafeInteger(saved.gifRange[0]) && Number.isSafeInteger(saved.gifRange[1])) {
+      gifRange[0] = clamp(saved.gifRange[0], 0, maxFrame);
+      gifRange[1] = clamp(saved.gifRange[1], gifRange[0], maxFrame);
+    }
+    if (normalSliderMax) syncGifControls();
   }
 
   function save() {
@@ -181,7 +193,8 @@
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
-      patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value), allowReducedZoom, ...options
+      patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value),
+      allowReducedZoom, gifFullCycle, gifRange: [...gifRange], ...options
     };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
@@ -241,6 +254,7 @@
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
     normalSliderMax = Math.min(maxFrame, (isJoint() ? 4 : 2) * Math.max(columns, height) + 1);
+    syncGifControls();
     cycle = null;
     configureCycle();
     initializeRun();
@@ -721,31 +735,41 @@
     column = branches[(target - 1) % 2].column;
   }
 
+  function findCheckpoint(target, start) {
+    let checkpoint = null;
+    for (const [at, saved] of checkpoints) {
+      if (at > start && at <= target) {
+        start = at;
+        checkpoint = {at, saved};
+      }
+    }
+    return checkpoint;
+  }
+
+  function restoreCheckpoint(at, checkpoint) {
+    field.val.set(checkpoint.bits);
+    firstPaintedRow = checkpoint.firstPaintedRow;
+    endPaintedRow = checkpoint.endPaintedRow;
+    branches = checkpoint.branches.map(item => ({...item}));
+    column = checkpoint.column;
+    routeWrap = checkpoint.routeWrap;
+    routeWrapY = checkpoint.routeWrapY;
+    jointPoints = checkpoint.jointPoints.map(point => ({...point}));
+    spiral = {...checkpoint.spiral};
+    routeReverse = checkpoint.routeReverse;
+    frame = at;
+  }
+
   function seek(target, lap = cycle && target >= cycle.start ? cycle.lap : 0) {
     stop();
     patternMarks = null;
     if (cycle) cycle.lap = lap;
-    let start = frame <= target ? frame : 0;
-    let checkpoint;
-    for (const [at, saved] of checkpoints) {
-      if (at > start && at <= target) {
-        start = at;
-        checkpoint = saved;
-      }
-    }
+    const current = frame <= target ? frame : 0;
+    const checkpoint = findCheckpoint(target, current);
+    const start = checkpoint?.at ?? current;
     const retreat = hubFour && target < frame && frame - target < target - start;
     if (!retreat && checkpoint) {
-      field.val.set(checkpoint.bits);
-      firstPaintedRow = checkpoint.firstPaintedRow;
-      endPaintedRow = checkpoint.endPaintedRow;
-      branches = checkpoint.branches.map(item => ({...item}));
-      column = checkpoint.column;
-      routeWrap = checkpoint.routeWrap;
-      routeWrapY = checkpoint.routeWrapY;
-      jointPoints = checkpoint.jointPoints.map(point => ({...point}));
-      spiral = {...checkpoint.spiral};
-      routeReverse = checkpoint.routeReverse;
-      frame = start;
+      restoreCheckpoint(start, checkpoint.saved);
     } else if (!retreat && frame > target) {
       field.val.fill(-1);
       initializeRun();
@@ -1263,6 +1287,7 @@
     if (frame > normalSliderMax) {
       const span = 2 * (isVertical() ? field.H : field.W) + 1;
       normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
+      syncGifControls(Math.max(normalSliderMax, Number(gifSliders[0].max)));
     }
     const expectedEnd = reportedCycle?.returned ?? 0;
     const end = cycle?.period ? cycle.start + cycle.period - 1
@@ -1435,6 +1460,8 @@
         if (label !== null && copy.getAttribute("aria-label") !== label) copy.setAttribute("aria-label", label);
         if (source.matches("input[type=range]")) copy.max = source.max;
         if (source.matches("input, select") && copy.value !== source.value) copy.value = source.value;
+      } else if (source === gifTrack) {
+        if (copy.style.cssText !== source.style.cssText) copy.style.cssText = source.style.cssText;
       } else {
         if (!source.querySelector("button, input, select") && copy.textContent !== source.textContent) copy.textContent = source.textContent;
       }
@@ -1506,6 +1533,31 @@
   function gifSettings() {
     return JSON.stringify([motionKey(), options, combineMode.value, flipSecond.checked,
       patternArea?.value, patternColors.map(input => input.value)]);
+  }
+
+  function syncGifControls(sliderLimit = normalSliderMax) {
+    const limit = Math.max(sliderLimit, gifRange[1], 1);
+    gifCycleButton.setAttribute("aria-pressed", String(gifFullCycle));
+    gifRange.forEach((value, index) => {
+      const slider = gifSliders[index], number = gifNumbers[index];
+      if (Number(slider.max) !== limit) slider.max = String(limit);
+      for (const input of [slider, number]) {
+        if (input.valueAsNumber !== value) input.value = String(value);
+        input.disabled = gifFullCycle;
+      }
+    });
+    gifTrack.style.setProperty("--gif-first", 100 * gifRange[0] / limit + "%");
+    gifTrack.style.setProperty("--gif-last", 100 * gifRange[1] / limit + "%");
+  }
+
+  function updateGifEndpoint(index, input, sliderLimit) {
+    const value = input.valueAsNumber;
+    if (Number.isFinite(value)) {
+      gifRange[index] = index === 0 ? clamp(Math.round(value), 0, gifRange[1])
+        : clamp(Math.round(value), gifRange[0], maxFrame);
+    }
+    syncGifControls(sliderLimit);
+    syncMirrors();
   }
 
   function checkGifJob(job) {
@@ -1596,6 +1648,22 @@
     return new Uint8ClampedArray(output.buffer);
   }
 
+  function prepareGifRun(job, first) {
+    const live = runState();
+    const wholeCycle = first === null;
+    job.run = {...live, field: MAYATNIK.field(field.W, field.H, "empty"),
+      routeChanges: new Map(wholeCycle ? [[0, currentWrap()]] : routeChanges),
+      verticalRouteChanges: new Map(wholeCycle ? [[0, currentWrapY()]] : verticalRouteChanges),
+      reversalChanges: new Map(wholeCycle ? [[0, currentReverse()]] : reversalChanges)};
+    const useLive = !wholeCycle && live.frame <= first;
+    const checkpoint = wholeCycle ? null : findCheckpoint(first, useLive ? live.frame : 0);
+    withGifRun(job, () => {
+      if (checkpoint) restoreCheckpoint(checkpoint.at, checkpoint.saved);
+      else if (useLive) restoreCheckpoint(live.frame, {...live, bits: live.field.val});
+      else initializeRun();
+    });
+  }
+
   async function toggleRecording(coin = false) {
     if (recording) {
       recording.cancelled = true;
@@ -1603,7 +1671,8 @@
     }
     const status = byId(coin ? "romb-coin-record-status" : "romb-record-status");
     status.hidden = false;
-    if (isJoint() && jointRoute.value.startsWith("spiral")) {
+    const range = gifFullCycle ? null : [...gifRange];
+    if (!range && isJoint() && jointRoute.value.startsWith("spiral")) {
       status.textContent = "У расширяющейся спирали нет полного цикла: длина витка растёт.";
       return;
     }
@@ -1622,31 +1691,31 @@
     let writer, sink;
     try {
       recording = job;
-      status.textContent = "Подготовка цикла · масштаб " + scaleLabel(scale);
+      const preparation = range ? "Кадры " + range.map(value => formatter.format(value)).join("–") : "Подготовка цикла";
+      status.textContent = preparation + " · масштаб " + scaleLabel(scale);
       recordLabel.textContent = "Отмена GIF";
       recordButton.setAttribute("aria-label", "Отменить сборку GIF");
       recordButton.setAttribute("aria-pressed", "true");
       syncMirrors();
       if (!colorWords) paint();
-      job.run = {...runState(), field: MAYATNIK.field(field.W, field.H, "empty"),
-        routeChanges: new Map([[0, currentWrap()]]), verticalRouteChanges: new Map([[0, currentWrapY()]]),
-        reversalChanges: new Map([[0, currentReverse()]])};
-      withGifRun(job, initializeRun);
+      prepareGifRun(job, range?.[0] ?? null);
       if (!coin && options.patternColors) job.painter = createPatternPainter();
       if (!coin && !options.square) {
         job.columns = new Int32Array(width);
         job.pairs = new Uint8Array(width);
       }
-      const period = await findGifCycle(job);
-      const start = job.run.frame;
+      const period = range ? null : await findGifCycle(job);
+      const start = range?.[0] ?? job.run.frame;
+      const end = range?.[1] ?? start + period - 1;
+      const count = range ? Math.ceil((end - start) / stride) + 1 : Math.ceil(period / stride);
       writer = await window.MayatnikGif.batch([{width, height}], {stream: true});
       sink = await window.MayatnikGif.squareSink([width]);
-      const count = Math.ceil(period / stride);
       for (let i = 0; i < count; i++) {
         checkGifJob(job);
-        await advanceGif(job, start + i * stride);
+        const target = Math.min(start + i * stride, end);
+        await advanceGif(job, target);
         const pixels = withGifRun(job, () => gifPixels(job));
-        const passes = Math.min(stride, period - i * stride);
+        const passes = Math.min(stride, end - target + (range ? 0 : 1)) || stride;
         const time = Math.max(1, Math.round(duration * passes / stride));
         const {blobs} = await writer.add([pixels], time);
         checkGifJob(job);
@@ -1659,7 +1728,7 @@
       const url = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.href = url;
-      link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + start + "-cycle-" + period + ".gif";
+      link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + start + (range ? "-" + end : "-cycle-" + period) + ".gif";
       document.body.append(link);
       link.click();
       link.remove();
@@ -1971,7 +2040,7 @@
     place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
       byId("romb-route-group"), byId("romb-counter-step"), byId("romb-reverse-contact"));
     place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
-      byId("romb-pattern-colors"), patternPalette, squareButton?.closest(".commands"), recordButton);
+      byId("romb-pattern-colors"), patternPalette, squareButton?.closest(".commands"), byId("romb-gif-controls"));
     place(playback, play.closest(".romb-run-steps"));
     place(timeline, frameControl);
     let previousView, previousFocus, nativeZen = false, mode = 0;
@@ -2120,6 +2189,22 @@
   squareButton?.addEventListener("click", () => toggleSquare());
   andButton?.addEventListener("click", toggleBuildAnd);
   recordButton?.addEventListener("click", () => toggleRecording());
+  gifCycleButton.addEventListener("click", () => {
+    gifFullCycle = !gifFullCycle;
+    syncGifControls();
+    syncMirrors();
+    save();
+  });
+  gifSliders.forEach((slider, index) => {
+    const number = gifNumbers[index];
+    number.max = String(maxFrame);
+    slider.addEventListener("input", () => updateGifEndpoint(index, slider, Number(slider.max)));
+    slider.addEventListener("change", save);
+    number.addEventListener("change", () => {
+      updateGifEndpoint(index, number);
+      save();
+    });
+  });
   frameSlider.addEventListener("input", () => seek(Number(frameSlider.value)));
   for (const [key, button] of Object.entries(edgeButtons)) {
     button.addEventListener("click", () => {

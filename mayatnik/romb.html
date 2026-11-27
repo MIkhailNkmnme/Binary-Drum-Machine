@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.041</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.042</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=007"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=037"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=038"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -48,6 +48,35 @@
     .romb-strip > button.gz-hx + button.gz-hx { margin-left: -5px; }
     .romb-strip > button.gz-hx::before { clip-path: inherit; }
     .romb-command-bank > button.gz-hx { width: auto; flex-basis: auto; }
+    .romb-gif-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; flex-basis: 100%; min-width: 0; }
+    .romb-gif-range { flex: 1 1 246px; min-width: 0; max-width: 360px; }
+    .romb-gif-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 12px; }
+    .romb-gif-values input {
+      width: 8ch; margin-left: 2px; padding: 0 2px; font: inherit; color: var(--text);
+      background: var(--gz-bg); border: 1px solid var(--line);
+    }
+    .romb-gif-track { position: relative; display: grid; }
+    .romb-gif-track::before {
+      content: ""; position: absolute; inset: calc(50% - 1px) 7px auto; height: 2px; pointer-events: none;
+      background:
+        linear-gradient(to right, transparent var(--gif-first, 0%), var(--cyan) var(--gif-first, 0%),
+          var(--cyan) var(--gif-last, 100%), transparent var(--gif-last, 100%)),
+        repeating-linear-gradient(to right, var(--muted) 0 3px, transparent 3px 6px);
+    }
+    .romb-gif-track input { appearance: none; position: relative; width: 100%; height: 18px; margin: 0; background: transparent; cursor: ew-resize; }
+    .romb-gif-track input:focus-visible { outline: 1px solid var(--cyan); outline-offset: -1px; }
+    .romb-gif-track input::-webkit-slider-runnable-track { height: 2px; background: transparent; }
+    .romb-gif-track input::-webkit-slider-thumb {
+      appearance: none; width: 14px; height: 14px; margin-top: -6px; background: var(--cyan);
+      clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    }
+    .romb-gif-track input::-moz-range-track { height: 2px; background: transparent; }
+    .romb-gif-track input::-moz-range-thumb {
+      width: 14px; height: 14px; border: 0; background: var(--cyan);
+      clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    }
+    .romb-gif-range:has(input:disabled) { opacity: .45; }
+    .romb-gif-track input:disabled { cursor: default; }
     .romb-controls > .romb-route-group { order: 1; }
     .romb-step-pair { --gz-r0: var(--line); --gz-r1: var(--line); cursor: default; }
     .romb-step-pair .gz-half { border: 0; text-shadow: none; }
@@ -168,6 +197,7 @@
     .romb-zen-motion .romb-route-group { display: grid; max-width: 252px; }
     .romb-zen-display > div { grid-template-columns: repeat(2, 120px); }
     .romb-zen-display .commands { grid-column: 1 / -1; display: grid; grid-template-columns: inherit; }
+    .romb-zen-display .romb-gif-controls { grid-column: 1 / -1; }
     .romb-zen-play { grid-area: play; justify-self: start; align-self: end; }
     .romb-zen-timeline { grid-area: timeline; align-self: end; width: 100%; max-width: 840px; justify-self: center; }
     .romb-zen-timeline .romb-frame-control { margin: 0; padding: 4px 0; }
@@ -291,7 +321,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.041</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.042</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -339,9 +369,24 @@
         <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
           <span class="gz-nm">AND</span>
         </button>
-        <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" aria-label="Собрать GIF">
-          <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
-        </button>
+        <div class="romb-gif-controls" id="romb-gif-controls" role="group" aria-label="Запись GIF">
+          <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" aria-label="Собрать GIF">
+            <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-gif-cycle" aria-pressed="false" title="Собрать один полный цикл" aria-label="Собрать один полный цикл">
+            <span class="gz-ic" aria-hidden="true">↻</span><span class="gz-nm">Весь цикл</span>
+          </button>
+          <div class="romb-gif-range" role="group" aria-label="Диапазон кадров GIF">
+            <div class="romb-gif-values">
+              <label>Начало <input type="number" id="romb-gif-first-value" min="0" step="1" value="0"></label>
+              <label>Конец <input type="number" id="romb-gif-last-value" min="0" step="1" value="64"></label>
+            </div>
+            <div class="romb-gif-track" id="romb-gif-track">
+              <input type="range" id="romb-gif-first" min="0" max="2047" step="1" value="0" aria-label="Первый кадр GIF">
+              <input type="range" id="romb-gif-last" min="0" max="2047" step="1" value="64" aria-label="Последний кадр GIF">
+            </div>
+          </div>
+        </div>
       </div>
       <label class="romb-setting">Высота ромба, N
         <span class="gz-hx value-control">
