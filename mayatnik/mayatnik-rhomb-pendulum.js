@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.043 */
+/* Ромбовый Маятник v0.044 */
 (() => {
   "use strict";
 
@@ -59,6 +59,8 @@
   const pngStatus = byId("romb-png-status");
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
+  const gifCountLabel = byId("romb-gif-count");
+  const gifStatus = byId("romb-record-status");
   const gifCropButton = byId("romb-gif-crop");
   const gifCycleButton = byId("romb-gif-cycle");
   const gifTrack = byId("romb-gif-track");
@@ -100,7 +102,7 @@
   let routeWrapY, verticalRouteChanges, jointPoints, spiral;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
-  let pixels, words, sampleColumn, samplePair, sampleStart, sampleEnd, colorWords, colorKey;
+  let pixels, words, flatSamples, colorWords, colorKey;
   let patternPainter, patternMarks;
   let firstPaintedRow, endPaintedRow;
   let renderRhombs = [];
@@ -1294,10 +1296,7 @@
       canvas.height = h;
       pixels = context.createImageData(w, h);
       words = new Uint32Array(pixels.data.buffer);
-      sampleColumn = new Int32Array(w);
-      samplePair = new Uint8Array(w);
-      sampleStart = new Int32Array(w);
-      sampleEnd = new Int32Array(w);
+      flatSamples = createFlatSamples(w, true);
     }
     const styles = getComputedStyle(root);
     syncPalette(styles);
@@ -1347,27 +1346,38 @@
     context.restore();
   }
 
-  function paintFlatBits(x, y, scale, w, h, marks, output = words, columns = sampleColumn, pairs = samplePair) {
+  function createFlatSamples(width, scanPatterns = false) {
+    const samples = {columns: new Int32Array(width), pairs: new Uint8Array(width)};
+    if (scanPatterns) {
+      samples.sampleStart = new Int32Array(width);
+      samples.sampleEnd = new Int32Array(width);
+    }
+    return samples;
+  }
+
+  function paintFlatBits(x, y, scale, w, h, marks, output = words, samples = flatSamples, area) {
     const {W, H, val} = field;
+    const {left, top, right, bottom} = area ?? {left: view.start, top: 0, right: view.end, bottom: H};
+    const {columns, pairs, sampleStart, sampleEnd} = samples;
     const displayWidth = view.end - view.start;
-    const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
-    const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
-    const firstY = Math.max(0, Math.ceil(y - 0.5));
-    const lastY = Math.min(h, Math.ceil(y + H * scale - 0.5));
+    const firstX = Math.max(0, Math.ceil(x + left * scale - 0.5));
+    const lastX = Math.min(w, Math.ceil(x + right * scale - 0.5));
+    const firstY = Math.max(0, Math.ceil(y + top * scale - 0.5));
+    const lastY = Math.min(h, Math.ceil(y + bottom * scale - 0.5));
     const searchPixel = marks && scale < 1;
     for (let px = firstX; px < lastX; px++) {
-      const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
+      const displayed = clamp(Math.floor((px + 0.5 - x) / scale), left, right - 1);
       const col = sourceColumn(displayed, W);
       columns[px] = displayed;
       // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
-      pairs[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
+      pairs[px] = col + 1 < W && displayed + 1 < right && (displayed + 1.5) * scale + x < px + 1;
       if (searchPixel) {
-        sampleStart[px] = Math.max(view.start, Math.ceil((px - x) / scale - 0.5));
-        sampleEnd[px] = Math.min(view.end, Math.ceil((px + 1 - x) / scale - 0.5));
+        sampleStart[px] = Math.max(left, Math.ceil((px - x) / scale - 0.5));
+        sampleEnd[px] = Math.min(right, Math.ceil((px + 1 - x) / scale - 0.5));
       }
     }
     for (let py = firstY; py < lastY; py++) {
-      const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
+      const row = clamp(Math.floor((py + 0.5 - y) / scale), top, bottom - 1);
       const sourceRow = row * W;
       const patternRow = row * displayWidth - view.start;
       const out = py * w;
@@ -1600,6 +1610,7 @@
     for (const copy of [...controls.querySelectorAll("[id]"), ...timeline.querySelectorAll("[id]"), repeat]) {
       const source = byId(copy.id);
       copy.id += "-coin";
+      if (source === gifStatus) continue;
       if (source.matches("button")) copy.addEventListener("click", () => {
         if (source === recordButton) toggleRecording(true);
         else if (source === pngButton) saveFramePng(true);
@@ -1655,6 +1666,26 @@
       patternArea?.value, patternColors.map(input => input.value)]);
   }
 
+  function gifFrameCount(range, stride, period) {
+    if (range) return Math.ceil((range[1] - range[0]) / stride) + 1;
+    return period == null ? null : Math.ceil(period / stride);
+  }
+
+  function knownGifCycle(wrap, reverse) {
+    if (!isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
+      return horizontalCycle(wrap, reverse);
+    }
+    return null;
+  }
+
+  function syncGifCount() {
+    const range = gifFullCycle ? null : gifRange;
+    const period = range ? null : knownGifCycle(currentWrap(), currentReverse())?.knownPeriod;
+    const count = gifFrameCount(range, stepCount(), period);
+    const text = "Кадров в GIF · " + (count === null ? "после расчёта цикла" : formatter.format(count));
+    if (gifCountLabel.textContent !== text) gifCountLabel.textContent = text;
+  }
+
   function syncGifControls() {
     gifControlsDirty = false;
     const cycleEnd = reportedCycle ? reportedCycle.returned - 1 : 0;
@@ -1677,6 +1708,7 @@
       const position = 100 * gifRange[index] / limit + "%";
       if (gifTrack.style.getPropertyValue(property) !== position) gifTrack.style.setProperty(property, position);
     }
+    syncGifCount();
   }
 
   function updateGifEndpoint(index, input) {
@@ -1728,8 +1760,9 @@
   }
 
   async function findGifCycle(job) {
-    if (!isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
-      const {start, knownPeriod} = horizontalCycle(job.run.routeWrap, job.run.routeReverse);
+    const knownCycle = knownGifCycle(job.run.routeWrap, job.run.routeReverse);
+    if (knownCycle) {
+      const {start, knownPeriod} = knownCycle;
       await advanceGif(job, start);
       return knownPeriod;
     }
@@ -1763,11 +1796,20 @@
     }
   }
 
-  function frameExportGeometry(coin, crop = null) {
+  function frameExportGeometry(coin, {crop = null, minimumScale = 1} = {}) {
     const camera = coin ? coinView : view;
-    const rect = (coin ? combinedCanvas : canvas).getBoundingClientRect();
+    const rect = coin ? combinedCanvas.getBoundingClientRect() : fieldFitRect();
     const bounds = crop ?? (coin ? coinBounds() : fullFieldBounds());
-    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? coinBounds() : projectedBounds()));
+    const scale = Math.max(minimumScale, camera.scale ?? fittedPixelScale(rect, camera, coin ? coinBounds() : projectedBounds()));
+    if (scale < 1) {
+      const divisor = Math.round(1 / scale);
+      const spanX = (bounds.right - bounds.left) / divisor, spanY = (bounds.bottom - bounds.top) / divisor;
+      const width = Math.ceil(spanX), height = Math.ceil(spanY);
+      // Keep the centers of the first and last pixels inside the selected area.
+      const x = (width - spanX) / 2 - bounds.left * scale;
+      const y = (height - spanY) / 2 - bounds.top * scale;
+      return {coin, bounds, scale, x, y, width, height};
+    }
     const x = -Math.floor(bounds.left * scale), y = -Math.floor(bounds.top * scale);
     const width = Math.ceil(bounds.right * scale) + x, height = Math.ceil(bounds.bottom * scale) + y;
     return {coin, bounds, scale, x, y, width, height};
@@ -1783,7 +1825,7 @@
       const marks = job.painter?.update(field.val, patternArea?.value) ?? job.marks;
       if (options.square) paintSquareBits(x, y, scale, width, height, bounds, marks, output);
       else paintFlatBits(x, y, scale, width, height, marks, output,
-        job.columns ?? new Int32Array(width), job.pairs ?? new Uint8Array(width));
+        job.flatSamples ?? createFlatSamples(width, marks && scale < 1), bounds);
     }
     return new Uint8ClampedArray(output.buffer);
   }
@@ -1858,7 +1900,7 @@
       recording.cancelled = true;
       return;
     }
-    const status = byId(coin ? "romb-coin-record-status" : "romb-record-status");
+    const status = coin ? byId("romb-record-status-coin") : gifStatus;
     status.hidden = false;
     const range = gifFullCycle ? null : [...gifRange];
     if (!range && isJoint() && jointRoute.value.startsWith("spiral")) {
@@ -1868,7 +1910,7 @@
     const camera = coin ? coinView : view;
     const element = coin ? combinedCanvas : canvas;
     const crop = camera.gifCrop.enabled ? gifCropArea(camera, element) : null;
-    const geometry = frameExportGeometry(coin, crop);
+    const geometry = frameExportGeometry(coin, {crop, minimumScale: 0});
     const {width, height, scale} = geometry;
     if (width > 65535 || height > 65535) {
       status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб поля.";
@@ -1879,8 +1921,10 @@
     let writer, sink;
     try {
       recording = job;
+      const estimate = gifFrameCount(range, stride, range ? null : knownGifCycle(currentWrap(), currentReverse())?.knownPeriod);
       const preparation = range ? "Кадры " + range.map(value => formatter.format(value)).join("–") : "Подготовка цикла";
-      status.textContent = preparation + " · масштаб " + scaleLabel(scale);
+      const total = estimate === null ? "" : " · 0 из " + formatter.format(estimate);
+      gifProgress(job, preparation + total, true);
       recordLabel.textContent = "Отмена GIF";
       recordButton.setAttribute("aria-label", "Отменить сборку GIF");
       recordButton.setAttribute("aria-pressed", "true");
@@ -1889,13 +1933,12 @@
       prepareGifRun(job, range?.[0] ?? null);
       if (!coin && options.patternColors) job.painter = createPatternPainter();
       if (!coin && !options.square) {
-        job.columns = new Int32Array(width);
-        job.pairs = new Uint8Array(width);
+        job.flatSamples = createFlatSamples(width, job.painter && scale < 1);
       }
       const period = range ? null : await findGifCycle(job);
       const start = range?.[0] ?? job.run.frame;
       const end = range?.[1] ?? start + period - 1;
-      const count = range ? Math.ceil((end - start) / stride) + 1 : Math.ceil(period / stride);
+      const count = gifFrameCount(range, stride, period);
       const totalFrames = formatter.format(count);
       gifProgress(job, "Сборка GIF · 0 % · 0 из " + totalFrames, true);
       writer = await window.MayatnikGif.batch([{width, height}], {stream: true});
@@ -2311,7 +2354,7 @@
     }
 
     place(top, frameLabel, size.closest(".romb-setting"),
-      speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), pngStatus, cycleNote);
+      speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, pngStatus, cycleNote);
     place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
       byId("romb-route-group"), byId("romb-counter-step"), byId("romb-reverse-contact"));
     place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
@@ -2549,11 +2592,13 @@
   }
   stepSize.addEventListener("input", () => {
     syncStepArrows();
+    syncGifCount();
     syncMirrors();
   });
   stepSize.addEventListener("change", () => {
     stepSize.value = stepCount();
     syncStepArrows();
+    syncGifCount();
     syncMirrors();
     save();
   });

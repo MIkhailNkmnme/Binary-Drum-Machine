@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.047</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.048</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=008"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=043"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=044"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -50,6 +50,9 @@
     .romb-strip > button.gz-hx::before { clip-path: inherit; }
     .romb-command-bank > button.gz-hx { width: auto; flex-basis: auto; }
     .romb-gif-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; flex-basis: 100%; min-width: 0; }
+    .romb-gif-feedback { flex: 1 0 100%; min-width: 0; }
+    .romb-gif-feedback .progress { margin: 2px 0 0; }
+    .romb-gif-feedback p[role="status"] { color: var(--cyan); }
     .romb-gif-range { flex: 1 1 246px; min-width: 0; max-width: 360px; }
     .romb-gif-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 12px; }
     .romb-gif-values input {
@@ -324,7 +327,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.047</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.048</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -394,6 +397,10 @@
               <input type="range" id="romb-gif-first" min="0" max="2047" step="1" value="0" aria-label="Первый кадр GIF">
               <input type="range" id="romb-gif-last" min="0" max="2047" step="1" value="64" aria-label="Последний кадр GIF">
             </div>
+          </div>
+          <div class="romb-gif-feedback">
+            <p id="romb-gif-count" class="progress"></p>
+            <p id="romb-record-status" class="progress" role="status" hidden></p>
           </div>
         </div>
       </div>
@@ -583,7 +590,6 @@
         <span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span>
       </button>
     </div>
-    <p id="romb-record-status" class="progress" role="status" hidden></p>
     <p id="romb-png-status" class="progress" role="status" hidden></p>
     <div class="romb-combine-controls" role="group" aria-label="Совмещение ромбов">
       <label class="romb-setting">Совмещение ромбов
@@ -610,7 +616,6 @@
         <button type="button" class="gz-hx" id="romb-coin-fit" title="Вписать Ромб-монету в окно"><span class="gz-ic" aria-hidden="true">↔</span><span class="gz-nm">Вписать</span></button>
         <button type="button" class="gz-hx" id="romb-coin-square" aria-pressed="false" title="Повернуть Ромб-монету в квадрат"><span class="gz-ic" aria-hidden="true">□</span><span class="gz-nm">Квадрат</span></button>
       </div>
-      <p id="romb-coin-record-status" class="progress" role="status" hidden></p>
       <p id="romb-coin-png-status" class="progress" role="status" hidden></p>
     </section>
     <div id="romb-hub-transport" role="group" aria-label="Управление кадрами в Хабе" hidden>
