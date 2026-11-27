@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ромбовый Маятник · строки 30–70 на новых маршрутах</title>
+  <link rel="stylesheet" href="../../wolfram/style.css?v=001">
+  <style>
+    .table-scroll {overflow-x:auto}
+    table {width:100%;border-collapse:collapse}
+    th,td {padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    thead {background:#15212b}
+  </style>
+</head>
+<body>
+<main>
+  <nav class="site-nav" aria-label="Разделы Зеркалиуса">
+    <a href="../Zerkalius-issledovanie.html">Исследования</a>
+    <a href="romb-search.html#sequences">Предыдущее исследование 5–70</a>
+  </nav>
+  <h1>Строки 30–70 на новых маршрутах Ромбового Маятника</h1>
+  <p>Поиск по исходным битам Ромбового Маятника v0.051. Проверено 124 064 кадров в 950 настройках. Один номер кадра считается отдельно для каждой настройки. Самая длинная находка в этой выборке — <strong>32 →</strong> · N = 512 · <a href="../../mayatnik/romb.html#romb=eyJ2ZXJzaW9uIjoxLCJzZXR0aW5ncyI6eyJyb3dzIjo1MTIsImZhY3RvciI6MiwiaGVpZ2h0RmFjdG9yIjoyLCJob3Jpem9udGFsTW90aW9uIjoicGVuZHVsdW0iLCJ2ZXJ0aWNhbE1vdGlvbiI6InBlbmR1bHVtIiwiam9pbnRSb3V0ZSI6InNwaXJhbC1jdyIsImhhbHZlcyI6eyJ4IjoidG9nZXRoZXIiLCJ5IjoidG9nZXRoZXIifSwiYnVpbGRBbmQiOmZhbHNlLCJ3cmFwIjpmYWxzZSwid3JhcFkiOmZhbHNlLCJyZXZlcnNlQXRDb250YWN0IjpmYWxzZSwicGF0dGVybkNvbG9ycyI6ZmFsc2UsInNxdWFyZSI6ZmFsc2UsImpvaW5MZWZ0IjpmYWxzZSwiam9pblJpZ2h0IjpmYWxzZX0sImZyYW1lIjoyNTYsImxhcCI6MCwicm91dGVzIjpbW1swLGZhbHNlXV0sW1swLGZhbHNlXV0sW1swLGZhbHNlXV1dfQ">кадр 256</a><br><small>строка 623, столбец 497 → строка 623, столбец 559</small>.</p>
+  <p>Длины найдены в следующем числе настроек (в скобках) — 32 (1).
+    <a href="romb-route-sequences.json" download>Скачать результаты и точный список кадров (JSON)</a>.</p>
+  <nav aria-label="Разделы исследования">
+    <a href="#matches">Совпадения</a> · <a href="#modes">Маршруты</a> · <a href="#frames">Кадры</a> ·
+    <a href="#spiral-frame">Кадр 24 433</a> · <a href="#windows">Окна с нахлёстом</a> · <a href="#time">Оценка времени</a>
+  </nav>
+  <section id="matches">
+    <h2>Первые совпадения</h2>
+    <p>Для каждой настройки и длины сохранено первое совпадение среди проверенных кадров. Координаты считались от 1 в исходной решётке на этом кадре. Ссылка открывает маршрут с теми же настройками и номером кадра.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Маршрут и настройки</th><th>Правило</th><th>Длина, направление и положение</th></tr></thead>
+      <tbody><tr><th scope='row'>Обе оси · Спираль по часовой<br><small>вместе по горизонтали, вместе по вертикали · 2N−1 × 2N−1 · отскок</small></th><td>XOR</td><td><strong>32 →</strong> · N = 512 · <a href="../../mayatnik/romb.html#romb=eyJ2ZXJzaW9uIjoxLCJzZXR0aW5ncyI6eyJyb3dzIjo1MTIsImZhY3RvciI6MiwiaGVpZ2h0RmFjdG9yIjoyLCJob3Jpem9udGFsTW90aW9uIjoicGVuZHVsdW0iLCJ2ZXJ0aWNhbE1vdGlvbiI6InBlbmR1bHVtIiwiam9pbnRSb3V0ZSI6InNwaXJhbC1jdyIsImhhbHZlcyI6eyJ4IjoidG9nZXRoZXIiLCJ5IjoidG9nZXRoZXIifSwiYnVpbGRBbmQiOmZhbHNlLCJ3cmFwIjpmYWxzZSwid3JhcFkiOmZhbHNlLCJyZXZlcnNlQXRDb250YWN0IjpmYWxzZSwicGF0dGVybkNvbG9ycyI6ZmFsc2UsInNxdWFyZSI6ZmFsc2UsImpvaW5MZWZ0IjpmYWxzZSwiam9pblJpZ2h0IjpmYWxzZX0sImZyYW1lIjoyNTYsImxhcCI6MCwicm91dGVzIjpbW1swLGZhbHNlXV0sW1swLGZhbHNlXV0sW1swLGZhbHNlXV1dfQ">кадр 256</a><br><small>строка 623, столбец 497 → строка 623, столбец 559</small></td></tr></tbody>
+    </table></div>
+  </section>
+  <section id="modes">
+    <h2>Результат по каждому движению половин</h2>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Оси</th><th>Ход и половины</th><th>Настроек</th><th>Лучшее XOR</th><th>Лучшее AND</th></tr></thead>
+      <tbody><tr><td>Горизонталь</td><th scope='row'>Маятник<br><small>вместе</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>Маятник<br><small>врозь</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>Подряд<br><small>вместе</small></th><td>24</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>Подряд<br><small>врозь</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>2 подряд<br><small>вместе</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>2 подряд<br><small>врозь</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>Навстречу<br><small>вместе</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Горизонталь</td><th scope='row'>Навстречу<br><small>врозь</small></th><td>26</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Маятник<br><small>вместе</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Маятник<br><small>врозь</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Подряд<br><small>вместе</small></th><td>20</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Подряд<br><small>врозь</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>2 подряд<br><small>вместе</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>2 подряд<br><small>врозь</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Навстречу<br><small>вместе</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Вертикаль</td><th scope='row'>Навстречу<br><small>врозь</small></th><td>22</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>По часовой<br><small>вместе по горизонтали, вместе по вертикали</small></th><td>30</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>По часовой<br><small>вместе по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>По часовой<br><small>врозь по горизонтали, вместе по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>По часовой<br><small>врозь по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Против часовой<br><small>вместе по горизонтали, вместе по вертикали</small></th><td>30</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Против часовой<br><small>вместе по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Против часовой<br><small>врозь по горизонтали, вместе по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Против часовой<br><small>врозь по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Крестом<br><small>вместе по горизонтали, вместе по вертикали</small></th><td>30</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Крестом<br><small>вместе по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Крестом<br><small>врозь по горизонтали, вместе по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Крестом<br><small>врозь по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль по часовой<br><small>вместе по горизонтали, вместе по вертикали</small></th><td>30</td><td><strong>32 →</strong> · N = 512 · <a href="../../mayatnik/romb.html#romb=eyJ2ZXJzaW9uIjoxLCJzZXR0aW5ncyI6eyJyb3dzIjo1MTIsImZhY3RvciI6MiwiaGVpZ2h0RmFjdG9yIjoyLCJob3Jpem9udGFsTW90aW9uIjoicGVuZHVsdW0iLCJ2ZXJ0aWNhbE1vdGlvbiI6InBlbmR1bHVtIiwiam9pbnRSb3V0ZSI6InNwaXJhbC1jdyIsImhhbHZlcyI6eyJ4IjoidG9nZXRoZXIiLCJ5IjoidG9nZXRoZXIifSwiYnVpbGRBbmQiOmZhbHNlLCJ3cmFwIjpmYWxzZSwid3JhcFkiOmZhbHNlLCJyZXZlcnNlQXRDb250YWN0IjpmYWxzZSwicGF0dGVybkNvbG9ycyI6ZmFsc2UsInNxdWFyZSI6ZmFsc2UsImpvaW5MZWZ0IjpmYWxzZSwiam9pblJpZ2h0IjpmYWxzZX0sImZyYW1lIjoyNTYsImxhcCI6MCwicm91dGVzIjpbW1swLGZhbHNlXV0sW1swLGZhbHNlXV0sW1swLGZhbHNlXV1dfQ">кадр 256</a><br><small>строка 623, столбец 497 → строка 623, столбец 559</small></td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль по часовой<br><small>вместе по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль по часовой<br><small>врозь по горизонтали, вместе по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль по часовой<br><small>врозь по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль против часовой<br><small>вместе по горизонтали, вместе по вертикали</small></th><td>30</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль против часовой<br><small>вместе по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль против часовой<br><small>врозь по горизонтали, вместе по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr>
+<tr><td>Обе оси</td><th scope='row'>Спираль против часовой<br><small>врозь по горизонтали, врозь по вертикали</small></th><td>28</td><td>—</td><td>—</td></tr></tbody>
+    </table></div>
+  </section>
+  <section id="frames">
+    <h2>Какие кадры вошли в выборку</h2>
+    <p>Искали 41 строку исходной последовательности по горизонтали →, вертикали ↓ и обеим диагоналям ↘ и ↙. Шаг по ряду или столбцу равен двум клеткам исходной решётки, шаг по диагонали — одна строка и один столбец. Пустая клетка разрывает цепочку. Длины, которые не помещаются в поле, исключены.</p>
+    <p>Основная выборка (616 настроек) использует размеры 2N−1 на включённых осях и отскок. На выключенной горизонтали ширина N−1, на выключенной вертикали высота N. Для каждого хода и состояния половин проверены XOR и AND. В таблице ниже указаны запланированные кадры, точная выборка для каждой настройки приведена в JSON. Всего исключено 104 настроек, где строка 30 геометрически не помещается.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Высота ромба N</th><th>Кадры</th></tr></thead>
+      <tbody><tr><th scope='row'>8</th><td>Исключены по размерам исходного поля</td></tr><tr><th scope='row'>16</th><td>1–128 подряд, только общие маршруты. На поле 31 × 31 диагональ вмещает 30 бит</td></tr><tr><th scope='row'>32</th><td>1–256 подряд</td></tr><tr><th scope='row'>64</th><td>1–512 подряд</td></tr><tr><th scope='row'>128, 256</th><td>1–32 подряд, затем 40, 48, 56, …, 512</td></tr><tr><th scope='row'>512</th><td>1–16 подряд, затем 32, 48, 64, …, 256</td></tr><tr><th scope='row'>1024</th><td>1–8, 16, 32, 48, 64</td></tr><tr><th scope='row'>2048</th><td>1–4, 8, 16</td></tr><tr><th scope='row'>4096</th><td>1, 2, 4</td></tr></tbody>
+    </table></div>
+    <ul>
+      <li>При N = 64 проверены ширины 4N−1, 8N−1, растущее поле и отдельно высота 4N−1. Это 224 настроек. Проверены кадры 1–32, затем через 8 до 512.</li>
+      <li>При N = 32 проверены перескок и разворот при касании там, где он доступен. Это 100 настроек. Проверены кадры 1–256 подряд.</li>
+      <li>В поздней выборке 10 настроек общих маршрутов при N = 256 с половинами вместе. Для четырёх маршрутов проверены кадры 128, 256, …, 4096. Для спирали по часовой — 256, 512, …, 24 320 и отдельно 24 433.</li>
+    </ul>
+    <p>Выводы относятся к перечисленным кадрам. Пропущенные кадры между точками выборки могут содержать более длинное совпадение. Непрерывный поиск по спиралям отложен.</p>
+  </section>
+  <section id="spiral-frame">
+    <h2>Отдельная проверка кадра 24 433</h2>
+    <p>Спираль по часовой, N = 256, поле 511 × 511, половины вместе, отскок. Вершина совпала с положением на снимке. На этом кадре проверен также прежний диапазон 5–70. Строки 30–70 не встретились ни в XOR, ни в AND.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Правило</th><th>Максимум</th><th>Лучшая диагональ</th><th>Кадр и вершина (столбец, строка)</th></tr></thead>
+      <tbody><tr><th scope='row'>XOR</th><td>23 ↓</td><td>20 ↙ · строка 162, столбец 151 → строка 181, столбец 132</td><td><a href="../../mayatnik/romb.html#romb=eyJ2ZXJzaW9uIjoxLCJzZXR0aW5ncyI6eyJyb3dzIjoyNTYsImZhY3RvciI6MiwiaGVpZ2h0RmFjdG9yIjoyLCJob3Jpem9udGFsTW90aW9uIjoicGVuZHVsdW0iLCJ2ZXJ0aWNhbE1vdGlvbiI6InBlbmR1bHVtIiwiam9pbnRSb3V0ZSI6InNwaXJhbC1jdyIsImhhbHZlcyI6eyJ4IjoidG9nZXRoZXIiLCJ5IjoidG9nZXRoZXIifSwiYnVpbGRBbmQiOmZhbHNlLCJ3cmFwIjpmYWxzZSwid3JhcFkiOmZhbHNlLCJyZXZlcnNlQXRDb250YWN0IjpmYWxzZSwicGF0dGVybkNvbG9ycyI6ZmFsc2UsInNxdWFyZSI6ZmFsc2UsImpvaW5MZWZ0IjpmYWxzZSwiam9pblJpZ2h0IjpmYWxzZX0sImZyYW1lIjoyNDQzMywibGFwIjowLCJyb3V0ZXMiOltbWzAsZmFsc2VdXSxbWzAsZmFsc2VdXSxbWzAsZmFsc2VdXV19">Кадр 24 433</a> · вершина 238, 206</td></tr>
+<tr><th scope='row'>AND</th><td>10 →</td><td>10 ↘ · строка 50, столбец 319 → строка 59, столбец 328</td><td><a href="../../mayatnik/romb.html#romb=eyJ2ZXJzaW9uIjoxLCJzZXR0aW5ncyI6eyJyb3dzIjoyNTYsImZhY3RvciI6MiwiaGVpZ2h0RmFjdG9yIjoyLCJob3Jpem9udGFsTW90aW9uIjoicGVuZHVsdW0iLCJ2ZXJ0aWNhbE1vdGlvbiI6InBlbmR1bHVtIiwiam9pbnRSb3V0ZSI6InNwaXJhbC1jdyIsImhhbHZlcyI6eyJ4IjoidG9nZXRoZXIiLCJ5IjoidG9nZXRoZXIifSwiYnVpbGRBbmQiOnRydWUsIndyYXAiOmZhbHNlLCJ3cmFwWSI6ZmFsc2UsInJldmVyc2VBdENvbnRhY3QiOmZhbHNlLCJwYXR0ZXJuQ29sb3JzIjpmYWxzZSwic3F1YXJlIjpmYWxzZSwiam9pbkxlZnQiOmZhbHNlLCJqb2luUmlnaHQiOmZhbHNlfSwiZnJhbWUiOjI0NDMzLCJsYXAiOjAsInJvdXRlcyI6W1tbMCxmYWxzZV1dLFtbMCxmYWxzZV1dLFtbMCxmYWxzZV1dXX0">Кадр 24 433</a> · вершина 238, 206</td></tr></tbody>
+    </table></div>
+  </section>
+  <section id="windows">
+    <h2>Окна с нахлёстом</h2>
+    <p>У 10-битной строки 1 024 возможных значения. Если окон больше, среди них обязательно есть дубль. Чтобы измерить покрытие, нужно считать разные значения. На N = 32, маршруте «По часовой» и кадрах 1–256 получилось следующее для строки <code>1000000010</code>.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Правило</th><th>Всего окон</th><th>Разных вариантов</th><th>Совпадений с шаблоном</th><th>Первый кадр</th></tr></thead>
+      <tbody><tr><th scope='row'>XOR</th><td>1 344 219</td><td>1 024 из 1 024</td><td>1 490</td><td>3</td></tr>
+<tr><th scope='row'>AND</th><td>1 344 219</td><td>303 из 1 024</td><td>328</td><td>3</td></tr></tbody>
+    </table></div>
+  </section>
+  <section id="time">
+    <h2>Оценка сплошного поиска до повтора</h2>
+    <p>В базовом сравнении на каждую высоту от 32 строк приходится 56 настроек движения и накопления с конечной траекторией. Учитывались фиксированные поля 2N−1 и отскок. При пороге 30 бит на N = 16 остаются 24 настройки двух осей, на N = 8 подходящих нет. Спирали и бескрайние маршруты оставлены за рамками оценки.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Высоты до N</th><th>Вариантов 30–70</th><th>Один период движения каждого</th><th>Пример подтверждённого первого повтора поля</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">1024</th><td>360</td><td>около 4 часов</td><td>4 192 255 кадров, около 3 суток</td></tr>
+        <tr><th scope="row">2048</th><td>416</td><td>около 28 часов</td><td>16 773 119 кадров, около 47 суток</td></tr>
+        <tr><th scope="row">4096</th><td>472</td><td>около 9 суток</td><td>67 100 671 кадр, около 2 лет</td></tr>
+      </tbody>
+    </table></div>
+    <p>Время оценено по локальному замеру построения и поиска по первым кадрам с тремя параллельными расчётами для сводной колонки. Пример справа — один горизонтальный XOR-маятник на максимальном N, поле 2N−1, отскок. Номера его первого повтора взяты из <a href="romb-search.html#xor">предыдущего расчёта</a>. Реальная скорость зависит от заполнения поля и маршрута.</p>
+    <p>Один период движения возвращает фазы и положения, а поле может повториться через много таких периодов. Полные периоды новых маршрутов пока не измерены, поэтому общего времени сплошного прогона до повторов эта выборка не определяет.</p>
+  </section>
+  <p><a href="https://github.com/MIkhailNkmnme/Binary-Drum-Machine/tree/main/tools/mayatnik-journal">Исходники расчёта и отчёта</a></p>
+</main>
+</body>
+</html>

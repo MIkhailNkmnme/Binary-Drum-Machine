@@ -73,7 +73,7 @@ function scan(model) {
   return scanGrid(width, height, model.snapshot());
 }
 
-function scanGrid(width, height, {bits, leftmost, rightmost, pixels}) {
+function scanGrid(width, height, {bits, leftmost, rightmost, pixels, values, bounds}, remaining) {
   const stride = bits ? bits.length / height : 0;
   const words = stride / 2;
   const vertical = new Int16Array(2 * width);
@@ -84,42 +84,51 @@ function scanGrid(width, height, {bits, leftmost, rightmost, pixels}) {
 
   function hit(offset, state, cell) {
     for (const pattern of outputs[state >> 1]) {
+      if (remaining) {
+        if (!remaining[pattern]) continue;
+        remaining[pattern] = 0;
+      }
       const index = offset + pattern;
       if (!counts[index]++) first[index] = cell;
     }
   }
 
   const stride2 = patterns.length * 2, stride3 = patterns.length * 3;
-  for (let row = 0; row < height; row++) {
+  const firstRow = bounds?.top ?? 0, lastRow = bounds?.bottom ?? height;
+  for (let row = firstRow; row < lastRow; row++) {
     const radius = Math.min(row, height - row - 1);
     const origin = row * width;
     const packed = row * stride;
-    const a = pixels ? 0 : Math.max(0, leftmost - radius);
-    const b = pixels ? width - 1 : Math.min(width - 1, rightmost + radius);
+    const a = values ? bounds.left : pixels ? 0 : Math.max(0, leftmost - radius);
+    const b = values ? bounds.right : pixels ? width - 1 : Math.min(width - 1, rightmost + radius);
     const diagOrigin = height - row - 1;
     const vertOrigin = (row & 1) * width;
     let even = 0, odd = 0;
-    vertical.fill(0, vertOrigin, vertOrigin + a);
-    vertical.fill(0, vertOrigin + b + 1, vertOrigin + width);
-    diagonal.fill(0, diagOrigin, diagOrigin + a);
-    diagonal.fill(0, diagOrigin + b + 1, diagOrigin + width);
-    opposite.fill(0, row, row + a);
-    opposite.fill(0, row + b + 1, row + width);
+    if (!values) {
+      vertical.fill(0, vertOrigin, vertOrigin + a);
+      vertical.fill(0, vertOrigin + b + 1, vertOrigin + width);
+      diagonal.fill(0, diagOrigin, diagOrigin + a);
+      diagonal.fill(0, diagOrigin + b + 1, diagOrigin + width);
+      opposite.fill(0, row, row + a);
+      opposite.fill(0, row + b + 1, row + width);
+    }
 
     for (let col = a; col <= b; col++) {
       const parity = col & 1;
       const v = vertOrigin + col, d = diagOrigin + col, o = row + col;
       // The collection uses indices 1–8 for bits and all other indices for
       // backdrop and decorative seams. Adjacent pairs have the same palette role.
-      const pixel = pixels ? pixels[origin + col] : 0;
-      const empty = pixels ? pixel < 1 || pixel > 8 : leftmost === rightmost && ((col - leftmost + radius) & 1);
+      const cell = values ? values[origin + col] : pixels ? pixels[origin + col] : 0;
+      const empty = values ? cell < 0 : pixels ? cell < 1 || cell > 8
+        : leftmost === rightmost && ((col - leftmost + radius) & 1);
       if (empty) {
         vertical[v] = diagonal[d] = opposite[o] = 0;
         if (parity) odd = 0;
         else even = 0;
         continue;
       }
-      const bit = pixels ? (pixel - 1) & 1 : (bits[packed + parity * words + (col >> 6)] >>> ((col >> 1) & 31)) & 1;
+      const bit = values ? cell : pixels ? (cell - 1) & 1
+        : (bits[packed + parity * words + (col >> 6)] >>> ((col >> 1) & 31)) & 1;
       const h = edges[(parity ? odd : even) + bit];
       const vt = edges[vertical[v] + bit], dg = edges[diagonal[d] + bit], op = edges[opposite[o] + bit];
       if (parity) odd = h & 32767;
@@ -212,4 +221,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {patterns, scan, steps};
+module.exports = {patterns, scan, scanGrid, steps};
