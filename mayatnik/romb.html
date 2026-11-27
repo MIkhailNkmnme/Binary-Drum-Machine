@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.037</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.038</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -24,6 +24,10 @@
       --romb-match-zero: #805420; --romb-match-one: #ffe194;
       --romb-left-zero: #43386c; --romb-left-one: #e9cef9;
       --romb-right-zero: #245a4c; --romb-right-one: #c4efb8;
+    }
+    #rhomb-pendulum :is(button, select, summary, input[type="range"], .romb-setting, .romb-pattern-palette label, .romb-cycle-values) {
+      -webkit-user-select: none;
+      user-select: none;
     }
     header { margin-bottom: 18px; }
     .scale-comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
@@ -241,7 +245,7 @@
     .romb-cycle-values {
       position: absolute; inset: 0 8px; display: flex; align-items: center; justify-content: space-between;
       font: 600 11px/1.1 "Segoe UI", sans-serif; white-space: nowrap; text-shadow: 0 1px 2px #07131e;
-      pointer-events: none; user-select: none;
+      pointer-events: none;
     }
     @container (max-width: 190px) {
       .romb-frame-track:has(.romb-cycle-values:not([hidden])) { --track-height: 32px; }
@@ -291,7 +295,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.037</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.038</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
