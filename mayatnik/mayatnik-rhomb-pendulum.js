@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.036 */
+/* Ромбовый Маятник v0.037 */
 (() => {
   "use strict";
 
@@ -49,6 +49,7 @@
   const combineMode = byId("romb-combine");
   const flipSecond = byId("romb-flip");
   const squareButton = byId("romb-square");
+  const reducedZoomButton = byId("romb-reduced-zoom");
   const andButton = byId("romb-build-and");
   const coinSquareButton = byId("romb-coin-square");
   const patternPalette = byId("romb-pattern-palette");
@@ -82,6 +83,7 @@
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
   const coinView = {x: 0, y: 0, scale: null};
+  let allowReducedZoom = false;
   const mirrors = [];
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
@@ -164,6 +166,8 @@
     updateSpeed();
     for (const key of Object.keys(options)) if (typeof saved[key] === "boolean") options[key] = saved[key];
     if (typeof saved.wrapY !== "boolean") options.wrapY = !!saved.wrap;
+    allowReducedZoom = saved.allowReducedZoom === true;
+    view.scale = limitPixelScale(view.scale, view);
   }
 
   function save() {
@@ -177,7 +181,7 @@
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
-      patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value), ...options
+      patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value), allowReducedZoom, ...options
     };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
@@ -379,6 +383,7 @@
     const label = byId("romb-width-label");
     if (label.textContent !== lengthLabel) label.textContent = lengthLabel;
     squareButton?.setAttribute("aria-pressed", String(options.square));
+    reducedZoomButton?.setAttribute("aria-pressed", String(allowReducedZoom));
     andButton?.setAttribute("aria-pressed", String(options.buildAnd));
     coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
     const both = isJoint();
@@ -793,13 +798,18 @@
     return projectBox(0, 2 * depth - 1, 2 * depth, options.coinSquare);
   }
 
+  function limitPixelScale(scale, camera) {
+    return scale !== null && camera === view && !allowReducedZoom ? Math.max(1, scale) : scale;
+  }
+
   function fittedPixelScale(rect, camera, bounds) {
     const dpr = devicePixelRatio || 1;
     const across = Math.round(rect.width * dpr) / (bounds.right - bounds.left);
     const available = camera === view && pageField() ? across
       : Math.min(across, Math.round(rect.height * dpr) / (bounds.bottom - bounds.top));
     if (available <= 0) return 1;
-    return available >= 1 ? Math.floor(available) : 1 / Math.ceil(1 / available);
+    const scale = available >= 1 ? Math.floor(available) : 1 / Math.ceil(1 / available);
+    return limitPixelScale(scale, camera);
   }
 
   function fieldFitRect() {
@@ -1847,7 +1857,7 @@
       const box = bounds();
       const old = scaleFor(rect, camera, box);
       const pointerRow = camera.y + py / old;
-      camera.scale = physicalScale;
+      camera.scale = limitPixelScale(physicalScale, camera);
       const shift = 1 / old - 1 / scaleFor(rect, camera, box);
       camera.x += px * shift;
       camera.y += py * shift;
@@ -1868,7 +1878,8 @@
       const level = current >= 1 ? current : 2 - Math.round(1 / current);
       const next = level + direction;
       const maxDivisor = Math.ceil(Math.max(box.right - box.left, box.bottom - box.top));
-      const scale = next >= 1 ? Math.min(next, Math.max(16, fitScale)) : 1 / Math.min(2 - next, maxDivisor);
+      const nextScale = next >= 1 ? Math.min(next, Math.max(16, fitScale)) : 1 / Math.min(2 - next, maxDivisor);
+      const scale = limitPixelScale(nextScale, camera);
       if (scale !== current) zoomTo(scale, px, py, anchorPointer);
     }
 
@@ -1994,6 +2005,7 @@
         nativeZen = false;
         placements.forEach(({element, marker}) => marker.after(element));
         Object.assign(view, previousView);
+        view.scale = limitPixelScale(view.scale, view);
         exitFullscreen();
         const target = previousFocus?.isConnected && previousFocus !== document.body ? previousFocus : enter;
         target.focus({preventScroll: true});
@@ -2098,6 +2110,13 @@
   byId("romb-reset").addEventListener("click", reset);
   byId("romb-fit").addEventListener("click", fitView);
   byId("romb-exact").addEventListener("click", () => zoomTo(1));
+  reducedZoomButton?.addEventListener("click", () => {
+    allowReducedZoom = !allowReducedZoom;
+    view.scale = limitPixelScale(view.scale, view);
+    syncEdgeButtons();
+    save();
+    redraw();
+  });
   squareButton?.addEventListener("click", () => toggleSquare());
   andButton?.addEventListener("click", toggleBuildAnd);
   recordButton?.addEventListener("click", () => toggleRecording());
