@@ -55,6 +55,18 @@ function makeModel() {
         reset();
       },
       advance: advancePass,
+      checkpoint() {
+        return {frame, width: field.W, height: field.H, column, branches, jointPoints, spiral,
+          routeWrap, routeWrapY, routeReverse, firstPaintedRow, endPaintedRow, left, right};
+      },
+      resume(saved, bits) {
+        if (saved.width !== field.W || saved.height !== field.H || bits.length !== field.val.length) {
+          throw Error('Размер опорного кадра не совпал с маршрутом.');
+        }
+        field.val.set(bits);
+        ({frame, column, branches, jointPoints, spiral, routeWrap, routeWrapY, routeReverse,
+          firstPaintedRow, endPaintedRow, left, right} = saved);
+      },
       snapshot() {
         const origin = openFieldWidth ? (field.W - 1) / 2 : 0;
         const bounds = {left: Math.max(0, left + origin), right: Math.min(field.W - 1, right + origin),
@@ -198,4 +210,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = {makeModel, matrix, search};
+module.exports = {makeModel, matrix, search, verifyWitness};
