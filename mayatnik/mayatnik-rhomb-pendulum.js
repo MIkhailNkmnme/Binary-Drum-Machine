@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.039 */
+/* Ромбовый Маятник v0.040 */
 (() => {
   "use strict";
 
@@ -1565,13 +1565,14 @@
     if (gifSettings() !== job.settings) throw Error("Параметры поля изменились. Запустите сборку ещё раз.");
   }
 
-  function gifProgress(job, message) {
-    if (performance.now() < job.nextUpdate) return;
+  function gifProgress(job, message, immediate = false) {
+    const now = performance.now();
+    if (!immediate && now < job.nextUpdate) return;
     job.status.textContent = message + " · масштаб " + scaleLabel(job.scale);
-    job.nextUpdate = performance.now() + 200;
+    job.nextUpdate = now + 200;
   }
 
-  async function advanceGif(job, target) {
+  async function advanceGif(job, target, reportPasses = true) {
     while (job.run.frame < target) {
       checkGifJob(job);
       withGifRun(job, () => {
@@ -1579,7 +1580,7 @@
         do { advancePass(); } while (frame < target && performance.now() < until);
       });
       if (job.run.frame < target) {
-        gifProgress(job, "Расчёт прохода " + formatter.format(job.run.frame));
+        if (reportPasses) gifProgress(job, "Расчёт прохода " + formatter.format(job.run.frame));
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
@@ -1708,20 +1709,25 @@
       const start = range?.[0] ?? job.run.frame;
       const end = range?.[1] ?? start + period - 1;
       const count = range ? Math.ceil((end - start) / stride) + 1 : Math.ceil(period / stride);
+      const totalFrames = formatter.format(count);
+      gifProgress(job, "Сборка GIF · 0 % · 0 из " + totalFrames, true);
       writer = await window.MayatnikGif.batch([{width, height}], {stream: true});
       sink = await window.MayatnikGif.squareSink([width]);
       for (let i = 0; i < count; i++) {
         checkGifJob(job);
         const target = Math.min(start + i * stride, end);
-        await advanceGif(job, target);
+        await advanceGif(job, target, false);
         const pixels = withGifRun(job, () => gifPixels(job));
         const passes = Math.min(stride, end - target + (range ? 0 : 1)) || stride;
         const time = Math.max(1, Math.round(duration * passes / stride));
         const {blobs} = await writer.add([pixels], time);
         checkGifJob(job);
         await sink.append(blobs);
-        gifProgress(job, "Сборка GIF · " + formatter.format(i + 1) + " из " + formatter.format(count));
+        const written = i + 1;
+        const percent = Math.min(99, Math.floor(written * 100 / count));
+        gifProgress(job, "Сборка GIF · " + percent + " % · " + formatter.format(written) + " из " + totalFrames);
       }
+      gifProgress(job, "Подготовка файла GIF · 99 % · " + totalFrames + " из " + totalFrames, true);
       await sink.append(await writer.finish());
       const [file] = await sink.finish();
       checkGifJob(job);
@@ -1735,7 +1741,7 @@
       const downloaded = sink;
       sink = null;
       setTimeout(() => { URL.revokeObjectURL(url); downloaded.dispose(); }, 60000);
-      status.textContent = "GIF · " + formatter.format(count) + " кадров · " + scaleLabel(scale) + " · " + width + " × " + height;
+      status.textContent = "GIF готов · 100 % · " + totalFrames + " кадров · " + scaleLabel(scale) + " · " + width + " × " + height;
     } catch (error) {
       status.textContent = job.cancelled ? "Сборка GIF отменена." : "GIF не собран · " + (error.message || String(error));
     } finally {
