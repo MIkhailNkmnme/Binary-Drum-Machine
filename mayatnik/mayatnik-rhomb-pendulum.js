@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.038 */
+/* Ромбовый Маятник v0.039 */
 (() => {
   "use strict";
 
@@ -1795,15 +1795,21 @@
 
   function paintOutlines(x, y, scale, ratio, styles) {
     const {W, H} = field;
-    const outlines = sourceRhombs(options.markRepeats || currentReverse()).map(outlinePolygon);
+    const centers = renderRhombs.map(({center}) => center);
+    const middleColumn = (Math.min(...centers) + Math.max(...centers)) / 2;
+    const leftStroke = styles.getPropertyValue("--romb-outline-left").trim();
+    const rightStroke = styles.getPropertyValue("--romb-outline").trim();
+    const outlines = sourceRhombs(options.markRepeats || currentReverse()).map(rhomb => ({
+      points: outlinePolygon(rhomb),
+      stroke: rhomb.center < middleColumn ? leftStroke : rightStroke
+    }));
     const overlaps = [];
     for (let i = 0; i < outlines.length; i++) {
       for (let j = i + 1; j < outlines.length; j++) {
-        const overlap = intersectOutlines(outlines[i], outlines[j]);
+        const overlap = intersectOutlines(outlines[i].points, outlines[j].points);
         if (overlap.length >= 3) overlaps.push(overlap);
       }
     }
-    const stroke = styles.getPropertyValue("--romb-outline").trim();
     const fill = styles.getPropertyValue("--romb-overlap").trim();
     for (const offset of [-W, 0, W]) {
       const left = Math.max(view.start, offset);
@@ -1822,12 +1828,12 @@
         for (const overlap of overlaps) traceOutline(overlap);
         context.fill();
       }
-      context.strokeStyle = stroke;
       if (options.patternColors) context.globalAlpha = 0.35;
       context.lineWidth = 1.25 * ratio / scale;
-      for (const outline of outlines) {
+      for (const {points, stroke} of outlines) {
+        context.strokeStyle = stroke;
         context.beginPath();
-        traceOutline(outline);
+        traceOutline(points);
         context.stroke();
       }
       context.restore();
