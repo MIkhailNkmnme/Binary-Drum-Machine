@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.041 */
+/* Ромбовый Маятник v0.042 */
 (() => {
   "use strict";
 
@@ -55,6 +55,8 @@
   const patternPalette = byId("romb-pattern-palette");
   const patternArea = byId("romb-pattern-area");
   const patternColors = [byId("romb-pattern-zero"), byId("romb-pattern-one")];
+  const pngButton = byId("romb-save-png");
+  const pngStatus = byId("romb-png-status");
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
   const gifCycleButton = byId("romb-gif-cycle");
@@ -1140,6 +1142,30 @@
     return fullHeight;
   }
 
+  function syncPalette(styles) {
+    const tones = ["zero", "one", "match-zero", "match-one", "left-zero", "left-one", "right-zero", "right-one"]
+      .map(name => styles.getPropertyValue("--romb-" + name).trim());
+    tones.push(...patternColors.map(input => input.value));
+    const key = tones.join("|");
+    if (colorKey === key) return;
+    swatch.clearRect(0, 0, tones.length, 1);
+    tones.forEach((tone, i) => {
+      swatch.fillStyle = tone;
+      swatch.fillRect(i, 0, 1, 1);
+    });
+    colorWords = new Uint32Array(swatch.getImageData(0, 0, tones.length, 1).data.buffer);
+    colorKey = key;
+  }
+
+  function livePatternMarks() {
+    if (!options.patternColors) return;
+    patternPainter ??= createPatternPainter();
+    if (frame) {
+      patternMarks ??= patternPainter.update(field.val, patternArea?.value);
+      return patternMarks;
+    }
+  }
+
   function paint() {
     if (hubFour) {
       hubRenderer?.render(field, branches[1].column, branches[0].column, hubAxes && frame > 0, hubVertical);
@@ -1157,8 +1183,6 @@
     const fullHeight = layoutFieldHeight(bounds);
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const {W, H} = field;
-    const displayWidth = view.end - view.start;
     renderRhombs = sourceRhombs();
     const viewWidth = bounds.right - bounds.left;
     const viewHeight = bounds.bottom - bounds.top;
@@ -1184,35 +1208,24 @@
       sampleEnd = new Int32Array(w);
     }
     const styles = getComputedStyle(root);
-    const tones = ["zero", "one", "match-zero", "match-one", "left-zero", "left-one", "right-zero", "right-one"]
-      .map(name => styles.getPropertyValue("--romb-" + name).trim());
-    tones.push(...patternColors.map(input => input.value));
-    const key = tones.join("|");
-    if (colorKey !== key) {
-      swatch.clearRect(0, 0, tones.length, 1);
-      tones.forEach((tone, i) => {
-        swatch.fillStyle = tone;
-        swatch.fillRect(i, 0, 1, 1);
-      });
-      colorWords = new Uint32Array(swatch.getImageData(0, 0, tones.length, 1).data.buffer);
-      colorKey = key;
-    }
+    syncPalette(styles);
 
     const x = Math.round(w / 2 - view.x * scale);
     const y = Math.round(h / 2 - view.y * scale);
-    let marks;
-    if (options.patternColors) {
-      patternPainter ??= createPatternPainter();
-      if (frame) {
-        patternMarks ??= patternPainter.update(field.val, patternArea?.value);
-        marks = patternMarks;
-      }
-    }
+    const marks = livePatternMarks();
     words.fill(0);
     if (options.square) paintSquareBits(x, y, scale, w, h, bounds, marks);
     else paintFlatBits(x, y, scale, w, h, marks);
     if (compare) paintSamples(Math.round(1 / selectedScale), x, y, bounds, ratio);
     context.putImageData(pixels, 0, 0);
+    paintFieldGuides(context, x, y, scale, ratio, styles);
+    if (!zen) paintCombined();
+
+    updateLabels(scale, compare ? selectedScale : null);
+  }
+
+  function paintFieldGuides(context, x, y, scale, ratio, styles) {
+    const {W, H} = field;
     context.save();
     if (options.square) {
       context.translate(x, y);
@@ -1221,7 +1234,7 @@
     }
     context.lineWidth = ratio;
     context.strokeStyle = styles.getPropertyValue("--romb-border").trim();
-    context.strokeRect(x + view.start * scale, y, displayWidth * scale, H * scale);
+    context.strokeRect(x + view.start * scale, y, (view.end - view.start) * scale, H * scale);
     context.beginPath();
     if (options.patternColors && patternPainter.centralAxis > view.start && patternPainter.centralAxis < view.end) {
       const axisX = x + patternPainter.centralAxis * scale;
@@ -1237,11 +1250,8 @@
       context.lineTo(x + W * scale, y + H * scale);
     }
     context.stroke();
-    if (frame) paintOutlines(x, y, scale, ratio, styles);
+    if (frame) paintOutlines(context, x, y, scale, ratio, styles);
     context.restore();
-    if (!zen) paintCombined();
-
-    updateLabels(scale, compare ? selectedScale : null);
   }
 
   function paintFlatBits(x, y, scale, w, h, marks, output = words, columns = sampleColumn, pairs = samplePair) {
@@ -1498,6 +1508,7 @@
       copy.id += "-coin";
       if (source.matches("button")) copy.addEventListener("click", () => {
         if (source === recordButton) toggleRecording(true);
+        else if (source === pngButton) saveFramePng(true);
         else source.click();
       });
       if (source.matches("input, select")) for (const type of ["input", "change"]) {
@@ -1655,19 +1666,78 @@
     }
   }
 
-  function gifPixels(job) {
-    const {width, height, scale, bounds} = job;
-    const output = new Uint32Array(width * height);
+  function frameExportGeometry(coin) {
+    const camera = coin ? coinView : view;
+    const rect = (coin ? combinedCanvas : canvas).getBoundingClientRect();
+    const bounds = coin ? coinBounds() : projectBox(view.start, view.end, field.H, options.square);
+    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? bounds : projectedBounds()));
     const x = -Math.floor(bounds.left * scale), y = -Math.floor(bounds.top * scale);
+    const width = Math.ceil(bounds.right * scale) + x, height = Math.ceil(bounds.bottom * scale) + y;
+    return {coin, bounds, scale, x, y, width, height};
+  }
+
+  function exportFramePixels(job) {
+    const {width, height, scale, bounds, x, y} = job;
+    const output = new Uint32Array(width * height);
     if (job.coin) {
       paintCoinBits(output, width, height, x, y, scale, bounds);
     } else {
       renderRhombs = sourceRhombs();
-      const marks = job.painter?.update(field.val, patternArea?.value);
+      const marks = job.painter?.update(field.val, patternArea?.value) ?? job.marks;
       if (options.square) paintSquareBits(x, y, scale, width, height, bounds, marks, output);
-      else paintFlatBits(x, y, scale, width, height, marks, output, job.columns, job.pairs);
+      else paintFlatBits(x, y, scale, width, height, marks, output,
+        job.columns ?? new Int32Array(width), job.pairs ?? new Uint8Array(width));
     }
     return new Uint8ClampedArray(output.buffer);
+  }
+
+  function downloadFrameFile(file, name) {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    return url;
+  }
+
+  async function saveFramePng(coin = false) {
+    if (pngButton.disabled) return;
+    const status = coin ? byId("romb-coin-png-status") : pngStatus;
+    status.hidden = false;
+    status.textContent = "Подготовка PNG…";
+    pngButton.disabled = true;
+    syncMirrors();
+    try {
+      const number = frame;
+      const geometry = frameExportGeometry(coin);
+      const {x, y, width, height, scale} = geometry;
+      if (width > 32768 || height > 32768 || width * height > 32 * 1024 * 1024) {
+        throw Error("Полный кадр слишком велик (" + width + " × " + height + "). Уменьшите масштаб или размер поля.");
+      }
+      const target = document.createElement("canvas");
+      target.width = width;
+      target.height = height;
+      const targetContext = target.getContext("2d");
+      if (!targetContext) throw Error("Браузер не смог создать холст для PNG.");
+      const styles = getComputedStyle(root);
+      syncPalette(styles);
+      const marks = coin ? undefined : livePatternMarks();
+      const data = exportFramePixels({...geometry, marks});
+      targetContext.putImageData(new ImageData(data, width, height), 0, 0);
+      if (!coin) paintFieldGuides(targetContext, x, y, scale, devicePixelRatio || 1, styles);
+      const file = await new Promise(resolve => target.toBlob(resolve, "image/png"));
+      if (!file?.size) throw Error("Браузер не смог создать PNG.");
+      const url = downloadFrameFile(file, (coin ? "romb-moneta-" : "romb-mayatnik-") + number + ".png");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      status.textContent = "PNG кадра " + formatter.format(number) + " готов · " + width + " × " + height;
+    } catch (error) {
+      status.textContent = "PNG не сохранён · " + (error.message || String(error));
+    } finally {
+      pngButton.disabled = false;
+      syncMirrors();
+    }
   }
 
   function prepareGifRun(job, first) {
@@ -1698,17 +1768,13 @@
       status.textContent = "У расширяющейся спирали нет полного цикла: длина витка растёт.";
       return;
     }
-    const camera = coin ? coinView : view;
-    const rect = (coin ? combinedCanvas : canvas).getBoundingClientRect();
-    const bounds = coin ? coinBounds() : projectBox(view.start, view.end, field.H, options.square);
-    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? bounds : projectedBounds()));
-    const width = Math.ceil(bounds.right * scale) - Math.floor(bounds.left * scale);
-    const height = Math.ceil(bounds.bottom * scale) - Math.floor(bounds.top * scale);
+    const geometry = frameExportGeometry(coin);
+    const {width, height, scale} = geometry;
     if (width > 65535 || height > 65535) {
       status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб поля.";
       return;
     }
-    const job = {coin, status, scale, width, height, bounds, nextUpdate: 0, settings: gifSettings()};
+    const job = {...geometry, status, nextUpdate: 0, settings: gifSettings()};
     const stride = stepCount(), duration = Math.max(1, Math.round(delay / 10));
     let writer, sink;
     try {
@@ -1738,7 +1804,7 @@
         checkGifJob(job);
         const target = Math.min(start + i * stride, end);
         await advanceGif(job, target, false);
-        const pixels = withGifRun(job, () => gifPixels(job));
+        const pixels = withGifRun(job, () => exportFramePixels(job));
         const passes = Math.min(stride, end - target + (range ? 0 : 1)) || stride;
         const time = Math.max(1, Math.round(duration * passes / stride));
         const {blobs} = await writer.add([pixels], time);
@@ -1752,13 +1818,8 @@
       await sink.append(await writer.finish());
       const [file] = await sink.finish();
       checkGifJob(job);
-      const url = URL.createObjectURL(file);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = (coin ? "romb-moneta-" : "romb-mayatnik-") + start + (range ? "-" + end : "-cycle-" + period) + ".gif";
-      document.body.append(link);
-      link.click();
-      link.remove();
+      const prefix = coin ? "romb-moneta-" : "romb-mayatnik-";
+      const url = downloadFrameFile(file, prefix + start + (range ? "-" + end : "-cycle-" + period) + ".gif");
       const downloaded = sink;
       sink = null;
       setTimeout(() => { URL.revokeObjectURL(url); downloaded.dispose(); }, 60000);
@@ -1814,13 +1875,13 @@
     return points;
   }
 
-  function traceOutline(points) {
+  function traceOutline(context, points) {
     context.moveTo(...points[0]);
     for (let i = 1; i < points.length; i++) context.lineTo(...points[i]);
     context.closePath();
   }
 
-  function paintOutlines(x, y, scale, ratio, styles) {
+  function paintOutlines(context, x, y, scale, ratio, styles) {
     const {W, H} = field;
     const centers = renderRhombs.map(({center}) => center);
     const middleColumn = (Math.min(...centers) + Math.max(...centers)) / 2;
@@ -1852,7 +1913,7 @@
         // Fill all intersections together to keep a uniform tint where several overlap.
         context.fillStyle = fill;
         context.beginPath();
-        for (const overlap of overlaps) traceOutline(overlap);
+        for (const overlap of overlaps) traceOutline(context, overlap);
         context.fill();
       }
       if (options.patternColors) context.globalAlpha = 0.35;
@@ -1860,7 +1921,7 @@
       for (const {points, stroke} of outlines) {
         context.strokeStyle = stroke;
         context.beginPath();
-        traceOutline(points);
+        traceOutline(context, points);
         context.stroke();
       }
       context.restore();
@@ -2069,7 +2130,7 @@
     }
 
     place(top, frameLabel, size.closest(".romb-setting"),
-      speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), cycleNote);
+      speed.closest(".romb-setting"), byId("romb-zen-pair") || enter, exit, byId("romb-record-status"), pngStatus, cycleNote);
     place(motion, horizontalMotion?.closest(".romb-motion-group"), verticalMotion?.closest(".romb-motion-group"),
       byId("romb-route-group"), byId("romb-counter-step"), byId("romb-reverse-contact"));
     place(display, byId("romb-join-left"), byId("romb-join-right"), byId("romb-mark-repeats"), andButton,
@@ -2221,6 +2282,7 @@
   });
   squareButton?.addEventListener("click", () => toggleSquare());
   andButton?.addEventListener("click", toggleBuildAnd);
+  pngButton.addEventListener("click", () => saveFramePng());
   recordButton?.addEventListener("click", () => toggleRecording());
   gifCycleButton.addEventListener("click", () => {
     gifFullCycle = !gifFullCycle;
