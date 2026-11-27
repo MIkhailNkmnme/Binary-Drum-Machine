@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.046 */
+/* Ромбовый Маятник v0.047 */
 (() => {
   "use strict";
 
@@ -94,7 +94,7 @@
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-  const view = {x: 0, y: 0, start: 0, end: 0, scale: null, gifCrop: {enabled: false, area: null}};
+  const view = {x: 0, y: 0, scale: null, gifCrop: {enabled: false, area: null}};
   const coinView = {x: 0, y: 0, scale: null, gifCrop: {enabled: false, area: null}};
   let allowReducedZoom = false;
   let gifFullCycle = false;
@@ -104,11 +104,12 @@
   const routePickers = [];
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
+  let openFieldWidth = false;
   let routeWrapY, verticalRouteChanges, jointPoints, spiral;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
   let pixels, words, flatSamples, colorWords, colorKey;
-  let patternPainter, patternMarks;
+  let patternPainter, patternPainterWidth, patternMarks;
   let firstPaintedRow, endPaintedRow;
   let renderRhombs = [];
   let combinedPixels, combinedWords;
@@ -120,6 +121,7 @@
   let nextBatchAt = 0;
   let nextPaintAt = 0;
   let dirty = false;
+  let fieldError = "";
   let zen = false;
   let delay = 115;
 
@@ -146,7 +148,7 @@
   function restore(saved) {
     if (!saved) return;
     if (Array.from(size.options).some(option => Number(option.value) === saved.rows)) size.value = saved.rows;
-    if (saved.factor === 2 || saved.factor === 4) width.value = saved.factor;
+    if ([2, 4, 8, "unlimited"].includes(saved.factor)) width.value = saved.factor;
     for (const [key, select, name] of [["y", verticalMotion, "verticalMotion"], ["x", horizontalMotion, "horizontalMotion"]]) {
       if (!select) continue;
       const previous = saved[name] ?? (key === "x" ? (isVertical() ? "off" : saved.counterStep ? "outward" : "pendulum") : "off");
@@ -198,7 +200,8 @@
 
   function currentSettings() {
     return {
-      rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
+      rows: Number(size.value), factor: width.value === "unlimited" ? width.value : Number(width.value),
+      step: stepCount(), speed: Number(speed.value),
       verticalMotion: verticalMotion.value, halves: {x: halves.x?.value, y: halves.y?.value},
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
@@ -255,10 +258,13 @@
   function reset(shared) {
     pendingSharedView = shared ?? null;
     stop();
+    fieldError = "";
     patternMarks = null;
     const rows = Number(size.value);
-    const length = Number(width.value) * rows - 1;
-    const height = isVertical() ? Number(heightFactor?.value || width.value) * rows - 1 : rows;
+    openFieldWidth = width.value === "unlimited" && isHorizontal();
+    const widthFactor = Number(width.value) || 2;
+    const length = widthFactor * rows - 1;
+    const height = isVertical() ? (Number(heightFactor?.value) || widthFactor) * rows - 1 : rows;
     const columns = isHorizontal() ? length : rows - 1;
     if (field?.W === columns && field.H === height) field.val.fill(-1);
     else {
@@ -270,8 +276,7 @@
     verticalRouteChanges = shared?.routes[1] ?? new Map([[0, options.wrapY]]);
     reversalChanges = shared?.routes[2] ?? new Map([[0, options.reverseAtContact]]);
     checkpoints = new Map();
-    checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
-    checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
+    updateCheckpointBudget();
     normalSliderMax = Math.min(maxFrame, (isJoint() ? 4 : 2) * Math.max(columns, height) + 1);
     cycle = null;
     configureCycle();
@@ -300,8 +305,9 @@
     routeWrapY = verticalRouteChanges.get(0);
     if (isJoint()) return;
     if (horizontalMode() === "inward") {
-      branches[1] = {column: 0, direction: 1};
-      branches[0] = {column: field.W - 1, direction: -1};
+      const reach = openFieldWidth ? 2 * depth - 1 : centerX;
+      branches[1] = {column: centerX - reach, direction: 1};
+      branches[0] = {column: centerX + reach, direction: -1};
     }
     if (!isVertical()) return;
     const end = field.H - 2 * depth;
@@ -364,7 +370,8 @@
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (isVertical() || horizontalMode() !== "pendulum" || splitAxis("x") || [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
+    if (openFieldWidth || width.value === "8" || isVertical() || horizontalMode() !== "pendulum" || splitAxis("x") ||
+        [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
         [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
       cycle = null;
       return;
@@ -439,13 +446,16 @@
     syncRoutePickers(both);
     verticalWrapButton?.setAttribute("aria-pressed", String(currentWrapY()));
     if (verticalWrapButton) verticalWrapButton.disabled = !isVertical();
-    edgeButtons.wrap.disabled = !isHorizontal();
+    const openWidth = openFieldWidth;
+    edgeButtons.wrap.disabled = !isHorizontal() || openWidth;
+    edgeButtons.joinLeft.disabled = edgeButtons.joinRight.disabled = openWidth;
     edgeButtons.reverseAtContact.disabled = !pairedMotion();
     syncMirrors();
   }
 
   function optionEnabled(key) {
-    if (key === "wrap") return currentWrap();
+    if (key === "wrap") return !openFieldWidth && currentWrap();
+    if (key === "joinLeft" || key === "joinRight") return !openFieldWidth && options[key];
     if (key === "reverseAtContact") return currentReverse();
     return options[key];
   }
@@ -454,11 +464,11 @@
     return Math.abs(branches[0].column - branches[1].column);
   }
 
-  function moveBranch(branch, W, wrap = routeWrap) {
+  function moveBranch(branch, W, wrap, unbounded) {
     if (!frame) return false;
     const previous = branch.column;
     const next = previous + branch.direction;
-    branch.column = MayatnikEdgeFlow.mapColumn(next, W, !wrap);
+    branch.column = unbounded ? next : MayatnikEdgeFlow.mapColumn(next, W, !wrap);
     if (!wrap && branch.column !== next) branch.direction *= -1;
     return Math.abs(branch.column - previous) === 1;
   }
@@ -575,12 +585,55 @@
     }
   }
 
+  function updateCheckpointBudget() {
+    checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
+    checkpointInterval = Math.max(16, Math.floor(field.W / (2 * Math.max(1, checkpointLimit))));
+    while (checkpoints.size > checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
+  }
+
+  function copyCenteredField(bits, columns, target) {
+    const offset = (target.W - columns) / 2;
+    for (let row = 0; row < target.H; row++) {
+      target.val.set(bits.subarray(row * columns, (row + 1) * columns), row * target.W + offset);
+    }
+  }
+
+  function unlimitedWidthLimit() {
+    const maxCells = Math.max(MayatnikEdgeFlow.MAX_CELLS, (8 * depth - 1) * field.H);
+    const maxColumns = Math.floor(maxCells / field.H);
+    return maxColumns % 2 ? maxColumns : maxColumns - 1;
+  }
+
+  function growFieldToReach(reach) {
+    const required = 2 * (reach + depth - 1) + 1;
+    if (required <= field.W) return;
+    const limit = unlimitedWidthLimit();
+    const message = "Достигнут предел памяти для ширины этого поля. Уменьшите высоту ромба или поля.";
+    if (required > limit) throw new RangeError(message);
+    const columns = Math.min(limit, Math.max(required, 2 * field.W + 1));
+    let expanded;
+    try {
+      expanded = MAYATNIK.field(columns, field.H, "empty");
+    } catch (error) {
+      if (error instanceof RangeError) throw new RangeError(message);
+      throw error;
+    }
+    copyCenteredField(field.val, field.W, expanded);
+    const offset = (columns - field.W) / 2;
+    field = expanded;
+    column += offset;
+    for (const branch of branches) branch.column += offset;
+    for (const point of jointPoints) point.center += offset;
+  }
+
   function advanceFrame() {
     patternMarks = null;
+    const previous = field;
     advancePass();
+    if (field !== previous) updateCheckpointBudget();
     if (checkpointLimit && frame % checkpointInterval === 0 && !checkpoints.has(frame)) {
       if (checkpoints.size === checkpointLimit) checkpoints.delete(checkpoints.keys().next().value);
-      checkpoints.set(frame, {bits: field.val.slice(), firstPaintedRow, endPaintedRow, branches: branches.map(item => ({...item})),
+      checkpoints.set(frame, {bits: field.val.slice(), width: field.W, firstPaintedRow, endPaintedRow, branches: branches.map(item => ({...item})),
         jointPoints: jointPoints.map(point => ({...point})), spiral: {...spiral}, column, routeWrap, routeWrapY, routeReverse});
     }
     observeCycle();
@@ -655,13 +708,20 @@
     routeWrap = currentWrap();
     routeWrapY = currentWrapY();
     const wrap = vertical ? routeWrapY : routeWrap;
-    const positions = vertical ? field.H - 2 * depth + 1 : field.W;
     const before = branches[0].column - branches[1].column;
     const split = splitAxis(vertical ? "y" : "x");
     const upper = mode === "pendulum" ? branches[frame % 2] : branches[1];
-    const moved = mode !== "off" && moveBranch(upper, positions, wrap);
     const twoTracks = mode === "double" || mode === "inward" || (mode === "sync" && split);
-    const otherMoved = twoTracks && moveBranch(branches[0], positions, wrap);
+    const openWidth = !vertical && openFieldWidth;
+    if (openWidth) {
+      const center = (field.W - 1) / 2;
+      const nextReach = branch => Math.abs(branch.column + (frame ? branch.direction : 0) - center);
+      const reach = twoTracks ? Math.max(nextReach(upper), nextReach(branches[0])) : nextReach(upper);
+      growFieldToReach(reach);
+    }
+    const positions = vertical ? field.H - 2 * depth + 1 : field.W;
+    const moved = mode !== "off" && moveBranch(upper, positions, wrap, openWidth);
+    const otherMoved = twoTracks && moveBranch(branches[0], positions, wrap, openWidth);
     if (!twoTracks && mode !== "pendulum") branches[0] = {...upper};
     const point = axisPoint(upper);
     column = point.center;
@@ -682,20 +742,22 @@
     routeWrap = currentWrap();
     routeWrapY = currentWrapY();
     const mode = jointRoute?.value || "cw";
+    const openWidth = openFieldWidth;
     let dx = 0, dy = 0;
     if (frame && mode.startsWith("spiral")) {
       const directions = mode === "spiral-ccw" ? [[0, -1], [-1, 0], [0, 1], [1, 0]]
         : [[0, -1], [1, 0], [0, 1], [-1, 0]];
       const [x, y] = directions[spiral.leg % 4];
-      spiral.x += x;
-      spiral.y += y;
+      dx = spiral.x + x;
+      dy = spiral.y + y;
+      if (openWidth) growFieldToReach(Math.abs(dx));
+      spiral.x = dx;
+      spiral.y = dy;
       if (++spiral.walked === spiral.length) {
         spiral.walked = 0;
         spiral.leg++;
         if (spiral.leg % 2 === 0) spiral.length++;
       }
-      dx = spiral.x;
-      dy = spiral.y;
     } else if (frame) {
       const directions = mode === "cross" ? [[-1, 0], [1, 0], [0, -1], [0, 1]]
         : mode === "ccw" ? [[0, -1], [-1, 0], [0, 1], [1, 0]]
@@ -704,9 +766,11 @@
       const [x, y] = directions[(frame - 1) % 4];
       dx = x * radius;
       dy = y * radius;
+      if (openWidth) growFieldToReach(Math.abs(dx));
     }
+    const center = (field.W - 1) / 2 + dx;
     const point = {
-      center: MayatnikEdgeFlow.mapColumn((field.W - 1) / 2 + dx, field.W, !routeWrap),
+      center: openWidth ? center : MayatnikEdgeFlow.mapColumn(center, field.W, !routeWrap),
       top: MayatnikEdgeFlow.mapColumn(Math.floor((field.H - 2 * depth) / 2) + dy, field.H - 2 * depth + 1, !routeWrapY)
     };
     jointPoints[frame % 2] = point;
@@ -772,14 +836,18 @@
   }
 
   function restoreCheckpoint(at, checkpoint) {
-    field.val.set(checkpoint.bits);
+    const offset = (field.W - checkpoint.width) / 2;
+    if (offset) {
+      field.val.fill(-1);
+      copyCenteredField(checkpoint.bits, checkpoint.width, field);
+    } else field.val.set(checkpoint.bits);
     firstPaintedRow = checkpoint.firstPaintedRow;
     endPaintedRow = checkpoint.endPaintedRow;
-    branches = checkpoint.branches.map(item => ({...item}));
-    column = checkpoint.column;
+    branches = checkpoint.branches.map(item => ({...item, column: item.column + offset}));
+    column = checkpoint.column + offset;
     routeWrap = checkpoint.routeWrap;
     routeWrapY = checkpoint.routeWrapY;
-    jointPoints = checkpoint.jointPoints.map(point => ({...point}));
+    jointPoints = checkpoint.jointPoints.map(point => ({...point, center: point.center + offset}));
     spiral = {...checkpoint.spiral};
     routeReverse = checkpoint.routeReverse;
     frame = at;
@@ -787,6 +855,7 @@
 
   function seek(target, lap = cycle && target >= cycle.start ? cycle.lap : 0) {
     stop();
+    fieldError = "";
     patternMarks = null;
     if (cycle) cycle.lap = lap;
     const current = frame <= target ? frame : 0;
@@ -818,6 +887,7 @@
   function toggleBuildAnd() {
     const target = seekTarget ?? frame;
     options.buildAnd = !options.buildAnd;
+    fieldError = "";
     field.val.fill(-1);
     checkpoints.clear();
     initializeRun();
@@ -836,15 +906,23 @@
     return !zen && !hubFour && !inline;
   }
 
-  function fullFieldBounds() {
-    return projectBox(view.start, view.end, field.H, options.square);
+  function fieldColumns(columns = field.W) {
+    const half = Math.floor(columns / 2);
+    if (openFieldWidth) return {start: -half, end: half + 1, origin: half};
+    return {start: options.joinLeft ? -half : 0, end: columns + (options.joinRight ? half : 0), origin: 0};
+  }
+
+  function fullFieldBounds(columns = field.W) {
+    const {start, end} = fieldColumns(columns);
+    return projectBox(start, end, field.H, options.square);
   }
 
   function projectedBounds() {
     if (!pageField()) return fullFieldBounds();
-    if (endPaintedRow > firstPaintedRow) return projectBox(view.start, view.end, endPaintedRow, options.square, firstPaintedRow);
+    const {start, end} = fieldColumns();
+    if (endPaintedRow > firstPaintedRow) return projectBox(start, end, endPaintedRow, options.square, firstPaintedRow);
     const top = Math.floor((field.H - 2 * depth) / 2);
-    return projectBox(view.start, view.end, top + 2 * depth, options.square, top);
+    return projectBox(start, end, top + 2 * depth, options.square, top);
   }
 
   function coinBounds() {
@@ -963,15 +1041,8 @@
   }
 
   function updateViewBounds() {
-    const half = Math.floor(field.W / 2);
-    const start = options.joinLeft ? -half : 0;
-    const end = field.W + (options.joinRight ? half : 0);
-    if (view.start !== start || view.end !== end) {
-      patternPainter = null;
-      patternMarks = null;
-    }
-    view.start = start;
-    view.end = end;
+    patternPainter = null;
+    patternMarks = null;
     if (view.scale === null) {
       const {left, top, right, bottom} = projectedBounds();
       view.x = (left + right) / 2;
@@ -1061,6 +1132,7 @@
         if (matchingPositionBlock(row, col, first, second) || matchingPositionBlock(row, col, second, first)) return 2;
       }
     }
+    if (openFieldWidth) return 0;
     const half = Math.floor(field.W / 2);
     if (options.joinLeft && col >= field.W - half) return 4;
     if (options.joinRight && col < half) return 6;
@@ -1072,7 +1144,8 @@
   }
 
   function createPatternPainter() {
-    return window.MayatnikRhombPatternColors.create(field.W, field.H, view.start, view.end);
+    const {start, end, origin} = fieldColumns();
+    return window.MayatnikRhombPatternColors.create(field.W, field.H, start + origin, end + origin);
   }
 
   // Geometry of the two current source passes. Half modes keep the original
@@ -1119,7 +1192,8 @@
 
   function paintSquareBits(x, y, scale, w, h, bounds, marks, output = words) {
     const {W, H, val} = field;
-    const displayWidth = view.end - view.start;
+    const {start, end, origin} = fieldColumns();
+    const displayWidth = end - start;
     const left = Math.max(0, Math.floor(x + bounds.left * scale));
     const right = Math.min(w, Math.ceil(x + bounds.right * scale));
     const top = Math.max(0, Math.floor(y + bounds.top * scale));
@@ -1131,10 +1205,10 @@
         const u = (px + .5 - x) * step;
         const row = Math.floor(u + v);
         const displayed = Math.floor(u - v);
-        if (row < 0 || row >= H || displayed < view.start || displayed >= view.end) continue;
-        const col = sourceColumn(displayed, W);
+        if (row < 0 || row >= H || displayed < start || displayed >= end) continue;
+        const col = sourceColumn(displayed + origin, W);
         const bit = val[row * W + col];
-        const patternIndex = row * displayWidth + displayed - view.start;
+        const patternIndex = row * displayWidth + displayed - start;
         if (bit >= 0) output[py * w + px] = colorWords[bit + bitTone(row, col, marks, patternIndex)];
       }
     }
@@ -1269,7 +1343,11 @@
 
   function livePatternMarks() {
     if (!options.patternColors) return;
-    patternPainter ??= createPatternPainter();
+    if (!patternPainter || patternPainterWidth !== field.W) {
+      patternPainter = createPatternPainter();
+      patternPainterWidth = field.W;
+      patternMarks = null;
+    }
     if (frame) {
       patternMarks ??= patternPainter.update(field.val, patternArea?.value);
       return patternMarks;
@@ -1340,6 +1418,7 @@
 
   function paintFieldGuides(context, x, y, scale, ratio, styles) {
     const {W, H} = field;
+    const {start, end, origin} = fieldColumns();
     context.save();
     if (options.square) {
       context.translate(x, y);
@@ -1348,20 +1427,22 @@
     }
     context.lineWidth = ratio;
     context.strokeStyle = styles.getPropertyValue("--romb-border").trim();
-    context.strokeRect(x + view.start * scale, y, (view.end - view.start) * scale, H * scale);
+    context.strokeRect(x + start * scale, y, (end - start) * scale, H * scale);
     context.beginPath();
-    if (options.patternColors && patternPainter.centralAxis > view.start && patternPainter.centralAxis < view.end) {
-      const axisX = x + patternPainter.centralAxis * scale;
+    const axis = patternPainter?.centralAxis - origin;
+    if (options.patternColors && axis > start && axis < end) {
+      const axisX = x + axis * scale;
       context.moveTo(axisX, y);
       context.lineTo(axisX, y + H * scale);
     }
-    if (view.start < 0) {
-      context.moveTo(x, y);
-      context.lineTo(x, y + H * scale);
+    if (start < -origin) {
+      context.moveTo(x - origin * scale, y);
+      context.lineTo(x - origin * scale, y + H * scale);
     }
-    if (view.end > W) {
-      context.moveTo(x + W * scale, y);
-      context.lineTo(x + W * scale, y + H * scale);
+    if (end > W - origin) {
+      const edgeX = x + (W - origin) * scale;
+      context.moveTo(edgeX, y);
+      context.lineTo(edgeX, y + H * scale);
     }
     context.stroke();
     if (frame) paintOutlines(context, x, y, scale, ratio, styles);
@@ -1379,9 +1460,11 @@
 
   function paintFlatBits(x, y, scale, w, h, marks, output = words, samples = flatSamples, area) {
     const {W, H, val} = field;
-    const {left, top, right, bottom} = area ?? {left: view.start, top: 0, right: view.end, bottom: H};
+    const {start, end, origin} = fieldColumns();
+    const left = Math.max(start, area?.left ?? start), right = Math.min(end, area?.right ?? end);
+    const top = area?.top ?? 0, bottom = area?.bottom ?? H;
     const {columns, pairs, sampleStart, sampleEnd} = samples;
-    const displayWidth = view.end - view.start;
+    const displayWidth = end - start;
     const firstX = Math.max(0, Math.ceil(x + left * scale - 0.5));
     const lastX = Math.min(w, Math.ceil(x + right * scale - 0.5));
     const firstY = Math.max(0, Math.ceil(y + top * scale - 0.5));
@@ -1389,7 +1472,7 @@
     const searchPixel = marks && scale < 1;
     for (let px = firstX; px < lastX; px++) {
       const displayed = clamp(Math.floor((px + 0.5 - x) / scale), left, right - 1);
-      const col = sourceColumn(displayed, W);
+      const col = sourceColumn(displayed + origin, W);
       columns[px] = displayed;
       // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
       pairs[px] = col + 1 < W && displayed + 1 < right && (displayed + 1.5) * scale + x < px + 1;
@@ -1401,11 +1484,11 @@
     for (let py = firstY; py < lastY; py++) {
       const row = clamp(Math.floor((py + 0.5 - y) / scale), top, bottom - 1);
       const sourceRow = row * W;
-      const patternRow = row * displayWidth - view.start;
+      const patternRow = row * displayWidth - start;
       const out = py * w;
       for (let px = firstX; px < lastX; px++) {
         let displayed = columns[px];
-        let col = sourceColumn(displayed, W);
+        let col = sourceColumn(displayed + origin, W);
         let bit = val[sourceRow + col];
         if (bit < 0 && pairs[px]) {
           displayed++;
@@ -1416,7 +1499,7 @@
           for (let candidate = sampleStart[px]; candidate < sampleEnd[px]; candidate++) {
             if (!patternAt(marks, patternRow + candidate)) continue;
             displayed = candidate;
-            col = sourceColumn(displayed, W);
+            col = sourceColumn(displayed + origin, W);
             bit = val[sourceRow + col];
             break;
           }
@@ -1476,14 +1559,17 @@
 
   function positionText() {
     if (!frame) return "";
+    const columnOffset = openFieldWidth ? -fieldColumns().origin : 1;
     if (isJoint()) {
       const point = jointPoints[(frame - 1) % 2];
       return " · " + routeNames[jointRoute?.value || "cw"] + " · вершина: столбец " +
-        formatter.format(point.center + 1) + ", строка " + formatter.format(point.top + 1);
+        formatter.format(point.center + columnOffset) + ", строка " + formatter.format(point.top + 1);
     }
     const vertical = isVertical();
     const points = sourceRhombs(false);
-    const position = point => formatter.format(1 + (vertical ? point.top + (point.half === "lower" ? depth : 0) : point.center));
+    const position = point => formatter.format(vertical
+      ? 1 + point.top + (point.half === "lower" ? depth : 0)
+      : point.center + columnOffset);
     if (points.length === 1) return (vertical ? " · вершина, строка " : " · столбец ") + position(points[0]);
     if (!points[0].half) return (vertical ? " · вершины, строки " : " · вершины, столбцы ") + points.map(position).join(", ");
     return " · верх " + points.filter(p => p.half === "upper").map(position).join(", ") +
@@ -1502,8 +1588,9 @@
   function updateLabels(scale, comparisonScale) {
     const {W, H} = field;
     const vertical = isVertical();
-    const position = positionText() + (frame && !vertical && !splitAxis("x") && !["double", "inward"].includes(horizontalMode()) ? " из " + formatter.format(W) : "");
-    const dimensions = vertical ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
+    const position = positionText() + (frame && !vertical && !openFieldWidth && !splitAxis("x") &&
+      !["double", "inward"].includes(horizontalMode()) ? " из " + formatter.format(W) : "");
+    const dimensions = vertical || openFieldWidth ? " · поле " + formatter.format(W) + " × " + formatter.format(H) : " · " + formatter.format(H) + " строк";
     const target = seekTarget === null ? "" : " → " + formatter.format(seekTarget);
     const contact = contactText();
     const zoom = comparisonScale ? "поле 1/1 · внизу " + scaleLabel(comparisonScale) : scaleLabel(scale);
@@ -1513,10 +1600,10 @@
     if (frameLabel.textContent !== label) frameLabel.textContent = label;
     const period = cycle?.period;
     const end = syncFrameSlider();
-    const cycleText = period
+    const cycleText = fieldError || (period
       ? "↻ Цикл " + formatter.format(cycle.lap + 1) + " · кадры " + formatter.format(cycle.start) + "–" +
         formatter.format(end) + " · " + formatter.format(end + 1) + " = " + formatter.format(cycle.start)
-      : cycle ? "Проверка повтора от кадра " + formatter.format(cycle.start) : "";
+      : cycle ? "Проверка повтора от кадра " + formatter.format(cycle.start) : "");
     if (cycleNote.textContent !== cycleText) cycleNote.textContent = cycleText;
     cycleNote.hidden = !cycleText;
     syncEdgeButtons();
@@ -1761,7 +1848,7 @@
   }
 
   function knownGifCycle(wrap, reverse) {
-    if (!isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
+    if (!openFieldWidth && width.value !== "8" && !isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
       return horizontalCycle(wrap, reverse);
     }
     return null;
@@ -1771,7 +1858,8 @@
     const range = gifFullCycle ? null : gifRange;
     const period = range ? null : knownGifCycle(currentWrap(), currentReverse())?.knownPeriod;
     const count = gifFrameCount(range, stepCount(), period);
-    const text = "Кадров в GIF · " + (count === null ? "после расчёта цикла" : formatter.format(count));
+    const text = !range && openFieldWidth ? "Для растущего поля выберите диапазон кадров"
+      : "Кадров в GIF · " + (count === null ? "после расчёта цикла" : formatter.format(count));
     if (gifCountLabel.textContent !== text) gifCountLabel.textContent = text;
   }
 
@@ -1885,10 +1973,20 @@
     }
   }
 
-  function frameExportGeometry(coin, {crop = null, minimumScale = 1} = {}) {
+  function gifOpenFieldBounds(endFrame) {
+    const steps = Math.max(0, endFrame - 1);
+    let reach = steps;
+    if (isJoint()) reach = jointRoute.value.startsWith("spiral") ? Math.ceil(Math.sqrt(steps)) : Math.ceil(steps / 4);
+    else if (horizontalMode() === "pendulum") reach = Math.ceil(steps / 2);
+    else if (horizontalMode() === "inward") reach += 2 * depth - 1;
+    const columns = Math.max(field.W, Math.min(unlimitedWidthLimit(), 2 * (reach + depth - 1) + 1));
+    return fullFieldBounds(columns);
+  }
+
+  function frameExportGeometry(coin, {area = null, minimumScale = 1} = {}) {
     const camera = coin ? coinView : view;
     const rect = coin ? combinedCanvas.getBoundingClientRect() : fieldFitRect();
-    const bounds = crop ?? (coin ? coinBounds() : fullFieldBounds());
+    const bounds = area ?? (coin ? coinBounds() : fullFieldBounds());
     const scale = Math.max(minimumScale, camera.scale ?? fittedPixelScale(rect, camera, coin ? coinBounds() : projectedBounds()));
     if (scale < 1) {
       const divisor = Math.round(1 / scale);
@@ -1911,6 +2009,10 @@
       paintCoinBits(output, width, height, x, y, scale, bounds);
     } else {
       renderRhombs = sourceRhombs();
+      if (job.patterns && job.patternWidth !== field.W) {
+        job.painter = createPatternPainter();
+        job.patternWidth = field.W;
+      }
       const marks = job.painter?.update(field.val, patternArea?.value) ?? job.marks;
       if (options.square) paintSquareBits(x, y, scale, width, height, bounds, marks, output);
       else paintFlatBits(x, y, scale, width, height, marks, output,
@@ -2108,7 +2210,7 @@
     const checkpoint = wholeCycle ? null : findCheckpoint(first, useLive ? live.frame : 0);
     withGifRun(job, () => {
       if (checkpoint) restoreCheckpoint(checkpoint.at, checkpoint.saved);
-      else if (useLive) restoreCheckpoint(live.frame, {...live, bits: live.field.val});
+      else if (useLive) restoreCheckpoint(live.frame, {...live, bits: live.field.val, width: live.field.W});
       else initializeRun();
     });
   }
@@ -2121,17 +2223,26 @@
     const status = coin ? byId("romb-record-status-coin") : gifStatus;
     status.hidden = false;
     const range = gifFullCycle ? null : [...gifRange];
+    if (!range && openFieldWidth) {
+      status.textContent = "Для растущего поля выберите диапазон кадров GIF.";
+      return;
+    }
     if (!range && isJoint() && jointRoute.value.startsWith("spiral")) {
       status.textContent = "У расширяющейся спирали нет полного цикла: длина витка растёт.";
       return;
     }
     const camera = coin ? coinView : view;
     const element = coin ? combinedCanvas : canvas;
-    const crop = camera.gifCrop.enabled ? gifCropArea(camera, element) : null;
-    const geometry = frameExportGeometry(coin, {crop, minimumScale: 0});
+    const area = camera.gifCrop.enabled ? gifCropArea(camera, element)
+      : !coin && openFieldWidth ? gifOpenFieldBounds(range[1]) : null;
+    const geometry = frameExportGeometry(coin, {area, minimumScale: 0});
     const {width, height, scale} = geometry;
     if (width > 65535 || height > 65535) {
-      status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб поля.";
+      status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб или выберите область GIF.";
+      return;
+    }
+    if (openFieldWidth && width * height > MayatnikEdgeFlow.MAX_CELLS) {
+      status.textContent = "Кадр GIF слишком велик для этого поля. Уменьшите масштаб или выберите область GIF.";
       return;
     }
     const job = {...geometry, status, nextUpdate: 0, settings: gifSettings()};
@@ -2149,9 +2260,9 @@
       syncMirrors();
       if (!colorWords) paint();
       prepareGifRun(job, range?.[0] ?? null);
-      if (!coin && options.patternColors) job.painter = createPatternPainter();
+      job.patterns = !coin && options.patternColors;
       if (!coin && !options.square) {
-        job.flatSamples = createFlatSamples(width, job.painter && scale < 1);
+        job.flatSamples = createFlatSamples(width, job.patterns && scale < 1);
       }
       const period = range ? null : await findGifCycle(job);
       const start = range?.[0] ?? job.run.frame;
@@ -2244,6 +2355,7 @@
 
   function paintOutlines(context, x, y, scale, ratio, styles) {
     const {W, H} = field;
+    const {start, end, origin} = fieldColumns();
     const centers = renderRhombs.map(({center}) => center);
     const middleColumn = (Math.min(...centers) + Math.max(...centers)) / 2;
     const leftStroke = styles.getPropertyValue("--romb-outline-left").trim();
@@ -2261,14 +2373,15 @@
     }
     const fill = styles.getPropertyValue("--romb-overlap").trim();
     for (const offset of [-W, 0, W]) {
-      const left = Math.max(view.start, offset);
-      const right = Math.min(view.end, offset + W);
+      const position = offset - origin;
+      const left = Math.max(start, position);
+      const right = Math.min(end, position + W);
       if (right <= left) continue;
       context.save();
       context.beginPath();
       context.rect(x + left * scale, y, (right - left) * scale, H * scale);
       context.clip();
-      context.translate(x + offset * scale, y);
+      context.translate(x + position * scale, y);
       context.scale(scale, scale);
       if (overlaps.length) {
         // Fill all intersections together to keep a uniform tint where several overlap.
@@ -2346,8 +2459,14 @@
           retreatHubFrame();
           pending++;
         } else {
-          advanceFrame();
-          pending--;
+          try {
+            advanceFrame();
+            pending--;
+          } catch (error) {
+            if (!(error instanceof RangeError) || !openFieldWidth) throw error;
+            fieldError = error.message;
+            stop();
+          }
         }
       } while (pending && frame !== boundary && performance.now() < deadline);
       if (!pending) {
