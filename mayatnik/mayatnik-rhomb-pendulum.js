@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.047 */
+/* Ромбовый Маятник v0.048 */
 (() => {
   "use strict";
 
@@ -105,6 +105,7 @@
   let coinFrameInfo, recording;
   let field, depth, frame, column, branches, routeWrap;
   let openFieldWidth = false;
+  let legacyHorizontalEdges = hubFour;
   let routeWrapY, verticalRouteChanges, jointPoints, spiral;
   let routeChanges, reversalChanges, routeReverse, checkpoints, checkpointLimit, checkpointInterval, seekTarget;
   let cycle, reportedCycle, normalSliderMax, cycleMarkKey;
@@ -252,15 +253,16 @@
 
   function motionKey() {
     return [size.value, width.value, heightFactor?.value, horizontalMode(), verticalMotion.value,
-      splitAxis("x"), splitAxis("y"), jointRoute?.value].join("|");
+      splitAxis("x"), splitAxis("y"), jointRoute?.value, legacyHorizontalEdges].join("|");
   }
 
-  function reset(shared) {
+  function reset(shared, legacyEdges = hubFour || shared?.version === 1) {
     pendingSharedView = shared ?? null;
     stop();
     fieldError = "";
     patternMarks = null;
     const rows = Number(size.value);
+    legacyHorizontalEdges = legacyEdges;
     openFieldWidth = width.value === "unlimited" && isHorizontal();
     const widthFactor = Number(width.value) || 2;
     const length = widthFactor * rows - 1;
@@ -294,6 +296,10 @@
     redraw();
   }
 
+  function horizontalMargin() {
+    return legacyHorizontalEdges || openFieldWidth ? 0 : depth - 1;
+  }
+
   function initializeRun() {
     firstPaintedRow = field.H;
     endPaintedRow = 0;
@@ -305,7 +311,7 @@
     routeWrapY = verticalRouteChanges.get(0);
     if (isJoint()) return;
     if (horizontalMode() === "inward") {
-      const reach = openFieldWidth ? 2 * depth - 1 : centerX;
+      const reach = openFieldWidth ? 2 * depth - 1 : centerX - horizontalMargin();
       branches[1] = {column: centerX - reach, direction: 1};
       branches[0] = {column: centerX + reach, direction: -1};
     }
@@ -370,7 +376,8 @@
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
     const reverse = reversalChanges.get(1) ?? reversalChanges.get(0);
-    if (openFieldWidth || width.value === "8" || isVertical() || horizontalMode() !== "pendulum" || splitAxis("x") ||
+    if ((!legacyHorizontalEdges && !reverse) || openFieldWidth || width.value === "8" ||
+        isVertical() || horizontalMode() !== "pendulum" || splitAxis("x") ||
         [...reversalChanges].some(([at, value]) => at > 1 && value !== reverse) ||
         [...routeChanges].some(([at, value]) => at > 1 && value !== wrap)) {
       cycle = null;
@@ -464,11 +471,11 @@
     return Math.abs(branches[0].column - branches[1].column);
   }
 
-  function moveBranch(branch, W, wrap, unbounded) {
+  function moveBranch(branch, positions, first, wrap) {
     if (!frame) return false;
     const previous = branch.column;
     const next = previous + branch.direction;
-    branch.column = unbounded ? next : MayatnikEdgeFlow.mapColumn(next, W, !wrap);
+    branch.column = positions === null ? next : first + MayatnikEdgeFlow.mapColumn(next - first, positions, !wrap);
     if (!wrap && branch.column !== next) branch.direction *= -1;
     return Math.abs(branch.column - previous) === 1;
   }
@@ -719,9 +726,10 @@
       const reach = twoTracks ? Math.max(nextReach(upper), nextReach(branches[0])) : nextReach(upper);
       growFieldToReach(reach);
     }
-    const positions = vertical ? field.H - 2 * depth + 1 : field.W;
-    const moved = mode !== "off" && moveBranch(upper, positions, wrap, openWidth);
-    const otherMoved = twoTracks && moveBranch(branches[0], positions, wrap, openWidth);
+    const first = vertical ? 0 : horizontalMargin();
+    const positions = openWidth ? null : vertical ? field.H - 2 * depth + 1 : field.W - 2 * first;
+    const moved = mode !== "off" && moveBranch(upper, positions, first, wrap);
+    const otherMoved = twoTracks && moveBranch(branches[0], positions, first, wrap);
     if (!twoTracks && mode !== "pendulum") branches[0] = {...upper};
     const point = axisPoint(upper);
     column = point.center;
@@ -769,8 +777,9 @@
       if (openWidth) growFieldToReach(Math.abs(dx));
     }
     const center = (field.W - 1) / 2 + dx;
+    const first = horizontalMargin();
     const point = {
-      center: openWidth ? center : MayatnikEdgeFlow.mapColumn(center, field.W, !routeWrap),
+      center: openWidth ? center : first + MayatnikEdgeFlow.mapColumn(center - first, field.W - 2 * first, !routeWrap),
       top: MayatnikEdgeFlow.mapColumn(Math.floor((field.H - 2 * depth) / 2) + dy, field.H - 2 * depth + 1, !routeWrapY)
     };
     jointPoints[frame % 2] = point;
@@ -1848,7 +1857,9 @@
   }
 
   function knownGifCycle(wrap, reverse) {
-    if (!openFieldWidth && width.value !== "8" && !isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
+    // Reversing at contact turns both branches before either reaches a side.
+    if ((legacyHorizontalEdges || reverse) && !openFieldWidth && width.value !== "8" &&
+        !isVertical() && horizontalMode() === "pendulum" && !splitAxis("x")) {
       return horizontalCycle(wrap, reverse);
     }
     return null;
@@ -1930,8 +1941,9 @@
       return mode === "pendulum" ? frame % 2 : 0;
     }
     const radius = Math.floor((frame - 1) / 4) + 1;
+    const columns = field.W - 2 * horizontalMargin();
     const rows = field.H - 2 * depth + 1;
-    const px = routeWrap ? field.W : Math.max(1, 2 * (field.W - 1));
+    const px = routeWrap ? columns : Math.max(1, 2 * (columns - 1));
     const py = routeWrapY ? rows : Math.max(1, 2 * (rows - 1));
     return [frame % 4, radius % px, radius % py].join("/");
   }
@@ -2034,7 +2046,7 @@
 
   function captureShareScene() {
     return {
-      version: 1,
+      version: legacyHorizontalEdges ? 1 : 2,
       settings: currentSettings(),
       frame,
       lap: cycle?.lap ?? 0,
@@ -2065,7 +2077,7 @@
     const binary = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
     const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
     const scene = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes));
-    if (scene?.version !== 1 || !scene.settings || typeof scene.settings !== "object" || Array.isArray(scene.settings) ||
+    if (![1, 2].includes(scene?.version) || !scene.settings || typeof scene.settings !== "object" || Array.isArray(scene.settings) ||
         !Number.isSafeInteger(scene.frame) || scene.frame < 0 || scene.frame > maxFrame ||
         !Number.isSafeInteger(scene.lap) || scene.lap < 0 || !Array.isArray(scene.routes) || scene.routes.length !== 3) {
       throw Error("В ссылке нет корректных настроек Ромбового Маятника.");

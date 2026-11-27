@@ -52,7 +52,8 @@ function makeModel() {
         options.reverseAtContact = config.edge === 'contact';
         left = Infinity;
         right = -Infinity;
-        reset();
+        // The published route searches use the original horizontal bounds.
+        reset(undefined, true);
       },
       advance: advancePass,
       checkpoint() {

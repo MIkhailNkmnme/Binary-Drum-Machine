@@ -14,6 +14,8 @@ const minLength = 30;
 const checkpointInterval = 30_000;
 const number = new Intl.NumberFormat('ru');
 const directions = ['→', '↓', '↘', '↙'];
+// v0.051 used these same bounds and state format in the research runner.
+const previousResearchSource = '358cec6143eef88a344d44c8580d28a99731bf751058e045571a06c10b0b297a';
 
 function buildJobs(maxSize, maxFrames) {
   return matrix()
@@ -247,8 +249,12 @@ Ctrl+C сохраняет прогресс. Та же команда продо�
       lengths: [minLength, 70], directions, steps};
     const manifestFile = path.join(directory, 'run.json');
     if (!fs.existsSync(manifestFile)) writeJson(manifestFile, manifest);
-    else if (JSON.stringify(readJson(manifestFile)) !== JSON.stringify(manifest)) {
-      throw Error('В папке остались данные от другой версии или параметров расчёта. Укажите другую папку через --output.');
+    else {
+      const stored = readJson(manifestFile);
+      if (stored.source === previousResearchSource) stored.source = manifest.source;
+      if (JSON.stringify(stored) !== JSON.stringify(manifest)) {
+        throw Error('В папке остались данные от другой версии или параметров расчёта. Укажите другую папку через --output.');
+      }
     }
 
     const pending = jobs.filter(job => !fs.existsSync(resultPath(directory, job.id)));
