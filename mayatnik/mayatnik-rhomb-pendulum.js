@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.044 */
+/* Ромбовый Маятник v0.045 */
 (() => {
   "use strict";
 
@@ -57,6 +57,9 @@
   const patternColors = [byId("romb-pattern-zero"), byId("romb-pattern-one")];
   const pngButton = byId("romb-save-png");
   const pngStatus = byId("romb-png-status");
+  const shareButton = byId("romb-share");
+  const shareStatus = byId("romb-share-status");
+  const shareUrlInput = byId("romb-share-url");
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
   const gifCountLabel = byId("romb-gif-count");
@@ -87,6 +90,7 @@
   const hubPlayButtons = hubFour ? [[-1, byId("romb-hub-play-back")], [1, byId("romb-hub-play-forward")]] : [];
   let hubRenderer, hubActive = false, hubAxes = false, hubVertical = false;
   const maxFrame = MayatnikEdgeFlow.MAX_FRAME;
+  const shareCodeLimit = 400000;
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -108,6 +112,7 @@
   let renderRhombs = [];
   let combinedPixels, combinedWords;
   let frameRequest = 0;
+  let pendingSharedView = null;
   let playing = false;
   let playDirection = 1;
   let pending = 0;
@@ -190,12 +195,8 @@
     }
   }
 
-  function save() {
-    if (hubFour) {
-      try { localStorage.setItem(hubStepKey, String(stepCount())); } catch { /* Optional preferences. */ }
-      return;
-    }
-    const settings = {
+  function currentSettings() {
+    return {
       rows: Number(size.value), factor: Number(width.value), step: stepCount(), speed: Number(speed.value),
       verticalMotion: verticalMotion.value, halves: {x: halves.x?.value, y: halves.y?.value},
       horizontalMotion: horizontalMode(), heightFactor: Number(heightFactor?.value || width.value),
@@ -204,6 +205,14 @@
       patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value),
       allowReducedZoom, gifFullCycle, gifRange: [...gifRange], gifCrop: view.gifCrop, coinGifCrop: coinView.gifCrop, ...options
     };
+  }
+
+  function save() {
+    if (hubFour) {
+      try { localStorage.setItem(hubStepKey, String(stepCount())); } catch { /* Optional preferences. */ }
+      return;
+    }
+    const settings = currentSettings();
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
       return;
@@ -242,7 +251,8 @@
       splitAxis("x"), splitAxis("y"), jointRoute?.value].join("|");
   }
 
-  function reset() {
+  function reset(shared) {
+    pendingSharedView = shared ?? null;
     stop();
     patternMarks = null;
     const rows = Number(size.value);
@@ -255,9 +265,9 @@
       patternPainter = null;
     }
     depth = rows / 2;
-    routeChanges = new Map([[0, options.wrap]]);
-    verticalRouteChanges = new Map([[0, options.wrapY]]);
-    reversalChanges = new Map([[0, options.reverseAtContact]]);
+    routeChanges = shared?.routes[0] ?? new Map([[0, options.wrap]]);
+    verticalRouteChanges = shared?.routes[1] ?? new Map([[0, options.wrapY]]);
+    reversalChanges = shared?.routes[2] ?? new Map([[0, options.reverseAtContact]]);
     checkpoints = new Map();
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
@@ -267,6 +277,10 @@
     initializeRun();
     fit();
     fitCoin();
+    if (shared) {
+      seek(shared.frame, shared.lap);
+      return;
+    }
     advanceFrame();
     syncTransport();
     syncEdgeButtons();
@@ -1270,11 +1284,17 @@
       return;
     }
     const bounds = projectedBounds();
+    const shared = seekTarget === null ? pendingSharedView : null;
+    if (shared) {
+      restoreSharedView(shared);
+      pendingSharedView = null;
+    }
     const ratio = devicePixelRatio || 1;
     const selectedScale = view.scale ?? fittedPixelScale(phaseList ? fieldFitRect() : canvas.getBoundingClientRect(), view, bounds);
     const compare = !!comparison && selectedScale < 1;
     if (comparison) comparison.hidden = !compare;
     const fullHeight = layoutFieldHeight(bounds);
+    if (shared && Number.isFinite(shared.scrollTop) && shared.scrollTop >= 0) window.scrollTo(0, shared.scrollTop);
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     renderRhombs = sourceRhombs();
@@ -1839,6 +1859,135 @@
     link.click();
     link.remove();
     return url;
+  }
+
+  function captureShareScene() {
+    return {
+      version: 1,
+      settings: currentSettings(),
+      frame,
+      lap: cycle?.lap ?? 0,
+      routes: [routeChanges, verticalRouteChanges, reversalChanges].map(changes => [...changes]),
+      cameras: [view, coinView].map(({x, y, scale}) => ({x, y, scale})),
+      scrollTop: zen ? null : window.scrollY,
+      phase: {factor: phaseFactor, page: Number(phasePage.value)}
+    };
+  }
+
+  function sceneUrl(scene) {
+    const bytes = new TextEncoder().encode(JSON.stringify(scene));
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    }
+    const code = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    if (code.length > shareCodeLimit) throw Error("История движения слишком велика для ссылки.");
+    const base = !inline && ["http:", "https:"].includes(location.protocol)
+      ? location.origin + location.pathname : "https://1001100.online/mayatnik/romb.html";
+    return base + "#romb=" + code;
+  }
+
+  function readShareScene() {
+    const code = new URLSearchParams(location.hash.slice(1)).get("romb");
+    if (code === null) return;
+    if (code.length > shareCodeLimit || !/^[A-Za-z0-9_-]+$/.test(code)) throw Error("Ссылка повреждена.");
+    const binary = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    const scene = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes));
+    if (scene?.version !== 1 || !scene.settings || typeof scene.settings !== "object" || Array.isArray(scene.settings) ||
+        !Number.isSafeInteger(scene.frame) || scene.frame < 0 || scene.frame > maxFrame ||
+        !Number.isSafeInteger(scene.lap) || scene.lap < 0 || !Array.isArray(scene.routes) || scene.routes.length !== 3) {
+      throw Error("В ссылке нет корректных настроек Ромбового Маятника.");
+    }
+    scene.routes = scene.routes.map(entries => {
+      if (!Array.isArray(entries) || entries.some(entry => !Array.isArray(entry) ||
+          !Number.isSafeInteger(entry[0]) || entry[0] < 0 || entry[0] > maxFrame || typeof entry[1] !== "boolean")) {
+        throw Error("В ссылке повреждена история движения.");
+      }
+      const changes = new Map(entries);
+      if (!changes.has(0) || changes.size !== entries.length) throw Error("В ссылке повреждена история движения.");
+      return changes;
+    });
+    return scene;
+  }
+
+  function loadShareScene() {
+    try {
+      const scene = readShareScene();
+      if (scene) restore(scene.settings);
+      return scene;
+    } catch (error) {
+      showShareStatus("Ссылка не открыта · " + (error.message || String(error)));
+    }
+  }
+
+  function restoreSharedView(scene) {
+    for (const [index, camera] of [view, coinView].entries()) {
+      const saved = scene.cameras?.[index];
+      if (!saved || ![saved.x, saved.y].every(value => Number.isFinite(value) && Math.abs(value) <= maxFrame)) continue;
+      camera.x = saved.x;
+      camera.y = saved.y;
+      if (Number.isFinite(saved.scale) && saved.scale >= 1 / maxFrame && saved.scale <= maxFrame) {
+        camera.scale = limitPixelScale(saved.scale, camera);
+      }
+    }
+    phaseFactor = Number.isSafeInteger(scene.phase?.factor) && scene.phase.factor > 0 && scene.phase.factor <= maxFrame
+      ? scene.phase.factor : 0;
+    phasePage.value = Number.isSafeInteger(scene.phase?.page) && scene.phase.page > 0 ? String(scene.phase.page) : "1";
+  }
+
+  function showShareStatus(message, url = "") {
+    shareStatus.textContent = message;
+    shareStatus.hidden = false;
+    shareUrlInput.value = url;
+    shareUrlInput.hidden = !url;
+    syncMirrors();
+  }
+
+  async function copyShareUrl(url) {
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        return true;
+      }
+    } catch { /* Try copying through the document. */ }
+    const previousFocus = document.activeElement;
+    const text = document.createElement("textarea");
+    text.value = url;
+    text.readOnly = true;
+    text.style.position = "fixed";
+    text.style.left = "-9999px";
+    (document.fullscreenElement || document.body).append(text);
+    try {
+      text.select();
+      return document.execCommand("copy");
+    } catch {
+      return false;
+    } finally {
+      text.remove();
+      previousFocus?.focus({preventScroll: true});
+    }
+  }
+
+  async function createShareLink() {
+    if (shareButton.disabled) return;
+    shareButton.disabled = true;
+    syncMirrors();
+    try {
+      const scene = captureShareScene();
+      const url = sceneUrl(scene);
+      const copied = copyShareUrl(url);
+      const file = new Blob([url + "\n"], {type: "text/plain;charset=utf-8"});
+      const downloadUrl = downloadFrameFile(file, "romb-mayatnik-" + scene.frame + ".txt");
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
+      if (await copied) showShareStatus("Ссылка скопирована. Файл TXT передан для скачивания.");
+      else showShareStatus("Файл TXT передан для скачивания. Ссылку можно скопировать из поля.", url);
+    } catch (error) {
+      showShareStatus("Ссылка не создана · " + (error.message || String(error)));
+    } finally {
+      shareButton.disabled = false;
+      syncMirrors();
+    }
   }
 
   async function saveFramePng(coin = false) {
@@ -2494,7 +2643,7 @@
     schedule();
   });
   backButton.addEventListener("click", stepBack);
-  byId("romb-reset").addEventListener("click", reset);
+  byId("romb-reset").addEventListener("click", () => reset());
   byId("romb-fit").addEventListener("click", fitView);
   byId("romb-exact").addEventListener("click", () => zoomTo(1));
   reducedZoomButton?.addEventListener("click", () => {
@@ -2507,6 +2656,7 @@
   squareButton?.addEventListener("click", () => toggleSquare());
   andButton?.addEventListener("click", toggleBuildAnd);
   pngButton.addEventListener("click", () => saveFramePng());
+  shareButton.addEventListener("click", createShareLink);
   gifCropButton.addEventListener("click", () => toggleGifCrop(view, canvas));
   recordButton?.addEventListener("click", () => toggleRecording());
   gifCycleButton.addEventListener("click", () => {
@@ -2612,6 +2762,7 @@
     redraw();
   });
 
+  let sharedScene;
   if (hubFour) {
     document.documentElement.classList.add("romb-hub-four");
     const transport = byId("romb-hub-transport");
@@ -2676,10 +2827,17 @@
       }
     });
   } else {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey));
-      restore(saved ?? {rows: Number(localStorage.getItem("zerk_mayatnik_rhomb_depth")) * 2});
-    } catch { /* Use default preferences. */ }
+    sharedScene = loadShareScene();
+    if (!sharedScene) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        restore(saved ?? {rows: Number(localStorage.getItem("zerk_mayatnik_rhomb_depth")) * 2});
+      } catch { /* Use default preferences. */ }
+    }
+    window.addEventListener("hashchange", () => {
+      const scene = loadShareScene();
+      if (scene) reset(scene);
+    });
   }
 
   if (!hubFour) {
@@ -2688,7 +2846,7 @@
     mountScaleExample();
   }
   updateSpeed();
-  reset();
+  reset(sharedScene);
   if (hubFour && window.parent === window) togglePlay();
   const observer = new ResizeObserver(redraw);
   observer.observe(canvas);

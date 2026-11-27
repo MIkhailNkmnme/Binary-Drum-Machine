@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.048</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.049</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=008"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=044"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=045"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -53,6 +53,7 @@
     .romb-gif-feedback { flex: 1 0 100%; min-width: 0; }
     .romb-gif-feedback .progress { margin: 2px 0 0; }
     .romb-gif-feedback p[role="status"] { color: var(--cyan); }
+    .romb-share-url { width: 100%; margin-top: 2px; font: 12px/1.4 monospace; color: var(--text); background: var(--gz-bg); border: 1px solid var(--line); }
     .romb-gif-range { flex: 1 1 246px; min-width: 0; max-width: 360px; }
     .romb-gif-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 12px; }
     .romb-gif-values input {
@@ -327,7 +328,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.048</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.049</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -375,7 +376,7 @@
         <button type="button" class="gz-hx" id="romb-build-and" aria-pressed="false" title="Совмещать прежний бит и вклад нового прохода по AND" aria-label="Накопление AND">
           <span class="gz-nm">AND</span>
         </button>
-        <div class="romb-gif-controls" id="romb-gif-controls" role="group" aria-label="Сохранение PNG и GIF">
+        <div class="romb-gif-controls" id="romb-gif-controls" role="group" aria-label="Сохранение PNG, GIF и ссылки">
           <button type="button" class="gz-hx" id="romb-save-png" title="Сохранить текущий кадр в PNG" aria-label="Сохранить текущий кадр в PNG">
             <span class="gz-ic" aria-hidden="true">▣</span><span class="gz-nm">PNG</span>
           </button>
@@ -387,6 +388,9 @@
           </button>
           <button type="button" class="gz-hx" id="romb-gif-cycle" aria-pressed="false" title="Собрать один полный цикл" aria-label="Собрать один полный цикл">
             <span class="gz-ic" aria-hidden="true">↻</span><span class="gz-nm">Весь цикл</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-share" title="Создать ссылку с текущим кадром и настройками, скопировать и скачать её" aria-label="Создать ссылку на текущий кадр и настройки">
+            <span class="gz-ic" aria-hidden="true">↗</span><span class="gz-nm">Ссылка</span>
           </button>
           <div class="romb-gif-range" role="group" aria-label="Диапазон кадров GIF">
             <div class="romb-gif-values">
@@ -401,6 +405,8 @@
           <div class="romb-gif-feedback">
             <p id="romb-gif-count" class="progress"></p>
             <p id="romb-record-status" class="progress" role="status" hidden></p>
+            <p id="romb-share-status" class="progress" role="status" hidden></p>
+            <input type="url" class="romb-share-url" id="romb-share-url" aria-label="Ссылка на кадр и настройки" readonly hidden>
           </div>
         </div>
       </div>
