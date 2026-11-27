@@ -28,13 +28,24 @@ function makeModel() {
     const noRender = () => {};
     stop = fit = fitCoin = syncTransport = syncEdgeButtons = announcePosition = redraw = configureCycle = noRender;
     advanceFrame = advancePass;
-    let left, right;
+    let left, right, changed;
     const draw = buildPass;
-    buildPass = (upper, lower, ...rest) => {
+    buildPass = (upper, lower, and, upperTop, lowerTop) => {
       const origin = openFieldWidth ? (field.W - 1) / 2 : 0;
-      left = Math.min(left, upper - origin - depth + 1, lower - origin - depth + 1);
-      right = Math.max(right, upper - origin + depth - 1, lower - origin + depth - 1);
-      draw(upper, lower, ...rest);
+      const passLeft = Math.min(upper, lower) - origin - depth + 1;
+      const passRight = Math.max(upper, lower) - origin + depth - 1;
+      left = Math.min(left, passLeft);
+      right = Math.max(right, passRight);
+      const top = Math.min(upperTop, lowerTop + depth);
+      const bottom = Math.max(upperTop + depth, lowerTop + 2 * depth);
+      if (!changed) changed = {left: passLeft, right: passRight, top, bottom};
+      else {
+        changed.left = Math.min(changed.left, passLeft);
+        changed.right = Math.max(changed.right, passRight);
+        changed.top = Math.min(changed.top, top);
+        changed.bottom = Math.max(changed.bottom, bottom);
+      }
+      draw(upper, lower, and, upperTop, lowerTop);
     };
     return {
       start(config) {
@@ -52,10 +63,14 @@ function makeModel() {
         options.reverseAtContact = config.edge === 'contact';
         left = Infinity;
         right = -Infinity;
-        // The published route searches use the original horizontal bounds.
-        reset(undefined, true);
+        changed = null;
+        // Published samples keep their original bounds unless the job opts in.
+        reset(undefined, !config.wholeHorizontalRhomb);
       },
-      advance: advancePass,
+      advance() {
+        changed = null;
+        advancePass();
+      },
       checkpoint() {
         return {frame, width: field.W, height: field.H, column, branches, jointPoints, spiral,
           routeWrap, routeWrapY, routeReverse, firstPaintedRow, endPaintedRow, left, right};
@@ -72,9 +87,10 @@ function makeModel() {
         const origin = openFieldWidth ? (field.W - 1) / 2 : 0;
         const bounds = {left: Math.max(0, left + origin), right: Math.min(field.W - 1, right + origin),
           top: firstPaintedRow, bottom: endPaintedRow};
+        const changedBounds = changed && {...changed, left: changed.left + origin, right: changed.right + origin};
         const point = isJoint() && frame ? jointPoints[(frame - 1) % 2] : null;
         const apex = point ? [point.top + 1, point.center + 1] : null;
-        return {frame, width: field.W, height: field.H, values: field.val, bounds, apex};
+        return {frame, width: field.W, height: field.H, values: field.val, bounds, changedBounds, apex};
       }
     };
   })();`, {

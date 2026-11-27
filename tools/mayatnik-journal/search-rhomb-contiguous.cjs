@@ -14,25 +14,39 @@ const minLength = 30;
 const checkpointInterval = 30_000;
 const number = new Intl.NumberFormat('ru');
 const directions = ['→', '↓', '↘', '↙'];
-// v0.051 used these same bounds and state format in the research runner.
-const previousResearchSource = '358cec6143eef88a344d44c8580d28a99731bf751058e045571a06c10b0b297a';
+// Both prior releases used the same state format with the old bounds.
+const previousResearchSources = new Set([
+  '358cec6143eef88a344d44c8580d28a99731bf751058e045571a06c10b0b297a',
+  '6c1bca84e46b74c49468e1b4007bdb2e669930b809cfad6cdfd5317d1306b562',
+]);
 
-function buildJobs(maxSize, maxFrames) {
+function bothAxes({x, y}) {
+  return x !== 'off' && y !== 'off';
+}
+
+function gcd(a, b) {
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+
+function buildJobs(maxSize, maxFrames, whole) {
   return matrix()
     .filter(job => job.group === 'routes' && !job.route.startsWith('spiral') && job.n <= maxSize)
     .map(({id, n, x, y, route, halfX, halfY, width, height, edge, rule}) => {
-      const joint = x !== 'off' && y !== 'off';
       const w = x === 'off' ? n - 1 : 2 * n - 1;
       const h = y === 'off' ? n : 2 * n - 1;
       const longest = Math.min(70, Math.max(Math.ceil(w / 2), Math.ceil(h / 2), Math.min(w, h)));
-      const positions = x === 'off' ? n : w;
+      const horizontal = 2 * ((whole ? n + 1 : w) - 1);
+      const vertical = 2 * (n - 1);
       const motion = x === 'off' ? y : x;
-      const period = joint ? 16 * (n - 1) : 2 * (positions - 1) * (motion === 'pendulum' ? 2 : 1);
+      const period = bothAxes({x, y}) ? 4 * horizontal * vertical / gcd(horizontal, vertical)
+        : (x === 'off' ? vertical : horizontal) * (motion === 'pendulum' ? 2 : 1);
       return {id, n, x, y, route, halfX, halfY, width, height, edge, rule, longest, period,
-        last: maxFrames === null ? period : Math.min(period, maxFrames)};
+        last: maxFrames === null ? period : Math.min(period, maxFrames),
+        ...(whole ? {wholeHorizontalRhomb: true} : {})};
     })
     .filter(job => job.longest >= minLength)
-    .sort((a, b) => a.n - b.n || a.id - b.id);
+    .sort((a, b) => (whole ? Number(bothAxes(a)) - Number(bothAxes(b)) : 0) || a.n - b.n || a.id - b.id);
 }
 
 function readJson(file) {
@@ -96,6 +110,20 @@ function saveCheckpoint(file, model, matches) {
   atomicWrite(file, Buffer.concat([size, header, bits]));
 }
 
+function scanChanged(snapshot, remaining, longest) {
+  const {width, height, values, bounds, changedBounds} = snapshot;
+  const reach = 2 * (longest - 1);
+  // Every new match must include a cell touched by this pass. The margin
+  // retains both ends even for horizontal and vertical two-cell steps.
+  const area = {
+    left: Math.max(bounds.left, changedBounds.left - reach),
+    right: Math.min(bounds.right, changedBounds.right + reach),
+    top: Math.max(bounds.top, changedBounds.top - reach),
+    bottom: Math.min(bounds.bottom, changedBounds.bottom + reach),
+  };
+  return scanGrid(width, height, {values, bounds: area}, remaining, minLength);
+}
+
 function runJob(model, job, directory, control) {
   const resultFile = resultPath(directory, job.id);
   const checkpointFile = checkpointPath(directory, job.id);
@@ -127,10 +155,13 @@ function runJob(model, job, directory, control) {
   while (checked < job.last && matches.length < goal && !Atomics.load(control, 1)) {
     if (checked > 0) model.advance();
     const snapshot = model.snapshot();
-    for (const [length, [[direction, , row, column, endRow, endColumn]]] of
-      scanGrid(snapshot.width, snapshot.height, snapshot, remaining)) {
+    const found = job.wholeHorizontalRhomb ? scanChanged(snapshot, remaining, job.longest)
+      : scanGrid(snapshot.width, snapshot.height, snapshot, remaining, minLength);
+    for (const [length, [[direction, , row, column, endRow, endColumn]]] of found) {
       verifyWitness(snapshot, length, direction, row, column);
-      matches.push({length, direction: directions[direction], frame: snapshot.frame, row, column, endRow, endColumn});
+      const hit = {length, direction: directions[direction], frame: snapshot.frame, row, column, endRow, endColumn};
+      matches.push(hit);
+      parentPort.postMessage({type: 'hit', id: job.id, n: job.n, rule: job.rule, hit});
     }
     checked = snapshot.frame;
     if (Date.now() >= checkpointAt) {
@@ -184,6 +215,7 @@ function parseCommand() {
   const {values} = parseArgs({options: {
     help: {type: 'boolean', short: 'h'},
     plan: {type: 'boolean'},
+    whole: {type: 'boolean'},
     output: {type: 'string'},
     workers: {type: 'string'},
     'max-size': {type: 'string'},
@@ -203,18 +235,21 @@ function parseCommand() {
   if (!Number.isSafeInteger(workers) || workers < 1 || workers > cores) {
     throw Error('--workers принимает число от 1 до ' + cores + '.');
   }
-  const defaultDirectory = 'romb-search-' + maxSize + (maxFrames === null ? '' : '-frames-' + maxFrames);
+  const whole = values.whole === true;
+  const defaultDirectory = 'romb-search-' + maxSize + (whole ? '-whole' : '') +
+    (maxFrames === null ? '' : '-frames-' + maxFrames);
   const directory = path.resolve(values.output ?? path.join(os.homedir(), defaultDirectory));
-  return {help: values.help, plan: values.plan, directory, maxSize, maxFrames, workers};
+  return {help: values.help, plan: values.plan, directory, maxSize, maxFrames, workers, whole};
 }
 
 async function main() {
-  const {help, plan, directory, maxSize, maxFrames, workers} = parseCommand();
+  const {help, plan, directory, maxSize, maxFrames, workers, whole} = parseCommand();
   if (help) {
     console.log(`node tools/mayatnik-journal/search-rhomb-contiguous.cjs [параметры]
 Поиск строк 30–70 в каждом кадре одного периода движения.
 
   --plan             Показать объём без расчёта
+  --whole            Использовать границы целого ромба v0.052
   --max-size 1024    Верхняя высота ромба
   --max-frames N     Ограничить число кадров на вариант
   --workers 3        Число рабочих потоков
@@ -224,9 +259,14 @@ Ctrl+C сохраняет прогресс. Та же команда продо�
     return;
   }
 
-  const jobs = buildJobs(maxSize, maxFrames);
+  const jobs = buildJobs(maxSize, maxFrames, whole);
   const plannedFrames = jobs.reduce((sum, job) => sum + job.last, 0);
   console.log(`${jobs.length} вариантов, до ${number.format(plannedFrames)} кадров, N ≤ ${maxSize}.`);
+  if (whole) {
+    const singleAxis = jobs.filter(job => !bothAxes(job));
+    const singleFrames = singleAxis.reduce((sum, job) => sum + job.last, 0);
+    console.log(`Одноосевые ходы первыми: ${singleAxis.length} вариантов, до ${number.format(singleFrames)} кадров.`);
+  }
   if (plan) return;
   fs.mkdirSync(directory, {recursive: true});
   const lock = path.join(directory, 'run.lock');
@@ -245,13 +285,13 @@ Ctrl+C сохраняет прогресс. Та же команда продо�
   process.on('SIGINT', interrupt);
   process.on('SIGTERM', interrupt);
   try {
-    const manifest = {version: 1, source: sourceDigest(), mode: 'motion-period', maxSize, maxFrames,
+    const manifest = {version: 1, source: sourceDigest(), mode: whole ? 'whole-rhomb-motion-period' : 'motion-period', maxSize, maxFrames,
       lengths: [minLength, 70], directions, steps};
     const manifestFile = path.join(directory, 'run.json');
     if (!fs.existsSync(manifestFile)) writeJson(manifestFile, manifest);
     else {
       const stored = readJson(manifestFile);
-      if (stored.source === previousResearchSource) stored.source = manifest.source;
+      if (!whole && previousResearchSources.has(stored.source)) stored.source = manifest.source;
       if (JSON.stringify(stored) !== JSON.stringify(manifest)) {
         throw Error('В папке остались данные от другой версии или параметров расчёта. Укажите другую папку через --output.');
       }
@@ -261,10 +301,12 @@ Ctrl+C сохраняет прогресс. Та же команда продо�
     let completed = jobs.length - pending.length;
     console.log(`Папка ${directory}. Завершено ${completed}/${jobs.length}.`);
     const taskCount = Math.min(workers, pending.length);
-    const onMessage = ({type, id, n, rule, checked, last, hits}) => {
+    const onMessage = ({type, id, n, rule, checked, last, hits, hit}) => {
       if (type === 'result') {
         completed++;
         console.log(`Вариант ${id} завершён (${completed}/${jobs.length}), найдено строк: ${hits}.`);
+      } else if (type === 'hit') {
+        console.log(`Вариант ${id}, N = ${n}, ${rule}: строка ${hit.length} ${hit.direction}, первый кадр ${number.format(hit.frame)}, клетка (${hit.row}, ${hit.column}).`);
       } else {
         console.log(`Вариант ${id}, N = ${n}, ${rule}, кадр ${number.format(checked)} из ${number.format(last)}.`);
       }

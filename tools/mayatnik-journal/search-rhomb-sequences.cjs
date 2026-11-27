@@ -13,11 +13,12 @@ if (patterns.length !== 66 || patterns[0] !== '10101' || patterns.some((word, i)
   throw Error('Проверьте исходные строки 5–70 начальной последовательности.');
 }
 
-function automaton() {
+function automaton(minimum = 5) {
   const next = [[-1, -1]];
   const outputs = [[]];
   const links = [0];
   for (const [index, word] of patterns.entries()) {
+    if (word.length < minimum) continue;
     let state = 0;
     for (const digit of word) {
       const bit = Number(digit);
@@ -64,7 +65,8 @@ function automaton() {
   return {edges, outputs};
 }
 
-const {edges, outputs} = automaton();
+const allLengths = automaton();
+const longLengths = automaton(30);
 const steps = [[2, 0], [0, 2], [1, 1], [-1, 1]];
 
 function scan(model) {
@@ -73,7 +75,8 @@ function scan(model) {
   return scanGrid(width, height, model.snapshot());
 }
 
-function scanGrid(width, height, {bits, leftmost, rightmost, pixels, values, bounds}, remaining) {
+function scanGrid(width, height, {bits, leftmost, rightmost, pixels, values, bounds}, remaining, minimum = 5) {
+  const {edges, outputs} = minimum === 30 ? longLengths : allLengths;
   const stride = bits ? bits.length / height : 0;
   const words = stride / 2;
   const vertical = new Int16Array(2 * width);
