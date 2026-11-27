@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.033 */
+/* Ромбовый Маятник v0.034 */
 (() => {
   "use strict";
 
@@ -1191,7 +1191,7 @@
       context.lineTo(x + W * scale, y + H * scale);
     }
     context.stroke();
-    if (frame) paintOutlines(x, y, scale, ratio, styles.getPropertyValue("--romb-outline").trim());
+    if (frame) paintOutlines(x, y, scale, ratio, styles);
     context.restore();
     if (!zen) paintCombined();
 
@@ -1664,14 +1664,62 @@
     }
   }
 
-  function activeOutlines() {
-    return sourceRhombs(options.markRepeats || currentReverse());
+  function outlinePolygon({center, top, half}) {
+    const tip = center + 0.5;
+    const middle = top + depth;
+    const radius = depth - 0.5;
+    const left = [tip - radius, middle], right = [tip + radius, middle];
+    const upper = [tip, top], lower = [tip, middle + depth];
+    if (half === "upper") return [upper, right, left];
+    if (half === "lower") return [right, lower, left];
+    return [upper, right, lower, left];
   }
 
-  function paintOutlines(x, y, scale, ratio, color) {
+  function intersectOutlines(points, outline) {
+    // The vertices follow the same winding. Clip against the inside of each edge.
+    for (let i = 0; i < outline.length && points.length >= 3; i++) {
+      const [ax, ay] = outline[i];
+      const [bx, by] = outline[(i + 1) % outline.length];
+      const side = ([x, y]) => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+      const clipped = [];
+      let previous = points.at(-1);
+      let before = side(previous);
+      for (const point of points) {
+        const after = side(point);
+        if ((before >= 0) !== (after >= 0)) {
+          const t = before / (before - after);
+          clipped.push([
+            previous[0] + t * (point[0] - previous[0]),
+            previous[1] + t * (point[1] - previous[1])
+          ]);
+        }
+        if (after >= 0) clipped.push(point);
+        previous = point;
+        before = after;
+      }
+      points = clipped;
+    }
+    return points;
+  }
+
+  function traceOutline(points) {
+    context.moveTo(...points[0]);
+    for (let i = 1; i < points.length; i++) context.lineTo(...points[i]);
+    context.closePath();
+  }
+
+  function paintOutlines(x, y, scale, ratio, styles) {
     const {W, H} = field;
-    const radius = (depth - 0.5) * scale;
-    const outlines = activeOutlines();
+    const outlines = sourceRhombs(options.markRepeats || currentReverse()).map(outlinePolygon);
+    const overlaps = [];
+    for (let i = 0; i < outlines.length; i++) {
+      for (let j = i + 1; j < outlines.length; j++) {
+        const overlap = intersectOutlines(outlines[i], outlines[j]);
+        if (overlap.length >= 3) overlaps.push(overlap);
+      }
+    }
+    const stroke = styles.getPropertyValue("--romb-outline").trim();
+    const fill = styles.getPropertyValue("--romb-overlap").trim();
     for (const offset of [-W, 0, W]) {
       const left = Math.max(view.start, offset);
       const right = Math.min(view.end, offset + W);
@@ -1680,26 +1728,21 @@
       context.beginPath();
       context.rect(x + left * scale, y, (right - left) * scale, H * scale);
       context.clip();
-      context.strokeStyle = color;
-      if (options.patternColors) context.globalAlpha = 0.35;
-      context.lineWidth = 1.25 * ratio;
-      for (const {center, top, half} of outlines) {
-        const tip = x + (offset + center + 0.5) * scale;
-        const from = y + top * scale;
-        const middle = from + depth * scale;
-        const to = from + 2 * depth * scale;
+      context.translate(x + offset * scale, y);
+      context.scale(scale, scale);
+      if (overlaps.length) {
+        // Fill all intersections together to keep a uniform tint where several overlap.
+        context.fillStyle = fill;
         context.beginPath();
-        if (half) {
-          context.moveTo(tip - radius, middle);
-          context.lineTo(tip, half === "upper" ? from : to);
-          context.lineTo(tip + radius, middle);
-        } else {
-          context.moveTo(tip, from);
-          context.lineTo(tip + radius, middle);
-          context.lineTo(tip, to);
-          context.lineTo(tip - radius, middle);
-        }
-        context.closePath();
+        for (const overlap of overlaps) traceOutline(overlap);
+        context.fill();
+      }
+      context.strokeStyle = stroke;
+      if (options.patternColors) context.globalAlpha = 0.35;
+      context.lineWidth = 1.25 * ratio / scale;
+      for (const outline of outlines) {
+        context.beginPath();
+        traceOutline(outline);
         context.stroke();
       }
       context.restore();

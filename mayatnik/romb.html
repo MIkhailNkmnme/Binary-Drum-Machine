@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.036</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.037</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,12 +14,13 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=007"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=033"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=034"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
       width: 100%; max-width: none;
       --romb-zero: #21627e; --romb-one: #e1f2ec; --romb-border: #476773; --romb-outline: #e9bd74;
+      --romb-overlap: rgb(250 93 151 / 32%);
       --romb-match-zero: #805420; --romb-match-one: #ffe194;
       --romb-left-zero: #43386c; --romb-left-one: #e9cef9;
       --romb-right-zero: #245a4c; --romb-right-one: #c4efb8;
@@ -273,6 +274,7 @@
     .legend .zero { background: var(--romb-zero); }
     .legend .one { background: var(--romb-one); }
     .legend .active { background: var(--romb-outline); }
+    .legend .overlap { background: var(--romb-overlap); }
     .explanation { margin-bottom: 0; }
   </style>
 </head>
@@ -289,7 +291,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.036</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.037</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -561,6 +563,7 @@
       <span><i class="zero" aria-hidden="true"></i>0</span>
       <span><i class="empty" aria-hidden="true"></i>Пусто</span>
       <span><i class="active" aria-hidden="true"></i>Текущий ромб</span>
+      <span><i class="overlap" aria-hidden="true"></i>Пересечение рамок</span>
     </div>
     <section id="scale-example" aria-labelledby="scale-example-title">
       <h2 id="scale-example-title">Два ромба при разном масштабе</h2>
