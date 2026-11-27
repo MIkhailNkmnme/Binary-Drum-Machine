@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.040 */
+/* Ромбовый Маятник v0.041 */
 (() => {
   "use strict";
 
@@ -89,6 +89,7 @@
   const coinView = {x: 0, y: 0, scale: null};
   let allowReducedZoom = false;
   let gifFullCycle = false;
+  let gifControlsDirty = true;
   const gifRange = [0, 64];
   const mirrors = [];
   let coinFrameInfo, recording;
@@ -175,11 +176,11 @@
     allowReducedZoom = saved.allowReducedZoom === true;
     view.scale = limitPixelScale(view.scale, view);
     gifFullCycle = saved.gifFullCycle === true;
+    gifControlsDirty = true;
     if (Array.isArray(saved.gifRange) && Number.isSafeInteger(saved.gifRange[0]) && Number.isSafeInteger(saved.gifRange[1])) {
-      gifRange[0] = clamp(saved.gifRange[0], 0, maxFrame);
-      gifRange[1] = clamp(saved.gifRange[1], gifRange[0], maxFrame);
+      gifRange[0] = Math.max(0, saved.gifRange[0]);
+      gifRange[1] = Math.max(gifRange[0], saved.gifRange[1]);
     }
-    if (normalSliderMax) syncGifControls();
   }
 
   function save() {
@@ -254,7 +255,6 @@
     checkpointLimit = Math.min(12, Math.floor(96 * 1024 * 1024 / field.val.length));
     checkpointInterval = Math.max(16, Math.floor(columns / (2 * Math.max(1, checkpointLimit))));
     normalSliderMax = Math.min(maxFrame, (isJoint() ? 4 : 2) * Math.max(columns, height) + 1);
-    syncGifControls();
     cycle = null;
     configureCycle();
     initializeRun();
@@ -337,6 +337,7 @@
   }
 
   function configureCycle() {
+    gifControlsDirty = true;
     reportedCycle = null;
     // The first, centered pass is identical in both edge modes.
     const wrap = routeChanges.get(1) ?? routeChanges.get(0);
@@ -1200,10 +1201,12 @@
     const x = Math.round(w / 2 - view.x * scale);
     const y = Math.round(h / 2 - view.y * scale);
     let marks;
-    if (options.patternColors && frame) {
+    if (options.patternColors) {
       patternPainter ??= createPatternPainter();
-      patternMarks ??= patternPainter.update(field.val, patternArea?.value);
-      marks = patternMarks;
+      if (frame) {
+        patternMarks ??= patternPainter.update(field.val, patternArea?.value);
+        marks = patternMarks;
+      }
     }
     words.fill(0);
     if (options.square) paintSquareBits(x, y, scale, w, h, bounds, marks);
@@ -1220,6 +1223,11 @@
     context.strokeStyle = styles.getPropertyValue("--romb-border").trim();
     context.strokeRect(x + view.start * scale, y, displayWidth * scale, H * scale);
     context.beginPath();
+    if (options.patternColors && patternPainter.centralAxis > view.start && patternPainter.centralAxis < view.end) {
+      const axisX = x + patternPainter.centralAxis * scale;
+      context.moveTo(axisX, y);
+      context.lineTo(axisX, y + H * scale);
+    }
     if (view.start < 0) {
       context.moveTo(x, y);
       context.lineTo(x, y + H * scale);
@@ -1286,9 +1294,13 @@
   function syncFrameSlider() {
     if (frame > normalSliderMax) {
       const span = 2 * (isVertical() ? field.H : field.W) + 1;
-      normalSliderMax = Math.min(maxFrame, Math.ceil(frame / span) * span);
-      syncGifControls(Math.max(normalSliderMax, Number(gifSliders[0].max)));
+      const limit = Math.min(maxFrame, Math.ceil(frame / span) * span);
+      if (limit !== normalSliderMax) {
+        normalSliderMax = limit;
+        gifControlsDirty = true;
+      }
     }
+    if (gifControlsDirty) syncGifControls();
     const expectedEnd = reportedCycle?.returned ?? 0;
     const end = cycle?.period ? cycle.start + cycle.period - 1
       : Math.max(normalSliderMax, expectedEnd <= maxFrame ? expectedEnd : 0);
@@ -1458,7 +1470,7 @@
         if (copy.title !== source.title) copy.title = source.title;
         const label = source.getAttribute("aria-label");
         if (label !== null && copy.getAttribute("aria-label") !== label) copy.setAttribute("aria-label", label);
-        if (source.matches("input[type=range]")) copy.max = source.max;
+        if (source.matches("input[type=range], input[type=number]") && copy.max !== source.max) copy.max = source.max;
         if (source.matches("input, select") && copy.value !== source.value) copy.value = source.value;
       } else if (source === gifTrack) {
         if (copy.style.cssText !== source.style.cssText) copy.style.cssText = source.style.cssText;
@@ -1535,28 +1547,37 @@
       patternArea?.value, patternColors.map(input => input.value)]);
   }
 
-  function syncGifControls(sliderLimit = normalSliderMax) {
-    const limit = Math.max(sliderLimit, gifRange[1], 1);
-    gifCycleButton.setAttribute("aria-pressed", String(gifFullCycle));
+  function syncGifControls() {
+    gifControlsDirty = false;
+    const cycleEnd = reportedCycle ? reportedCycle.returned - 1 : 0;
+    const inputLimit = Math.max(maxFrame, cycleEnd);
+    gifRange[0] = clamp(gifRange[0], 0, inputLimit);
+    gifRange[1] = clamp(gifRange[1], gifRange[0], inputLimit);
+    const limit = Math.max(normalSliderMax, cycleEnd, gifRange[1], 1);
+    const pressed = String(gifFullCycle);
+    if (gifCycleButton.getAttribute("aria-pressed") !== pressed) gifCycleButton.setAttribute("aria-pressed", pressed);
     gifRange.forEach((value, index) => {
       const slider = gifSliders[index], number = gifNumbers[index];
       if (Number(slider.max) !== limit) slider.max = String(limit);
+      if (Number(number.max) !== inputLimit) number.max = String(inputLimit);
       for (const input of [slider, number]) {
         if (input.valueAsNumber !== value) input.value = String(value);
-        input.disabled = gifFullCycle;
+        if (input.disabled !== gifFullCycle) input.disabled = gifFullCycle;
       }
     });
-    gifTrack.style.setProperty("--gif-first", 100 * gifRange[0] / limit + "%");
-    gifTrack.style.setProperty("--gif-last", 100 * gifRange[1] / limit + "%");
+    for (const [index, property] of ["--gif-first", "--gif-last"].entries()) {
+      const position = 100 * gifRange[index] / limit + "%";
+      if (gifTrack.style.getPropertyValue(property) !== position) gifTrack.style.setProperty(property, position);
+    }
   }
 
-  function updateGifEndpoint(index, input, sliderLimit) {
+  function updateGifEndpoint(index, input) {
     const value = input.valueAsNumber;
     if (Number.isFinite(value)) {
       gifRange[index] = index === 0 ? clamp(Math.round(value), 0, gifRange[1])
-        : clamp(Math.round(value), gifRange[0], maxFrame);
+        : clamp(Math.round(value), gifRange[0], Math.max(maxFrame, reportedCycle ? reportedCycle.returned - 1 : 0));
     }
-    syncGifControls(sliderLimit);
+    syncGifControls();
     syncMirrors();
   }
 
@@ -2209,8 +2230,7 @@
   });
   gifSliders.forEach((slider, index) => {
     const number = gifNumbers[index];
-    number.max = String(maxFrame);
-    slider.addEventListener("input", () => updateGifEndpoint(index, slider, Number(slider.max)));
+    slider.addEventListener("input", () => updateGifEndpoint(index, slider));
     slider.addEventListener("change", save);
     number.addEventListener("change", () => {
       updateGifEndpoint(index, number);

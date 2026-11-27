@@ -1,4 +1,4 @@
-/* Раскраска Ромбового Маятника v0.007 */
+/* Раскраска Ромбового Маятника v0.008 */
 (() => {
   "use strict";
 
@@ -10,11 +10,14 @@
   function create(sourceWidth, H, start = 0, end = sourceWidth) {
     const W = end - start;
     const marks = new Uint8Array(Math.ceil(W * H / 8));
-    const axisColumns = [[Math.floor(sourceWidth / 2) - start]];
-    // A join lies between the last column of one segment and the first of the next.
-    if (start < 0) axisColumns.push([-1 - start, -start]);
-    if (end > sourceWidth) axisColumns.push([sourceWidth - 1 - start, sourceWidth - start]);
-    const seedColumns = axisColumns.flat();
+    // Boundaries use field coordinates; each axis seeds its two adjacent cells.
+    const centralAxis = Math.floor(sourceWidth / 2);
+    const boundaries = [centralAxis];
+    if (start < 0) boundaries.push(0);
+    if (end > sourceWidth) boundaries.push(sourceWidth);
+    const axes = boundaries.filter(boundary => boundary > start && boundary < end)
+      .map(boundary => ({boundary: boundary - start, seeds: [boundary - 1 - start, boundary - start]}));
+    const seedColumns = axes.flatMap(axis => axis.seeds);
     const columns = Int32Array.from({length: W}, (_, x) => (x + start + sourceWidth) % sourceWidth);
     const labels = new Uint32Array(H * maxStride);
     const queue = new Int32Array(labels.length);
@@ -24,26 +27,20 @@
       marks[index >> 3] |= 1 << (index & 7);
     }
 
-    function hasReflection(count, label, origin, stride, left, top, right, bottom) {
-      const contains = (x, y) => {
-        const local = x - origin;
-        return local >= 0 && local < stride && labels[y * stride + local] === label;
-      };
-      let vertical = true, horizontal = true;
-      let diagonal = right - left === bottom - top, antidiagonal = diagonal;
-      for (let i = 0; i < count && (vertical || horizontal || diagonal || antidiagonal); i++) {
+    function hasReflection(count, label, origin, stride, boundary) {
+      for (let i = 0; i < count; i++) {
         const index = queue[i];
         const y = Math.floor(index / stride);
         const x = origin + index % stride;
-        vertical = vertical && contains(left + right - x, y);
-        horizontal = horizontal && contains(x, top + bottom - y);
-        diagonal = diagonal && contains(left + y - top, top + x - left);
-        antidiagonal = antidiagonal && contains(right - y + top, bottom - x + left);
+        const reflected = 2 * boundary - 1 - x;
+        const local = reflected - origin;
+        if (reflected < 0 || reflected >= W || local < 0 || local >= stride ||
+            labels[y * stride + local] !== label) return false;
       }
-      return vertical || horizontal || diagonal || antidiagonal;
+      return true;
     }
 
-    function markSymmetricPatterns(values, seeds) {
+    function markSymmetricPatterns(values, {boundary, seeds}) {
       const origin = seeds[0] - reach;
       const stride = 2 * reach + seeds.length;
       labels.fill(0);
@@ -52,12 +49,9 @@
         for (const column of seeds) {
           const bit = valueAt(values, column, row);
           if (bit < 0) continue;
-          mark(row * W + column);
-
           const seed = row * stride + column - origin;
           if (labels[seed]) continue;
           let count = 1;
-          let left = column, right = column, top = row, bottom = row;
           let complete = true;
           labels[seed] = ++label;
           queue[0] = seed;
@@ -66,10 +60,6 @@
             const point = queue[head];
             const y = Math.floor(point / stride);
             const x = origin + point % stride;
-            left = Math.min(left, x);
-            right = Math.max(right, x);
-            top = Math.min(top, y);
-            bottom = Math.max(bottom, y);
 
             for (let ny = Math.max(0, y - 1); ny <= Math.min(H - 1, y + 1); ny++) {
               for (let nx = Math.max(0, x - 1); nx <= Math.min(W - 1, x + 1); nx++) {
@@ -87,7 +77,7 @@
             }
           }
 
-          if (!complete || count < 4 || !hasReflection(count, label, origin, stride, left, top, right, bottom)) continue;
+          if (!complete || count < 4 || !hasReflection(count, label, origin, stride, boundary)) continue;
           for (let i = 0; i < count; i++) {
             const point = queue[i];
             const y = Math.floor(point / stride);
@@ -100,7 +90,7 @@
     function update(values, mode = "patterns") {
       marks.fill(0);
       if (mode === "patterns") {
-        for (const seeds of axisColumns) markSymmetricPatterns(values, seeds);
+        for (const axis of axes) markSymmetricPatterns(values, axis);
         return marks;
       }
       const pending = [];
@@ -137,7 +127,7 @@
       return marks;
     }
 
-    return {update};
+    return {update, centralAxis};
   }
 
   window.MayatnikRhombPatternColors = {create};
