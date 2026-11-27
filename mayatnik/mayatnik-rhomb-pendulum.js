@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.042 */
+/* Ромбовый Маятник v0.043 */
 (() => {
   "use strict";
 
@@ -59,6 +59,7 @@
   const pngStatus = byId("romb-png-status");
   const recordButton = byId("romb-record");
   const recordLabel = byId("romb-record-label");
+  const gifCropButton = byId("romb-gif-crop");
   const gifCycleButton = byId("romb-gif-cycle");
   const gifTrack = byId("romb-gif-track");
   const gifSliders = [byId("romb-gif-first"), byId("romb-gif-last")];
@@ -87,8 +88,8 @@
   const formatter = new Intl.NumberFormat("ru", {maximumFractionDigits: 2});
   const swatch = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-  const view = {x: 0, y: 0, start: 0, end: 0, scale: null};
-  const coinView = {x: 0, y: 0, scale: null};
+  const view = {x: 0, y: 0, start: 0, end: 0, scale: null, gifCrop: {enabled: false, area: null}};
+  const coinView = {x: 0, y: 0, scale: null, gifCrop: {enabled: false, area: null}};
   let allowReducedZoom = false;
   let gifFullCycle = false;
   let gifControlsDirty = true;
@@ -178,6 +179,8 @@
     allowReducedZoom = saved.allowReducedZoom === true;
     view.scale = limitPixelScale(view.scale, view);
     gifFullCycle = saved.gifFullCycle === true;
+    view.gifCrop = restoreGifCrop(saved.gifCrop);
+    coinView.gifCrop = restoreGifCrop(saved.coinGifCrop);
     gifControlsDirty = true;
     if (Array.isArray(saved.gifRange) && Number.isSafeInteger(saved.gifRange[0]) && Number.isSafeInteger(saved.gifRange[1])) {
       gifRange[0] = Math.max(0, saved.gifRange[0]);
@@ -197,7 +200,7 @@
       jointRoute: jointRoute?.value || "cw", rememberedModes: {...rememberedModes},
       combination: combineMode.value, flipSecond: flipSecond.checked,
       patternArea: patternArea?.value, patternPalette: patternColors.map(input => input.value),
-      allowReducedZoom, gifFullCycle, gifRange: [...gifRange], ...options
+      allowReducedZoom, gifFullCycle, gifRange: [...gifRange], gifCrop: view.gifCrop, coinGifCrop: coinView.gifCrop, ...options
     };
     if (inline) {
       window.openai?.setWidgetState?.({modelContent: settings})?.catch(() => {});
@@ -401,6 +404,7 @@
     if (label.textContent !== lengthLabel) label.textContent = lengthLabel;
     squareButton?.setAttribute("aria-pressed", String(options.square));
     reducedZoomButton?.setAttribute("aria-pressed", String(allowReducedZoom));
+    gifCropButton?.setAttribute("aria-pressed", String(view.gifCrop.enabled));
     andButton?.setAttribute("aria-pressed", String(options.buildAnd));
     coinSquareButton?.setAttribute("aria-pressed", String(options.coinSquare));
     const both = isJoint();
@@ -814,8 +818,12 @@
     return !zen && !hubFour && !inline;
   }
 
+  function fullFieldBounds() {
+    return projectBox(view.start, view.end, field.H, options.square);
+  }
+
   function projectedBounds() {
-    if (!pageField()) return projectBox(view.start, view.end, field.H, options.square);
+    if (!pageField()) return fullFieldBounds();
     if (endPaintedRow > firstPaintedRow) return projectBox(view.start, view.end, endPaintedRow, options.square, firstPaintedRow);
     const top = Math.floor((field.H - 2 * depth) / 2);
     return projectBox(view.start, view.end, top + 2 * depth, options.square, top);
@@ -823,6 +831,89 @@
 
   function coinBounds() {
     return projectBox(0, 2 * depth - 1, 2 * depth, options.coinSquare);
+  }
+
+  function restoreGifCrop(saved) {
+    const area = saved?.area;
+    const valid = area && [area.left, area.top, area.right, area.bottom].every(Number.isSafeInteger) &&
+      area.left < area.right && area.top < area.bottom;
+    return {enabled: saved?.enabled === true, area: valid ? {...area} : null};
+  }
+
+  function gifCropLimits(camera) {
+    const {left, top, right, bottom} = camera === view ? fullFieldBounds() : coinBounds();
+    return {left: Math.floor(left), top: Math.floor(top), right: Math.ceil(right), bottom: Math.ceil(bottom)};
+  }
+
+  function confineGifCrop(area, limits) {
+    const width = Math.min(area.right - area.left, limits.right - limits.left);
+    const height = Math.min(area.bottom - area.top, limits.bottom - limits.top);
+    const left = clamp(area.left, limits.left, limits.right - width);
+    const top = clamp(area.top, limits.top, limits.bottom - height);
+    return {left, top, right: left + width, bottom: top + height};
+  }
+
+  function initialGifCrop(camera, element, limits) {
+    let {left, top, right, bottom} = limits;
+    const rect = element.getBoundingClientRect();
+    if (camera.raster && rect.width && rect.height) {
+      const {x, y, scale} = camera.raster;
+      const dx = element.width / rect.width, dy = element.height / rect.height;
+      const visibleLeft = Math.max(left, (-rect.left * dx - x) / scale, -x / scale);
+      const visibleTop = Math.max(top, (-rect.top * dy - y) / scale, -y / scale);
+      const visibleRight = Math.min(right, ((innerWidth - rect.left) * dx - x) / scale, (element.width - x) / scale);
+      const visibleBottom = Math.min(bottom, ((innerHeight - rect.top) * dy - y) / scale, (element.height - y) / scale);
+      if (visibleLeft < visibleRight && visibleTop < visibleBottom) {
+        ({left, top, right, bottom} = {left: visibleLeft, top: visibleTop, right: visibleRight, bottom: visibleBottom});
+      }
+    }
+    const width = Math.max(1, Math.floor((right - left) / 2));
+    const height = Math.max(1, Math.floor((bottom - top) / 2));
+    const start = Math.round((left + right - width) / 2), from = Math.round((top + bottom - height) / 2);
+    return {left: start, top: from, right: start + width, bottom: from + height};
+  }
+
+  function gifCropArea(camera, element) {
+    const limits = gifCropLimits(camera);
+    const area = camera.gifCrop.area ?? initialGifCrop(camera, element, limits);
+    camera.gifCrop.area = confineGifCrop(area, limits);
+    return camera.gifCrop.area;
+  }
+
+  function toggleGifCrop(camera, element) {
+    camera.gifCrop.enabled = !camera.gifCrop.enabled;
+    if (camera.gifCrop.enabled) gifCropArea(camera, element);
+    syncEdgeButtons();
+    save();
+    redraw();
+  }
+
+  function paintGifCrop(context, element, camera, x, y, scale, ratio) {
+    camera.raster = {x, y, scale};
+    element.classList.toggle("romb-crop-mode", camera.gifCrop.enabled);
+    if (!camera.gifCrop.enabled) return;
+    const area = gifCropArea(camera, element);
+    const left = x + area.left * scale, top = y + area.top * scale;
+    const right = x + area.right * scale, bottom = y + area.bottom * scale;
+    context.save();
+    context.strokeStyle = "#0b1620";
+    context.lineWidth = 3 * ratio;
+    context.strokeRect(left, top, right - left, bottom - top);
+    context.strokeStyle = "#fff";
+    context.lineWidth = ratio;
+    context.setLineDash([5 * ratio, 4 * ratio]);
+    context.strokeRect(left, top, right - left, bottom - top);
+    context.setLineDash([]);
+    context.fillStyle = "#fff";
+    context.strokeStyle = "#0b1620";
+    const handle = 8 * ratio;
+    for (const px of [left, right]) {
+      for (const py of [top, bottom]) {
+        context.fillRect(px - handle / 2, py - handle / 2, handle, handle);
+        context.strokeRect(px - handle / 2, py - handle / 2, handle, handle);
+      }
+    }
+    context.restore();
   }
 
   function limitPixelScale(scale, camera) {
@@ -888,6 +979,7 @@
     const {x, y} = camera;
     const s = Math.SQRT1_2;
     options[key] = !options[key];
+    camera.gifCrop.area = null;
     if (options[key]) {
       camera.x = (x + y) * s;
       camera.y = (y - x) * s;
@@ -1219,6 +1311,7 @@
     if (compare) paintSamples(Math.round(1 / selectedScale), x, y, bounds, ratio);
     context.putImageData(pixels, 0, 0);
     paintFieldGuides(context, x, y, scale, ratio, styles);
+    paintGifCrop(context, canvas, view, x, y, scale, ratio);
     if (!zen) paintCombined();
 
     updateLabels(scale, compare ? selectedScale : null);
@@ -1425,6 +1518,7 @@
     const originY = Math.round(height / 2 - coinView.y * scale);
     paintCoinBits(combinedWords, width, height, originX, originY, scale, {left, top, right, bottom});
     combinedContext.putImageData(combinedPixels, 0, 0);
+    paintGifCrop(combinedContext, combinedCanvas, coinView, originX, originY, scale, ratio);
     if (coinFrameInfo) {
       const zoom = scaleLabel(scale);
       coinFrameInfo.textContent = "Кадр " + formatter.format(frame) + " · " + zoom + (options.coinSquare ? " · квадрат" : "");
@@ -1475,7 +1569,7 @@
       copy.hidden = source.hidden;
       if (source.matches("button, input, select")) {
         copy.disabled = source.disabled;
-        const pressed = source.getAttribute("aria-pressed");
+        const pressed = source === gifCropButton ? String(coinView.gifCrop.enabled) : source.getAttribute("aria-pressed");
         if (pressed !== null && copy.getAttribute("aria-pressed") !== pressed) copy.setAttribute("aria-pressed", pressed);
         if (copy.title !== source.title) copy.title = source.title;
         const label = source.getAttribute("aria-label");
@@ -1509,6 +1603,7 @@
       if (source.matches("button")) copy.addEventListener("click", () => {
         if (source === recordButton) toggleRecording(true);
         else if (source === pngButton) saveFramePng(true);
+        else if (source === gifCropButton) toggleGifCrop(coinView, combinedCanvas);
         else source.click();
       });
       if (source.matches("input, select")) for (const type of ["input", "change"]) {
@@ -1527,7 +1622,9 @@
     byId("romb-coin-exact").addEventListener("click", () => viewport.zoomTo(1));
     byId("romb-coin-fit").addEventListener("click", viewport.fitView);
     coinSquareButton.addEventListener("click", () => toggleSquare(true));
-    combinedCanvas.addEventListener("dblclick", togglePlay);
+    combinedCanvas.addEventListener("dblclick", () => {
+      if (!coinView.gifCrop.enabled) togglePlay();
+    });
   }
 
   // The exporter advances a private field in synchronous slices. The live run
@@ -1666,11 +1763,11 @@
     }
   }
 
-  function frameExportGeometry(coin) {
+  function frameExportGeometry(coin, crop = null) {
     const camera = coin ? coinView : view;
     const rect = (coin ? combinedCanvas : canvas).getBoundingClientRect();
-    const bounds = coin ? coinBounds() : projectBox(view.start, view.end, field.H, options.square);
-    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? bounds : projectedBounds()));
+    const bounds = crop ?? (coin ? coinBounds() : fullFieldBounds());
+    const scale = Math.max(1, camera.scale ?? fittedPixelScale(rect, camera, coin ? coinBounds() : projectedBounds()));
     const x = -Math.floor(bounds.left * scale), y = -Math.floor(bounds.top * scale);
     const width = Math.ceil(bounds.right * scale) + x, height = Math.ceil(bounds.bottom * scale) + y;
     return {coin, bounds, scale, x, y, width, height};
@@ -1768,7 +1865,10 @@
       status.textContent = "У расширяющейся спирали нет полного цикла: длина витка растёт.";
       return;
     }
-    const geometry = frameExportGeometry(coin);
+    const camera = coin ? coinView : view;
+    const element = coin ? combinedCanvas : canvas;
+    const crop = camera.gifCrop.enabled ? gifCropArea(camera, element) : null;
+    const geometry = frameExportGeometry(coin, crop);
     const {width, height, scale} = geometry;
     if (width > 65535 || height > 65535) {
       status.textContent = "Для GIF сторона кадра должна быть до 65 535 пикселей. Уменьшите масштаб поля.";
@@ -2012,6 +2112,50 @@
     if (playing || pending) schedule();
   }
 
+  function gifCropPoint(event, element, camera) {
+    const rect = element.getBoundingClientRect();
+    const {x, y, scale} = camera.raster;
+    const widthRatio = element.width / rect.width, heightRatio = element.height / rect.height;
+    return {
+      x: ((event.clientX - rect.left) * widthRatio - x) / scale,
+      y: ((event.clientY - rect.top) * heightRatio - y) / scale,
+      tolerance: 10 * widthRatio / scale
+    };
+  }
+
+  function startGifCropDrag(event, element, camera) {
+    const point = gifCropPoint(event, element, camera);
+    const area = gifCropArea(camera, element);
+    const side = point.x < (area.left + area.right) / 2 ? "left" : "right";
+    const edge = point.y < (area.top + area.bottom) / 2 ? "top" : "bottom";
+    const corner = Math.abs(point.x - area[side]) <= point.tolerance &&
+      Math.abs(point.y - area[edge]) <= point.tolerance ? [side, edge] : null;
+    const move = point.x >= area.left && point.x <= area.right && point.y >= area.top && point.y <= area.bottom;
+    return {point, area, corner, move, changed: false};
+  }
+
+  function adjustGifCrop(area, dx, dy, limits, corner) {
+    const {left, top, right, bottom} = area;
+    if (!corner) {
+      return confineGifCrop({left: left + dx, top: top + dy, right: right + dx, bottom: bottom + dy}, limits);
+    }
+    const [side, edge] = corner;
+    return {
+      left: side === "left" ? clamp(left + dx, limits.left, right - 1) : left,
+      right: side === "right" ? clamp(right + dx, left + 1, limits.right) : right,
+      top: edge === "top" ? clamp(top + dy, limits.top, bottom - 1) : top,
+      bottom: edge === "bottom" ? clamp(bottom + dy, top + 1, limits.bottom) : bottom
+    };
+  }
+
+  function drawGifCropFromPoints(first, last, limits) {
+    const left = clamp(Math.round(Math.min(first.x, last.x)), limits.left, limits.right - 1);
+    const top = clamp(Math.round(Math.min(first.y, last.y)), limits.top, limits.bottom - 1);
+    const right = clamp(Math.round(Math.max(first.x, last.x)), left + 1, limits.right);
+    const bottom = clamp(Math.round(Math.max(first.y, last.y)), top + 1, limits.bottom);
+    return {left, top, right, bottom};
+  }
+
   function bindViewport(element, camera, bounds, fitCamera) {
     let drag;
     function zoomTo(physicalScale, px = 0, py = 0, anchorPointer = false) {
@@ -2065,6 +2209,18 @@
       zoomBy(factor, event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2, true);
     }, {passive: false});
     element.addEventListener("keydown", event => {
+      if (camera.gifCrop.enabled) {
+        const dx = Number(event.key === "ArrowRight") - Number(event.key === "ArrowLeft");
+        const dy = Number(event.key === "ArrowDown") - Number(event.key === "ArrowUp");
+        if (dx || dy) {
+          event.preventDefault();
+          const area = gifCropArea(camera, element);
+          camera.gifCrop.area = adjustGifCrop(area, dx, dy, gifCropLimits(camera), event.shiftKey ? ["right", "bottom"] : null);
+          save();
+          redraw();
+          return;
+        }
+      }
       if (!["+", "=", "-", "−", "0", "1"].includes(event.key)) return;
       event.preventDefault();
       if (event.key === "0") fitView();
@@ -2072,12 +2228,33 @@
       else zoomBy(event.key === "+" || event.key === "=" ? 1.3 : 1 / 1.3);
     });
     element.addEventListener("pointerdown", event => {
-      if (!element.classList.contains("romb-zoomed") || event.button !== 0 || drag) return;
+      if (event.button !== 0 || drag) return;
+      if (camera.gifCrop.enabled && camera.raster && !event.shiftKey) {
+        event.preventDefault();
+        element.focus({preventScroll: true});
+        element.setPointerCapture(event.pointerId);
+        drag = {id: event.pointerId, crop: startGifCropDrag(event, element, camera)};
+        return;
+      }
+      if (!element.classList.contains("romb-zoomed")) return;
       element.setPointerCapture(event.pointerId);
       drag = {id: event.pointerId, x: event.clientX, y: event.clientY};
     });
     element.addEventListener("pointermove", event => {
       if (drag?.id !== event.pointerId) return;
+      if (drag.crop) {
+        if (!camera.gifCrop.enabled) return;
+        const point = gifCropPoint(event, element, camera);
+        const {point: start, area, move, corner, changed} = drag.crop;
+        const dx = Math.round(point.x - start.x), dy = Math.round(point.y - start.y);
+        if (!changed && !dx && !dy) return;
+        const limits = gifCropLimits(camera);
+        camera.gifCrop.area = move || corner ? adjustGifCrop(area, dx, dy, limits, corner)
+          : drawGifCropFromPoints(start, point, limits);
+        drag.crop.changed = true;
+        redraw();
+        return;
+      }
       const scale = scaleFor(element.getBoundingClientRect(), camera, bounds());
       camera.x -= (event.clientX - drag.x) / scale;
       if (element === canvas && fieldBoard.classList.contains("romb-full-height")) window.scrollBy(0, drag.y - event.clientY);
@@ -2086,7 +2263,11 @@
       drag.y = event.clientY;
       redraw();
     });
-    element.addEventListener("lostpointercapture", () => { drag = null; });
+    element.addEventListener("lostpointercapture", event => {
+      if (drag?.id !== event.pointerId) return;
+      if (drag.crop?.changed) save();
+      drag = null;
+    });
     return {zoomTo, zoomBy, fitView};
   }
 
@@ -2257,7 +2438,7 @@
   play.addEventListener("click", togglePlay);
   canvas.addEventListener("dblclick", event => {
     event.preventDefault();
-    togglePlay();
+    if (!view.gifCrop.enabled) togglePlay();
   });
   stepButton.addEventListener("click", () => {
     if (hubFour) {
@@ -2283,6 +2464,7 @@
   squareButton?.addEventListener("click", () => toggleSquare());
   andButton?.addEventListener("click", toggleBuildAnd);
   pngButton.addEventListener("click", () => saveFramePng());
+  gifCropButton.addEventListener("click", () => toggleGifCrop(view, canvas));
   recordButton?.addEventListener("click", () => toggleRecording());
   gifCycleButton.addEventListener("click", () => {
     gifFullCycle = !gifFullCycle;

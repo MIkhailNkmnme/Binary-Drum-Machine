@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.046</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.047</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -14,7 +14,7 @@
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
   <script defer src="mayatnik-rhomb-pattern-colors.js?v=008"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=042"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=043"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -165,6 +165,7 @@
     .romb-board canvas:focus-visible { outline: 1px solid var(--cyan); outline-offset: 2px; }
     .romb-board .romb-zoomed { cursor: grab; touch-action: none; }
     .romb-board .romb-zoomed:active { cursor: grabbing; }
+    .romb-board canvas.romb-crop-mode, .romb-board canvas.romb-crop-mode:active { cursor: crosshair; touch-action: none; }
     .romb-zen-open { overflow: hidden; }
     .romb-zen > :not(#romb-board, #romb-announcement) { visibility: hidden; }
     .romb-zen #romb-board {
@@ -323,7 +324,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.046</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.047</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -377,6 +378,9 @@
           </button>
           <button type="button" class="gz-hx" id="romb-record" aria-pressed="false" aria-label="Собрать GIF">
             <span class="gz-ic" aria-hidden="true">●</span><span class="gz-nm" id="romb-record-label">Собрать GIF</span>
+          </button>
+          <button type="button" class="gz-hx" id="romb-gif-crop" aria-pressed="false" title="Выбрать прямоугольную область для GIF. Потяните рамку изнутри или за угол." aria-label="Выбрать область GIF">
+            <span class="gz-ic" aria-hidden="true">▭</span><span class="gz-nm">Область GIF</span>
           </button>
           <button type="button" class="gz-hx" id="romb-gif-cycle" aria-pressed="false" title="Собрать один полный цикл" aria-label="Собрать один полный цикл">
             <span class="gz-ic" aria-hidden="true">↻</span><span class="gz-nm">Весь цикл</span>
