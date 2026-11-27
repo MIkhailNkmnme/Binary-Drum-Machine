@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Опыт Зеркалиуса с ромбовым Маятником: рост по XOR, сужение до одной клетки и накопление на общем поле.">
-  <title>Зеркалиус · Ромбовый Маятник v0.035</title>
+  <title>Зеркалиус · Ромбовый Маятник v0.036</title>
   <link rel="stylesheet" href="../_js/grozd.css">
   <link rel="stylesheet" href="../wolfram/style.css?v=001">
   <script defer src="../_js/hub-button-text.js"></script>
@@ -13,8 +13,8 @@
   <script defer src="mayatnik-rhomb-four.js?v=2"></script>
   <script defer src="mayatnik-gif.js"></script>
   <script defer src="mayatnik-cell-area.js?v=658"></script>
-  <script defer src="mayatnik-rhomb-pattern-colors.js?v=006"></script>
-  <script defer src="mayatnik-rhomb-pendulum.js?v=032"></script>
+  <script defer src="mayatnik-rhomb-pattern-colors.js?v=007"></script>
+  <script defer src="mayatnik-rhomb-pendulum.js?v=033"></script>
   <style>
     main {
       --page-gutter: clamp(12px, 3vw, 30px);
@@ -289,7 +289,7 @@
       <a href="../issledovanie/Zerkalius-issledovanie.html">Исследования</a>
     </nav>
     <header>
-      <h1>Ромбовый Маятник <small>черновик v0.035</small></h1>
+      <h1>Ромбовый Маятник <small>черновик v0.036</small></h1>
       <p class="lead">На поле в 512 строк ромб расширяется до 256 бит на 256-й строке и сужается до одной клетки в 512-й. Каждый проход сдвигает весь ромб и продолжает рисунок.</p>
     </header>
     <fieldset id="romb-controls" class="commands romb-controls" aria-label="Управление ромбовым Маятником">
@@ -311,7 +311,7 @@
           <button type="button" class="gz-hx" id="romb-mark-repeats" aria-pressed="false" title="Отметить совпадающие блоки в ромбах и копии при склейке" aria-label="Выделить повторы">
             <span class="gz-ic" aria-hidden="true">▦</span><span class="gz-nm">Повторы</span>
           </button>
-          <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить узоры на исходной центральной оси" aria-label="Раскрасить узоры на исходной центральной оси">
+          <button type="button" class="gz-hx" id="romb-pattern-colors" aria-pressed="false" aria-controls="romb-pattern-palette" title="Раскрасить узоры по центральной оси и включённым стыкам «Соединить»" aria-label="Раскрасить узоры по осям">
             <span class="gz-ic" aria-hidden="true">◈</span><span class="gz-nm">Раскрасить</span>
           </button>
         </div>
@@ -595,7 +595,7 @@
       <p>«Разворот» меняет направление обеих ветвей на последнем касании.</p>
       <p>С начального кадра цикла нумерация повторяется после совпадения битов и обеих ветвей. Если сменить режим края в ходе опыта, расчёт продолжится по новому маршруту. <a href="../issledovanie/wolfram-nks/romb-period.html#sizes">Периоды для разных размеров</a>.</p>
       <p>«Повторы» отмечают золотым одинаковые блоки 2 × 2 внутри двух ромбов. Фиолетовый связывает левую склейку с правой половиной поля, зелёный — правую склейку с левой. Оттенки сохраняют различие между 0 и 1.</p>
-      <p>«Раскрасить» начинает заливку с заполненных клеток исходной центральной оси. В списке «Область» выберите, как соединять одинаковые биты: по сторонам, по сторонам и углам или только по углам. «Шахматки 0» соединяет нулевые диагональные цепочки также боковыми касаниями. «Один бит» красит только саму ось. Прежний поиск симметричных узоров доступен в пункте «Симметричные фигуры». Цвета для 1 и 0 выбираются отдельно.</p>
+      <p>«Раскрасить» начинает заливку с заполненных клеток центральной оси. Для каждой включённой кнопки «Соединить» добавляется боковая ось между двумя столбцами на стыке, и заливка начинается с обоих столбцов. В списке «Область» выберите, как соединять одинаковые биты: по сторонам, по сторонам и углам или только по углам. «Шахматки 0» соединяет нулевые диагональные цепочки также боковыми касаниями. «Один бит» красит центральный столбец и оба столбца каждого включённого стыка. Прежний поиск симметричных узоров доступен в пункте «Симметричные фигуры». Цвета для 1 и 0 выбираются отдельно.</p>
       <p>Совмещение читает две вырезки по центрам и строит отдельный ромб. В наложении фиолетовый показывает единицу первой ветви, зелёный — второй, светлый — обеих. В XOR и AND пустая клетка даёт 0, а общей пустоте соответствует прозрачность.</p>
     </section>
   </main>

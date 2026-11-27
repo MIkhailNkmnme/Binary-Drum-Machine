@@ -1,4 +1,4 @@
-/* Ромбовый Маятник v0.032 */
+/* Ромбовый Маятник v0.033 */
 (() => {
   "use strict";
 
@@ -811,8 +811,14 @@
 
   function updateViewBounds() {
     const half = Math.floor(field.W / 2);
-    view.start = options.joinLeft ? -half : 0;
-    view.end = field.W + (options.joinRight ? half : 0);
+    const start = options.joinLeft ? -half : 0;
+    const end = field.W + (options.joinRight ? half : 0);
+    if (view.start !== start || view.end !== end) {
+      patternPainter = null;
+      patternMarks = null;
+    }
+    view.start = start;
+    view.end = end;
     if (view.scale === null) {
       const {left, top, right, bottom} = projectedBounds();
       view.x = (left + right) / 2;
@@ -911,6 +917,10 @@
     return marks && (marks[index >> 3] & (1 << (index & 7)));
   }
 
+  function createPatternPainter() {
+    return window.MayatnikRhombPatternColors.create(field.W, field.H, view.start, view.end);
+  }
+
   // Geometry of the two current source passes. Half modes keep the original
   // upper/lower pieces; joint routes retain the two most recent whole rhombs.
   function sourceRhombs(all = true) {
@@ -955,6 +965,7 @@
 
   function paintSquareBits(x, y, scale, w, h, bounds, marks, output = words) {
     const {W, H, val} = field;
+    const displayWidth = view.end - view.start;
     const left = Math.max(0, Math.floor(x + bounds.left * scale));
     const right = Math.min(w, Math.ceil(x + bounds.right * scale));
     const top = Math.max(0, Math.floor(y + bounds.top * scale));
@@ -968,9 +979,9 @@
         const displayed = Math.floor(u - v);
         if (row < 0 || row >= H || displayed < view.start || displayed >= view.end) continue;
         const col = sourceColumn(displayed, W);
-        const index = row * W + col;
-        const bit = val[index];
-        if (bit >= 0) output[py * w + px] = colorWords[bit + bitTone(row, col, marks, index)];
+        const bit = val[row * W + col];
+        const patternIndex = row * displayWidth + displayed - view.start;
+        if (bit >= 0) output[py * w + px] = colorWords[bit + bitTone(row, col, marks, patternIndex)];
       }
     }
   }
@@ -1152,7 +1163,7 @@
     const y = Math.round(h / 2 - view.y * scale);
     let marks;
     if (options.patternColors && frame) {
-      patternPainter ??= window.MayatnikRhombPatternColors.create(W, H);
+      patternPainter ??= createPatternPainter();
       patternMarks ??= patternPainter.update(field.val, patternArea?.value);
       marks = patternMarks;
     }
@@ -1189,6 +1200,7 @@
 
   function paintFlatBits(x, y, scale, w, h, marks, output = words, columns = sampleColumn, pairs = samplePair) {
     const {W, H, val} = field;
+    const displayWidth = view.end - view.start;
     const firstX = Math.max(0, Math.ceil(x + view.start * scale - 0.5));
     const lastX = Math.min(w, Math.ceil(x + view.end * scale - 0.5));
     const firstY = Math.max(0, Math.ceil(y - 0.5));
@@ -1197,7 +1209,7 @@
     for (let px = firstX; px < lastX; px++) {
       const displayed = clamp(Math.floor((px + 0.5 - x) / scale), view.start, view.end - 1);
       const col = sourceColumn(displayed, W);
-      columns[px] = col;
+      columns[px] = displayed;
       // Below 1:1, keep a staggered bit when its neighbor shares this pixel.
       pairs[px] = col + 1 < W && displayed + 1 < view.end && (displayed + 1.5) * scale + x < px + 1;
       if (searchPixel) {
@@ -1208,22 +1220,27 @@
     for (let py = firstY; py < lastY; py++) {
       const row = clamp(Math.floor((py + 0.5 - y) / scale), 0, H - 1);
       const sourceRow = row * W;
+      const patternRow = row * displayWidth - view.start;
       const out = py * w;
       for (let px = firstX; px < lastX; px++) {
-        let col = columns[px];
+        let displayed = columns[px];
+        let col = sourceColumn(displayed, W);
         let bit = val[sourceRow + col];
-        if (bit < 0 && pairs[px]) bit = val[sourceRow + ++col];
+        if (bit < 0 && pairs[px]) {
+          displayed++;
+          bit = val[sourceRow + ++col];
+        }
         // Keep a thin marked line visible when the field is fitted to the canvas.
-        if (searchPixel && !patternAt(marks, sourceRow + col)) {
-          for (let displayed = sampleStart[px]; displayed < sampleEnd[px]; displayed++) {
-            const candidate = sourceColumn(displayed, W);
-            if (!patternAt(marks, sourceRow + candidate)) continue;
-            col = candidate;
+        if (searchPixel && !patternAt(marks, patternRow + displayed)) {
+          for (let candidate = sampleStart[px]; candidate < sampleEnd[px]; candidate++) {
+            if (!patternAt(marks, patternRow + candidate)) continue;
+            displayed = candidate;
+            col = sourceColumn(displayed, W);
             bit = val[sourceRow + col];
             break;
           }
         }
-        if (bit >= 0) output[out + px] = colorWords[bit + bitTone(row, col, marks, sourceRow + col)];
+        if (bit >= 0) output[out + px] = colorWords[bit + bitTone(row, col, marks, patternRow + displayed)];
       }
     }
   }
@@ -1601,7 +1618,7 @@
         routeChanges: new Map([[0, currentWrap()]]), verticalRouteChanges: new Map([[0, currentWrapY()]]),
         reversalChanges: new Map([[0, currentReverse()]])};
       withGifRun(job, initializeRun);
-      if (!coin && options.patternColors) job.painter = window.MayatnikRhombPatternColors.create(field.W, field.H);
+      if (!coin && options.patternColors) job.painter = createPatternPainter();
       if (!coin && !options.square) {
         job.columns = new Int32Array(width);
         job.pairs = new Uint8Array(width);
